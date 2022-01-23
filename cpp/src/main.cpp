@@ -1,18 +1,13 @@
-#include <google/protobuf/util/json_util.h>
 #include <iostream>
-#include "protoconf/item.pb.h"
-using google::protobuf::util::JsonStringToMessage;
+#include "item.tableau.h"
+#include <fstream>
+#include <string>
+#include "common/loader.h"
 
-bool proto_to_json(const google::protobuf::Message& message, std::string& json) {
-    google::protobuf::util::JsonPrintOptions options;
-    options.add_whitespace = true;
-    options.always_print_primitive_fields = true;
-    options.preserve_proto_field_names = true;
-    return MessageToJsonString(message, &json, options).ok();
-}
-
-bool json_to_proto(const std::string& json, google::protobuf::Message& message) {
-    return JsonStringToMessage(json, &message).ok();
+void WriteFile(const std::string& filename, const std::string& input){
+    std::ofstream out(filename);
+    out << input;
+    out.close();
 }
 
 int main() {
@@ -24,8 +19,7 @@ int main() {
     item.mutable_path()->set_dir("/home/protoconf/");
     item.mutable_path()->set_name("icon.png");
 
-    /* protobuf 转 json。 */
-    if (!proto_to_json(item, json_string)) {
+    if (!tableau::Proto2Json(item, json_string)) {
         std::cout << "protobuf convert json failed!" << std::endl;
         return 1;
     }
@@ -33,16 +27,31 @@ int main() {
               << json_string << std::endl;
 
     item.Clear();
-    std::cout << "-----" << std::endl;
 
-    /* json 转 protobuf。 */
-    if (!json_to_proto(json_string, item)) {
-        std::cout << "json to protobuf failed!" << std::endl;
+    // std::cout << "-----" << std::endl;
+    // if (!tableau::Json2Proto(json_string, item)) {
+    //     std::cout << "json to protobuf failed!" << std::endl;
+    //     return 1;
+    // }
+    // std::cout << "json to protobuf done!" << std::endl
+    //           << "name: " << item.name() << std::endl
+    //           << "dir: " << item.mutable_path()->dir()
+    //           << std::endl;
+    
+    std::cout << "-----" << std::endl;
+    tableau::ItemLoader item_loader;
+    if (!item_loader.Load("../testdata/", tableau::Format::kJSON)) {
+        std::cout << "protobuf load json failed!" << std::endl;
         return 1;
     }
-    std::cout << "json to protobuf done!" << std::endl
-              << "name: " << item.name() << std::endl
-              << "dir: " << item.mutable_path()->dir()
-              << std::endl;
+    item = item_loader.GetConf();
+    std::cout << "item: " << item.DebugString() << std::endl;
+
+    json_string.clear();
+     if (!tableau::Proto2Json(item, json_string)) {
+        std::cout << "protobuf convert json failed!" << std::endl;
+        return 1;
+    }
+    WriteFile("./test_item.json", json_string);
     return 0;
 }
