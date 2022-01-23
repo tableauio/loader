@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+cpp/bin
+cpp/build
+cpp/src/protoconf/*.pb.*
+third_party/protobuf/
