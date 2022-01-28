@@ -4,7 +4,6 @@
 
 #include "demo/hub.h"
 #include "protoconf/item.pb.h"
-#include "tableau/common.h"
 
 void WriteFile(const std::string& filename, const std::string& input) {
   std::ofstream out(filename);
@@ -21,7 +20,7 @@ int main() {
   item.mutable_path()->set_dir("/home/protoconf/");
   item.mutable_path()->set_name("icon.png");
 
-  if (!tableau::Proto2Json(item, json_string)) {
+  if (!demo::tableau::Message2JSON(item, json_string)) {
     std::cout << "protobuf convert json failed!" << std::endl;
     return 1;
   }
@@ -30,7 +29,7 @@ int main() {
   item.Clear();
 
   // std::cout << "-----" << std::endl;
-  // if (!tableau::Json2Proto(json_string, item)) {
+  // if (!demo::tableau::Json2Proto(json_string, item)) {
   //     std::cout << "json to protobuf failed!" << std::endl;
   //     return 1;
   // }
@@ -40,12 +39,12 @@ int main() {
   //           << std::endl;
 
   std::cout << "-----" << std::endl;
-  bool ok = protoconf::Hub::Instance().Load("../testdata/", [](const std::string& name) { return false; });
+  bool ok = demo::tableau::Hub::Instance().Load("../testdata/", [](const std::string& name) { return true; });
   if (!ok) {
     std::cout << "protobuf hub load failed!" << std::endl;
     return 1;
   }
-  auto item1 = protoconf::Get<protoconf::Item>();
+  auto item1 = demo::tableau::Get<protoconf::Item>();
   if (!item1) {
     std::cout << "protobuf hub get Item failed!" << std::endl;
     return 1;
@@ -53,7 +52,7 @@ int main() {
   std::cout << "item1: " << item1->DebugString() << std::endl;
 
   json_string.clear();
-  if (!tableau::Proto2Json(*item1, json_string)) {
+  if (!demo::tableau::Message2JSON(*item1, json_string)) {
     std::cout << "protobuf convert json failed!" << std::endl;
     return 1;
   }
