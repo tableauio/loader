@@ -1,4 +1,5 @@
 # loader
+
 Configuration loader for Tableau.
 
 ## Prerequisites
@@ -16,5 +17,6 @@ Configuration loader for Tableau.
 - Build: `make`, then the **bin** dir will be generated at `cpp/bin`.
 
 ## References
+
 - [Protocol Buffers C++ Installation](https://github.com/protocolbuffers/protobuf/tree/master/src)
 

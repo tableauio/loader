@@ -33,11 +33,6 @@ SET(COMMON_INCLUDE_DIR
 SET(COMMON_LIB
     ${PROTOBUF_LIB}/libprotobuf.a
     pthread
-    z
-    dl
-    ssl
-    crypto
-    rt
     )
 
 # inlcude
