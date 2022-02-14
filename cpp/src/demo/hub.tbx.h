@@ -3,8 +3,6 @@
 #include <google/protobuf/util/json_util.h>
 
 #include <string>
-
-namespace demo {
 namespace tableau {
 #define SINGLETON(ClassName)          \
  private:                             \
@@ -24,6 +22,7 @@ enum class Format {
   kWire,
 };
 
+static const std::string kEmpty = "";
 const std::string& GetErrMsg();
 
 bool Message2JSON(const google::protobuf::Message& message, std::string& json);
@@ -34,34 +33,47 @@ bool Wire2Message(const std::string& wire, google::protobuf::Message& message);
 const std::string& GetProtoName(const google::protobuf::Message& message);
 bool LoadMessage(const std::string& dir, google::protobuf::Message& message, Format fmt = Format::kJSON);
 
-typedef std::function<bool(const std::string& proto_name)> Filter;
-
-typedef std::unordered_map<std::string, std::shared_ptr<google::protobuf::Message>> ConfigMap;
+class Messager {
+ public:
+  virtual ~Messager() = default;
+  static const std::string& Name() { return kEmpty; };
+  virtual bool Load(const std::string& dir, Format fmt) = 0;
+};
+typedef std::unordered_map<std::string, std::shared_ptr<Messager>> ConfigMap;
 typedef std::shared_ptr<ConfigMap> ConfigMapPtr;
+typedef std::function<bool(const std::string& name)> Filter;
+typedef std::function<std::shared_ptr<Messager>()> MessagerGenerator;
 
 class Hub {
   SINGLETON(Hub);
 
  public:
+  void Init();
+  template <typename T>
+  void Register();
   bool Load(const std::string& dir, Filter filter, Format fmt = Format::kJSON);
   template <typename T>
   const std::shared_ptr<T> Get() const;
 
  private:
-  static ConfigMapPtr NewConfigMap();
-  const std::shared_ptr<google::protobuf::Message> GetConf(const std::string& proto_name) const {
-    return (*config_map_ptr_)[proto_name];
-  }
+  ConfigMapPtr NewConfigMap();
+  const std::shared_ptr<Messager> GetMessager(const std::string& name) const { return (*config_map_ptr_)[name]; }
 
  private:
   ConfigMapPtr config_map_ptr_;
+  // messager name -> messager generator
+  std::unordered_map<std::string, MessagerGenerator> messager_map_;
 };
 
 template <typename T>
+void Hub::Register() {
+  messager_map_[T::Name()] = []() { return std::make_shared<T>(); };
+}
+
+template <typename T>
 const std::shared_ptr<T> Hub::Get() const {
-  auto t = T();
-  auto conf = GetConf(GetProtoName(t));
-  return std::dynamic_pointer_cast<T>(conf);
+  auto msg = GetMessager(T::Name());
+  return std::dynamic_pointer_cast<T>(msg);
 }
 
 // syntactic sugar
@@ -71,4 +83,3 @@ const std::shared_ptr<T> Get() {
 }
 
 }  // namespace tableau
-}  // namespace demo

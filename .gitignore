@@ -16,10 +16,6 @@
 *.dylib
 *.dll
 
-# Fortran module files
-*.mod
-*.smod
-
 # Compiled Static libraries
 *.lai
 *.la
@@ -33,5 +29,5 @@
 
 cpp/bin
 cpp/build
-cpp/src/protoconf/*.pb.*
+cpp/src/protoconf/*
 third_party/protobuf/

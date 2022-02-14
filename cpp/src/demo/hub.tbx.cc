@@ -1,13 +1,12 @@
-#include "demo/hub.h"
+#include "demo/hub.tbx.h"
 
 #include <google/protobuf/text_format.h>
 
 #include <fstream>
 #include <sstream>
 
-#include "protoconf/item.pb.h"
+#include "demo/item.tbx.h"
 
-namespace demo {
 namespace tableau {
 static std::string g_err_msg;
 const std::string& GetErrMsg() { return g_err_msg; }
@@ -29,9 +28,8 @@ bool Text2Message(const std::string& text, google::protobuf::Message& message) {
 bool Wire2Message(const std::string& wire, google::protobuf::Message& message) { return message.ParseFromString(wire); }
 
 const std::string& GetProtoName(const google::protobuf::Message& message) {
-  static const std::string empty = "";
   const auto* md = message.GetDescriptor();
-  return md != nullptr ? md->name() : empty;
+  return md != nullptr ? md->name() : kEmpty;
 }
 
 bool ReadFile(const std::string& filename, std::string& content) {
@@ -91,7 +89,7 @@ bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
     auto&& name = iter.first;
     bool yes = filter(name);
     if (!yes) continue;
-    bool ok = LoadMessage(dir, *iter.second, fmt);
+    bool ok = iter.second->Load(dir, fmt);
     if (!ok) {
       g_err_msg = "Load " + name + " failed";
       return false;
@@ -105,16 +103,16 @@ bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
 
 ConfigMapPtr Hub::NewConfigMap() {
   ConfigMapPtr config_map_ptr = std::make_shared<ConfigMap>();
-
-#define REGISTER(Namespace, MessageName) (*config_map_ptr)[#MessageName] = std::make_shared<Namespace::MessageName>();
-
-  // TODO: auto-generate this list by `protoc-gen-cpp-tableau`.
-  REGISTER(protoconf, Item);
-
-#undef REGISTER
-
+  for (auto&& it : messager_map_) {
+    (*config_map_ptr)[it.first] = it.second();
+  }
   return config_map_ptr;
 }
 
+
+
+void Hub::Init() {
+  Register<Item>();
+}
+
 }  // namespace tableau
-}  // namespace demo
