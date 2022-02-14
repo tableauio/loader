@@ -5,7 +5,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "demo/item.tbx.h"
+#include "demo/registry.tbx.h"
 
 namespace tableau {
 static std::string g_err_msg;
@@ -103,16 +103,10 @@ bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
 
 ConfigMapPtr Hub::NewConfigMap() {
   ConfigMapPtr config_map_ptr = std::make_shared<ConfigMap>();
-  for (auto&& it : messager_map_) {
+  for (auto&& it : Registry::registrar) {
     (*config_map_ptr)[it.first] = it.second();
   }
   return config_map_ptr;
-}
-
-
-
-void Hub::Init() {
-  Register<Item>();
 }
 
 }  // namespace tableau

@@ -3,19 +3,8 @@
 #include <google/protobuf/util/json_util.h>
 
 #include <string>
-namespace tableau {
-#define SINGLETON(ClassName)          \
- private:                             \
-  ClassName() {}                      \
-  ClassName(const ClassName&) {}      \
-  void operator=(const ClassName&) {} \
-                                      \
- public:                              \
-  static ClassName& Instance() {      \
-    static ClassName instance;        \
-    return instance;                  \
-  }
 
+namespace tableau {
 enum class Format {
   kJSON,
   kText,
@@ -39,18 +28,12 @@ class Messager {
   static const std::string& Name() { return kEmpty; };
   virtual bool Load(const std::string& dir, Format fmt) = 0;
 };
-typedef std::unordered_map<std::string, std::shared_ptr<Messager>> ConfigMap;
-typedef std::shared_ptr<ConfigMap> ConfigMapPtr;
-typedef std::function<bool(const std::string& name)> Filter;
-typedef std::function<std::shared_ptr<Messager>()> MessagerGenerator;
+using ConfigMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
+using ConfigMapPtr = std::shared_ptr<ConfigMap>;
+using Filter = std::function<bool(const std::string& name)>;
 
 class Hub {
-  SINGLETON(Hub);
-
  public:
-  void Init();
-  template <typename T>
-  void Register();
   bool Load(const std::string& dir, Filter filter, Format fmt = Format::kJSON);
   template <typename T>
   const std::shared_ptr<T> Get() const;
@@ -61,25 +44,12 @@ class Hub {
 
  private:
   ConfigMapPtr config_map_ptr_;
-  // messager name -> messager generator
-  std::unordered_map<std::string, MessagerGenerator> messager_map_;
 };
-
-template <typename T>
-void Hub::Register() {
-  messager_map_[T::Name()] = []() { return std::make_shared<T>(); };
-}
 
 template <typename T>
 const std::shared_ptr<T> Hub::Get() const {
   auto msg = GetMessager(T::Name());
   return std::dynamic_pointer_cast<T>(msg);
-}
-
-// syntactic sugar
-template <typename T>
-const std::shared_ptr<T> Get() {
-  return Hub::Instance().Get<T>();
 }
 
 }  // namespace tableau
