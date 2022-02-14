@@ -11,6 +11,10 @@ enum class Format {
   kWire,
 };
 
+constexpr const char* kJSONExt = ".json";
+constexpr const char* kTextExt = ".text";
+constexpr const char* kWireExt = ".wire";
+
 static const std::string kEmpty = "";
 const std::string& GetErrMsg();
 

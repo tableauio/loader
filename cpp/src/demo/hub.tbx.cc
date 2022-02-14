@@ -51,21 +51,21 @@ bool LoadMessage(const std::string& dir, google::protobuf::Message& message, For
   std::string content;
   switch (fmt) {
     case Format::kJSON: {
-      bool ok = ReadFile(basepath + ".json", content);
+      bool ok = ReadFile(basepath + kJSONExt, content);
       if (!ok) {
         return false;
       }
       return JSON2Message(content, message);
     }
     case Format::kText: {
-      bool ok = ReadFile(basepath + ".text", content);
+      bool ok = ReadFile(basepath + kTextExt, content);
       if (!ok) {
         return false;
       }
       return Text2Message(content, message);
     }
     case Format::kWire: {
-      bool ok = ReadFile(basepath + ".wire", content);
+      bool ok = ReadFile(basepath + kWireExt, content);
       if (!ok) {
         return false;
       }
