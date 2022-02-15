@@ -1,13 +1,27 @@
 syntax = "proto3";
 package protoconf;
+option go_package = "github.com/tableauio/loader/plugin/testpb";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "tableau/protobuf/tableau.proto";
+
+option (tableau.workbook) = {
+  name: "Test.xlsx"
+};
 
 message Item {
-    uint32 id = 1;
-    string name = 2;
-    Path path = 4;
+  option (tableau.worksheet) = {
+    name: "Activity"
+  };
+  uint32 id = 1;
+  string name = 2;
+  Path path = 4;
+  google.protobuf.Timestamp expiry = 5;
+  google.protobuf.Duration duration = 6;
 }
 
 message Path {
-    string dir = 1;
-    string name = 2;
+  string dir = 1;
+  string name = 2;
 }

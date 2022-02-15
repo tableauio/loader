@@ -13,5 +13,4 @@ class Item : public Messager {
   static const std::string kProtoName;
   protoconf::Item data_;
 };
-
 }  // namespace tableau
