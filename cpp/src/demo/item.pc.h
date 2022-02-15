@@ -1,5 +1,5 @@
 #pragma once
-#include "demo/hub.tbx.h"
+#include "demo/hub.pc.h"
 #include "protoconf/item.pb.h"
 
 namespace tableau {

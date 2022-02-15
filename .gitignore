@@ -31,5 +31,3 @@ cpp/bin
 cpp/build
 cpp/src/protoconf/*
 third_party/protobuf/
-plugin/cmd/protoc-gen-cpp-tableau-loader/protoc-gen-cpp-tableau-loader
-plugin/cmd/protoc-gen-cpp-tableau-loader/test/src

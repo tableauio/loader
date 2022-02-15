@@ -2,10 +2,10 @@
 #include <iostream>
 #include <string>
 
-#include "demo/hub.pc.h"
-#include "demo/item.pc.h"
-#include "demo/registry.pc.h"
+#include "protoconf/hub.pc.h"
 #include "protoconf/item.pb.h"
+#include "protoconf/item.pc.h"
+#include "protoconf/registry.pc.h"
 
 void WriteFile(const std::string& filename, const std::string& input) {
   std::ofstream out(filename);

@@ -1,4 +1,4 @@
-#include "demo/item.tbx.h"
+#include "demo/item.pc.h"
 namespace tableau {
 const std::string Item::kProtoName = "Item";
 

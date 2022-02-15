@@ -37,4 +37,15 @@ for item in "$PROTOCONF_IN"/* ; do
     fi
 done
 
-# protoc --plugin "$PLUGIN" --cpp_out="$OUTDIR" --cpp-tableau-loader_out="$OUTDIR" --cpp-tableau-loader_opt=paths=source_relative -I "$INDIR" item.proto
+TABLEAU_IN="./third_party/tableau/proto/tableau/protobuf"
+TABLEAU_OUT="${ROOTDIR}/test/src"
+# remove old generated files
+rm -rfv "$TABLEAU_OUT/tableau"
+mkdir -p "$TABLEAU_OUT/tableau"
+
+${PROTOC} \
+--cpp_out="$TABLEAU_OUT" \
+--proto_path="$PROTOBUF_PROTO" \
+--proto_path="$TABLEAU_PROTO" \
+"${TABLEAU_PROTO}/tableau/protobuf/tableau.proto"
+    

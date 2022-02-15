@@ -1,8 +1,8 @@
 
 
-#include "demo/registry.tbx.h"
+#include "demo/registry.pc.h"
 
-#include "demo/item.tbx.h"
+#include "demo/item.pc.h"
 
 namespace tableau {
 Registrar Registry::registrar = Registrar();

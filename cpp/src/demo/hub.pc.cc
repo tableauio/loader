@@ -1,11 +1,11 @@
-#include "demo/hub.tbx.h"
+#include "demo/hub.pc.h"
 
 #include <google/protobuf/text_format.h>
 
 #include <fstream>
 #include <sstream>
 
-#include "demo/registry.tbx.h"
+#include "demo/registry.pc.h"
 
 namespace tableau {
 static std::string g_err_msg;

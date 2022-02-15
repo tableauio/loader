@@ -1,6 +1,6 @@
 
 #pragma once
-#include "demo/hub.tbx.h"
+#include "demo/hub.pc.h"
 namespace tableau {
 using MessagerGenerator = std::function<std::shared_ptr<Messager>()>;
 // messager name -> messager generator
