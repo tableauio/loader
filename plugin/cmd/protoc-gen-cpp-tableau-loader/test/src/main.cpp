@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 
+#include "protoconf/test.pc.h"
 #include "protoconf/hub.pc.h"
 #include "protoconf/item.pb.h"
 #include "protoconf/item.pc.h"
@@ -78,7 +79,7 @@ int main() {
   tableau::Registry::Init();
   bool ok = MyHub::Instance().Load("../testdata/", [](const std::string& name) { return true; });
   if (!ok) {
-    std::cout << "protobuf hub load failed!" << std::endl;
+    std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
     return 1;
   }
   auto item1 = MyHub::Instance().Get<tableau::Item>();
@@ -86,13 +87,26 @@ int main() {
     std::cout << "protobuf hub get Item failed!" << std::endl;
     return 1;
   }
-  std::cout << "item1: " << item1->Get().DebugString() << std::endl;
+  std::cout << "item1: " << item1->Data().DebugString() << std::endl;
 
   jsonstr.clear();
-  if (!tableau::Message2JSON(item1->Get(), jsonstr)) {
+  if (!tableau::Message2JSON(item1->Data(), jsonstr)) {
     std::cout << "protobuf convert json failed!" << std::endl;
     return 1;
   }
   WriteFile("./test_item.json", jsonstr);
+
+  auto activity_conf = MyHub::Instance().Get<tableau::ActivityConf>();
+  if (!activity_conf) {
+    std::cout << "protobuf hub get ActivityConf failed!" << std::endl;
+    return 1;
+  }
+
+  const auto* section_conf = activity_conf->Get(100001, 2);
+  if (!section_conf) {
+    std::cout << "ActivityConf get section failed!" << std::endl;
+    return 1;
+  }
+  std::cout << "section_conf: " << section_conf->DebugString() << std::endl;
   return 0;
 }

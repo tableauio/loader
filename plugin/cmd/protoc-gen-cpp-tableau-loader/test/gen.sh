@@ -22,20 +22,30 @@ mkdir -p "$PROTOCONF_OUT"
 cd "${ROOTDIR}" && go build && cd -
 
 # generate
-for item in "$PROTOCONF_IN"/* ; do
-    echo "$item"
-    if [ -f "$item" ]; then
-        ${PROTOC} \
-        --plugin "$PLUGIN" \
-        --cpp-tableau-loader_out="$PROTOCONF_OUT" \
-        --cpp-tableau-loader_opt=paths=source_relative \
-        --cpp_out="$PROTOCONF_OUT" \
-        --proto_path="$PROTOBUF_PROTO" \
-        --proto_path="$TABLEAU_PROTO" \
-        --proto_path="$PROTOCONF_IN" \
-        "$item"
-    fi
-done
+# for item in "$PROTOCONF_IN"/* ; do
+#     echo "$item"
+#     if [ -f "$item" ]; then
+#         ${PROTOC} \
+#         --plugin "$PLUGIN" \
+#         --cpp-tableau-loader_out="$PROTOCONF_OUT" \
+#         --cpp-tableau-loader_opt=paths=source_relative \
+#         --cpp_out="$PROTOCONF_OUT" \
+#         --proto_path="$PROTOBUF_PROTO" \
+#         --proto_path="$TABLEAU_PROTO" \
+#         --proto_path="$PROTOCONF_IN" \
+#         "$item"
+#     fi
+# done
+
+${PROTOC} \
+--plugin "$PLUGIN" \
+--cpp-tableau-loader_out="$PROTOCONF_OUT" \
+--cpp-tableau-loader_opt=paths=source_relative \
+--cpp_out="$PROTOCONF_OUT" \
+--proto_path="$PROTOBUF_PROTO" \
+--proto_path="$TABLEAU_PROTO" \
+--proto_path="$PROTOCONF_IN" \
+"$PROTOCONF_IN"/*
 
 TABLEAU_IN="./third_party/tableau/proto/tableau/protobuf"
 TABLEAU_OUT="${ROOTDIR}/test/src"

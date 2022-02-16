@@ -1,0 +1,34 @@
+syntax = "proto3";
+package protoconf;
+option go_package = "github.com/tableauio/loader/plugin/testpb";
+
+import "tableau/protobuf/tableau.proto";
+
+option (tableau.workbook) = {
+  name: "Test.xlsx"
+};
+
+message ActivityConf {
+  option (tableau.worksheet) = {name:"Activity"};
+
+  map<uint32, Activity> activity_map = 1 [(tableau.field) = {key:"ActivityID" layout:LAYOUT_VERTICAL}];
+  message Activity {
+    uint32 activity_id = 1 [(tableau.field) = {name:"ActivityID"}];
+    string activity_name = 2 [(tableau.field) = {name:"ActivityName"}];
+    map<uint32, Chapter> chapter_map = 3 [(tableau.field) = {key:"ChapterID" layout:LAYOUT_VERTICAL}];
+    message Chapter {
+      uint32 chapter_id = 1 [(tableau.field) = {name:"ChapterID"}];
+      string chapter_name = 2 [(tableau.field) = {name:"ChapterName"}];
+      repeated Section section_list = 3 [(tableau.field) = {layout:LAYOUT_VERTICAL}];
+      message Section {
+        uint32 section_id = 1 [(tableau.field) = {name:"SectionID"}];
+        string section_name = 2 [(tableau.field) = {name:"SectionName"}];
+        repeated Item section_item_list = 3 [(tableau.field) = {name:"SectionItem" layout:LAYOUT_HORIZONTAL}];
+        message Item {
+          int32 id = 1 [(tableau.field) = {name:"Id"}];
+          int32 num = 2 [(tableau.field) = {name:"Num"}];
+        }
+      }
+    }
+  }
+}

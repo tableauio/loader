@@ -82,7 +82,7 @@ const hubCpp = `#include "hub.pc.h"
 #include "registry.pc.h"
 
 namespace tableau {
-static std::string g_err_msg;
+static thread_local std::string g_err_msg;
 const std::string& GetErrMsg() { return g_err_msg; }
 bool Message2JSON(const google::protobuf::Message& message, std::string& json) {
   google::protobuf::util::JsonPrintOptions options;
