@@ -18,12 +18,10 @@ cd third_party/protobuf
 git checkout v3.19.3
 git submodule update --init --recursive
 ./autogen.sh
-./configure
 
 # Build and install the C++ Protocol Buffer runtime and the Protocol Buffer compiler (protoc)
 ./configure
-make
+make -j64
 make check
-make
 # sudo make install
 # sudo ldconfig # refresh shared library cache.
