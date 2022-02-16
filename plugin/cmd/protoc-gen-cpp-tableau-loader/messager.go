@@ -28,6 +28,7 @@ func generateHppFile(gen *protogen.Plugin, file *protogen.File) *protogen.Genera
 	filename := file.GeneratedFilenamePrefix + "." + pcExt + ".h"
 	g := gen.NewGeneratedFile(filename, "")
 	generateFileHeader(gen, file, g)
+	g.P()
 	generateHppFileContent(gen, file, g)
 	return g
 }
@@ -37,6 +38,7 @@ func generateCppFile(gen *protogen.Plugin, file *protogen.File) *protogen.Genera
 	filename := file.GeneratedFilenamePrefix + "." + pcExt + ".cc"
 	g := gen.NewGeneratedFile(filename, "")
 	generateFileHeader(gen, file, g)
+	g.P()
 	generateCppFileContent(gen, file, g)
 	return g
 }

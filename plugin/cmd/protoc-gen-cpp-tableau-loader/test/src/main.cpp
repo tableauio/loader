@@ -2,11 +2,11 @@
 #include <iostream>
 #include <string>
 
-#include "protoconf/test.pc.h"
 #include "protoconf/hub.pc.h"
 #include "protoconf/item.pb.h"
 #include "protoconf/item.pc.h"
 #include "protoconf/registry.pc.h"
+#include "protoconf/test.pc.h"
 
 void WriteFile(const std::string& filename, const std::string& input) {
   std::ofstream out(filename);
@@ -96,17 +96,25 @@ int main() {
   }
   WriteFile("./test_item.json", jsonstr);
 
-  auto activity_conf = MyHub::Instance().Get<tableau::ActivityConf>();
-  if (!activity_conf) {
-    std::cout << "protobuf hub get ActivityConf failed!" << std::endl;
-    return 1;
-  }
+  //   auto activity_conf = MyHub::Instance().Get<tableau::ActivityConf>();
+  //   if (!activity_conf) {
+  //     std::cout << "protobuf hub get ActivityConf failed!" << std::endl;
+  //     return 1;
+  //   }
 
-  const auto* section_conf = activity_conf->Get(100001, 2);
+  //   const auto* section_conf = activity_conf->Get(100001, 1, 2);
+  //   if (!section_conf) {
+  //     std::cout << "ActivityConf get section failed!" << std::endl;
+  //     return 1;
+  //   }
+
+  const auto* section_conf = MyHub::Instance().Get<tableau::ActivityConf, protoconf::ActivityConf::Activity::Chapter::Section>(100001, 1, 2);
   if (!section_conf) {
     std::cout << "ActivityConf get section failed!" << std::endl;
     return 1;
   }
-  std::cout << "section_conf: " << section_conf->DebugString() << std::endl;
+
+  std::cout << "-----section_conf" << std::endl;
+  std::cout << section_conf->DebugString() << std::endl;
   return 0;
 }

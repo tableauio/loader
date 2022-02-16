@@ -6,10 +6,14 @@ import "google.golang.org/protobuf/compiler/protogen"
 func generateHub(gen *protogen.Plugin) {
 	hppFilename := "hub." + pcExt + ".h"
 	g1 := gen.NewGeneratedFile(hppFilename, "")
+	generateCommonHeader(gen, g1)
+	g1.P()
 	g1.P(hubHpp)
 
 	cppFilename := "hub." + pcExt + ".cc"
 	g2 := gen.NewGeneratedFile(cppFilename, "")
+	generateCommonHeader(gen, g2)
+	g2.P()
 	g2.P(hubCpp)
 }
 
@@ -55,6 +59,8 @@ class Hub {
   bool Load(const std::string& dir, Filter filter, Format fmt = Format::kJSON);
   template <typename T>
   const std::shared_ptr<T> Get() const;
+  template <typename T, typename U, typename... Args>
+  const U* Get(Args... args) const;
 
  private:
   ConfigMapPtr NewConfigMap();
@@ -68,6 +74,16 @@ template <typename T>
 const std::shared_ptr<T> Hub::Get() const {
   auto msg = GetMessager(T::Name());
   return std::dynamic_pointer_cast<T>(msg);
+}
+
+template <typename T, typename U, typename... Args>
+const U* Hub::Get(Args... args) const {
+  auto msg = GetMessager(T::Name());
+  auto msger = std::dynamic_pointer_cast<T>(msg);
+  if (!msger) {
+    return nullptr;
+  }
+  return msger->Get(args...);
 }
 
 }  // namespace tableau`

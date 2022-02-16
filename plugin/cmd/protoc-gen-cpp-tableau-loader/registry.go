@@ -8,10 +8,14 @@ import (
 func generateRegistry(gen *protogen.Plugin) {
 	hppFilename := "registry." + pcExt + ".h"
 	g1 := gen.NewGeneratedFile(hppFilename, "")
+	generateCommonHeader(gen, g1)
+	g1.P()
 	g1.P(registryHpp)
 
 	cppFilename := "registry." + pcExt + ".cc"
 	g2 := gen.NewGeneratedFile(cppFilename, "")
+	generateCommonHeader(gen, g2)
+	g2.P()
 	generateRegistryCppFileContent(gen, g2)
 }
 
