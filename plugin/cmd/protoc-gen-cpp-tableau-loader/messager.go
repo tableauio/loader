@@ -97,7 +97,7 @@ func genHppMapGetters(depth int, params []string, g *protogen.GeneratedFile, md 
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
 				genHppMapGetters(depth+1, params, g, fd.MapValue().Message())
 			}
-			continue
+			break
 		}
 	}
 }
@@ -162,7 +162,7 @@ func genCppMapGetters(depth int, params []string, messagerName string, g *protog
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
 				genCppMapGetters(depth+1, params, messagerName, g, fd.MapValue().Message())
 			}
-			continue
+			break
 		}
 	}
 }
@@ -184,9 +184,9 @@ func parseCppType(fd protoreflect.FieldDescriptor) string {
 	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
 		return "uint64_t"
 	case protoreflect.FloatKind:
-		return "float_t"
+		return "float"
 	case protoreflect.DoubleKind:
-		return "double_t"
+		return "double"
 	case protoreflect.StringKind, protoreflect.BytesKind:
 		return "std::string"
 	case protoreflect.MessageKind:

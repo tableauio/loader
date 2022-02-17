@@ -77,7 +77,7 @@ int main() {
 
   std::cout << "-----" << std::endl;
   tableau::Registry::Init();
-  bool ok = MyHub::Instance().Load("../testdata/", [](const std::string& name) { return true; });
+  bool ok = MyHub::Instance().Load("../../testdata/", [](const std::string& name) { return true; });
   if (!ok) {
     std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
     return 1;
