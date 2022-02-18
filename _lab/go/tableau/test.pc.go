@@ -8,12 +8,6 @@ import (
 	"github.com/tableauio/tableau/options"
 )
 
-func init() {
-	register("ActivityConf", func() Messager {
-		return &ActivityConf{}
-	})
-}
-
 type ActivityConf struct {
 	data protoconf.ActivityConf
 }
@@ -59,7 +53,7 @@ func (x *ActivityConf) Get2(key1 uint64, key2 uint32) (*protoconf.ActivityConf_A
 	}
 }
 
-func (x *ActivityConf) Get3(key1 uint64, key2 uint32, key3 uint32) (*protoconf.ActivityConf_Activity_Chapter_Section, error) {
+func (x *ActivityConf) Get3(key1 uint64, key2 uint32, key3 uint32) (*protoconf.Section, error) {
 	conf, err := x.Get2(key1, key2)
 	if err != nil {
 		return nil, fmt.Errorf("Get1 failed: %v", err)
@@ -74,4 +68,27 @@ func (x *ActivityConf) Get3(key1 uint64, key2 uint32, key3 uint32) (*protoconf.A
 	} else {
 		return val, nil
 	}
+}
+
+func (x *ActivityConf) Get4(key1 uint64, key2 uint32, key3 uint32, key4 uint32) (*protoconf.Item, error) {
+	conf, err := x.Get3(key1, key2, key3)
+	if err != nil {
+		return nil, fmt.Errorf("Get3 failed: %v", err)
+	}
+
+	d := conf.SectionItemMap
+	if d == nil {
+		return nil, errors.New("SectionItemMap is nil")
+	}
+	if val, ok := d[key4]; !ok {
+		return nil, fmt.Errorf("key4(%v)not found", key1)
+	} else {
+		return val, nil
+	}
+}
+
+func init() {
+	register("ActivityConf", func() Messager {
+		return &ActivityConf{}
+	})
 }

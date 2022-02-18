@@ -1,4 +1,4 @@
-#include "test.pc.h"
+#include "test_conf.pc.h"
 
 namespace tableau {
 const std::string ActivityConf::kProtoName = "ActivityConf";
@@ -23,7 +23,7 @@ const protoconf::ActivityConf::Activity::Chapter* ActivityConf::Get(uint64_t key
   return &iter->second;
 }
 
-const protoconf::ActivityConf::Activity::Chapter::Section* ActivityConf::Get(uint64_t key1, uint32_t key2, uint32_t key3) const {
+const protoconf::Section* ActivityConf::Get(uint64_t key1, uint32_t key2, uint32_t key3) const {
   const auto* conf = Get(key1, key2);
   if (conf == nullptr) {
     return nullptr;

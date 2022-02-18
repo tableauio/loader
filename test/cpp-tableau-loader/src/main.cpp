@@ -3,10 +3,9 @@
 #include <string>
 
 #include "protoconf/hub.pc.h"
-#include "protoconf/item.pb.h"
-#include "protoconf/item.pc.h"
+#include "protoconf/item_conf.pc.h"
 #include "protoconf/registry.pc.h"
-#include "protoconf/test.pc.h"
+#include "protoconf/test_conf.pc.h"
 
 void WriteFile(const std::string& filename, const std::string& input) {
   std::ofstream out(filename);
@@ -49,52 +48,18 @@ const std::shared_ptr<T> Get() {
 }
 
 int main() {
-  protoconf::Item item;
-  std::string jsonstr;
-
-  item.set_id(100);
-  item.set_name("coin");
-  item.mutable_path()->set_dir("/home/protoconf/");
-  item.mutable_path()->set_name("icon.png");
-
-  if (!tableau::Message2JSON(item, jsonstr)) {
-    std::cout << "protobuf convert json failed!" << std::endl;
-    return 1;
-  }
-  std::cout << "protobuf convert json done!" << std::endl << jsonstr << std::endl;
-
-  item.Clear();
-
-  // std::cout << "-----" << std::endl;
-  // if (!tableau::Json2Proto(jsonstr, item)) {
-  //     std::cout << "json to protobuf failed!" << std::endl;
-  //     return 1;
-  // }
-  // std::cout << "json to protobuf done!" << std::endl
-  //           << "name: " << item.name() << std::endl
-  //           << "dir: " << item.mutable_path()->dir()
-  //           << std::endl;
-
-  std::cout << "-----" << std::endl;
   tableau::Registry::Init();
   bool ok = MyHub::Instance().Load("../../testdata/", [](const std::string& name) { return true; });
   if (!ok) {
     std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
     return 1;
   }
-  auto item1 = MyHub::Instance().Get<tableau::Item>();
+  auto item1 = MyHub::Instance().Get<tableau::ItemConf>();
   if (!item1) {
     std::cout << "protobuf hub get Item failed!" << std::endl;
     return 1;
   }
   std::cout << "item1: " << item1->Data().DebugString() << std::endl;
-
-  jsonstr.clear();
-  if (!tableau::Message2JSON(item1->Data(), jsonstr)) {
-    std::cout << "protobuf convert json failed!" << std::endl;
-    return 1;
-  }
-  WriteFile("./test_item.json", jsonstr);
 
   //   auto activity_conf = MyHub::Instance().Get<tableau::ActivityConf>();
   //   if (!activity_conf) {
@@ -108,7 +73,7 @@ int main() {
   //     return 1;
   //   }
 
-  const auto* section_conf = MyHub::Instance().Get<tableau::ActivityConf, protoconf::ActivityConf::Activity::Chapter::Section>(100001, 1, 2);
+  const auto* section_conf = MyHub::Instance().Get<tableau::ActivityConf, protoconf::Section>(100001, 1, 2);
   if (!section_conf) {
     std::cout << "ActivityConf get section failed!" << std::endl;
     return 1;

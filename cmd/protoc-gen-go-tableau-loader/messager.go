@@ -35,30 +35,35 @@ func generateMessager(gen *protogen.Plugin, file *protogen.File) {
 
 // generateFileContent generates struct type definitions.
 func generateFileContent(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile) {
+	var fileMessagers []string
 	for _, message := range file.Messages {
 		opts := message.Desc.Options().(*descriptorpb.MessageOptions)
 		worksheet := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
 		if worksheet != nil {
 			genMessage(gen, file, g, message)
+
+			messagerName := string(message.Desc.Name())
+			fileMessagers = append(fileMessagers, messagerName)
 		}
 	}
+	messagers = append(messagers, fileMessagers...)
+	generateRegister(fileMessagers, g)
+}
+
+func generateRegister(messagers []string, g *protogen.GeneratedFile) {
+	// register messagers
+	g.P("func init() {")
+	for _, messager := range messagers {
+		g.P(`register("`, messager, `", func() Messager {`)
+		g.P("return &", messager, "{}")
+		g.P("})")
+	}
+	g.P("}")
 }
 
 // genMessage generates a message definition.
 func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) {
 	messagerName := string(message.Desc.Name())
-	messagers = append(messagers, messagerName)
-
-	// filePkg := string(file.GoImportPath())
-	// goFullName := strings.ReplaceAll(filePkg, ".", "_") + "_" + messagerName
-
-	// register messager
-	g.P("func init() {")
-	g.P(`register("`, messagerName, `", func() Messager {`)
-	g.P("return &", messagerName, "{}")
-	g.P("})")
-	g.P("}")
-	g.P()
 
 	// messager definition
 	g.P("type ", messagerName, " struct {")
@@ -144,8 +149,7 @@ func getMessage(messages []*protogen.Message, md protoreflect.MessageDescriptor)
 			if msg.Desc.FullName() == md.FullName() {
 				return msg
 			} else {
-				m := getMessage(msg.Messages, md)
-				if m != nil {
+				if m := getMessage(msg.Messages, md); m != nil {
 					return m
 				}
 			}

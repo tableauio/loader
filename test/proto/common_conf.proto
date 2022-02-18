@@ -1,0 +1,10 @@
+syntax = "proto3";
+package protoconf;
+option go_package = "github.com/tableauio/loader/test/protoconf";
+
+import "tableau/protobuf/tableau.proto";
+
+message Item {
+  uint32 id = 1 [(tableau.field) = {name:"Id"}];
+  int32 num = 2 [(tableau.field) = {name:"Num"}];
+}

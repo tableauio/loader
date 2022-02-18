@@ -10,9 +10,9 @@ option (tableau.workbook) = {
   name: "Test.xlsx"
 };
 
-message Item {
+message ItemConf {
   option (tableau.worksheet) = {
-    name: "Item"
+    name: "ItemConf"
   };
   uint32 id = 1;
   string name = 2;

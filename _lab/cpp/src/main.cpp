@@ -3,10 +3,10 @@
 #include <string>
 
 #include "demo/hub.pc.h"
-#include "demo/item.pc.h"
+#include "demo/item_conf.pc.h"
 #include "demo/registry.pc.h"
-#include "demo/test.pc.h"
-#include "protoconf/item.pb.h"
+#include "demo/test_conf.pc.h"
+#include "protoconf/item_conf.pb.h"
 
 void WriteFile(const std::string& filename, const std::string& input) {
   std::ofstream out(filename);
@@ -49,7 +49,7 @@ const std::shared_ptr<T> Get() {
 }
 
 int main() {
-  protoconf::Item item;
+  protoconf::ItemConf item;
   std::string jsonstr;
 
   item.set_id(100);
@@ -82,7 +82,7 @@ int main() {
     std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
     return 1;
   }
-  auto item1 = MyHub::Instance().Get<tableau::Item>();
+  auto item1 = MyHub::Instance().Get<tableau::ItemConf>();
   if (!item1) {
     std::cout << "protobuf hub get Item failed!" << std::endl;
     return 1;
@@ -109,7 +109,7 @@ int main() {
   //   }
 
   const auto* section_conf =
-      MyHub::Instance().Get<tableau::ActivityConf, protoconf::ActivityConf::Activity::Chapter::Section>(100001, 1, 2);
+      MyHub::Instance().Get<tableau::ActivityConf, protoconf::Section>(100001, 1, 2);
   if (!section_conf) {
     std::cout << "ActivityConf get section failed!" << std::endl;
     return 1;

@@ -4,17 +4,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/tableauio/tableau/options"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
-
-var registrar Registrar
-
-func init() {
-	registrar = make(Registrar, 1024)
-}
 
 type Messager interface {
 	Name() string
@@ -23,10 +18,28 @@ type Messager interface {
 
 type ConfigMap = map[string]Messager
 type MessagerGenerator = func() Messager
-type Registrar = map[string]MessagerGenerator
+type Registrar struct {
+	generators map[string]MessagerGenerator
+}
+
+func (r *Registrar) register(name string, gen MessagerGenerator) {
+	r.generators[name] = gen
+}
+
+var registrarSingleton *Registrar
+var once sync.Once
+
+func getRegistrar() *Registrar {
+	once.Do(func() {
+		registrarSingleton = &Registrar{
+			generators: map[string]MessagerGenerator{},
+		}
+	})
+	return registrarSingleton
+}
 
 func register(name string, gen MessagerGenerator) {
-	registrar[name] = gen
+	getRegistrar().register(name, gen)
 }
 
 type Filter interface {
@@ -65,7 +78,7 @@ func NewHub() *Hub {
 
 func (h *Hub) newConfigMap(filter Filter) ConfigMap {
 	configMap := map[string]Messager{}
-	for name, gen := range registrar {
+	for name, gen := range getRegistrar().generators {
 		if filter == nil || filter.Filter(name) {
 			configMap[name] = gen()
 		}
