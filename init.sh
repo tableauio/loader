@@ -14,7 +14,7 @@ git submodule update --init --recursive
 ### reference: https://github.com/protocolbuffers/protobuf/tree/v3.19.3/src
 
 # google protobuf
-cd third_party/protobuf
+cd third_party/_submodules/protobuf
 git checkout v3.19.3
 git submodule update --init --recursive
 ./autogen.sh

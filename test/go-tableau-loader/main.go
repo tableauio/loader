@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/tableauio/loader/plugin/testpb/tableau"
+	"github.com/tableauio/loader/test/protoconf/tableau"
 	"github.com/tableauio/tableau/options"
 )
 
@@ -27,7 +27,7 @@ func GetHub() *MyHub {
 }
 
 func main() {
-	err := GetHub().Load("../../../../testdata/", nil, options.JSON)
+	err := GetHub().Load("../testdata/", nil, options.JSON)
 	if err != nil {
 		panic(err)
 	}

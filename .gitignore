@@ -27,7 +27,10 @@
 *.out
 *.app
 
-cpp/bin
-cpp/build
-cpp/src/protoconf/*
-third_party/protobuf/
+# custom files and directories 
+third_party/_submodules
+cmd/protoc-gen-cpp-tableau-loader/protoc-gen-cpp-tableau-loader
+cmd/protoc-gen-go-tableau-loader/protoc-gen-go-tableau-loader
+
+test/protoconf
+test/go-tableau-loader/go-tableau-loader

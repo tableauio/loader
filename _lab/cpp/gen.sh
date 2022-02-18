@@ -5,11 +5,11 @@ set -e
 set -o pipefail
 
 cd "$(git rev-parse --show-toplevel)"
-PROTOC="./third_party/protobuf/src/protoc"
-PROTOBUF_PROTO="./third_party/protobuf/src"
-TABLEAU_PROTO="./third_party/tableau/proto"
-PROTOCONF_IN="./protoconf"
-PROTOCONF_OUT="./cpp/src/protoconf"
+PROTOC="./third_party/_submodules/protobuf/src/protoc"
+PROTOBUF_PROTO="./third_party/_submodules/protobuf/src"
+TABLEAU_PROTO="./third_party/_submodules/tableau/proto"
+PROTOCONF_IN="./test/proto"
+PROTOCONF_OUT="./_lab/cpp/src/protoconf"
 
 # remove old generated files
 rm -rfv "$PROTOCONF_OUT"
@@ -21,8 +21,8 @@ ${PROTOC} \
 --proto_path="$PROTOCONF_IN" \
 "$PROTOCONF_IN"/*
 
-TABLEAU_IN="./third_party/tableau/proto/tableau/protobuf"
-TABLEAU_OUT="./cpp/src/"
+TABLEAU_IN="./third_party/_submodules/tableau/proto/tableau/protobuf"
+TABLEAU_OUT="./_lab/cpp/src/"
 # remove old generated files
 rm -rfv "$TABLEAU_OUT/tableau"
 mkdir -p "$TABLEAU_OUT/tableau"

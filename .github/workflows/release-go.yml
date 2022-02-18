@@ -1,4 +1,4 @@
-name: Release CPP
+name: Release Go
 
 on:
   release:
@@ -6,9 +6,9 @@ on:
 
 jobs:
   release:
-    name: Release cmd/protoc-gen-cpp-tableau-loader
+    name: Release cmd/protoc-gen-go-tableau-loader
     runs-on: ubuntu-latest
-    if: startsWith(github.event.release.tag_name, 'cmd/protoc-gen-cpp-tableau-loader/')
+    if: startsWith(github.event.release.tag_name, 'cmd/protoc-gen-go-tableau-loader/')
     strategy:
       matrix:
         goos: [linux, darwin, windows]
@@ -28,7 +28,7 @@ jobs:
 
       - name: Download dependencies
         run: |
-          cd cmd/protoc-gen-cpp-tableau-loader
+          cd cmd/protoc-gen-go-tableau-loader
           go mod download
       - name: Prepare build directory
         run: |
@@ -40,12 +40,12 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
-          cd cmd/protoc-gen-cpp-tableau-loader
+          cd cmd/protoc-gen-go-tableau-loader
           go build -trimpath -o $GITHUB_WORKSPACE/build
       - name: Create package
         id: package
         run: |
-          PACKAGE_NAME=tableauc.${GITHUB_REF#refs/tags/cmd/protoc-gen-cpp-tableau-loader/}.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
+          PACKAGE_NAME=tableauc.${GITHUB_REF#refs/tags/cmd/protoc-gen-go-tableau-loader/}.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
           tar -czvf $PACKAGE_NAME -C build .
           echo ::set-output name=name::${PACKAGE_NAME}
       - name: Upload asset

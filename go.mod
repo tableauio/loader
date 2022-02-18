@@ -1,4 +1,4 @@
-module github.com/tableauio/loader/plugin
+module github.com/tableauio/loader
 
 go 1.17
 

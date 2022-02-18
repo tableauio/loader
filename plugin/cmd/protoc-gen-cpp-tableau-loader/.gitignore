@@ -1,5 +1,0 @@
-protoc-gen-cpp-tableau-loader
-test/build
-test/bin
-test/src/protoconf
-test/src/tableau

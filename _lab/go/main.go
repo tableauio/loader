@@ -27,7 +27,7 @@ func GetHub() *MyHub {
 }
 
 func main() {
-	err := GetHub().Load("../../testdata/", nil, options.JSON)
+	err := GetHub().Load("../../test/testdata/", nil, options.JSON)
 	if err != nil {
 		panic(err)
 	}
