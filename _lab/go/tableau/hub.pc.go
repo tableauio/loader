@@ -86,6 +86,10 @@ func (h *Hub) newConfigMap(filter Filter) ConfigMap {
 	return configMap
 }
 
+func (h *Hub) SetConfigMap(configMap ConfigMap) {
+	h.configMap = configMap
+}
+
 func (h *Hub) Load(dir string, filter Filter, format options.Format) error {
 	configMap := h.newConfigMap(filter)
 	for name, msger := range configMap {
@@ -94,7 +98,7 @@ func (h *Hub) Load(dir string, filter Filter, format options.Format) error {
 		}
 		fmt.Println("Loaded successfully: " + msger.Name())
 	}
-	h.configMap = configMap
+	h.SetConfigMap(configMap)
 	return nil
 }
 

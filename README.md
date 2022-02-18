@@ -1,6 +1,6 @@
 # loader
 
-Configuration loader for Tableau.
+The configuration loader for Tableau.
 
 ## Prerequisites
 
