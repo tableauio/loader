@@ -37,14 +37,14 @@ using Filter = std::function<bool(const std::string& name)>;
 
 class Hub {
  public:
-  bool Load(const std::string& dir, Filter filter, Format fmt = Format::kJSON);
+  bool Load(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON);
   template <typename T>
   const std::shared_ptr<T> Get() const;
   template <typename T, typename U, typename... Args>
   const U* Get(Args... args) const;
 
  private:
-  ConfigMapPtr NewConfigMap();
+  ConfigMapPtr NewConfigMap(Filter filter = nullptr);
   const std::shared_ptr<Messager> GetMessager(const std::string& name) const { return (*config_map_ptr_)[name]; }
 
  private:

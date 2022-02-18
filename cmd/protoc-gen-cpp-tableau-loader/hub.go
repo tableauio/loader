@@ -56,14 +56,14 @@ using Filter = std::function<bool(const std::string& name)>;
 
 class Hub {
  public:
-  bool Load(const std::string& dir, Filter filter, Format fmt = Format::kJSON);
+  bool Load(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON);
   template <typename T>
   const std::shared_ptr<T> Get() const;
   template <typename T, typename U, typename... Args>
   const U* Get(Args... args) const;
 
  private:
-  ConfigMapPtr NewConfigMap();
+  ConfigMapPtr NewConfigMap(Filter filter = nullptr);
   const std::shared_ptr<Messager> GetMessager(const std::string& name) const { return (*config_map_ptr_)[name]; }
 
  private:
@@ -174,11 +174,9 @@ bool StoreMessage(const std::string& dir, google::protobuf::Message& message, Fo
 }
 
 bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
-  auto new_config_map_ptr = NewConfigMap();
+  auto new_config_map_ptr = NewConfigMap(filter);
   for (auto iter : *new_config_map_ptr) {
     auto&& name = iter.first;
-    bool yes = filter(name);
-    if (!yes) continue;
     bool ok = iter.second->Load(dir, fmt);
     if (!ok) {
       g_err_msg = "Load " + name + " failed";
@@ -191,10 +189,12 @@ bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
   return true;
 }
 
-ConfigMapPtr Hub::NewConfigMap() {
+ConfigMapPtr Hub::NewConfigMap(Filter filter) {
   ConfigMapPtr config_map_ptr = std::make_shared<ConfigMap>();
   for (auto&& it : Registry::registrar) {
-    (*config_map_ptr)[it.first] = it.second();
+    if (filter == nullptr || filter(it.first)) {
+      (*config_map_ptr)[it.first] = it.second();
+    }
   }
   return config_map_ptr;
 }

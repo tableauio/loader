@@ -7,26 +7,26 @@ Configuration loader for Tableau.
 - Development OS: linux
 - Init protobuf: `bash init.sh`
 
-### C++ Loader
+## test
 
-### cpp/
+### C++
 
 - Install: **CMake 2.8+**
-- Change into cpp dir: `cd cpp/`
+- Change into dir: `cd test/cpp-tableau-loader`
 - Generate protoconf: `bash ./gen.sh`
 - Create build dir: `mkdir build && cd build`
 - Run cmake: `cmake ../src/`
-- Build: `make -j8`, then the **bin** dir will be generated at `cpp/bin`.
+- Build: `make -j8`, then the **bin** dir will be generated at `test/cpp-tableau-loader/bin`.
 
-### plugin/cmd/protoc-gen-cpp-tableau-loader/
+### Golang
 
 - Install: **CMake 2.8+**
-- Change into cpp dir: `cd plugin/cmd/protoc-gen-cpp-tableau-loader/test`
+- Change into dir: `cd test/go-tableau-loader`
 - Generate protoconf: `bash ./gen.sh`
-- Create build dir: `mkdir build && cd build`
-- Run cmake: `cmake ../src/`
-- Build: `make -j8`, then the **bin** dir will be generated at `cpp/bin`.
 
+## TODO
+
+- [ ] Log: support setting log handler
 
 ## References
 

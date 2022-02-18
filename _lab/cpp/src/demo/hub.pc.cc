@@ -84,11 +84,9 @@ bool StoreMessage(const std::string& dir, google::protobuf::Message& message, Fo
 }
 
 bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
-  auto new_config_map_ptr = NewConfigMap();
+  auto new_config_map_ptr = NewConfigMap(filter);
   for (auto iter : *new_config_map_ptr) {
     auto&& name = iter.first;
-    bool yes = filter(name);
-    if (!yes) continue;
     bool ok = iter.second->Load(dir, fmt);
     if (!ok) {
       g_err_msg = "Load " + name + " failed";
@@ -101,10 +99,12 @@ bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
   return true;
 }
 
-ConfigMapPtr Hub::NewConfigMap() {
+ConfigMapPtr Hub::NewConfigMap(Filter filter) {
   ConfigMapPtr config_map_ptr = std::make_shared<ConfigMap>();
   for (auto&& it : Registry::registrar) {
-    (*config_map_ptr)[it.first] = it.second();
+    if (filter == nullptr || filter(it.first)) {
+      (*config_map_ptr)[it.first] = it.second();
+    }
   }
   return config_map_ptr;
 }
