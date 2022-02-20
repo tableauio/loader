@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	errorsPackage  = protogen.GoImportPath("errors")
-	fmtPackage     = protogen.GoImportPath("fmt")
-	optionsPackage = protogen.GoImportPath("github.com/tableauio/tableau/options")
+	errorsPackage = protogen.GoImportPath("errors")
+	fmtPackage    = protogen.GoImportPath("fmt")
+	formatPackage = protogen.GoImportPath("github.com/tableauio/tableau/format")
+	loadPackage   = protogen.GoImportPath("github.com/tableauio/tableau/load")
 )
 
 // golbal container for record all proto filenames and messager names
@@ -82,8 +83,8 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	g.P("}")
 	g.P()
 
-	g.P("func (x *", messagerName, ") Load(dir string, format ", optionsPackage.Ident("Format"), ") error {")
-	g.P("return load(&x.data, dir, format)")
+	g.P("func (x *", messagerName, ") Load(dir string, format ", formatPackage.Ident("Format"), ") error {")
+	g.P("return ", loadPackage.Ident("Load"), "(&x.data, dir, format)")
 	g.P("}")
 	g.P()
 

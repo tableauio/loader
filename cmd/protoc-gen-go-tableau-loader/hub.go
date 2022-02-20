@@ -33,18 +33,15 @@ func generateHub(gen *protogen.Plugin) {
 
 const staticHubContent = `import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"sync"
 
-	"github.com/tableauio/tableau/options"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
+	"github.com/pkg/errors"
+	"github.com/tableauio/tableau/format"
 )
 
 type Messager interface {
 	Name() string
-	Load(dir string, fmt options.Format) error
+	Load(dir string, fmt format.Format) error
 }
 
 type ConfigMap = map[string]Messager
@@ -77,25 +74,6 @@ type Filter interface {
 	Filter(name string) bool
 }
 
-func load(msg proto.Message, dir string, format options.Format) error {
-	ext, err := options.Format2Ext(format)
-	if err != nil {
-		return fmt.Errorf("invalid format: %v", format)
-	}
-	md := msg.ProtoReflect().Descriptor()
-	msgName := string(md.Name())
-	path := filepath.Join(dir, msgName+ext)
-
-	if content, err := os.ReadFile(path); err != nil {
-		return fmt.Errorf("failed to read file %v: %v", path, err)
-	} else {
-		if err := protojson.Unmarshal(content, msg); err != nil {
-			return fmt.Errorf("failed to parse message %v: %v", msgName, err)
-		}
-	}
-	return nil
-}
-
 // Hub is the holder for managing configurations.
 type Hub struct {
 	configMap ConfigMap
@@ -121,11 +99,11 @@ func (h *Hub) SetConfigMap(configMap ConfigMap) {
 	h.configMap = configMap
 }
 
-func (h *Hub) Load(dir string, filter Filter, format options.Format) error {
+func (h *Hub) Load(dir string, filter Filter, format format.Format) error {
 	configMap := h.newConfigMap(filter)
 	for name, msger := range configMap {
 		if err := msger.Load(dir, format); err != nil {
-			return fmt.Errorf("failed to load %v: %v", name, err)
+			return errors.WithMessagef(err, "failed to load: %v", name)
 		}
 		fmt.Println("Loaded successfully: " + msger.Name())
 	}

@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/tableauio/loader/test/protoconf/tableau"
-	"github.com/tableauio/tableau/options"
+	"github.com/tableauio/tableau/format"
 )
 
 type MyHub struct {
@@ -27,7 +27,7 @@ func GetHub() *MyHub {
 }
 
 func main() {
-	err := GetHub().Load("../testdata/", nil, options.JSON)
+	err := GetHub().Load("../testdata/", nil, format.JSON)
 	if err != nil {
 		panic(err)
 	}

@@ -19,7 +19,7 @@ mkdir -p "$PROTOCONF_OUT"
 # build
 cd "${PLGUIN_DIR}" && go build && cd -
 
-export PATH="${PATH}:${PLGUIN_DIR}"
+export PATH="${PLGUIN_DIR}:${PATH}"
 
 ${PROTOC} \
 --go-tableau-loader_out="$PROTOCONF_OUT" \

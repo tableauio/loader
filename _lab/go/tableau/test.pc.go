@@ -5,7 +5,8 @@ import (
 	"fmt"
 
 	"github.com/tableauio/loader/_lab/go/protoconf"
-	"github.com/tableauio/tableau/options"
+	"github.com/tableauio/tableau/format"
+	"github.com/tableauio/tableau/load"
 )
 
 type ActivityConf struct {
@@ -20,8 +21,8 @@ func (x *ActivityConf) Data() *protoconf.ActivityConf {
 	return &x.data
 }
 
-func (x *ActivityConf) Load(dir string, fmt options.Format) error {
-	return load(&x.data, dir, fmt)
+func (x *ActivityConf) Load(dir string, fmt format.Format) error {
+	return load.Load(&x.data, dir, fmt)
 }
 
 func (x *ActivityConf) Get1(key1 uint64) (*protoconf.ActivityConf_Activity, error) {
