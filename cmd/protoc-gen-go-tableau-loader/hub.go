@@ -8,7 +8,7 @@ import (
 
 // generateHub generates related hub files.
 func generateHub(gen *protogen.Plugin) {
-	filename := filepath.Join("hub."+pcExt+".go")
+	filename := filepath.Join("hub." + pcExt + ".go")
 	g := gen.NewGeneratedFile(filename, "")
 	generateCommonHeader(gen, g)
 	g.P()
@@ -19,7 +19,7 @@ func generateHub(gen *protogen.Plugin) {
 
 	for _, messager := range messagers {
 		g.P("func (h *Hub) Get", messager, "() *", messager, " {")
-		g.P(`msger := h.configMap["`, messager, `"]`)
+		g.P(`msger := h.messagerMap["`, messager, `"]`)
 		g.P("if msger != nil {")
 		g.P("if conf, ok := msger.(*", messager, "); ok {")
 		g.P("return conf")
@@ -40,11 +40,17 @@ const staticHubContent = `import (
 )
 
 type Messager interface {
+	Checker
 	Name() string
 	Load(dir string, fmt format.Format) error
 }
 
-type ConfigMap = map[string]Messager
+type Checker interface {
+	Messager() Messager
+	Check() error
+}
+
+type MessagerMap = map[string]Messager
 type MessagerGenerator = func() Messager
 type Registrar struct {
 	generators map[string]MessagerGenerator
@@ -76,37 +82,39 @@ type Filter interface {
 
 // Hub is the holder for managing configurations.
 type Hub struct {
-	configMap ConfigMap
+	messagerMap MessagerMap
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		configMap: map[string]Messager{},
+		messagerMap: MessagerMap{},
 	}
 }
 
-func (h *Hub) newConfigMap(filter Filter) ConfigMap {
-	configMap := map[string]Messager{}
+func (h *Hub) NewMessagerMap(filter Filter) MessagerMap {
+	messagerMap := MessagerMap{}
 	for name, gen := range getRegistrar().generators {
 		if filter == nil || filter.Filter(name) {
-			configMap[name] = gen()
+			messagerMap[name] = gen()
 		}
 	}
-	return configMap
+	return messagerMap
 }
 
-func (h *Hub) SetConfigMap(configMap ConfigMap) {
-	h.configMap = configMap
+func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
+	h.messagerMap = messagerMap
 }
 
 func (h *Hub) Load(dir string, filter Filter, format format.Format) error {
-	configMap := h.newConfigMap(filter)
-	for name, msger := range configMap {
+	messagerMap := h.NewMessagerMap(filter)
+	for name, msger := range messagerMap {
 		if err := msger.Load(dir, format); err != nil {
 			return errors.WithMessagef(err, "failed to load: %v", name)
 		}
 		fmt.Println("Loaded: " + msger.Name())
 	}
-	h.SetConfigMap(configMap)
+	h.SetMessagerMap(messagerMap)
 	return nil
-}`
+}
+
+// Auto-generated getters below`

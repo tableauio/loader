@@ -25,7 +25,7 @@ var messagers []string
 // generateMessager generates a protoconf file correponsing to the protobuf file.
 // Each wrapped struct type implement the Messager interface.
 func generateMessager(gen *protogen.Plugin, file *protogen.File) {
-	filename := filepath.Join(file.GeneratedFilenamePrefix+"."+pcExt+".go")
+	filename := filepath.Join(file.GeneratedFilenamePrefix + "." + pcExt + ".go")
 	g := gen.NewGeneratedFile(filename, "")
 	generateFileHeader(gen, file, g)
 	g.P()
@@ -82,10 +82,16 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	g.P("return &x.data")
 	g.P("}")
 	g.P()
-	
-	g.P("// Messager is defined for Checker interface.")
+
+	g.P("// Messager is used to implement Checker interface.")
 	g.P("func (x *", messagerName, ") Messager() Messager {")
 	g.P("return x")
+	g.P("}")
+	g.P()
+
+	g.P("// Check is used to implement Checker interface.")
+	g.P("func (x *", messagerName, ") Check() error {")
+	g.P("return nil")
 	g.P("}")
 	g.P()
 
