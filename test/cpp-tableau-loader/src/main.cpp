@@ -54,12 +54,12 @@ int main() {
     std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
     return 1;
   }
-  auto item1 = MyHub::Instance().Get<tableau::ItemConf>();
-  if (!item1) {
+  auto item_mgr = MyHub::Instance().Get<protoconf::ItemConfMgr>();
+  if (!item_mgr) {
     std::cout << "protobuf hub get Item failed!" << std::endl;
     return 1;
   }
-  std::cout << "item1: " << item1->Data().DebugString() << std::endl;
+  std::cout << "item1: " << item_mgr->Data().DebugString() << std::endl;
 
   //   auto activity_conf = MyHub::Instance().Get<tableau::ActivityConf>();
   //   if (!activity_conf) {
@@ -73,7 +73,7 @@ int main() {
   //     return 1;
   //   }
 
-  const auto* section_conf = MyHub::Instance().Get<tableau::ActivityConf, protoconf::Section>(100001, 1, 2);
+  const auto* section_conf = MyHub::Instance().Get<protoconf::ActivityConfMgr, protoconf::Section>(100001, 1, 2);
   if (!section_conf) {
     std::cout << "ActivityConf get section failed!" << std::endl;
     return 1;

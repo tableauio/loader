@@ -53,22 +53,34 @@ func generateHppFileContent(gen *protogen.Plugin, file *protogen.File, g *protog
 	g.P()
 
 	g.P("namespace ", *namespace, " {")
+	var fileMessagers []string
 	for _, message := range file.Messages {
 		opts := message.Desc.Options().(*descriptorpb.MessageOptions)
 		worksheet := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
 		if worksheet != nil {
 			genHppMessage(gen, file, g, message)
+			messagerName := string(message.Desc.Name())
+			fileMessagers = append(fileMessagers, messagerName)
 		}
 	}
+	messagers = append(messagers, fileMessagers...)
 	g.P("}  // namespace ", *namespace)
+	g.P()
+
+	// Generate aliases for all messagers.
+	pkg := string(file.Desc.Package())
+	pbNamespace := strings.ReplaceAll(pkg, ".", "::")
+	g.P("namespace ", pbNamespace, " {")
+	for _, messager := range fileMessagers {
+		g.P("using ", messager, *messagerSuffix, " = ", *namespace, "::", messager, ";")
+	}
+	g.P("}  // namespace ", pbNamespace)
 }
 
 // genHppMessage generates a message definition.
 func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) {
 	pkg := string(file.Desc.Package())
 	cppFullName := strings.ReplaceAll(pkg, ".", "::") + "::" + string(message.Desc.Name())
-
-	messagers = append(messagers, string(message.Desc.Name()))
 
 	g.P("class ", message.Desc.Name(), " : public Messager {")
 	g.P(" public:")

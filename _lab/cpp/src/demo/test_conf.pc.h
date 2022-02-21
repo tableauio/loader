@@ -20,3 +20,7 @@ class ActivityConf : public Messager {
 };
 
 }  // namespace tableau
+
+namespace protoconf {
+using ActivityConfMgr = tableau::ActivityConf;
+}  // namespace protoconf

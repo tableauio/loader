@@ -12,10 +12,12 @@ import (
 const version = "0.2.1"
 
 var namespace *string
+var messagerSuffix *string
 
 func main() {
 	var flags flag.FlagSet
 	namespace = flags.String("namespace", "tableau", "tableau namespace")
+	messagerSuffix = flags.String("suffix", "Mgr", "tableau messager name suffix")
 	flag.Parse()
 
 	protogen.Options{

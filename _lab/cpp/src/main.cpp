@@ -109,7 +109,7 @@ int main() {
   //   }
 
   const auto* section_conf =
-      MyHub::Instance().Get<tableau::ActivityConf, protoconf::Section>(100001, 1, 2);
+      MyHub::Instance().Get<protoconf::ActivityConfMgr, protoconf::Section>(100001, 1, 2);
   if (!section_conf) {
     std::cout << "ActivityConf get section failed!" << std::endl;
     return 1;

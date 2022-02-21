@@ -17,3 +17,7 @@ class ItemConf : public Messager {
 };
 
 }  // namespace tableau
+
+namespace protoconf {
+using ItemConfMgr = tableau::ItemConf;
+}  // namespace protoconf
