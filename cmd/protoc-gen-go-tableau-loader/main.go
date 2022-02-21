@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-const version = "0.1.1"
+const version = "0.1.2"
 
 var pkg *string
 

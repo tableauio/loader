@@ -74,7 +74,7 @@ func (h *Hub) Load(dir string, filter Filter, format format.Format) error {
 		if err := msger.Load(dir, format); err != nil {
 			return errors.WithMessagef(err, "failed to load: %v", name)
 		}
-		fmt.Println("Loaded successfully: " + msger.Name())
+		fmt.Println("Loaded: " + msger.Name())
 	}
 	h.SetConfigMap(configMap)
 	return nil

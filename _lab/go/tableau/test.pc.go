@@ -21,6 +21,11 @@ func (x *ActivityConf) Data() *protoconf.ActivityConf {
 	return &x.data
 }
 
+// Messager is defined for Checker interface.
+func (x *ActivityConf) Messager() Messager {
+	return x
+}
+
 func (x *ActivityConf) Load(dir string, fmt format.Format) error {
 	return load.Load(&x.data, dir, fmt)
 }

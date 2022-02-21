@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/tableauio/loader/test/protoconf/tableau"
+	tableau "github.com/tableauio/loader/test/protoconf/loader"
 	"github.com/tableauio/tableau/format"
 )
 
