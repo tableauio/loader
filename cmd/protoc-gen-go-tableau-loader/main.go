@@ -34,6 +34,8 @@ func main() {
 			generateMessager(gen, f)
 		}
 		generateHub(gen)
+		generateError(gen)
+		generateCode(gen)
 		return nil
 	})
 }

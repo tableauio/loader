@@ -13,18 +13,21 @@ import (
 )
 
 const (
-	errorsPackage = protogen.GoImportPath("errors")
-	fmtPackage    = protogen.GoImportPath("fmt")
 	formatPackage = protogen.GoImportPath("github.com/tableauio/tableau/format")
 	loadPackage   = protogen.GoImportPath("github.com/tableauio/tableau/load")
 )
 
 // golbal container for record all proto filenames and messager names
 var messagers []string
+var errorsPackage protogen.GoImportPath
+var codePackage protogen.GoImportPath
 
 // generateMessager generates a protoconf file correponsing to the protobuf file.
 // Each wrapped struct type implement the Messager interface.
 func generateMessager(gen *protogen.Plugin, file *protogen.File) {
+	errorsPackage = protogen.GoImportPath(string(file.GoImportPath) + "/" + *pkg + "/" + errPkg)
+	codePackage = protogen.GoImportPath(string(file.GoImportPath) + "/" + *pkg + "/" + codePkg)
+
 	filename := filepath.Join(file.GeneratedFilenamePrefix + "." + pcExt + ".go")
 	g := gen.NewGeneratedFile(filename, "")
 	generateFileHeader(gen, file, g)
@@ -126,18 +129,18 @@ func genMapGetters(depth int, params []string, messagerName string, file *protog
 				getter := fmt.Sprintf("Get%v", depth-1)
 				g.P("conf, err := x.", getter, "(", strings.Join(findParams, ", "), ")")
 				g.P("if err != nil {")
-				g.P(`return nil, `, fmtPackage.Ident("Errorf"), `("`, getter, ` failed: %v", err)`)
+				g.P(`return nil, err`)
 				g.P("}")
 				g.P()
 			}
 
 			g.P("d := ", container, ".", field.GoName)
 			g.P("if d == nil {")
-			g.P(`return nil, `, errorsPackage.Ident("New"), `("`, field.GoName, ` is nil")`)
+			g.P(`return nil, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("Nil"), `, "`, field.GoName, ` is nil")`)
 			g.P("}")
 			keyer := fmt.Sprintf("key%v", depth)
 			g.P("if val, ok := d[", keyer, "]; !ok {")
-			g.P(`return nil, `, fmtPackage.Ident("Errorf"), `("`, keyer, `(%v)not found", key1)`)
+			g.P(`return nil, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("NotFound"), `, "`, keyer, `(%v)not found", key1)`)
 			g.P("} else {")
 			g.P("return val, nil")
 			g.P("}")
@@ -150,7 +153,6 @@ func genMapGetters(depth int, params []string, messagerName string, file *protog
 					genMapGetters(depth+1, params, messagerName, file, g, msg)
 				}
 			}
-
 			break
 		}
 	}

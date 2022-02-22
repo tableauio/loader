@@ -5,6 +5,8 @@ import (
 	"sync"
 
 	tableau "github.com/tableauio/loader/test/protoconf/loader"
+	"github.com/tableauio/loader/test/protoconf/loader/code"
+	"github.com/tableauio/loader/test/protoconf/loader/xerrors"
 	"github.com/tableauio/tableau/format"
 )
 
@@ -36,9 +38,11 @@ func main() {
 	if conf == nil {
 		panic("ActivityConf is nil")
 	}
-	chapter, err := conf.Get3(100001, 1, 2)
+	chapter, err := conf.Get3(100001, 1, 9)
 	if err != nil {
-		panic(err)
+		if xerrors.Is(err, code.NotFound) {
+			panic(err)
+		}
 	}
 	fmt.Printf("ActivityConf: %v\n", chapter)
 }
