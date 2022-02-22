@@ -50,8 +50,8 @@ class Messager {
   static const std::string& Name() { return kEmpty; };
   virtual bool Load(const std::string& dir, Format fmt) = 0;
 };
-using ConfigMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
-using ConfigMapPtr = std::shared_ptr<ConfigMap>;
+using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
+using MessagerMapPtr = std::shared_ptr<MessagerMap>;
 using Filter = std::function<bool(const std::string& name)>;
 
 class Hub {
@@ -63,11 +63,11 @@ class Hub {
   const U* Get(Args... args) const;
 
  private:
-  ConfigMapPtr NewConfigMap(Filter filter = nullptr);
-  const std::shared_ptr<Messager> GetMessager(const std::string& name) const { return (*config_map_ptr_)[name]; }
+  MessagerMapPtr NewMessagerMap(Filter filter = nullptr);
+  const std::shared_ptr<Messager> GetMessager(const std::string& name) const { return (*messager_map_ptr_)[name]; }
 
  private:
-  ConfigMapPtr config_map_ptr_;
+  MessagerMapPtr messager_map_ptr_;
 };
 
 template <typename T>
@@ -174,8 +174,8 @@ bool StoreMessage(const std::string& dir, google::protobuf::Message& message, Fo
 }
 
 bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
-  auto new_config_map_ptr = NewConfigMap(filter);
-  for (auto iter : *new_config_map_ptr) {
+  auto new_messager_map_ptr = NewMessagerMap(filter);
+  for (auto iter : *new_messager_map_ptr) {
     auto&& name = iter.first;
     bool ok = iter.second->Load(dir, fmt);
     if (!ok) {
@@ -185,18 +185,18 @@ bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
   }
 
   // replace
-  config_map_ptr_ = new_config_map_ptr;
+  messager_map_ptr_ = new_messager_map_ptr;
   return true;
 }
 
-ConfigMapPtr Hub::NewConfigMap(Filter filter) {
-  ConfigMapPtr config_map_ptr = std::make_shared<ConfigMap>();
+MessagerMapPtr Hub::NewMessagerMap(Filter filter) {
+  MessagerMapPtr messager_map_ptr = std::make_shared<MessagerMap>();
   for (auto&& it : Registry::registrar) {
     if (filter == nullptr || filter(it.first)) {
-      (*config_map_ptr)[it.first] = it.second();
+      (*messager_map_ptr)[it.first] = it.second();
     }
   }
-  return config_map_ptr;
+  return messager_map_ptr;
 }
 
 }  // namespace tableau`

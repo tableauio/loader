@@ -31,8 +31,8 @@ class Messager {
   static const std::string& Name() { return kEmpty; };
   virtual bool Load(const std::string& dir, Format fmt) = 0;
 };
-using ConfigMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
-using ConfigMapPtr = std::shared_ptr<ConfigMap>;
+using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
+using MessagerMapPtr = std::shared_ptr<MessagerMap>;
 using Filter = std::function<bool(const std::string& name)>;
 
 class Hub {
@@ -44,11 +44,11 @@ class Hub {
   const U* Get(Args... args) const;
 
  private:
-  ConfigMapPtr NewConfigMap(Filter filter = nullptr);
-  const std::shared_ptr<Messager> GetMessager(const std::string& name) const { return (*config_map_ptr_)[name]; }
+  MessagerMapPtr NewMessagerMap(Filter filter = nullptr);
+  const std::shared_ptr<Messager> GetMessager(const std::string& name) const { return (*messager_map_ptr_)[name]; }
 
  private:
-  ConfigMapPtr config_map_ptr_;
+  MessagerMapPtr messager_map_ptr_;
 };
 
 template <typename T>

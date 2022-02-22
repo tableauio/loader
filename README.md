@@ -20,7 +20,6 @@ The configuration loader for Tableau.
 
 ### Golang
 
-- Install: **CMake 2.8+**
 - Change into dir: `cd test/go-tableau-loader`
 - Generate protoconf: `bash ./gen.sh`
 

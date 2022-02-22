@@ -84,8 +84,8 @@ bool StoreMessage(const std::string& dir, google::protobuf::Message& message, Fo
 }
 
 bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
-  auto new_config_map_ptr = NewConfigMap(filter);
-  for (auto iter : *new_config_map_ptr) {
+  auto new_messager_map_ptr = NewMessagerMap(filter);
+  for (auto iter : *new_messager_map_ptr) {
     auto&& name = iter.first;
     bool ok = iter.second->Load(dir, fmt);
     if (!ok) {
@@ -95,18 +95,18 @@ bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
   }
 
   // replace
-  config_map_ptr_ = new_config_map_ptr;
+  messager_map_ptr_ = new_messager_map_ptr;
   return true;
 }
 
-ConfigMapPtr Hub::NewConfigMap(Filter filter) {
-  ConfigMapPtr config_map_ptr = std::make_shared<ConfigMap>();
+MessagerMapPtr Hub::NewMessagerMap(Filter filter) {
+  MessagerMapPtr messager_map_ptr = std::make_shared<MessagerMap>();
   for (auto&& it : Registry::registrar) {
     if (filter == nullptr || filter(it.first)) {
-      (*config_map_ptr)[it.first] = it.second();
+      (*messager_map_ptr)[it.first] = it.second();
     }
   }
-  return config_map_ptr;
+  return messager_map_ptr;
 }
 
 }  // namespace tableau
