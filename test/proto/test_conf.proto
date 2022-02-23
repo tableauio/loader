@@ -41,5 +41,5 @@ message Section {
   uint32 section_id = 1 [(tableau.field) = { name: "SectionID" }];
   string section_name = 2 [(tableau.field) = { name: "SectionName" }];
   repeated Item section_item_list = 3 [(tableau.field) = { name: "SectionItem" layout: LAYOUT_HORIZONTAL }];
-  map<uint32, Item> section_item_map = 4 [(tableau.field) = { key: "Id" layout: LAYOUT_VERTICAL }];
+  map<uint32, int32> section_rank_map = 4 [(tableau.field) = {layout: LAYOUT_VERTICAL }];
 }

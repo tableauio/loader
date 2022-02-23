@@ -102,15 +102,15 @@ int main() {
     }
   }
 
-  const auto* item_ordered_map =
-      MyHub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::protoconf_Item_OrderedMap>(
-          100001, 1, 2);
-  if (!item_ordered_map) {
-    std::cout << "ActivityConf GetOrderedMap item failed!" << std::endl;
+  const auto* rank_ordered_map =
+      MyHub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::int32_t_OrderedMap>(100001, 1,
+                                                                                                             2);
+  if (!rank_ordered_map) {
+    std::cout << "ActivityConf GetOrderedMap rank failed!" << std::endl;
     return 1;
   }
-  std::cout <<"-----item_ordered_map" << std::endl;
-  for (auto&& it : *item_ordered_map) {
+  std::cout << "-----rank_ordered_map" << std::endl;
+  for (auto&& it : *rank_ordered_map) {
     std::cout << it.first << std::endl;
   }
   return 0;
