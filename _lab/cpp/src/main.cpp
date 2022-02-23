@@ -108,14 +108,49 @@ int main() {
   //     return 1;
   //   }
 
-  const auto* section_conf =
-      MyHub::Instance().Get<protoconf::ActivityConfMgr, protoconf::Section>(100001, 1, 2);
+  const auto* section_conf = MyHub::Instance().Get<protoconf::ActivityConfMgr, protoconf::Section>(100001, 1, 2);
   if (!section_conf) {
-    std::cout << "ActivityConf get section failed!" << std::endl;
+    std::cout << "ActivityConf Get section failed!" << std::endl;
     return 1;
   }
 
   std::cout << "-----section_conf" << std::endl;
   std::cout << section_conf->DebugString() << std::endl;
+
+  const auto* chapter_ordered_map =
+      MyHub::Instance()
+          .GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::Protoconf_Activity_Chapter_Map>(100001);
+  if (!chapter_ordered_map) {
+    std::cout << "ActivityConf GetOrderedMap chapter failed!" << std::endl;
+    return 1;
+  }
+
+  for (auto&& it : *chapter_ordered_map) {
+    
+    std::cout << "---" << it.first << "-----section_map" << std::endl;
+    for (auto&& item : it.second.first->section_map()) {
+      std::cout << item.first << std::endl;
+    }
+
+    std::cout << "---" << it.first << " -----section_ordered_map" << std::endl;
+    for (auto&& item : it.second.second) {
+      std::cout << item.first << std::endl;
+    }
+  }
+
+  //   const auto* section_ordered_map =
+  //       MyHub::Instance().GetOrderedMap<protoconf::ActivityConfMgr,
+  //       tableau::ActivityConf::Protoconf_Section_Map>(100001,
+  //                                                                                                                 1);
+  //   if (!section_ordered_map) {
+  //     std::cout << "ActivityConf GetOrderedMap section failed!" << std::endl;
+  //     return 1;
+  //   }
+
+  //   std::cout << "-----section_ordered_map" << std::endl;
+  //   for (auto&& item : *section_ordered_map) {
+  //     std::cout << item.first << std::endl;
+  //   }
+
   return 0;
 }
