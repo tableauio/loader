@@ -66,20 +66,14 @@ template <typename T, typename U, typename... Args>
 const U* Hub::Get(Args... args) const {
   auto msg = GetMessager(T::Name());
   auto msger = std::dynamic_pointer_cast<T>(msg);
-  if (!msger) {
-    return nullptr;
-  }
-  return msger->Get(args...);
+  return msger ? msger->Get(args...) : nullptr;
 }
 
 template <typename T, typename U, typename... Args>
 const U* Hub::GetOrderedMap(Args... args) const {
   auto msg = GetMessager(T::Name());
   auto msger = std::dynamic_pointer_cast<T>(msg);
-  if (!msger) {
-    return nullptr;
-  }
-  return msger->GetOrderedMap(args...);
+  return msger ? msger->GetOrderedMap(args...) : nullptr;
 }
 
 }  // namespace tableau

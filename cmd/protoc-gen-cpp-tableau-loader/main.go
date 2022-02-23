@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-const version = "0.2.2"
+const version = "0.3.0"
 
 var namespace *string
 var messagerSuffix *string

@@ -138,7 +138,7 @@ int main() {
   }
 
   const auto* section_ordered_map =
-      MyHub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::Section_OrderedMap>(
+      MyHub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::protoconf_Section_OrderedMap>(
           100001, 1);
   if (!section_ordered_map) {
     std::cout << "ActivityConf GetOrderedMap section failed!" << std::endl;

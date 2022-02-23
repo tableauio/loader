@@ -57,10 +57,15 @@ using Filter = std::function<bool(const std::string& name)>;
 class Hub {
  public:
   bool Load(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON);
+
   template <typename T>
   const std::shared_ptr<T> Get() const;
+
   template <typename T, typename U, typename... Args>
   const U* Get(Args... args) const;
+
+  template <typename T, typename U, typename... Args>
+  const U* GetOrderedMap(Args... args) const;
 
  private:
   MessagerMapPtr NewMessagerMap(Filter filter = nullptr);
@@ -80,10 +85,14 @@ template <typename T, typename U, typename... Args>
 const U* Hub::Get(Args... args) const {
   auto msg = GetMessager(T::Name());
   auto msger = std::dynamic_pointer_cast<T>(msg);
-  if (!msger) {
-    return nullptr;
-  }
-  return msger->Get(args...);
+  return msger ? msger->Get(args...) : nullptr;
+}
+
+template <typename T, typename U, typename... Args>
+const U* Hub::GetOrderedMap(Args... args) const {
+  auto msg = GetMessager(T::Name());
+  auto msger = std::dynamic_pointer_cast<T>(msg);
+  return msger ? msger->GetOrderedMap(args...) : nullptr;
 }
 
 }  // namespace tableau`

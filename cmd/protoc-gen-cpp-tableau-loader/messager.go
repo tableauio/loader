@@ -87,7 +87,10 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	g.P("  static const std::string& Name() { return kProtoName; };")
 	g.P("  virtual bool Load(const std::string& dir, Format fmt) override;")
 	g.P("  const ", cppFullName, "& Data() const { return data_; };")
-
+	g.P()
+	g.P(" private:")
+	g.P("  bool ProcessAfterLoad();")
+	g.P()
 	// syntactic sugar for accessing map items
 	genHppMapGetters(1, nil, g, message.Desc)
 
@@ -95,6 +98,8 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	g.P(" private:")
 	g.P("  static const std::string kProtoName;")
 	g.P("  ", cppFullName, " data_;")
+	g.P()
+	genHppOrderedMapGetters(1, nil, g, message.Desc, string(message.Desc.FullName()))
 	g.P("};")
 	g.P()
 }
@@ -103,6 +108,9 @@ func genHppMapGetters(depth int, params []string, g *protogen.GeneratedFile, md 
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
+			if depth == 1 {
+				g.P(" public:")
+			}
 			keyParam := parseCppType(fd.MapKey()) + fmt.Sprintf(" key%d", depth)
 			params = append(params, keyParam)
 			g.P("  const ", parseCppType(fd.MapValue()), "* Get(", strings.Join(params, ", "), ") const;")
@@ -112,6 +120,80 @@ func genHppMapGetters(depth int, params []string, g *protogen.GeneratedFile, md 
 			break
 		}
 	}
+}
+
+const mapSuffix = "_Map"
+const orderedMapSuffix = "_OrderedMap"
+const orderedMapValueSuffix = "_OrderedMapValue"
+
+func genHppOrderedMapGetters(depth int, params []string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, messagerFullName string) {
+	for i := 0; i < md.Fields().Len(); i++ {
+		fd := md.Fields().Get(i)
+		if fd.IsMap() {
+			if depth == 1 {
+				g.P(" public:")
+			}
+			keyType := parseCppType(fd.MapKey())
+			keyParam := keyType + fmt.Sprintf(" key%d", depth)
+			nextParams := append(params, keyParam)
+			if fd.MapValue().Kind() == protoreflect.MessageKind {
+				genHppOrderedMapGetters(depth+1, nextParams, g, fd.MapValue().Message(), messagerFullName)
+			}
+
+			prefix := parseOrderedMapPrefix(string(fd.MapValue().Message().FullName()), messagerFullName)
+			orderedMap := prefix + orderedMapSuffix
+			orderedMapValue := prefix + orderedMapValueSuffix
+
+			nextMapFD := getNextLevelMapFD(fd.MapValue())
+			if nextMapFD != nil {
+				nextKeyType, nextValueType := parseMapType(nextMapFD)
+				nextPrefix := parseOrderedMapPrefix(strings.ReplaceAll(nextValueType, "::", "."), messagerFullName)
+				nextMap := nextPrefix + mapSuffix
+				nextOrderedMap := nextPrefix + orderedMapSuffix
+				// nextOrderedMapValue := nextPrefix + orderedMapValueSuffix
+				g.P("  using ", nextMap, " = ::google::protobuf::Map<", nextKeyType, ", ", nextValueType, ">;")
+				g.P("  using ", orderedMapValue, " = std::pair<", nextOrderedMap, ", const ", nextMap, "*>;")
+				g.P("  using ", orderedMap, " = std::map<", keyType, ", ", orderedMapValue, ">;")
+				g.P("  const ", orderedMap, "* GetOrderedMap(", strings.Join(params, ", "), ") const;")
+				g.P()
+			} else {
+				orderedMapValue = parseCppType(fd.MapValue())
+				g.P("  using ", orderedMap, " = std::map<", keyType, ", ", orderedMapValue, ">;")
+				g.P("  const ", orderedMap, "* GetOrderedMap(", strings.Join(params, ", "), ") const;")
+				g.P()
+			}
+			if depth == 1 {
+				g.P(" private:")
+				g.P("  ", orderedMap, " ordered_map_;")
+			}
+			break
+		}
+	}
+}
+
+func parseOrderedMapPrefix(msgFullName, messagerFullName string) string {
+	localMsgProtoName := strings.TrimPrefix(msgFullName, messagerFullName+".")
+	return strings.ReplaceAll(localMsgProtoName, ".", "_")
+}
+
+func getNextLevelMapFD(fd protoreflect.FieldDescriptor) protoreflect.FieldDescriptor {
+	if fd.Kind() == protoreflect.MessageKind {
+		md := fd.Message()
+		for i := 0; i < md.Fields().Len(); i++ {
+			fd := md.Fields().Get(i)
+			if fd.IsMap() {
+				return fd
+			}
+		}
+	}
+	return nil
+}
+
+func parseMapType(fd protoreflect.FieldDescriptor) (keyType, valueType string) {
+	if fd.IsMap() {
+		return parseCppType(fd.MapKey()), parseCppType(fd.MapValue())
+	}
+	return "", ""
 }
 
 // generateCppFileContent generates type implementations.
@@ -133,9 +215,22 @@ func generateCppFileContent(gen *protogen.Plugin, file *protogen.File, g *protog
 // genCppMessage generates a message implementation.
 func genCppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P("const std::string ", message.Desc.Name(), "::kProtoName = ", `"`, message.Desc.Name(), `";`)
-	g.P("bool ", message.Desc.Name(), "::Load(const std::string& dir, Format fmt) { return LoadMessage(dir, data_, fmt); }")
+	g.P()
+	g.P("bool ", message.Desc.Name(), "::Load(const std::string& dir, Format fmt) {")
+	g.P("  bool ok = LoadMessage(dir, data_, fmt);")
+	g.P("  return ok ? ProcessAfterLoad() : false;")
+	g.P("}")
+	g.P()
+	// bool ProcessAfterLoad()
+	g.P("bool ", message.Desc.Name(), "::ProcessAfterLoad() {")
+	genCppOrderedMapLoader(1, string(message.Desc.FullName()), g, message.Desc)
+	g.P("  return true;")
+	g.P("}")
+	g.P()
+
 	// syntactic sugar for accessing map items
 	genCppMapGetters(1, nil, string(message.Desc.Name()), g, message.Desc)
+	genCppOrderedMapGetters(1, nil, string(message.Desc.Name()), string(message.Desc.FullName()), g, message.Desc)
 }
 
 func genCppMapGetters(depth int, params []string, messagerName string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
@@ -175,6 +270,93 @@ func genCppMapGetters(depth int, params []string, messagerName string, g *protog
 				genCppMapGetters(depth+1, params, messagerName, g, fd.MapValue().Message())
 			}
 			break
+		}
+	}
+}
+
+func genCppOrderedMapGetters(depth int, params []string, messagerName, messagerFullName string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
+	for i := 0; i < md.Fields().Len(); i++ {
+		fd := md.Fields().Get(i)
+		if fd.IsMap() {
+			prefix := parseOrderedMapPrefix(string(fd.MapValue().Message().FullName()), messagerFullName)
+			orderedMap := prefix + orderedMapSuffix
+
+			g.P("const ", messagerName, "::", orderedMap, "* ", messagerName, "::GetOrderedMap(", strings.Join(params, ", "), ") const {")
+			if depth == 1 {
+				g.P("  return &ordered_map_; ")
+			} else {
+				keyName := fmt.Sprintf("key%d", depth-1)
+				var findParams []string
+				for i := 1; i < depth-1; i++ {
+					findParams = append(findParams, fmt.Sprintf("key%d", i))
+				}
+				g.P("  const auto* conf = GetOrderedMap(", strings.Join(findParams, ", "), ");")
+				g.P("  if (conf == nullptr) {")
+				g.P("    return nullptr;")
+				g.P("  }")
+				g.P()
+				g.P("  auto iter = conf->find(", keyName, ");")
+				g.P("  if (iter == conf->end()) {")
+				g.P("    return nullptr;")
+				g.P("  }")
+				g.P("  return &iter->second.first;")
+
+			}
+			g.P("}")
+			g.P()
+
+			keyType := parseCppType(fd.MapKey())
+			keyParam := keyType + fmt.Sprintf(" key%d", depth)
+			nextParams := append(params, keyParam)
+			if fd.MapValue().Kind() == protoreflect.MessageKind {
+				genCppOrderedMapGetters(depth+1, nextParams, messagerName, messagerFullName, g, fd.MapValue().Message())
+			}
+			break
+		}
+	}
+}
+
+func genCppOrderedMapLoader(depth int, messagerFullName string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
+	for i := 0; i < md.Fields().Len(); i++ {
+		fd := md.Fields().Get(i)
+		if fd.IsMap() {
+
+			prefix := parseOrderedMapPrefix(string(fd.MapValue().Message().FullName()), messagerFullName)
+			// orderedMap := prefix + orderedMapSuffix
+			orderedMapValue := prefix + orderedMapValueSuffix
+			itemName := fmt.Sprintf("item%d", depth)
+
+			tmpOrderedMapName := fmt.Sprintf("ordered_map%d", depth)
+
+			prevItemName := fmt.Sprintf("item%d", depth-1)
+			prevContainer := prevItemName + ".second"
+			prevTmpOrderedMapName := fmt.Sprintf("ordered_map%d", depth-1)
+			if depth == 1 {
+				prevContainer = "data_"
+				prevTmpOrderedMapName = "ordered_map_"
+			}
+			g.P(strings.Repeat("  ", depth), "for (auto&& ", itemName, " : ", prevContainer, ".", string(fd.Name()), "()) {")
+			nextMapFD := getNextLevelMapFD(fd.MapValue())
+			if nextMapFD != nil {
+				_, nextValueType := parseMapType(nextMapFD)
+				nextPrefix := parseOrderedMapPrefix(strings.ReplaceAll(nextValueType, "::", "."), messagerFullName)
+				// nextMap := nextPrefix + mapSuffix
+				nextOrderedMap := nextPrefix + orderedMapSuffix
+				g.P(strings.Repeat("  ", depth+1), prevTmpOrderedMapName, "[", itemName, ".first] = ", orderedMapValue, "(", nextOrderedMap, "(), &", itemName, ".second.", string(nextMapFD.Name()), "());")
+				g.P(strings.Repeat("  ", depth+1), "auto&& ", tmpOrderedMapName, " = ", prevTmpOrderedMapName, "[", itemName, ".first].first;")
+			} else {
+				g.P(strings.Repeat("  ", depth+1), prevTmpOrderedMapName, "[", itemName, ".first] = ",  itemName, ".second;")
+			}
+			if fd.MapValue().Kind() == protoreflect.MessageKind {
+				genCppOrderedMapLoader(depth+1, messagerFullName, g, fd.MapValue().Message())
+			}
+			g.P(strings.Repeat("  ", depth), "}")
+
+			// for (auto&& item3 : item2.second.section_map()) {
+			// 	ordered_map2[item3.first] = &item3.second;
+			// }
+			break
+
 		}
 	}
 }
