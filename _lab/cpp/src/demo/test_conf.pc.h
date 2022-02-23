@@ -1,12 +1,13 @@
 #pragma once
-#include <string>
+#include <google/protobuf/map.h>
+
 #include <map>
+#include <string>
 
 #include "hub.pc.h"
 #include "protoconf/test_conf.pb.h"
 
 namespace tableau {
-
 
 class ActivityConf : public Messager {
  public:
@@ -17,22 +18,24 @@ class ActivityConf : public Messager {
   const protoconf::ActivityConf::Activity::Chapter* Get(uint64_t key1, uint32_t key2) const;
   const protoconf::Section* Get(uint64_t key1, uint32_t key2, uint32_t key3) const;
 
-  using Protoconf_Section_Map = std::map<uint32_t, const protoconf::Section*>;
+  using Section_OrderedMap = std::map<uint32_t, const protoconf::Section*>;
 
-  using Protoconf_Activity_Chapter_Map_ValueType = std::pair<const protoconf::ActivityConf::Activity::Chapter*, Protoconf_Section_Map>;
-  using Protoconf_Activity_Chapter_Map = std::map<uint32_t, Protoconf_Activity_Chapter_Map_ValueType>;
+  using Section_Map = ::google::protobuf::Map<uint32_t, protoconf::Section>;
+  using Activity_Chapter_OrderedMapValueType = std::pair<Section_OrderedMap, const Section_Map*>;
+  using Activity_Chapter_OrderedMap = std::map<uint32_t, Activity_Chapter_OrderedMapValueType>;
 
-  using Protoconf_Activity_Map_ValueType = std::pair<const protoconf::ActivityConf::Activity*, Protoconf_Activity_Chapter_Map>;
-  using Protoconf_Activity_Map = std::map<uint64_t, Protoconf_Activity_Map_ValueType>;
+  using Activity_Chapter_Map = ::google::protobuf::Map<uint32_t, protoconf::ActivityConf::Activity::Chapter>;
+  using Activity_OrderedMapValueType = std::pair<Activity_Chapter_OrderedMap, const Activity_Chapter_Map*>;
+  using Activity_OrderedMap = std::map<uint64_t, Activity_OrderedMapValueType>;
 
-  const Protoconf_Activity_Map& OrderedMap() const;
-  const Protoconf_Activity_Chapter_Map* GetOrderedMap(uint64_t key1) const;
-  const Protoconf_Section_Map* GetOrderedMap(uint64_t key1, uint32_t key2) const;
+  const Activity_OrderedMap& OrderedMap() const;
+  const Activity_Chapter_OrderedMap* GetOrderedMap(uint64_t key1) const;
+  const Section_OrderedMap* GetOrderedMap(uint64_t key1, uint32_t key2) const;
 
  private:
   static const std::string kProtoName;
   protoconf::ActivityConf data_;
-  Protoconf_Activity_Map ordered_map_;
+  Activity_OrderedMap ordered_map_;
 };
 
 }  // namespace tableau
