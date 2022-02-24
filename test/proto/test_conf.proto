@@ -12,9 +12,10 @@ option (tableau.workbook) = {
 message ActivityConf {
   option (tableau.worksheet) = {
     name: "Activity"
+    ordered_map: true
   };
 
-  map<uint64, Activity> activity_map = 1 [(tableau.field) = { key: "ActivityID" layout: LAYOUT_VERTICAL }];
+  map<uint64, Activity> activity_map = 1 [(tableau.field) = { key: "ActivityID" layout: LAYOUT_VERTICAL}];
   message Activity {
     uint64 activity_id = 1 [(tableau.field) = { name: "ActivityID" }];
     string activity_name = 2 [(tableau.field) = { name: "ActivityName" }];

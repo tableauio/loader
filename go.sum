@@ -41,8 +41,8 @@ github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UV
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5CcY=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/tableauio/tableau v0.9.0 h1:u5DsjO7f6o69+5WJIK1CZ67uGF/u6KaAOO/2ndocwJ8=
-github.com/tableauio/tableau v0.9.0/go.mod h1:P0GOuh1frYXGPsP9lgJB+ERX+vvzJKggj5spH7VpiiI=
+github.com/tableauio/tableau v0.9.1 h1:K3vkvEaXkA5d0GRLmuAD1uGaLq+uNh+M6XKaqoFipr4=
+github.com/tableauio/tableau v0.9.1/go.mod h1:P0GOuh1frYXGPsP9lgJB+ERX+vvzJKggj5spH7VpiiI=
 github.com/xuri/efp v0.0.0-20210322160811-ab561f5b45e3 h1:EpI0bqf/eX9SdZDwlMmahKM+CDBgNbsXMhsN28XrM8o=
 github.com/xuri/efp v0.0.0-20210322160811-ab561f5b45e3/go.mod h1:ybY/Jr0T0GTCnYjKqmdwxyxn2BQf2RcQIIvex5QldPI=
 github.com/xuri/excelize/v2 v2.4.1 h1:veeeFLAJwsNEBPBlDepzPIYS1eLyBVcXNZUW79exZ1E=

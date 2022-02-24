@@ -103,7 +103,7 @@ int main() {
   }
 
   const auto* rank_ordered_map =
-      MyHub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::int32_t_OrderedMap>(100001, 1,
+      MyHub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::int32_OrderedMap>(100001, 1,
                                                                                                              2);
   if (!rank_ordered_map) {
     std::cout << "ActivityConf GetOrderedMap rank failed!" << std::endl;

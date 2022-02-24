@@ -3,7 +3,11 @@ package main
 import (
 	"fmt"
 
+	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 const pcExt = "pc" // protoconf file extension
@@ -35,4 +39,14 @@ func protocVersion(gen *protogen.Plugin) string {
 		suffix = "-" + s
 	}
 	return fmt.Sprintf("v%d.%d.%d%s", v.GetMajor(), v.GetMinor(), v.GetPatch(), suffix)
+}
+
+func needGenOrderedMap(md protoreflect.MessageDescriptor) bool {
+	opts := md.Options().(*descriptorpb.MessageOptions)
+	wsOpts := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
+	if wsOpts == nil || !wsOpts.OrderedMap {
+		// Not an ordered map.
+		return false
+	}
+	return true
 }
