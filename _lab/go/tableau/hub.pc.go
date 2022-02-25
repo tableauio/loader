@@ -12,6 +12,7 @@ type Messager interface {
 	Checker
 	Name() string
 	Load(dir string, fmt format.Format) error
+	InternalCheck(hub *Hub) error
 }
 
 type Checker interface {

@@ -115,7 +115,14 @@ func genMapGetters(depth int, params []string, messagerName string, file *protog
 			keyName := fmt.Sprintf("key%d", depth)
 			params = append(params, keyName+" "+keyType)
 
-			g.P("func (x *", messagerName, ") Get", depth, "(", strings.Join(params, ", "), ") (*", getGoIdent(file, message, fd.MapValue()), ", error) {")
+			if fd.MapValue().Kind() == protoreflect.MessageKind {
+				g.P("func (x *", messagerName, ") Get", depth, "(", strings.Join(params, ", "), ") (*", getGoIdent(file, message, fd.MapValue()), ", error) {")
+			} else {
+				returnValType := parseGoType(file, fd.MapValue())
+				g.P("func (x *", messagerName, ") Get", depth, "(", strings.Join(params, ", "), ") (", returnValType, ", error) {")
+			}
+
+			returnEmptyValue := getTypeEmptyValue(fd.MapValue())
 
 			var container string
 			if depth == 1 {
@@ -129,20 +136,20 @@ func genMapGetters(depth int, params []string, messagerName string, file *protog
 				getter := fmt.Sprintf("Get%v", depth-1)
 				g.P("conf, err := x.", getter, "(", strings.Join(findParams, ", "), ")")
 				g.P("if err != nil {")
-				g.P(`return nil, err`)
+				g.P(`return `, returnEmptyValue, `, err`)
 				g.P("}")
 				g.P()
 			}
 
 			g.P("d := ", container, ".", field.GoName)
 			g.P("if d == nil {")
-			g.P(`return nil, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("Nil"), `, "`, field.GoName, ` is nil")`)
+			g.P(`return `, returnEmptyValue, `, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("Nil"), `, "`, field.GoName, ` is nil")`)
 			g.P("}")
 			keyer := fmt.Sprintf("key%v", depth)
 			g.P("if val, ok := d[", keyer, "]; !ok {")
-			g.P(`return nil, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("NotFound"), `, "`, keyer, `(%v)not found", key1)`)
+			g.P(`return `, returnEmptyValue, `, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("NotFound"), `, "`, keyer, `(%v)not found", key1)`)
 			g.P("} else {")
-			g.P("return val, nil")
+			g.P(`return val, nil`)
 			g.P("}")
 			g.P("}")
 			g.P()
@@ -186,9 +193,8 @@ func getGoIdent(file *protogen.File, message *protogen.Message, fd protoreflect.
 	}
 }
 
-// parseGoType converts a FieldDescriptor to C++ type string.
+// parseGoType converts a FieldDescriptor to Go type string.
 func parseGoType(file *protogen.File, fd protoreflect.FieldDescriptor) string {
-	file.Desc.Package()
 	switch fd.Kind() {
 	case protoreflect.BoolKind:
 		return "bool"
@@ -221,6 +227,31 @@ func parseGoType(file *protogen.File, fd protoreflect.FieldDescriptor) string {
 		}
 		goName := strings.ReplaceAll(protoName, ".", "_")
 		return string(file.GoImportPath.Ident(goName).GoName)
+	// case protoreflect.GroupKind:
+	// 	return "group"
+	default:
+		return fmt.Sprintf("<unknown:%d>", fd.Kind())
+	}
+}
+
+func getTypeEmptyValue(fd protoreflect.FieldDescriptor) string {
+	switch fd.Kind() {
+	case protoreflect.BoolKind:
+		return "false"
+	// case protoreflect.EnumKind:
+	// 	protoFullName := string(fd.Message().FullName())
+	// 	return strings.ReplaceAll(protoFullName, ".", "_")
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind,
+		protoreflect.Uint32Kind, protoreflect.Fixed32Kind,
+		protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind,
+		protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		return "0"
+	case protoreflect.FloatKind, protoreflect.DoubleKind:
+		return "0.0"
+	case protoreflect.StringKind:
+		return ""
+	case protoreflect.BytesKind, protoreflect.MessageKind:
+		return "nil"
 	// case protoreflect.GroupKind:
 	// 	return "group"
 	default:

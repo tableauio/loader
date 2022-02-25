@@ -34,6 +34,10 @@ func (x *ActivityConf) Load(dir string, fmt format.Format) error {
 	return load.Load(&x.data, dir, fmt)
 }
 
+func (x *ActivityConf) InternalCheck(hub *Hub) error {
+	return nil
+}
+
 func (x *ActivityConf) Get1(key1 uint64) (*protoconf.ActivityConf_Activity, error) {
 	d := x.data.ActivityMap
 	if d == nil {
@@ -80,18 +84,18 @@ func (x *ActivityConf) Get3(key1 uint64, key2 uint32, key3 uint32) (*protoconf.S
 	}
 }
 
-func (x *ActivityConf) Get4(key1 uint64, key2 uint32, key3 uint32, key4 uint32) (*protoconf.Item, error) {
+func (x *ActivityConf) Get4(key1 uint64, key2 uint32, key3 uint32, key4 uint32) (int32, error) {
 	conf, err := x.Get3(key1, key2, key3)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	d := conf.SectionItemMap
+	d := conf.SectionRankMap
 	if d == nil {
-		return nil, xerrors.Errorf(code.Nil, "SectionItemMap is nil")
+		return 0, xerrors.Errorf(code.Nil, "SectionRankMap is nil")
 	}
 	if val, ok := d[key4]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "key4(%v) not found", key4)
+		return 0, xerrors.Errorf(code.NotFound, "key4(%v)not found", key1)
 	} else {
 		return val, nil
 	}

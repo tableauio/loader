@@ -1,8 +1,20 @@
 {
- "id": 100,
- "name": "coin",
- "path": {
-  "dir": "/home/protoconf/",
-  "name": "icon.png"
- }
+    "itemMap": {
+        "1": {
+            "id": 1,
+            "name": "coin1",
+            "path": {
+                "dir": "/home/protoconf/",
+                "name": "icon.png"
+            }
+        },
+        "2": {
+            "id": 2,
+            "name": "coin2",
+            "path": {
+                "dir": "/home/protoconf/",
+                "name": "icon.png"
+            }
+        }
+    }
 }
