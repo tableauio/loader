@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/tableauio/loader/_lab/go/tableau"
 	"github.com/tableauio/tableau/format"
@@ -44,4 +45,22 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("ActivityConf: %v\n", chapter)
+
+	debug()
+	time.AfterFunc(time.Second*5, func() {
+		err := GetHub().Load("../../test/testdata/", nil, format.JSON)
+		if err != nil {
+			panic(err)
+		}
+		debug()
+	})
+	time.Sleep(time.Second * 30)
+}
+
+func debug() {
+	itemConf := GetHub().GetItemConf()
+	if itemConf == nil {
+		panic("ItemConf is nil")
+	}
+	fmt.Printf("ItemConf: %v\n", itemConf.Data())
 }
