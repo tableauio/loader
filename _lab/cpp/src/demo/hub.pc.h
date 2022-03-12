@@ -30,7 +30,11 @@ class Messager {
   virtual ~Messager() = default;
   static const std::string& Name() { return kEmpty; };
   virtual bool Load(const std::string& dir, Format fmt) = 0;
+
+ protected:
+  virtual bool ProcessAfterLoad() { return true; };
 };
+
 using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
 using MessagerMapPtr = std::shared_ptr<MessagerMap>;
 using Filter = std::function<bool(const std::string& name)>;

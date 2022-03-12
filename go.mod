@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/pkg/errors v0.8.1
-	github.com/tableauio/tableau v0.9.1
+	github.com/tableauio/tableau v0.9.9
 	go.uber.org/zap v1.17.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0

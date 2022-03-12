@@ -1,6 +1,8 @@
 package tableau
 
 import (
+	"fmt"
+
 	"github.com/tableauio/loader/_lab/go/protoconf"
 	"github.com/tableauio/loader/_lab/go/tableau/code"
 	"github.com/tableauio/loader/_lab/go/tableau/xerrors"
@@ -35,6 +37,17 @@ func (x *ActivityConf) Load(dir string, fmt format.Format) error {
 }
 
 func (x *ActivityConf) InternalCheck(hub *Hub) error {
+	conf := hub.GetItemConf()
+	if conf == nil {
+		return fmt.Errorf("ItemConf is nil")
+	}
+	for _, val1 := range x.data.ActivityMap {
+		for key2 := range val1.ChapterMap {
+			if _, ok := conf.Data().ItemMap[key2]; !ok {
+				return fmt.Errorf("refer: %v not found in ItemConf.ID", key2)
+			}
+		}
+	}
 	return nil
 }
 

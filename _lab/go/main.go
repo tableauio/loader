@@ -38,6 +38,9 @@ func main() {
 	}
 	chapter, err := conf.Get3(100001, 1, 2)
 	if err != nil {
+		fmt.Println(err)
+	}
+	if err := conf.InternalCheck(GetHub().Hub); err != nil {
 		panic(err)
 	}
 	fmt.Printf("ActivityConf: %v\n", chapter)

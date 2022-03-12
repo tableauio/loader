@@ -38,7 +38,8 @@ func main() {
 	if conf == nil {
 		panic("ActivityConf is nil")
 	}
-	chapter, err := conf.Get3(100001, 1, 9)
+	// chapter, err := conf.Get3(100001, 1, 9)
+	chapter, err := conf.Get3(100001, 1, 2)
 	if err != nil {
 		if xerrors.Is(err, code.NotFound) {
 			panic(err)

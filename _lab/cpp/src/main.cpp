@@ -49,21 +49,21 @@ const std::shared_ptr<T> Get() {
 }
 
 int main() {
-  protoconf::ItemConf item;
   std::string jsonstr;
+  //   protoconf::ItemConf item;
 
-  item.set_id(100);
-  item.set_name("coin");
-  item.mutable_path()->set_dir("/home/protoconf/");
-  item.mutable_path()->set_name("icon.png");
+  //   item.set_id(100);
+  //   item.set_name("coin");
+  //   item.mutable_path()->set_dir("/home/protoconf/");
+  //   item.mutable_path()->set_name("icon.png");
 
-  if (!tableau::Message2JSON(item, jsonstr)) {
-    std::cout << "protobuf convert json failed!" << std::endl;
-    return 1;
-  }
-  std::cout << "protobuf convert json done!" << std::endl << jsonstr << std::endl;
+  //   if (!tableau::Message2JSON(item, jsonstr)) {
+  //     std::cout << "protobuf convert json failed!" << std::endl;
+  //     return 1;
+  //   }
+  //   std::cout << "protobuf convert json done!" << std::endl << jsonstr << std::endl;
 
-  item.Clear();
+  //   item.Clear();
 
   // std::cout << "-----" << std::endl;
   // if (!tableau::Json2Proto(jsonstr, item)) {
@@ -96,28 +96,30 @@ int main() {
   }
   WriteFile("./test_item.json", jsonstr);
 
-  //   auto activity_conf = MyHub::Instance().Get<tableau::ActivityConf>();
-  //   if (!activity_conf) {
-  //     std::cout << "protobuf hub get ActivityConf failed!" << std::endl;
-  //     return 1;
-  //   }
+  auto activity_conf = MyHub::Instance().Get<tableau::ActivityConf>();
+  if (!activity_conf) {
+    std::cout << "protobuf hub get ActivityConf failed!" << std::endl;
+    return 1;
+  }
 
-  //   const auto* section_conf = activity_conf->Get(100001, 1, 2);
-  //   if (!section_conf) {
-  //     std::cout << "ActivityConf get section failed!" << std::endl;
-  //     return 1;
-  //   }
+  // std::cout << "acitivity: " << activity_conf->Data().DebugString() << std::endl;
 
-  const auto* section_conf = MyHub::Instance().Get<protoconf::ActivityConfMgr, protoconf::Section>(100001, 1, 2);
+  auto section_conf = activity_conf->Get(100001, 1, 2);
   if (!section_conf) {
-    std::cout << "ActivityConf Get section failed!" << std::endl;
+    std::cout << "ActivityConf get section failed!" << std::endl;
+    return 1;
+  }
+
+  section_conf = MyHub::Instance().Get<protoconf::ActivityConfMgr, protoconf::Section>(100001, 1, 2);
+  if (!section_conf) {
+    std::cout << "ActivityConf Get section failed: " << tableau::GetErrMsg() << std::endl;
     return 1;
   }
 
   std::cout << "-----section_conf" << std::endl;
   std::cout << section_conf->DebugString() << std::endl;
 
-  const auto* chapter_ordered_map =
+  auto chapter_ordered_map =
       MyHub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::Activity_Chapter_OrderedMap>(
           100001);
   if (!chapter_ordered_map) {
@@ -137,7 +139,7 @@ int main() {
     }
   }
 
-  const auto* section_ordered_map =
+  auto section_ordered_map =
       MyHub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::protoconf_Section_OrderedMap>(
           100001, 1);
   if (!section_ordered_map) {

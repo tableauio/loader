@@ -38,7 +38,7 @@ func (x *ItemConf) InternalCheck(hub *Hub) error {
 	return nil
 }
 
-func (x *ItemConf) Get1(key1 uint64) (*protoconf.ItemConf_Item, error) {
+func (x *ItemConf) Get1(key1 uint32) (*protoconf.ItemConf_Item, error) {
 	d := x.data.ItemMap
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "ItemMap is nil")

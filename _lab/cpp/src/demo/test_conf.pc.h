@@ -46,7 +46,7 @@ class ActivityConf : public Messager {
   const Activity_OrderedMap* GetOrderedMap() const;
 
  private:
-  bool ProcessAfterLoad();
+  virtual bool ProcessAfterLoad() override final;
 
  private:
   static const std::string kProtoName;

@@ -98,3 +98,13 @@ func (h *Hub) GetActivityConf() *ActivityConf {
 	}
 	return nil
 }
+
+func (h *Hub) GetItemConf() *ItemConf {
+	msger := h.messagerMap["ItemConf"]
+	if msger != nil {
+		if conf, ok := msger.(*ItemConf); ok {
+			return conf
+		}
+	}
+	return nil
+}

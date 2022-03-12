@@ -19,13 +19,27 @@ bool Message2JSON(const google::protobuf::Message& message, std::string& json) {
 }
 
 bool JSON2Message(const std::string& json, google::protobuf::Message& message) {
-  return google::protobuf::util::JsonStringToMessage(json, &message).ok();
+  if (!google::protobuf::util::JsonStringToMessage(json, &message).ok()) {
+    g_err_msg = "failed to parse json file: " + GetProtoName(message) + kJSONExt;
+    return false;
+  }
+  return true;
 }
 
 bool Text2Message(const std::string& text, google::protobuf::Message& message) {
-  return google::protobuf::TextFormat::ParseFromString(text, &message);
+  if (!google::protobuf::TextFormat::ParseFromString(text, &message)) {
+    g_err_msg = "failed to parse text file: " + GetProtoName(message) + kTextExt;
+    return false;
+  }
+  return true;
 }
-bool Wire2Message(const std::string& wire, google::protobuf::Message& message) { return message.ParseFromString(wire); }
+bool Wire2Message(const std::string& wire, google::protobuf::Message& message) {
+  if (!message.ParseFromString(wire)) {
+    g_err_msg = "failed to parse wire file: " + GetProtoName(message) + kWireExt;
+    return false;
+  }
+  return true;
+}
 
 const std::string& GetProtoName(const google::protobuf::Message& message) {
   const auto* md = message.GetDescriptor();
@@ -35,7 +49,7 @@ const std::string& GetProtoName(const google::protobuf::Message& message) {
 bool ReadFile(const std::string& filename, std::string& content) {
   std::ifstream file(filename);
   if (!file.is_open()) {
-    g_err_msg = "Failed to open file: " + filename;
+    g_err_msg = "failed to open file: " + filename;
     return false;
   }
   std::stringstream ss;
@@ -72,7 +86,7 @@ bool LoadMessage(const std::string& dir, google::protobuf::Message& message, For
       return Wire2Message(content, message);
     }
     default: {
-      g_err_msg = "Unsupported format: %d" + static_cast<int>(fmt);
+      g_err_msg = "unsupported format: %d" + static_cast<int>(fmt);
       return false;
     }
   }
@@ -89,7 +103,6 @@ bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
     auto&& name = iter.first;
     bool ok = iter.second->Load(dir, fmt);
     if (!ok) {
-      g_err_msg = "Load " + name + " failed";
       return false;
     }
   }
