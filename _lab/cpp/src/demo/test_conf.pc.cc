@@ -8,6 +8,7 @@ bool ActivityConf::Load(const std::string& dir, Format fmt) {
 }
 
 bool ActivityConf::ProcessAfterLoad() {
+  // init ordered map.
   for (auto&& item1 : data_.activity_map()) {
     ordered_map_[item1.first] = Activity_OrderedMapValue(Activity_Chapter_OrderedMap(), &item1.second.chapter_map());
     auto&& ordered_map1 = ordered_map_[item1.first].first;
@@ -18,6 +19,13 @@ bool ActivityConf::ProcessAfterLoad() {
       for (auto&& item3 : item2.second.section_map()) {
         ordered_map2[item3.first] = &item3.second;
       }
+    }
+  }
+
+  // init index.
+  for (auto&& item1 : data_.activity_map()) {
+    for (auto&& item2 : item1.second.chapter_map()) {
+      index_chapter_map_[item2.second.chapter_id()].push_back(&item2.second);
     }
   }
   return true;
@@ -81,6 +89,24 @@ const ActivityConf::protoconf_Section_OrderedMap* ActivityConf::GetOrderedMap(ui
     return nullptr;
   }
   return &iter->second.first;
+}
+
+const ActivityConf::Index_ChapterMap& ActivityConf::FindChapter() const { return index_chapter_map_; }
+
+const ActivityConf::Index_ChapterVector* ActivityConf::FindChapter(uint32_t chapter_id) const {
+  auto iter = index_chapter_map_.find(chapter_id);
+  if (iter == index_chapter_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::ActivityConf::Activity::Chapter* ActivityConf::FindFirstChapter(uint32_t chapter_id) const {
+  auto conf = FindChapter(chapter_id);
+  if (conf == nullptr || conf->size() == 0) {
+    return nullptr;
+  }
+  return (*conf)[0];
 }
 
 }  // namespace tableau

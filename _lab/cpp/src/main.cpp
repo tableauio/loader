@@ -152,5 +152,25 @@ int main() {
     std::cout << item.first << std::endl;
   }
 
+  std::cout << "-----Index accessers test" << std::endl;
+  auto index_chapters = activity_conf->FindChapter(1);
+  if (!index_chapters) {
+    std::cout << "ActivityConf FindChapter failed!" << std::endl;
+    return 1;
+  }
+  std::cout << "-----FindChapter" << std::endl;
+  for (auto&& chapter : *index_chapters) {
+    std::cout << chapter->ShortDebugString() << std::endl;
+  }
+
+  auto index_first_chapter = activity_conf->FindFirstChapter(1);
+  if (!index_first_chapter) {
+    std::cout << "ActivityConf FindFirstChapter failed!" << std::endl;
+    return 1;
+  }
+
+  std::cout << "-----FindFirstChapter" << std::endl;
+  std::cout << index_first_chapter->ShortDebugString() << std::endl;
+
   return 0;
 }
