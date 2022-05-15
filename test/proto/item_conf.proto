@@ -13,6 +13,7 @@ option (tableau.workbook) = {
 message ItemConf {
   option (tableau.worksheet) = {
     name: "ItemConf"
+    ordered_map: true
   };
   map<uint32, Item> item_map = 1 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
   message Item {

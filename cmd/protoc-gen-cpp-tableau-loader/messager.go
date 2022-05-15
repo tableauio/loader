@@ -166,7 +166,10 @@ func genHppOrderedMapGetters(depth int, params []string, g *protogen.GeneratedFi
 				g.P("  const ", orderedMap, "* GetOrderedMap(", strings.Join(params, ", "), ") const;")
 				g.P()
 			} else {
-				orderedMapValue = parseCppType(fd.MapValue())
+				orderedMapValue := parseCppType(fd.MapValue())
+				if fd.MapValue().Kind() == protoreflect.MessageKind {
+					orderedMapValue += "*" // If value type is message, should use pointer.
+				}
 				g.P("  using ", orderedMap, " = std::map<", keyType, ", ", orderedMapValue, ">;")
 				g.P("  const ", orderedMap, "* GetOrderedMap(", strings.Join(params, ", "), ") const;")
 				g.P()
@@ -360,7 +363,11 @@ func genCppOrderedMapLoader(depth int, messagerFullName string, g *protogen.Gene
 				g.P(strings.Repeat("  ", depth+1), prevTmpOrderedMapName, "[", itemName, ".first] = ", orderedMapValue, "(", nextOrderedMap, "(), &", itemName, ".second.", string(nextMapFD.Name()), "());")
 				g.P(strings.Repeat("  ", depth+1), "auto&& ", tmpOrderedMapName, " = ", prevTmpOrderedMapName, "[", itemName, ".first].first;")
 			} else {
-				g.P(strings.Repeat("  ", depth+1), prevTmpOrderedMapName, "[", itemName, ".first] = ", itemName, ".second;")
+				ref := "&"
+				if fd.MapValue().Kind() != protoreflect.MessageKind {
+					ref = "" // scalar value type just do value copy.
+				}
+				g.P(strings.Repeat("  ", depth+1), prevTmpOrderedMapName, "[", itemName, ".first] = ", ref, itemName, ".second;")
 			}
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
 				genCppOrderedMapLoader(depth+1, messagerFullName, g, fd.MapValue().Message())
