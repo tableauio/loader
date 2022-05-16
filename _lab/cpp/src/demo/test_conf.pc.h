@@ -27,7 +27,7 @@ class ActivityConf : public Messager {
   static const std::string kProtoName;
   protoconf::ActivityConf data_;
 
-  // OrederedMap related accessers.
+  // OrderedMap accessers.
  public:
   using protoconf_Section_OrderedMap = std::map<uint32_t, const protoconf::Section*>;
   const protoconf_Section_OrderedMap* GetOrderedMap(uint64_t key1, uint32_t key2) const;
@@ -45,7 +45,7 @@ class ActivityConf : public Messager {
  private:
   Activity_OrderedMap ordered_map_;
 
-  // Index related accessers.
+  // Index accessers.
  public:
   using Index_ChapterVector = std::vector<const protoconf::ActivityConf::Activity::Chapter*>;
   using Index_ChapterMap = std::unordered_map<uint32_t, Index_ChapterVector>;

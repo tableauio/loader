@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
@@ -8,13 +9,13 @@ import (
 func generateRegistry(gen *protogen.Plugin) {
 	hppFilename := "registry." + pcExt + ".h"
 	g1 := gen.NewGeneratedFile(hppFilename, "")
-	generateCommonHeader(gen, g1)
+	helper.GenerateCommonHeader(gen, g1, version)
 	g1.P()
 	g1.P(registryHpp)
 
 	cppFilename := "registry." + pcExt + ".cc"
 	g2 := gen.NewGeneratedFile(cppFilename, "")
-	generateCommonHeader(gen, g2)
+	helper.GenerateCommonHeader(gen, g2, version)
 	g2.P()
 	generateRegistryCppFileContent(gen, g2)
 }

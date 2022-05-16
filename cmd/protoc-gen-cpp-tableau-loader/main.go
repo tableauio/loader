@@ -10,6 +10,8 @@ import (
 )
 
 const version = "0.3.1"
+const pcExt = "pc" // protoconf file extension
+const pbExt = "pb" // protobuf file extension
 
 var namespace *string
 var messagerSuffix *string

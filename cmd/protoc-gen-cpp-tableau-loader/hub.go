@@ -1,18 +1,21 @@
 package main
 
-import "google.golang.org/protobuf/compiler/protogen"
+import (
+	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
+	"google.golang.org/protobuf/compiler/protogen"
+)
 
 // generateHub generates related registry files.
 func generateHub(gen *protogen.Plugin) {
 	hppFilename := "hub." + pcExt + ".h"
 	g1 := gen.NewGeneratedFile(hppFilename, "")
-	generateCommonHeader(gen, g1)
+	helper.GenerateCommonHeader(gen, g1, version)
 	g1.P()
 	g1.P(hubHpp)
 
 	cppFilename := "hub." + pcExt + ".cc"
 	g2 := gen.NewGeneratedFile(cppFilename, "")
-	generateCommonHeader(gen, g2)
+	helper.GenerateCommonHeader(gen, g2, version)
 	g2.P()
 	g2.P(hubCpp)
 }
