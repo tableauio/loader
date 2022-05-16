@@ -13,7 +13,9 @@ message ActivityConf {
   option (tableau.worksheet) = {
     name: "Activity"
     ordered_map: true
-    index: "ChapterName"
+    index: "ChapterID"
+    index: "ChapterName@NamedChapter"
+    index: "SectionItemId@Award"
   };
 
   map<uint64, Activity> activity_map = 1 [(tableau.field) = { key: "ActivityID" layout: LAYOUT_VERTICAL }];

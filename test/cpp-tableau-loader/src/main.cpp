@@ -104,7 +104,7 @@ int main() {
 
   const auto* rank_ordered_map =
       MyHub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::int32_OrderedMap>(100001, 1,
-                                                                                                             2);
+                                                                                                           2);
   if (!rank_ordered_map) {
     std::cout << "ActivityConf GetOrderedMap rank failed!" << std::endl;
     return 1;
@@ -113,5 +113,31 @@ int main() {
   for (auto&& it : *rank_ordered_map) {
     std::cout << it.first << std::endl;
   }
+
+  auto activity_conf = MyHub::Instance().Get<tableau::ActivityConf>();
+  if (!activity_conf) {
+    std::cout << "protobuf hub get ActivityConf failed!" << std::endl;
+    return 1;
+  }
+  
+  std::cout << "-----Index accessers test" << std::endl;
+  auto index_chapters = activity_conf->FindChapter(1);
+  if (!index_chapters) {
+    std::cout << "ActivityConf FindChapter failed!" << std::endl;
+    return 1;
+  }
+  std::cout << "-----FindChapter" << std::endl;
+  for (auto&& chapter : *index_chapters) {
+    std::cout << chapter->ShortDebugString() << std::endl;
+  }
+
+  auto index_first_chapter = activity_conf->FindFirstChapter(1);
+  if (!index_first_chapter) {
+    std::cout << "ActivityConf FindFirstChapter failed!" << std::endl;
+    return 1;
+  }
+
+  std::cout << "-----FindFirstChapter" << std::endl;
+  std::cout << index_first_chapter->ShortDebugString() << std::endl;
   return 0;
 }

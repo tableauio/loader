@@ -132,7 +132,8 @@ func ParseIndexInfo(md protoreflect.MessageDescriptor) []*IndexInfo {
 		indexInfo.FullClassName = helper.ParseCppClassType(deepestLevelInfo.MD)
 		indexInfo.IndexFieldType = helper.ParseCppType(deepestLevelInfo.FD)
 		indexInfo.IndexFieldName = string(deepestLevelInfo.FD.Name())
-		if indexName == "" {
+		indexInfo.IndexName = indexName
+		if indexInfo.IndexName == "" {
 			// use index field's parent message name if not set.
 			indexInfo.IndexName = string(deepestLevelInfo.MD.Name())
 		}

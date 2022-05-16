@@ -74,6 +74,7 @@ func generateHppFileContent(gen *protogen.Plugin, file *protogen.File, g *protog
 	pkg := string(file.Desc.Package())
 	pbNamespace := strings.ReplaceAll(pkg, ".", "::")
 	g.P("namespace ", pbNamespace, " {")
+	g.P("// Here are some type aliases for easy use.")
 	for _, messager := range fileMessagers {
 		g.P("using ", messager, *messagerSuffix, " = ", *namespace, "::", messager, ";")
 	}
@@ -238,6 +239,7 @@ func genHppIndexFinders(depth int, params []string, g *protogen.GeneratedFile, m
 		g.P(" private:")
 		indexContainerName := "index_" + strcase.ToSnake(info.IndexName) + "_map_"
 		g.P("  ", mapName, " ", indexContainerName, ";")
+		g.P()
 	}
 }
 
