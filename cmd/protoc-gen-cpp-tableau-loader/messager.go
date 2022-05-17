@@ -93,7 +93,7 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	g.P("  const ", cppFullName, "& Data() const { return data_; };")
 	g.P()
 
-	if helper.NeedGenOrderedMap(message.Desc) {
+	if helper.NeedGenOrderedMap(message.Desc) || index.NeedGenIndex(message.Desc) {
 		g.P(" private:")
 		g.P("  virtual bool ProcessAfterLoad() override final;")
 		g.P()
@@ -336,16 +336,18 @@ func genCppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	g.P("}")
 	g.P()
 
-	g.P("bool ", message.Desc.Name(), "::ProcessAfterLoad() {")
-	if helper.NeedGenOrderedMap(message.Desc) {
-		genCppOrderedMapLoader(1, string(message.Desc.FullName()), g, message.Desc)
+	if helper.NeedGenOrderedMap(message.Desc) || index.NeedGenIndex(message.Desc) {
+		g.P("bool ", message.Desc.Name(), "::ProcessAfterLoad() {")
+		if helper.NeedGenOrderedMap(message.Desc) {
+			genCppOrderedMapLoader(1, string(message.Desc.FullName()), g, message.Desc)
+		}
+		if index.NeedGenIndex(message.Desc) {
+			genCppIndexLoader(g, message.Desc)
+		}
+		g.P("  return true;")
+		g.P("}")
+		g.P()
 	}
-	if index.NeedGenIndex(message.Desc) {
-		genCppIndexLoader(g, message.Desc)
-	}
-	g.P("  return true;")
-	g.P("}")
-	g.P()
 
 	// syntactic sugar for accessing map items
 	genCppMapGetters(1, nil, string(message.Desc.Name()), g, message.Desc)
