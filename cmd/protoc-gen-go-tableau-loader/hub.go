@@ -37,12 +37,13 @@ const staticHubContent = `import (
 
 	"github.com/pkg/errors"
 	"github.com/tableauio/tableau/format"
+	"github.com/tableauio/tableau/load"
 )
 
 type Messager interface {
 	Checker
 	Name() string
-	Load(dir string, fmt format.Format) error
+	Load(dir string, fmt format.Format, options ...load.Option) error
 }
 
 type Checker interface {

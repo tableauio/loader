@@ -98,7 +98,7 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	g.P("}")
 	g.P()
 
-	g.P("func (x *", messagerName, ") Load(dir string, format ", formatPackage.Ident("Format"), ") error {")
+	g.P("func (x *", messagerName, ") Load(dir string, format ", formatPackage.Ident("Format"), " , options ...",loadPackage.Ident("Option"),") error {")
 	g.P("return ", loadPackage.Ident("Load"), "(&x.data, dir, format)")
 	g.P("}")
 	g.P()
