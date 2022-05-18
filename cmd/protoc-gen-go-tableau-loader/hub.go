@@ -48,7 +48,7 @@ type Messager interface {
 
 type Checker interface {
 	Messager() Messager
-	Check() error
+	Check(hub *Hub) error
 }
 
 type MessagerMap = map[string]Messager

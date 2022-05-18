@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 
+	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/firstpass"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -12,15 +13,18 @@ import (
 const version = "0.2.2"
 
 var pkg *string
+var protoconfPkg *string
 
 func main() {
 	var flags flag.FlagSet
 	pkg = flags.String("pkg", "tableau", "tableau package name")
+	protoconfPkg = flags.String("protoconf-pkg", "protoconf", "protoconf package name")
 	flag.Parse()
 
 	protogen.Options{
 		ParamFunc: flags.Set,
 	}.Run(func(gen *protogen.Plugin) error {
+		firstpass.Init(gen)
 		for _, f := range gen.Files {
 			if !f.Generate {
 				continue

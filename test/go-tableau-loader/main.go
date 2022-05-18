@@ -46,4 +46,7 @@ func main() {
 		}
 	}
 	fmt.Printf("ActivityConf: %v\n", chapter)
+	if err := conf.Check(GetHub().Hub); err != nil {
+		panic(err)
+	}
 }

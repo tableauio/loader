@@ -24,9 +24,10 @@ message ActivityConf {
     string activity_name = 2 [(tableau.field) = { name: "ActivityName" }];
     map<uint32, Chapter> chapter_map = 3 [(tableau.field) = { key: "ChapterID" layout: LAYOUT_VERTICAL }];
     message Chapter {
-      uint32 chapter_id = 1 [(tableau.field) = { name: "ChapterID"  prop:{refer:"ItemConf.ID"}}];
+      uint32 chapter_id = 1 [(tableau.field) = { name: "ChapterID"  prop:{refer:"ChapterConf.ID"}}];
       string chapter_name = 2 [(tableau.field) = { name: "ChapterName" }];
-      map<uint32, Section> section_map = 3 [(tableau.field) = { key: "SectionID" layout: LAYOUT_VERTICAL }];
+      uint32 award_id = 3 [(tableau.field) = { name: "AwardID"  prop:{refer:"ItemConf.ID"}}];
+      map<uint32, Section> section_map = 4 [(tableau.field) = { key: "SectionID" layout: LAYOUT_VERTICAL }];
     //   message Section {
     //     uint32 section_id = 1 [(tableau.field) = { name: "SectionID" }];
     //     string section_name = 2 [(tableau.field) = { name: "SectionName" }];
@@ -38,12 +39,36 @@ message ActivityConf {
     //   }
     }
   }
-  map<uint32, Item> section_item_map = 2 [(tableau.field) = { key: "Id" layout: LAYOUT_VERTICAL }];
+  map<uint32, Item> bonus_map = 2 [(tableau.field) = { name:"Bonus" key: "Id" layout: LAYOUT_HORIZONTAL }];
+  string theme_name = 3 [(tableau.field) = { name: "ThemName"  prop:{refer:"ThemeConf.Name"}}];
+  int32 cost_item_id = 4 [(tableau.field) = { name: "CostItemID"  prop:{refer:"ItemConf.ID"}}];
 }
 
 message Section {
-  uint32 section_id = 1 [(tableau.field) = { name: "SectionID" }];
+  uint32 section_id = 1 [(tableau.field) = { name: "SectionID"}];
   string section_name = 2 [(tableau.field) = { name: "SectionName" }];
   repeated Item section_item_list = 3 [(tableau.field) = { name: "SectionItem" layout: LAYOUT_HORIZONTAL }];
   map<uint32, int32> section_rank_map = 4 [(tableau.field) = {layout: LAYOUT_VERTICAL }];
+}
+
+message ChapterConf {
+  option (tableau.worksheet) = {
+    name: "ChapterConf"
+  };
+  map<uint64, Chapter> chapter_map = 1 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
+  message Chapter {
+    uint64 id = 1 [(tableau.field) = { name: "ID"}];
+    string name = 2 [(tableau.field) = { name: "Name"}];
+  }
+}
+
+message ThemeConf {
+  option (tableau.worksheet) = {
+    name: "ThemeConf"
+  };
+  map<string, Theme> theme_map = 1 [(tableau.field) = { key: "Name" layout: LAYOUT_VERTICAL }];
+  message Theme {
+    string name = 2 [(tableau.field) = { name: "Name"}];
+    uint64 value = 1 [(tableau.field) = { name: "Value"}];
+  }
 }

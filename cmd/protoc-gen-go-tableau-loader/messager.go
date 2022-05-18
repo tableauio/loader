@@ -5,6 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/iancoleman/strcase"
+	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/check"
+	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -15,6 +18,7 @@ import (
 const (
 	formatPackage = protogen.GoImportPath("github.com/tableauio/tableau/format")
 	loadPackage   = protogen.GoImportPath("github.com/tableauio/tableau/load")
+	errors        = protogen.GoImportPath("github.com/pkg/errors")
 )
 
 // golbal container for record all proto filenames and messager names
@@ -93,12 +97,16 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	g.P()
 
 	g.P("// Check is used to implement Checker interface.")
-	g.P("func (x *", messagerName, ") Check() error {")
+	g.P("func (x *", messagerName, ") Check(hub *Hub) error {")
+
+	levelInfos := check.ParseReferLevelInfo(*protoconfPkg, "", message.Desc)
+	genCheckRefer(1, levelInfos, g, messagerName)
+
 	g.P("return nil")
 	g.P("}")
 	g.P()
 
-	g.P("func (x *", messagerName, ") Load(dir string, format ", formatPackage.Ident("Format"), " , options ...",loadPackage.Ident("Option"),") error {")
+	g.P("func (x *", messagerName, ") Load(dir string, format ", formatPackage.Ident("Format"), " , options ...", loadPackage.Ident("Option"), ") error {")
 	g.P("return ", loadPackage.Ident("Load"), "(&x.data, dir, format, options...)")
 	g.P("}")
 	g.P()
@@ -107,22 +115,59 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	genMapGetters(1, nil, messagerName, file, g, message)
 }
 
+func genCheckRefer(depth int, levelInfos []*check.LevelInfo, g *protogen.GeneratedFile, messagerName string) {
+	if depth == 1 {
+		g.P(`// refer check`)
+	}
+	for _, levelInfo := range levelInfos {
+		accesser := levelInfo.Accesser
+		itemName := fmt.Sprintf("item%d", depth)
+		prevItemName := fmt.Sprintf("item%d", depth-1)
+		fieldName := fmt.Sprintf("%s.%s", prevItemName, strcase.ToCamel(levelInfo.GoFieldName))
+		if depth == 1 {
+			if accesser != nil {
+				fieldName = fmt.Sprintf("x.data.%s", strcase.ToCamel(levelInfo.GoFieldName))
+			} else {
+				g.P("for _, " + itemName + " := range x.data." + levelInfo.GoFieldName + "{")
+			}
+		} else {
+			if levelInfo.FD == nil {
+				g.P("for _, " + itemName + " := range " + prevItemName + "." + levelInfo.GoFieldName + "{")
+			}
+		}
+		if accesser != nil {
+			g.P(`if conf := hub.Get` + accesser.MessagerName + `(); conf != nil {`)
+			g.P("    if _, ok := conf.Data()." + accesser.MapFieldName + "[" + accesser.MapKeyType + "(" + fieldName + ")]; !ok {")
+			g.P(`        return `, errors.Ident("Errorf"), `("`, messagerName, ".", levelInfo.ColumnName, `(%v) not found in `, levelInfo.Refer, `", `, fieldName, `) `)
+			g.P("    }")
+			g.P("} else {")
+			g.P(`    return `, errors.Ident("Errorf"), `("`+accesser.MessagerName+` not found")`)
+			g.P("}")
+		}
+
+		genCheckRefer(depth+1, levelInfo.NextLevels, g, messagerName)
+		if levelInfo.FD == nil {
+			g.P("}")
+		}
+	}
+}
+
 func genMapGetters(depth int, params []string, messagerName string, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) {
 	for _, field := range message.Fields {
 		fd := field.Desc
 		if field.Desc.IsMap() {
-			keyType := parseGoType(file, fd.MapKey())
+			keyType := helper.ParseGoType(file, fd.MapKey())
 			keyName := fmt.Sprintf("key%d", depth)
 			params = append(params, keyName+" "+keyType)
 
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
 				g.P("func (x *", messagerName, ") Get", depth, "(", strings.Join(params, ", "), ") (*", getGoIdent(file, message, fd.MapValue()), ", error) {")
 			} else {
-				returnValType := parseGoType(file, fd.MapValue())
+				returnValType := helper.ParseGoType(file, fd.MapValue())
 				g.P("func (x *", messagerName, ") Get", depth, "(", strings.Join(params, ", "), ") (", returnValType, ", error) {")
 			}
 
-			returnEmptyValue := getTypeEmptyValue(fd.MapValue())
+			returnEmptyValue := helper.GetTypeEmptyValue(fd.MapValue())
 
 			var container string
 			if depth == 1 {
@@ -189,72 +234,6 @@ func getGoIdent(file *protogen.File, message *protogen.Message, fd protoreflect.
 	}
 	return protogen.GoIdent{
 		GoImportPath: file.GoImportPath,
-		GoName:       parseGoType(file, fd),
-	}
-}
-
-// parseGoType converts a FieldDescriptor to Go type string.
-func parseGoType(file *protogen.File, fd protoreflect.FieldDescriptor) string {
-	switch fd.Kind() {
-	case protoreflect.BoolKind:
-		return "bool"
-	// case protoreflect.EnumKind:
-	// 	protoFullName := string(fd.Message().FullName())
-	// 	return strings.ReplaceAll(protoFullName, ".", "_")
-	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
-		return "int32"
-	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
-		return "uint32"
-	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
-		return "int64"
-	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
-		return "uint64"
-	case protoreflect.FloatKind:
-		return "float"
-	case protoreflect.DoubleKind:
-		return "double"
-	case protoreflect.StringKind:
-		return "string"
-	case protoreflect.BytesKind:
-		return "[]byte"
-	case protoreflect.MessageKind:
-		fullName := string(fd.Message().FullName())
-		pkg := string(file.Desc.Package())
-		protoName := fullName
-		if strings.HasPrefix(fullName, pkg) {
-			// defined at the same package
-			protoName = fullName[len(pkg)+1:]
-		}
-		goName := strings.ReplaceAll(protoName, ".", "_")
-		return string(file.GoImportPath.Ident(goName).GoName)
-	// case protoreflect.GroupKind:
-	// 	return "group"
-	default:
-		return fmt.Sprintf("<unknown:%d>", fd.Kind())
-	}
-}
-
-func getTypeEmptyValue(fd protoreflect.FieldDescriptor) string {
-	switch fd.Kind() {
-	case protoreflect.BoolKind:
-		return "false"
-	// case protoreflect.EnumKind:
-	// 	protoFullName := string(fd.Message().FullName())
-	// 	return strings.ReplaceAll(protoFullName, ".", "_")
-	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind,
-		protoreflect.Uint32Kind, protoreflect.Fixed32Kind,
-		protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind,
-		protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
-		return "0"
-	case protoreflect.FloatKind, protoreflect.DoubleKind:
-		return "0.0"
-	case protoreflect.StringKind:
-		return ""
-	case protoreflect.BytesKind, protoreflect.MessageKind:
-		return "nil"
-	// case protoreflect.GroupKind:
-	// 	return "group"
-	default:
-		return fmt.Sprintf("<unknown:%d>", fd.Kind())
+		GoName:       helper.ParseGoType(file, fd),
 	}
 }

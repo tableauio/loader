@@ -1,5 +1,9 @@
 {
     "itemMap": {
+        "0": {
+            "id": 0,
+            "name": "coin1"
+        },
         "1": {
             "id": 1,
             "name": "coin1",
@@ -7,7 +11,7 @@
                 "dir": "/home/protoconf/",
                 "name": "icon.png"
             },
-            "expiry": "2019-01-01T18:00:00Z"
+            "expiry": "2021-01-01T18:00:00Z"
         },
         "2": {
             "id": 2,
@@ -16,7 +20,43 @@
                 "dir": "/home/protoconf/",
                 "name": "icon.png"
             },
-            "expiry": "2019-01-01T08:00:00Z"
+            "expiry": "2022-01-01T08:00:00Z"
+        },
+        "3": {
+            "id": 3,
+            "name": "coin3",
+            "path": {
+                "dir": "/home/protoconf/",
+                "name": "icon.png"
+            },
+            "expiry": "2023-01-01T08:00:00Z"
+        },
+        "2001": {
+            "id": 2001,
+            "name": "coin2001",
+            "path": {
+                "dir": "/home/protoconf/",
+                "name": "icon.png"
+            },
+            "expiry": "2024-01-01T08:00:00Z"
+        },
+        "2002": {
+            "id": 2002,
+            "name": "coin2002",
+            "path": {
+                "dir": "/home/protoconf/",
+                "name": "icon.png"
+            },
+            "expiry": "2024-01-01T08:00:00Z"
+        },
+        "2003": {
+            "id": 2003,
+            "name": "coin2003",
+            "path": {
+                "dir": "/home/protoconf/",
+                "name": "icon.png"
+            },
+            "expiry": "2024-01-01T08:00:00Z"
         }
     }
 }

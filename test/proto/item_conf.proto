@@ -17,8 +17,8 @@ message ItemConf {
   };
   map<uint32, Item> item_map = 1 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
   message Item {
-    uint32 id = 1;
-    string name = 2;
+    uint32 id = 1 [(tableau.field) = { name: "ID"}];
+    string name = 2 [(tableau.field) = { name: "Name"}];
     Path path = 4;
     google.protobuf.Timestamp expiry = 5;
     google.protobuf.Duration duration = 6;
