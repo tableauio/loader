@@ -206,7 +206,7 @@ bool StoreMessage(const std::string& dir, google::protobuf::Message& message, Fo
 bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
   auto new_messager_map_ptr = NewMessagerMap(filter);
   for (auto iter : *new_messager_map_ptr) {
-    auto&& name = iter.first;
+    // auto&& name = iter.first;
     bool ok = iter.second->Load(dir, fmt);
     if (!ok) {
       return false;
