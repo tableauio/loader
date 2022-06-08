@@ -1,7 +1,10 @@
 #pragma once
 #include <google/protobuf/util/json_util.h>
 
+#include <functional>
+#include <mutex>
 #include <string>
+#include <thread>
 
 namespace tableau {
 enum class Format {
@@ -37,12 +40,29 @@ class Messager {
 
 using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
 using MessagerMapPtr = std::shared_ptr<MessagerMap>;
+using MMP = MessagerMapPtr;
 using Filter = std::function<bool(const std::string& name)>;
+using MMPProvider = std::function<MessagerMapPtr()>;  // MMP (MessagerMapPtr) provider.
 
 class Hub {
  public:
+  /***** Synchronously Loading *****/
+  // Load messagers from dir using the specified format, and store them in MMP.
   bool Load(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON);
 
+  /***** Asynchronously Loading *****/
+  // Load configs into temp MMP, and you should call LoopOnce() in you app's main loop,
+  // in order to take the temp MMP into effect.
+  bool AsyncLoad(const std::string& dir, Filter filter, Format fmt);
+  int LoopOnce();
+  // You'd better initialize the scheduler in the main thread.
+  void InitScheduler();
+
+  /***** MMP: Messager Map Ptr *****/
+  MessagerMapPtr GetMMP() const { return mmp_; }
+  void SetMMPProvider(MMPProvider provider) { mmp_provider_ = provider; }
+
+  /***** Access APIs *****/
   template <typename T>
   const std::shared_ptr<T> Get() const;
 
@@ -53,11 +73,20 @@ class Hub {
   const U* GetOrderedMap(Args... args) const;
 
  private:
-  MessagerMapPtr NewMessagerMap(Filter filter = nullptr);
-  const std::shared_ptr<Messager> GetMessager(const std::string& name) const { return (*messager_map_ptr_)[name]; }
+  MMP LoadNewMMP(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON);
+  MessagerMapPtr NewMMP(Filter filter = nullptr);
+  void SetMMP(MMP mmp);
+  MessagerMapPtr GetMMPWithProvider() const;
+  const std::shared_ptr<Messager> GetMessager(const std::string& name) const { return (*GetMMPWithProvider())[name]; }
 
  private:
-  MessagerMapPtr messager_map_ptr_;
+  // For thread-safe guarantee during configuration updating.
+  std::mutex mutex_;
+  // All messagers' container.
+  MessagerMapPtr mmp_;
+  // Provide custom MMP (MessagerMapPtr). For keeping configuration access consistency
+  // in a coroutine or a transaction.
+  MMPProvider mmp_provider_;
 };
 
 template <typename T>
@@ -79,5 +108,28 @@ const U* Hub::GetOrderedMap(Args... args) const {
   auto msger = std::dynamic_pointer_cast<T>(msg);
   return msger ? msger->GetOrderedMap(args...) : nullptr;
 }
+
+namespace internal {
+class Scheduler {
+ public:
+  typedef std::function<void()> Job;
+
+ public:
+  Scheduler() : thread_id_(std::this_thread::get_id()) {}
+  static Scheduler& Current();
+  // thread-safety
+  void Post(const Job& job);
+  void Dispatch(const Job& job);
+  int LoopOnce();
+  bool IsLoopThread() const;
+  void AssertInLoopThread() const;
+
+ private:
+  std::thread::id thread_id_;
+  std::mutex mutex_;
+  std::vector<Job> jobs_;
+};
+
+}  // namespace internal
 
 }  // namespace tableau

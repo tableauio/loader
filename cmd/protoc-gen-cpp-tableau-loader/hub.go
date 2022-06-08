@@ -23,7 +23,10 @@ func generateHub(gen *protogen.Plugin) {
 const hubHpp = `#pragma once
 #include <google/protobuf/util/json_util.h>
 
+#include <functional>
+#include <mutex>
 #include <string>
+#include <thread>
 
 namespace tableau {
 enum class Format {
@@ -59,12 +62,29 @@ class Messager {
 
 using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
 using MessagerMapPtr = std::shared_ptr<MessagerMap>;
+using MMP = MessagerMapPtr;
 using Filter = std::function<bool(const std::string& name)>;
+using MMPProvider = std::function<MessagerMapPtr()>;  // MMP (MessagerMapPtr) provider.
 
 class Hub {
  public:
+  /***** Synchronously Loading *****/
+  // Load messagers from dir using the specified format, and store them in MMP.
   bool Load(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON);
 
+  /***** Asynchronously Loading *****/
+  // Load configs into temp MMP, and you should call LoopOnce() in you app's main loop,
+  // in order to take the temp MMP into effect.
+  bool AsyncLoad(const std::string& dir, Filter filter, Format fmt);
+  int LoopOnce();
+  // You'd better initialize the scheduler in the main thread.
+  void InitScheduler();
+
+  /***** MMP: Messager Map Ptr *****/
+  MessagerMapPtr GetMMP() const { return mmp_; }
+  void SetMMPProvider(MMPProvider provider) { mmp_provider_ = provider; }
+
+  /***** Access APIs *****/
   template <typename T>
   const std::shared_ptr<T> Get() const;
 
@@ -75,11 +95,20 @@ class Hub {
   const U* GetOrderedMap(Args... args) const;
 
  private:
-  MessagerMapPtr NewMessagerMap(Filter filter = nullptr);
-  const std::shared_ptr<Messager> GetMessager(const std::string& name) const { return (*messager_map_ptr_)[name]; }
+  MMP LoadNewMMP(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON);
+  MessagerMapPtr NewMMP(Filter filter = nullptr);
+  void SetMMP(MMP mmp);
+  MessagerMapPtr GetMMPWithProvider() const;
+  const std::shared_ptr<Messager> GetMessager(const std::string& name) const { return (*GetMMPWithProvider())[name]; }
 
  private:
-  MessagerMapPtr messager_map_ptr_;
+  // For thread-safe guarantee during configuration updating.
+  std::mutex mutex_;
+  // All messagers' container.
+  MessagerMapPtr mmp_;
+  // Provide custom MMP (MessagerMapPtr). For keeping configuration access consistency
+  // in a coroutine or a transaction.
+  MMPProvider mmp_provider_;
 };
 
 template <typename T>
@@ -102,7 +131,31 @@ const U* Hub::GetOrderedMap(Args... args) const {
   return msger ? msger->GetOrderedMap(args...) : nullptr;
 }
 
-}  // namespace tableau`
+namespace internal {
+class Scheduler {
+ public:
+  typedef std::function<void()> Job;
+
+ public:
+  Scheduler() : thread_id_(std::this_thread::get_id()) {}
+  static Scheduler& Current();
+  // thread-safety
+  void Post(const Job& job);
+  void Dispatch(const Job& job);
+  int LoopOnce();
+  bool IsLoopThread() const;
+  void AssertInLoopThread() const;
+
+ private:
+  std::thread::id thread_id_;
+  std::mutex mutex_;
+  std::vector<Job> jobs_;
+};
+
+}  // namespace internal
+
+}  // namespace tableau
+`
 
 const hubCpp = `#include "hub.pc.h"
 
@@ -204,28 +257,107 @@ bool StoreMessage(const std::string& dir, google::protobuf::Message& message, Fo
 }
 
 bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
-  auto new_messager_map_ptr = NewMessagerMap(filter);
-  for (auto iter : *new_messager_map_ptr) {
-    // auto&& name = iter.first;
-    bool ok = iter.second->Load(dir, fmt);
-    if (!ok) {
-      return false;
-    }
+  auto mmp = LoadNewMMP(dir, filter, fmt);
+  if (!mmp) {
+    return false;
   }
-
-  // replace
-  messager_map_ptr_ = new_messager_map_ptr;
+  SetMMP(mmp);
   return true;
 }
 
-MessagerMapPtr Hub::NewMessagerMap(Filter filter) {
-  MessagerMapPtr messager_map_ptr = std::make_shared<MessagerMap>();
-  for (auto&& it : Registry::registrar) {
-    if (filter == nullptr || filter(it.first)) {
-      (*messager_map_ptr)[it.first] = it.second();
-    }
+bool Hub::AsyncLoad(const std::string& dir, Filter filter, Format fmt) {
+  auto mmp = LoadNewMMP(dir, filter, fmt);
+  if (!mmp) {
+    return false;
   }
-  return messager_map_ptr;
+  ::tableau::internal::Scheduler::Current().Dispatch(std::bind(&Hub::SetMMP, this, mmp));
+  return true;
 }
 
-}  // namespace tableau`
+int Hub::LoopOnce() { return ::tableau::internal::Scheduler::Current().LoopOnce(); }
+void Hub::InitScheduler() { ::tableau::internal::Scheduler::Current(); }
+
+MMP Hub::LoadNewMMP(const std::string& dir, Filter filter, Format fmt) {
+  auto mmp = NewMMP(filter);
+  for (auto iter : *mmp) {
+    auto&& name = iter.first;
+    bool ok = iter.second->Load(dir, fmt);
+    if (!ok) {
+      return nullptr;
+    }
+  }
+  return mmp;
+}
+
+MessagerMapPtr Hub::NewMMP(Filter filter) {
+  MessagerMapPtr mmp = std::make_shared<MessagerMap>();
+  for (auto&& it : Registry::registrar) {
+    if (filter == nullptr || filter(it.first)) {
+      (*mmp)[it.first] = it.second();
+    }
+  }
+  return mmp;
+}
+
+void Hub::SetMMP(MMP mmp) {
+  // replace with thread-safe guarantee.
+  std::unique_lock<std::mutex> lock(mutex_);
+  mmp_ = mmp;
+}
+
+MessagerMapPtr Hub::GetMMPWithProvider() const {
+  if (mmp_provider_ != nullptr) {
+    return mmp_provider_();
+  }
+  return mmp_;
+}
+
+namespace internal {
+// Thread-local storage (TLS)
+thread_local Scheduler* tls_sched = nullptr;
+Scheduler& Scheduler::Current() {
+  if (tls_sched == nullptr) tls_sched = new Scheduler;
+  return *tls_sched;
+}
+
+int Scheduler::LoopOnce() {
+  AssertInLoopThread();
+
+  int count = 0;
+  std::vector<Job> jobs;
+  {  // scoped for auto-release lock.
+     // wake up immediately when there are pending tasks.
+    std::unique_lock<std::mutex> lock(mutex_);
+    jobs.swap(jobs_);
+  }
+  for (auto&& job : jobs) {
+    job();
+  }
+  count += jobs.size();
+  return count;
+}
+
+void Scheduler::Post(const Job& job) {
+  std::unique_lock<std::mutex> lock(mutex_);
+  jobs_.push_back(job);
+}
+
+void Scheduler::Dispatch(const Job& job) {
+  if (IsLoopThread()) {
+    job();  // run it immediately
+  } else {
+    Post(job);  // post and run it at next loop
+  }
+}
+
+bool Scheduler::IsLoopThread() const { return thread_id_ == std::this_thread::get_id(); }
+void Scheduler::AssertInLoopThread() const {
+  if (!IsLoopThread()) {
+    abort();
+  }
+}
+
+}  // namespace internal
+
+}  // namespace tableau
+`

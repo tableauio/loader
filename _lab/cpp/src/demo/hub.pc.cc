@@ -98,28 +98,106 @@ bool StoreMessage(const std::string& dir, google::protobuf::Message& message, Fo
 }
 
 bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
-  auto new_messager_map_ptr = NewMessagerMap(filter);
-  for (auto iter : *new_messager_map_ptr) {
-    auto&& name = iter.first;
-    bool ok = iter.second->Load(dir, fmt);
-    if (!ok) {
-      return false;
-    }
+  auto mmp = LoadNewMMP(dir, filter, fmt);
+  if (!mmp) {
+    return false;
   }
-
-  // replace
-  messager_map_ptr_ = new_messager_map_ptr;
+  SetMMP(mmp);
   return true;
 }
 
-MessagerMapPtr Hub::NewMessagerMap(Filter filter) {
-  MessagerMapPtr messager_map_ptr = std::make_shared<MessagerMap>();
-  for (auto&& it : Registry::registrar) {
-    if (filter == nullptr || filter(it.first)) {
-      (*messager_map_ptr)[it.first] = it.second();
+bool Hub::AsyncLoad(const std::string& dir, Filter filter, Format fmt) {
+  auto mmp = LoadNewMMP(dir, filter, fmt);
+  if (!mmp) {
+    return false;
+  }
+  ::tableau::internal::Scheduler::Current().Dispatch(std::bind(&Hub::SetMMP, this, mmp));
+  return true;
+}
+
+int Hub::LoopOnce() { return ::tableau::internal::Scheduler::Current().LoopOnce(); }
+void Hub::InitScheduler() { ::tableau::internal::Scheduler::Current(); }
+
+MMP Hub::LoadNewMMP(const std::string& dir, Filter filter, Format fmt) {
+  auto mmp = NewMMP(filter);
+  for (auto iter : *mmp) {
+    auto&& name = iter.first;
+    bool ok = iter.second->Load(dir, fmt);
+    if (!ok) {
+      return nullptr;
     }
   }
-  return messager_map_ptr;
+  return mmp;
 }
+
+MessagerMapPtr Hub::NewMMP(Filter filter) {
+  MessagerMapPtr mmp = std::make_shared<MessagerMap>();
+  for (auto&& it : Registry::registrar) {
+    if (filter == nullptr || filter(it.first)) {
+      (*mmp)[it.first] = it.second();
+    }
+  }
+  return mmp;
+}
+
+void Hub::SetMMP(MMP mmp) {
+  // replace with thread-safe guarantee.
+  std::unique_lock<std::mutex> lock(mutex_);
+  mmp_ = mmp;
+}
+
+MessagerMapPtr Hub::GetMMPWithProvider() const {
+  if (mmp_provider_ != nullptr) {
+    return mmp_provider_();
+  }
+  return mmp_;
+}
+
+namespace internal {
+// Thread-local storage (TLS)
+thread_local Scheduler* tls_sched = nullptr;
+Scheduler& Scheduler::Current() {
+  if (tls_sched == nullptr) tls_sched = new Scheduler;
+  return *tls_sched;
+}
+
+int Scheduler::LoopOnce() {
+  AssertInLoopThread();
+
+  int count = 0;
+  std::vector<Job> jobs;
+  {  // scoped for auto-release lock.
+     // wake up immediately when there are pending tasks.
+    std::unique_lock<std::mutex> lock(mutex_);
+    jobs.swap(jobs_);
+  }
+  for (auto&& job : jobs) {
+    job();
+  }
+  count += jobs.size();
+  return count;
+}
+
+void Scheduler::Post(const Job& job) {
+  std::unique_lock<std::mutex> lock(mutex_);
+  jobs_.push_back(job);
+}
+
+void Scheduler::Dispatch(const Job& job) {
+  if (IsLoopThread()) {
+    job();  // run it immediately
+  } else {
+    Post(job);  // post and run it at next loop
+  }
+}
+
+bool Scheduler::IsLoopThread() const { return thread_id_ == std::this_thread::get_id(); }
+void Scheduler::AssertInLoopThread() const {
+  if (!IsLoopThread()) {
+    abort();
+  }
+}
+
+}  // namespace internal
 
 }  // namespace tableau
