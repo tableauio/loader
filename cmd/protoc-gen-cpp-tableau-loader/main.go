@@ -38,7 +38,7 @@ func main() {
 			generateMessager(gen, f)
 		}
 		generateRegistry(gen)
-		generateHub(gen)
+		generateEmbed(gen)
 		return nil
 	})
 }
