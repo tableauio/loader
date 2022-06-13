@@ -53,7 +53,7 @@ class Hub {
   /***** Asynchronously Loading *****/
   // Load configs into temp MMP, and you should call LoopOnce() in you app's main loop,
   // in order to take the temp MMP into effect.
-  bool AsyncLoad(const std::string& dir, Filter filter, Format fmt);
+  bool AsyncLoad(const std::string& dir, Filter filter, Format fmt = Format::kJSON);
   int LoopOnce();
   // You'd better initialize the scheduler in the main thread.
   void InitScheduler();
