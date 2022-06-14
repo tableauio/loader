@@ -99,20 +99,20 @@ bool StoreMessage(const std::string& dir, google::protobuf::Message& message, Fo
 }
 
 bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
-  auto mmp = LoadNewMMP(dir, filter, fmt);
-  if (!mmp) {
+  auto msger_container = LoadNewMessagerContainer(dir, filter, fmt);
+  if (!msger_container) {
     return false;
   }
-  SetMMP(mmp);
+  SetMessagerContainer(msger_container);
   return true;
 }
 
 bool Hub::AsyncLoad(const std::string& dir, Filter filter, Format fmt) {
-  auto mmp = LoadNewMMP(dir, filter, fmt);
-  if (!mmp) {
+  auto msger_container = LoadNewMessagerContainer(dir, filter, fmt);
+  if (!msger_container) {
     return false;
   }
-  sched_->Dispatch(std::bind(&Hub::SetMMP, this, mmp));
+  sched_->Dispatch(std::bind(&Hub::SetMessagerContainer, this, msger_container));
   return true;
 }
 
@@ -122,42 +122,53 @@ void Hub::InitScheduler() {
   sched_->Current();
 }
 
-MMP Hub::LoadNewMMP(const std::string& dir, Filter filter, Format fmt) {
-  auto mmp = NewMMP(filter);
-  for (auto iter : *mmp) {
+MessagerContainer Hub::LoadNewMessagerContainer(const std::string& dir, Filter filter, Format fmt) {
+  auto msger_container = NewMessagerContainer(filter);
+  for (auto iter : *msger_container) {
     auto&& name = iter.first;
-    ATOM_TRACE("%s is loading...", name.c_str());
+    ATOM_TRACE("loading %s", name.c_str());
     bool ok = iter.second->Load(dir, fmt);
     if (!ok) {
-      ATOM_ERROR("%s load failed: %s", name.c_str(), GetErrMsg().c_str());
+      ATOM_ERROR("load %s failed: %s", name.c_str(), GetErrMsg().c_str());
       return nullptr;
     }
-    ATOM_TRACE("%s loaded successfully", name.c_str());
+    ATOM_TRACE("loaded %s", name.c_str());
   }
-  return mmp;
+  return msger_container;
 }
 
-MessagerMapPtr Hub::NewMMP(Filter filter) {
-  MessagerMapPtr mmp = std::make_shared<MessagerMap>();
+MessagerContainer Hub::NewMessagerContainer(Filter filter) {
+  MessagerContainer msger_container = std::make_shared<MessagerMap>();
   for (auto&& it : Registry::registrar) {
     if (filter == nullptr || filter(it.first)) {
-      (*mmp)[it.first] = it.second();
+      (*msger_container)[it.first] = it.second();
     }
   }
-  return mmp;
+  return msger_container;
 }
 
-void Hub::SetMMP(MMP mmp) {
+void Hub::SetMessagerContainer(MessagerContainer msger_container) {
   // replace with thread-safe guarantee.
   std::unique_lock<std::mutex> lock(mutex_);
-  mmp_ = mmp;
+  msger_container_ = msger_container;
 }
 
-MessagerMapPtr Hub::GetMMPWithProvider() const {
-  if (mmp_provider_ != nullptr) {
-    return mmp_provider_();
+MessagerContainer Hub::GetMessagerContainerWithProvider() const {
+  if (msger_container_provider_ != nullptr) {
+    return msger_container_provider_();
   }
-  return mmp_;
+  return msger_container_;
+}
+
+const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const {
+  auto container = GetMessagerContainerWithProvider();
+  if (container) {
+    auto it = container->find(name);
+    if (it != container->end()) {
+      return it->second;
+    }
+  }
+  return nullptr;
 }
 
 namespace internal {

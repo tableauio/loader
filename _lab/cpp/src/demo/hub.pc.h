@@ -62,28 +62,27 @@ class Messager {
 };
 
 using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
-using MessagerMapPtr = std::shared_ptr<MessagerMap>;
-using MMP = MessagerMapPtr;
+using MessagerContainer = std::shared_ptr<MessagerMap>;
 using Filter = std::function<bool(const std::string& name)>;
-using MMPProvider = std::function<MessagerMapPtr()>;  // MMP (MessagerMapPtr) provider.
+using MessagerContainerProvider = std::function<MessagerContainer()>;
 
 class Hub {
  public:
   /***** Synchronously Loading *****/
-  // Load messagers from dir using the specified format, and store them in MMP.
+  // Load messagers from dir using the specified format, and store them in MessagerContainer.
   bool Load(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON);
 
   /***** Asynchronously Loading *****/
-  // Load configs into temp MMP, and you should call LoopOnce() in you app's main loop,
-  // in order to take the temp MMP into effect.
+  // Load configs into temp MessagerContainer, and you should call LoopOnce() in you app's main loop,
+  // in order to take the temp MessagerContainer into effect.
   bool AsyncLoad(const std::string& dir, Filter filter, Format fmt = Format::kJSON);
   int LoopOnce();
   // You'd better initialize the scheduler in the main thread.
   void InitScheduler();
 
-  /***** MMP: Messager Map Ptr *****/
-  MessagerMapPtr GetMMP() const { return mmp_; }
-  void SetMMPProvider(MMPProvider provider) { mmp_provider_ = provider; }
+  /***** MessagerContainer *****/
+  MessagerContainer GetMessagerContainer() const { return msger_container_; }
+  void SetMessagerContainerProvider(MessagerContainerProvider provider) { msger_container_provider_ = provider; }
 
   /***** Access APIs *****/
   template <typename T>
@@ -96,20 +95,22 @@ class Hub {
   const U* GetOrderedMap(Args... args) const;
 
  private:
-  MMP LoadNewMMP(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON);
-  MessagerMapPtr NewMMP(Filter filter = nullptr);
-  void SetMMP(MMP mmp);
-  MessagerMapPtr GetMMPWithProvider() const;
-  const std::shared_ptr<Messager> GetMessager(const std::string& name) const { return (*GetMMPWithProvider())[name]; }
+  MessagerContainer LoadNewMessagerContainer(const std::string& dir, Filter filter = nullptr,
+                                             Format fmt = Format::kJSON);
+  MessagerContainer NewMessagerContainer(Filter filter = nullptr);
+  void SetMessagerContainer(MessagerContainer msger_container);
+  MessagerContainer GetMessagerContainerWithProvider() const;
+  const std::shared_ptr<Messager> GetMessager(const std::string& name) const;
 
  private:
   // For thread-safe guarantee during configuration updating.
   std::mutex mutex_;
   // All messagers' container.
-  MessagerMapPtr mmp_;
-  // Provide custom MMP (MessagerMapPtr). For keeping configuration access consistency
-  // in a coroutine or a transaction.
-  MMPProvider mmp_provider_;
+  MessagerContainer msger_container_;
+  // Provide custom MessagerContainer. For keeping configuration access
+  // consistent in a coroutine or a transaction.
+  MessagerContainerProvider msger_container_provider_;
+  // Loading scheduler.
   internal::Scheduler* sched_;
 };
 

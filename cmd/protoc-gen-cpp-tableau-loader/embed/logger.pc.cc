@@ -3,15 +3,20 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/syscall.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include <thread>
 #include <unordered_map>
 
+#define gettid() syscall(SYS_gettid)
+
 namespace tableau {
+namespace log {
 
 // clang-format off
-static const std::unordered_map<int, std::string> kLogLevelMap = {
+static const std::unordered_map<int, std::string> kLevelMap = {
     {kTrace, "TRACE"},
     {kDebug, "DEBUG"},
     {kInfo, "INFO"},
@@ -32,7 +37,7 @@ Logger* DefaultLogger() {
 
 void SetDefaultLogger(Logger* logger) { g_default_logger = logger; }
 
-int Logger::Init(const std::string& path) {
+int Logger::Init(const std::string& path, Level level) {
   std::string dir = path.substr(0, path.find_last_of("/\\"));
   std::string cmd = "mkdir -p " + dir;
   // prepare the specified directory
@@ -43,10 +48,14 @@ int Logger::Init(const std::string& path) {
   }
   ofs_.open(path, std::ofstream::out | std::ofstream::app);
   os_ = &ofs_;  // use file stream as output stream
+  level_ = level;
   return 0;
 }
 
-void Logger::Log(const SourceLocation& loc, LogLevel level, const char* format, ...) {
+void Logger::Log(const SourceLocation& loc, Level level, const char* format, ...) {
+  if (level < level_) {
+    return;
+  }
   // scoped auto-release lock.
   std::unique_lock<std::mutex> lock(mutex_);
   static thread_local char content[1024] = {0};
@@ -58,8 +67,9 @@ void Logger::Log(const SourceLocation& loc, LogLevel level, const char* format, 
   int lvl = static_cast<int>(level);
   // clang-format off
   *os_ << NowStr() << "|"
-    << std::this_thread::get_id() << "|"
-    << kLogLevelMap.at(lvl) << "|" 
+    // << std::this_thread::get_id() << "|"
+    << gettid() << "|"
+    << kLevelMap.at(lvl) << "|" 
     << loc.filename << ":" << loc.line << "|" 
     << loc.funcname << "|" 
     << content
@@ -81,4 +91,5 @@ const char* NowStr() {
   return buf;
 }
 
+}  // namespace log
 }  // namespace tableau
