@@ -2,7 +2,7 @@ package main
 
 import (
 	"embed"
-	"path/filepath"
+	"path"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -21,11 +21,15 @@ func generateEmbed(gen *protogen.Plugin) {
 		if entry.IsDir() {
 			continue
 		}
-		
+
 		g := gen.NewGeneratedFile(entry.Name(), "")
 		helper.GenerateCommonHeader(gen, g, version)
 		g.P()
-		content, _ := efs.ReadFile(filepath.Join("embed", entry.Name()))
+		// refer: [embed: embed path on different OS cannot open file](https://github.com/golang/go/issues/45230)
+		content, err := efs.ReadFile(path.Join("embed", entry.Name()))
+		if err != nil {
+			panic(err)
+		}
 		g.P(string(content))
 	}
 }
