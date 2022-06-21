@@ -11,6 +11,12 @@
 namespace tableau {
 static thread_local std::string g_err_msg;
 const std::string& GetErrMsg() { return g_err_msg; }
+
+void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& message) {
+  static const char* level_names[] = {"WARNING", "ERROR", "FATAL"};
+  ATOM_ERROR("[libprotobuf %s %s:%d] %s", level_names[level], filename, line, message.c_str());
+}
+
 bool Message2JSON(const google::protobuf::Message& message, std::string& json) {
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;
@@ -20,8 +26,9 @@ bool Message2JSON(const google::protobuf::Message& message, std::string& json) {
 }
 
 bool JSON2Message(const std::string& json, google::protobuf::Message& message) {
-  if (!google::protobuf::util::JsonStringToMessage(json, &message).ok()) {
-    g_err_msg = "failed to parse json file: " + GetProtoName(message) + kJSONExt;
+  auto status = google::protobuf::util::JsonStringToMessage(json, &message);
+  if (!status.ok()) {
+    g_err_msg = "failed to parse " + GetProtoName(message) + kJSONExt + ": " + status.ToString();
     return false;
   }
   return true;
@@ -29,14 +36,14 @@ bool JSON2Message(const std::string& json, google::protobuf::Message& message) {
 
 bool Text2Message(const std::string& text, google::protobuf::Message& message) {
   if (!google::protobuf::TextFormat::ParseFromString(text, &message)) {
-    g_err_msg = "failed to parse text file: " + GetProtoName(message) + kTextExt;
+    g_err_msg = "failed to parse " + GetProtoName(message) + kTextExt;
     return false;
   }
   return true;
 }
 bool Wire2Message(const std::string& wire, google::protobuf::Message& message) {
   if (!message.ParseFromString(wire)) {
-    g_err_msg = "failed to parse wire file: " + GetProtoName(message) + kWireExt;
+    g_err_msg = "failed to parse " + GetProtoName(message) + kWireExt;
     return false;
   }
   return true;
@@ -123,6 +130,9 @@ void Hub::InitScheduler() {
 }
 
 MessagerContainer Hub::LoadNewMessagerContainer(const std::string& dir, Filter filter, Format fmt) {
+  // intercept protobuf error logs
+  auto old_handler = google::protobuf::SetLogHandler(ProtobufLogHandler);
+
   auto msger_container = NewMessagerContainer(filter);
   for (auto iter : *msger_container) {
     auto&& name = iter.first;
@@ -130,10 +140,15 @@ MessagerContainer Hub::LoadNewMessagerContainer(const std::string& dir, Filter f
     bool ok = iter.second->Load(dir, fmt);
     if (!ok) {
       ATOM_ERROR("load %s failed: %s", name.c_str(), GetErrMsg().c_str());
+      // restore to old protobuf log hanlder
+      google::protobuf::SetLogHandler(old_handler);
       return nullptr;
     }
     ATOM_TRACE("loaded %s", name.c_str());
   }
+
+  // restore to old protobuf log hanlder
+  google::protobuf::SetLogHandler(old_handler);
   return msger_container;
 }
 
