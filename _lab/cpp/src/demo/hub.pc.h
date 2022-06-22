@@ -111,7 +111,7 @@ class Hub {
   // consistent in a coroutine or a transaction.
   MessagerContainerProvider msger_container_provider_;
   // Loading scheduler.
-  internal::Scheduler* sched_;
+  internal::Scheduler* sched_ = nullptr;
 };
 
 template <typename T>
