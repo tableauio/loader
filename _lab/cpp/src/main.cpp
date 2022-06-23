@@ -4,6 +4,7 @@
 
 #include "demo/hub.pc.h"
 #include "demo/item_conf.pc.h"
+#include "demo/logger.pc.h"
 #include "demo/registry.pc.h"
 #include "demo/test_conf.pc.h"
 #include "protoconf/item_conf.pb.h"
@@ -77,6 +78,17 @@ int main() {
 
   std::cout << "-----" << std::endl;
   tableau::Registry::Init();
+  protoconf::ActivityConf act_conf;
+  tableau::ProtobufLogHandler(google::protobuf::LOGLEVEL_INFO, "info.cc", 10, "info msg");
+  tableau::ProtobufLogHandler(google::protobuf::LOGLEVEL_WARNING, "warn.cc", 10, "warn msg");
+  tableau::ProtobufLogHandler(google::protobuf::LOGLEVEL_ERROR, "error.cc", 10, "error msg");
+  tableau::ProtobufLogHandler(google::protobuf::LOGLEVEL_FATAL, "fatal.cc", 10, "fatal msg");
+  // google::protobuf::SetLogHandler(tableau::ProtobufLogHandler);
+  //   if (!act_conf.ParseFromString("0101010110")) {
+  //     std::cout << "failed to parse" << std::endl;
+  //     return 1;
+  //   }
+
   bool ok = MyHub::Instance().Load("../../../test/testdata/", [](const std::string& name) { return true; });
   if (!ok) {
     std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;

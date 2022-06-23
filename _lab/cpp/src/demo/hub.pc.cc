@@ -1,9 +1,11 @@
 #include "hub.pc.h"
 
+#include <google/protobuf/stubs/logging.h>
 #include <google/protobuf/text_format.h>
 
 #include <fstream>
 #include <sstream>
+#include <unordered_map>
 
 #include "logger.pc.h"
 #include "registry.pc.h"
@@ -12,9 +14,18 @@ namespace tableau {
 static thread_local std::string g_err_msg;
 const std::string& GetErrMsg() { return g_err_msg; }
 
+// refer: https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/stubs/logging.h
 void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& message) {
-  static const char* level_names[] = {"WARNING", "ERROR", "FATAL"};
-  ATOM_ERROR("[libprotobuf %s %s:%d] %s", level_names[level], filename, line, message.c_str());
+  static const std::unordered_map<int, log::Level> kLevelMap = {{google::protobuf::LOGLEVEL_INFO, log::kInfo},
+                                                                {google::protobuf::LOGLEVEL_WARNING, log::kWarn},
+                                                                {google::protobuf::LOGLEVEL_ERROR, log::kError},
+                                                                {google::protobuf::LOGLEVEL_FATAL, log::kFatal}};
+  log::Level lvl = log::kWarn;  // default
+  auto iter = kLevelMap.find(level);
+  if (iter != kLevelMap.end()) {
+    lvl = iter->second;
+  }
+  ATOM_LOGGER_CALL(tableau::log::DefaultLogger(), lvl, "[libprotobuf %s:%d] %s", filename, line, message.c_str());
 }
 
 bool Message2JSON(const google::protobuf::Message& message, std::string& json) {

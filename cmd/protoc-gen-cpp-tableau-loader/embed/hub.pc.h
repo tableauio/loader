@@ -24,7 +24,7 @@ bool Message2JSON(const google::protobuf::Message& message, std::string& json);
 bool JSON2Message(const std::string& json, google::protobuf::Message& message);
 bool Text2Message(const std::string& text, google::protobuf::Message& message);
 bool Wire2Message(const std::string& wire, google::protobuf::Message& message);
-
+void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& message);
 const std::string& GetProtoName(const google::protobuf::Message& message);
 bool LoadMessage(const std::string& dir, google::protobuf::Message& message, Format fmt = Format::kJSON);
 
