@@ -4,6 +4,7 @@
 
 #include "protoconf/hub.pc.h"
 #include "protoconf/item_conf.pc.h"
+#include "protoconf/logger.pc.h"
 #include "protoconf/registry.pc.h"
 #include "protoconf/test_conf.pc.h"
 
@@ -47,7 +48,24 @@ const std::shared_ptr<T> Get() {
   return MyHub::Instance().Get<T>();
 }
 
+void LogWrite(std::ostream* os, const tableau::log::SourceLocation& loc, const tableau::log::LevelInfo& lvl,
+              const std::string& content) {
+  // clang-format off
+  *os << tableau::log::NowStr() << " "
+    // << std::this_thread::get_id() << "|"
+    // << gettid() << " "
+    << lvl.name << " [" 
+    << loc.filename << ":" << loc.line << "][" 
+    << loc.funcname << "]" 
+    << content
+    << std::endl << std::flush;
+  // clang-format on
+}
+
 int main() {
+  // custom log
+  tableau::log::DefaultLogger()->SetWriter(LogWrite);
+
   tableau::Registry::Init();
   bool ok = MyHub::Instance().Load("../../testdata/", [](const std::string& name) { return true; });
   if (!ok) {
@@ -119,7 +137,7 @@ int main() {
     std::cout << "protobuf hub get ActivityConf failed!" << std::endl;
     return 1;
   }
-  
+
   std::cout << "-----Index accessers test" << std::endl;
   auto index_chapters = activity_conf->FindChapter(1);
   if (!index_chapters) {

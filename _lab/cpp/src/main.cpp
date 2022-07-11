@@ -49,7 +49,24 @@ const std::shared_ptr<T> Get() {
   return MyHub::Instance().Get<T>();
 }
 
+void LogWrite(std::ostream* os, const tableau::log::SourceLocation& loc, const tableau::log::LevelInfo& lvl,
+              const std::string& content) {
+  // clang-format off
+  *os << tableau::log::NowStr() << " "
+    // << std::this_thread::get_id() << "|"
+    // << gettid() << " "
+    << lvl.name << " [" 
+    << loc.filename << ":" << loc.line << "][" 
+    << loc.funcname << "]" 
+    << content
+    << std::endl << std::flush;
+  // clang-format on
+}
+
 int main() {
+  // custom log
+  tableau::log::DefaultLogger()->SetWriter(LogWrite);
+
   std::string jsonstr;
   //   protoconf::ItemConf item;
 

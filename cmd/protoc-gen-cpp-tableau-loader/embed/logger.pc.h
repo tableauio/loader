@@ -17,6 +17,11 @@ enum Level : int {
   kFatal = 5,
 };
 
+struct LevelInfo {
+  Level level;
+  const std::string& name;
+};
+
 struct SourceLocation {
   SourceLocation() = default;
   SourceLocation(const char* filename_in, int line_in, const char* funcname_in)
@@ -28,16 +33,24 @@ struct SourceLocation {
   const char* funcname{nullptr};
 };
 
+using Writer = std::function<void(std::ostream* os, const SourceLocation& loc, const LevelInfo& level,
+                                  const std::string& content)>;
+// Default write: write the log to output stream.
+void DefaultWrite(std::ostream* os, const SourceLocation& loc, const LevelInfo& level, const std::string& content);
+
 // A simple multi-threaded logger.
 class Logger {
  public:
   Logger() {
     // default: write to stdout
     os_ = &std::cout;
+    writer_ = DefaultWrite;
   }
   // Init the logger with the specified path.
   // NOTE: no guarantee of thread-safety.
   int Init(const std::string& path, Level level);
+  // Set the writer for writing log.
+  void SetWriter(Writer writer) { writer_ = writer; }
   // Log with guarantee of thread-safety.
   void Log(const SourceLocation& loc, Level level, const char* format, ...);
 
@@ -46,6 +59,7 @@ class Logger {
   std::ofstream ofs_;
   std::ostream* os_ = nullptr;
   std::mutex mutex_;
+  Writer writer_;
 };
 
 const char* NowStr();

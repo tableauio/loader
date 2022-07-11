@@ -64,12 +64,16 @@ void Logger::Log(const SourceLocation& loc, Level level, const char* format, ...
   vsnprintf(content, sizeof(content), format, ap);
   va_end(ap);
 
-  int lvl = static_cast<int>(level);
+  LevelInfo level_info{level, kLevelMap.at(static_cast<int>(level))};
+  writer_(os_, loc, level_info, content);
+}
+
+void DefaultWrite(std::ostream* os, const SourceLocation& loc, const LevelInfo& lvl, const std::string& content) {
   // clang-format off
-  *os_ << NowStr() << "|"
+  *os << NowStr() << "|"
     // << std::this_thread::get_id() << "|"
     << gettid() << "|"
-    << kLevelMap.at(lvl) << "|" 
+    << lvl.name << "|" 
     << loc.filename << ":" << loc.line << "|" 
     << loc.funcname << "|" 
     << content
