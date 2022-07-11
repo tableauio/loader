@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-const version = "0.4.3"
+const version = "0.4.4"
 const pcExt = "pc" // protoconf file extension
 const pbExt = "pb" // protobuf file extension
 
