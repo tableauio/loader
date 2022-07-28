@@ -20,7 +20,7 @@ git submodule update --init --recursive
 ./autogen.sh
 # Build and install the C++ Protocol Buffer runtime and the Protocol Buffer compiler (protoc)
 ./configure
-make -j64
-make check
+make -j"$(nproc)"
+make check -j"$(nproc)"
 # sudo make install
 # sudo ldconfig # refresh shared library cache.
