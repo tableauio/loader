@@ -3,9 +3,9 @@
 #include <sys/types.h>
 
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <mutex>
-#include <functional>
 
 namespace tableau {
 namespace log {

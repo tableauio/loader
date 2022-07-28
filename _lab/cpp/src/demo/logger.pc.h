@@ -3,6 +3,7 @@
 #include <sys/types.h>
 
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <mutex>
 
