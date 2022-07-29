@@ -17,10 +17,25 @@ const pbExt = "pb" // protobuf file extension
 var namespace *string
 var messagerSuffix *string
 
+// genMode 可以控制只生成 registry 代码，或者只生成 loader 代码
+// registry 代码依赖输入所有要生成的 proto 文件，而 loader 代码可以单个文件独立生成
+// 把 registry 单独拆出来，方便做依赖管理，避免每次改动只能全量生成
+var genMode *string
+
+const (
+	// normalMode 普通模式，需要一次性输入所有配置协议，重新生成所有代码
+	normalMode = "normal"
+	// registryOnly 只生成 registry 代码的模式，任意一个协议有变化，registry 代码都会有变化
+	registryOnly = "registry_only"
+	// loaderOnly 只生成 loader 代码的模式，跳过公共代码生成
+	loaderOnly = "loader_only"
+)
+
 func main() {
 	var flags flag.FlagSet
 	namespace = flags.String("namespace", "tableau", "tableau namespace")
 	messagerSuffix = flags.String("suffix", "Mgr", "tableau messager name suffix")
+	genMode = flags.String("gen-mode", "normal", "gen registry code only")
 	flag.Parse()
 
 	protogen.Options{
@@ -37,10 +52,26 @@ func main() {
 			if workbook == nil {
 				continue
 			}
-			generateMessager(gen, f)
+
+			switch *genMode {
+			case loaderOnly:
+				fallthrough
+			case normalMode:
+				generateMessager(gen, f)
+			case registryOnly:
+				recordFileAndMessagers(gen, f)
+			}
 		}
-		generateRegistry(gen)
-		generateEmbed(gen)
+
+		switch *genMode {
+		case loaderOnly:
+			// skip common code generation
+		case normalMode:
+			generateRegistry(gen)
+			generateEmbed(gen)
+		case registryOnly:
+			generateRegistry(gen)
+		}
 		return nil
 	})
 }
