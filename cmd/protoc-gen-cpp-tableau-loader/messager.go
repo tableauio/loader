@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"strings"
 
 	"github.com/iancoleman/strcase"
@@ -613,4 +614,25 @@ func genCppOrderedMapLoader(depth int, messagerFullName string, g *protogen.Gene
 	if depth == 1 {
 		g.P("")
 	}
+}
+
+func recordFileAndMessagers(gen *protogen.Plugin, file *protogen.File) {
+	protofiles = append(protofiles, file.GeneratedFilenamePrefix)
+
+	var fileMessagers []string
+	for _, message := range file.Messages {
+		opts, ok := message.Desc.Options().(*descriptorpb.MessageOptions)
+		if !ok {
+			gen.Error(errors.New("get message options failed"))
+		}
+		worksheet, ok := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
+		if !ok {
+			gen.Error(errors.New("get worksheet extension failed"))
+		}
+		if worksheet != nil {
+			messagerName := string(message.Desc.Name())
+			fileMessagers = append(fileMessagers, messagerName)
+		}
+	}
+	messagers = append(messagers, fileMessagers...)
 }
