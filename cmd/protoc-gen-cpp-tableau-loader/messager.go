@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"strings"
 
 	"github.com/iancoleman/strcase"
@@ -139,7 +140,8 @@ const mapSuffix = "_Map"
 const orderedMapSuffix = "_OrderedMap"
 const orderedMapValueSuffix = "_OrderedMapValue"
 
-func genHppOrderedMapGetters(depth int, params []string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, messagerFullName string) {
+func genHppOrderedMapGetters(depth int, params []string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor,
+	messagerFullName string) {
 	if depth == 1 && !helper.NeedGenOrderedMap(md) {
 		return
 	}
@@ -222,7 +224,8 @@ func parseMapType(fd protoreflect.FieldDescriptor) (keyType, valueType string) {
 	return "", ""
 }
 
-func genHppIndexFinders(depth int, params []string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, messagerFullName string) {
+func genHppIndexFinders(depth int, params []string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor,
+	messagerFullName string) {
 	g.P("  // Index accessers.")
 	indexInfos := index.ParseIndexInfo(md)
 	for _, info := range indexInfos {
@@ -232,8 +235,10 @@ func genHppIndexFinders(depth int, params []string, g *protogen.GeneratedFile, m
 		g.P("  using ", vectorName, " = std::vector<const ", info.FullClassName, "*>;")
 		g.P("  using ", mapName, " = std::unordered_map<", info.IndexFieldType, ", ", vectorName, ">;")
 		g.P("  const ", mapName, "& Find", info.IndexName, "() const;")
-		g.P("  const ", vectorName, "* Find", info.IndexName, "(", info.IndexFieldType, " ", info.IndexFieldName, ") const;")
-		g.P("  const ", info.FullClassName, "* FindFirst", info.IndexName, "(", info.IndexFieldType, " ", info.IndexFieldName, ") const;")
+		g.P("  const ", vectorName, "* Find", info.IndexName, "(", info.IndexFieldType, " ", info.IndexFieldName,
+			") const;")
+		g.P("  const ", info.FullClassName, "* FindFirst", info.IndexName, "(", info.IndexFieldType, " ",
+			info.IndexFieldName, ") const;")
 		g.P()
 
 		g.P(" private:")
@@ -250,10 +255,12 @@ func genCppIndexFinders(messagerName string, g *protogen.GeneratedFile, md proto
 		mapName := "Index_" + info.IndexName + "Map"
 		indexContainerName := "index_" + strcase.ToSnake(info.IndexName) + "_map_"
 
-		g.P("const ", messagerName, "::", mapName, "& "+messagerName+"::Find", info.IndexName, "() const { return "+indexContainerName+" ;}")
+		g.P("const ", messagerName, "::", mapName, "& "+messagerName+"::Find", info.IndexName,
+			"() const { return "+indexContainerName+" ;}")
 		g.P()
 
-		g.P("const ", messagerName, "::", vectorName, "* "+messagerName+"::Find", info.IndexName, "(", info.IndexFieldType, " ", info.IndexFieldName, ") const {")
+		g.P("const ", messagerName, "::", vectorName, "* "+messagerName+"::Find", info.IndexName, "(",
+			info.IndexFieldType, " ", info.IndexFieldName, ") const {")
 		g.P("  auto iter = ", indexContainerName, ".find(", info.IndexFieldName, ");")
 		g.P("  if (iter == ", indexContainerName, ".end()) {")
 		g.P("    return nullptr;")
@@ -262,7 +269,8 @@ func genCppIndexFinders(messagerName string, g *protogen.GeneratedFile, md proto
 		g.P("}")
 		g.P()
 
-		g.P("const ", info.FullClassName, "* "+messagerName+"::FindFirst", info.IndexName, "(", info.IndexFieldType, " ", info.IndexFieldName, ") const {")
+		g.P("const ", info.FullClassName, "* "+messagerName+"::FindFirst", info.IndexName, "(", info.IndexFieldType,
+			" ", info.IndexFieldName, ") const {")
 		g.P("  auto conf = Find", info.IndexName, "(", info.IndexFieldName, ");")
 		g.P("  if (conf == nullptr || conf->size() == 0) {")
 		g.P("    return nullptr;")
@@ -284,7 +292,8 @@ func genCppIndexLoader(g *protogen.GeneratedFile, md protoreflect.MessageDescrip
 	}
 }
 
-func genOneCppIndexLoader(depth int, indexContainerName string, parentDataName string, info *index.LevelInfo, g *protogen.GeneratedFile) {
+func genOneCppIndexLoader(depth int, indexContainerName string, parentDataName string, info *index.LevelInfo,
+	g *protogen.GeneratedFile) {
 
 	// for (auto&& item1 : data_.activity_map()) {
 	// 	for (auto&& item2 : item1.second.chapter_map()) {
@@ -306,7 +315,8 @@ func genOneCppIndexLoader(depth int, indexContainerName string, parentDataName s
 		genOneCppIndexLoader(depth+1, indexContainerName, parentDataName, info.NextLevel, g)
 		g.P(strings.Repeat("  ", depth), "}")
 	} else {
-		g.P(strings.Repeat("  ", depth), indexContainerName, "["+parentDataName+"."+info.FieldName+"()].push_back(&"+parentDataName+");")
+		g.P(strings.Repeat("  ", depth), indexContainerName,
+			"["+parentDataName+"."+info.FieldName+"()].push_back(&"+parentDataName+");")
 	}
 }
 
@@ -358,7 +368,8 @@ func genCppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	}
 }
 
-func genCppMapGetters(depth int, params []string, messagerName string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
+func genCppMapGetters(depth int, params []string, messagerName string, g *protogen.GeneratedFile,
+	md protoreflect.MessageDescriptor) {
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
@@ -367,7 +378,8 @@ func genCppMapGetters(depth int, params []string, messagerName string, g *protog
 
 			params = append(params, keyType+" "+keyName)
 
-			g.P("const ", helper.ParseCppType(fd.MapValue()), "* ", messagerName, "::Get(", strings.Join(params, ", "), ") const {")
+			g.P("const ", helper.ParseCppType(fd.MapValue()), "* ", messagerName, "::Get(", strings.Join(params, ", "),
+				") const {")
 
 			var container string
 			if depth == 1 {
@@ -399,7 +411,8 @@ func genCppMapGetters(depth int, params []string, messagerName string, g *protog
 	}
 }
 
-func genCppOrderedMapGetters(depth int, params []string, messagerName, messagerFullName string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
+func genCppOrderedMapGetters(depth int, params []string, messagerName, messagerFullName string,
+	g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
 	if depth == 1 && !helper.NeedGenOrderedMap(md) {
 		return
 	}
@@ -409,7 +422,8 @@ func genCppOrderedMapGetters(depth int, params []string, messagerName, messagerF
 			prefix := parseOrderedMapPrefix(fd, messagerFullName)
 			orderedMap := prefix + orderedMapSuffix
 
-			g.P("const ", messagerName, "::", orderedMap, "* ", messagerName, "::GetOrderedMap(", strings.Join(params, ", "), ") const {")
+			g.P("const ", messagerName, "::", orderedMap, "* ", messagerName, "::GetOrderedMap(",
+				strings.Join(params, ", "), ") const {")
 			if depth == 1 {
 				g.P("  return &ordered_map_; ")
 			} else {
@@ -444,7 +458,8 @@ func genCppOrderedMapGetters(depth int, params []string, messagerName, messagerF
 	}
 }
 
-func genCppOrderedMapLoader(depth int, messagerFullName string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
+func genCppOrderedMapLoader(depth int, messagerFullName string, g *protogen.GeneratedFile,
+	md protoreflect.MessageDescriptor) {
 	if depth == 1 {
 		g.P("  // OrderedMap init.")
 	}
@@ -465,20 +480,24 @@ func genCppOrderedMapLoader(depth int, messagerFullName string, g *protogen.Gene
 				prevContainer = "data_"
 				prevTmpOrderedMapName = "ordered_map_"
 			}
-			g.P(strings.Repeat("  ", depth), "for (auto&& ", itemName, " : ", prevContainer, ".", string(fd.Name()), "()) {")
+			g.P(strings.Repeat("  ", depth), "for (auto&& ", itemName, " : ", prevContainer, ".", string(fd.Name()),
+				"()) {")
 			nextMapFD := getNextLevelMapFD(fd.MapValue())
 			if nextMapFD != nil {
 				nextPrefix := parseOrderedMapPrefix(nextMapFD, messagerFullName)
 				// nextMap := nextPrefix + mapSuffix
 				nextOrderedMap := nextPrefix + orderedMapSuffix
-				g.P(strings.Repeat("  ", depth+1), prevTmpOrderedMapName, "[", itemName, ".first] = ", orderedMapValue, "(", nextOrderedMap, "(), &", itemName, ".second.", string(nextMapFD.Name()), "());")
-				g.P(strings.Repeat("  ", depth+1), "auto&& ", tmpOrderedMapName, " = ", prevTmpOrderedMapName, "[", itemName, ".first].first;")
+				g.P(strings.Repeat("  ", depth+1), prevTmpOrderedMapName, "[", itemName, ".first] = ", orderedMapValue,
+					"(", nextOrderedMap, "(), &", itemName, ".second.", string(nextMapFD.Name()), "());")
+				g.P(strings.Repeat("  ", depth+1), "auto&& ", tmpOrderedMapName, " = ", prevTmpOrderedMapName, "[",
+					itemName, ".first].first;")
 			} else {
 				ref := "&"
 				if fd.MapValue().Kind() != protoreflect.MessageKind {
 					ref = "" // scalar value type just do value copy.
 				}
-				g.P(strings.Repeat("  ", depth+1), prevTmpOrderedMapName, "[", itemName, ".first] = ", ref, itemName, ".second;")
+				g.P(strings.Repeat("  ", depth+1), prevTmpOrderedMapName, "[", itemName, ".first] = ", ref, itemName,
+					".second;")
 			}
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
 				genCppOrderedMapLoader(depth+1, messagerFullName, g, fd.MapValue().Message())
@@ -490,4 +509,23 @@ func genCppOrderedMapLoader(depth int, messagerFullName string, g *protogen.Gene
 	if depth == 1 {
 		g.P("")
 	}
+}
+
+func appendMessager(gen *protogen.Plugin, file *protogen.File) {
+	var fileMessagers []string
+	for _, message := range file.Messages {
+		opts, ok := message.Desc.Options().(*descriptorpb.MessageOptions)
+		if !ok {
+			gen.Error(errors.New("get message options failed"))
+		}
+		worksheet, ok := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
+		if !ok {
+			gen.Error(errors.New("get worksheet extension failed"))
+		}
+		if worksheet != nil {
+			messagerName := string(message.Desc.Name())
+			fileMessagers = append(fileMessagers, messagerName)
+		}
+	}
+	messagers = append(messagers, fileMessagers...)
 }
