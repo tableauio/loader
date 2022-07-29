@@ -511,7 +511,9 @@ func genCppOrderedMapLoader(depth int, messagerFullName string, g *protogen.Gene
 	}
 }
 
-func appendMessager(gen *protogen.Plugin, file *protogen.File) {
+func recordFileAndMessagers(gen *protogen.Plugin, file *protogen.File) {
+	protofiles = append(protofiles, file.GeneratedFilenamePrefix)
+
 	var fileMessagers []string
 	for _, message := range file.Messages {
 		opts, ok := message.Desc.Options().(*descriptorpb.MessageOptions)
