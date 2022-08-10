@@ -26,7 +26,7 @@ var messagers []string
 var errorsPackage protogen.GoImportPath
 var codePackage protogen.GoImportPath
 
-// generateMessager generates a protoconf file correponsing to the protobuf file.
+// generateMessager generates a protoconf file corresponding to the protobuf file.
 // Each wrapped struct type implement the Messager interface.
 func generateMessager(gen *protogen.Plugin, file *protogen.File) {
 	errorsPackage = protogen.GoImportPath(string(file.GoImportPath) + "/" + *pkg + "/" + errPkg)
