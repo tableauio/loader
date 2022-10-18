@@ -67,7 +67,9 @@ int main() {
   tableau::log::DefaultLogger()->SetWriter(LogWrite);
 
   tableau::Registry::Init();
-  bool ok = MyHub::Instance().Load("../../testdata/", [](const std::string& name) { return true; });
+  tableau::LoadOptions options;
+  options.ignore_unknown_fields = true;
+  bool ok = MyHub::Instance().Load("../../testdata/", [](const std::string& name) { return true; }, tableau::Format::kJSON, &options);
   if (!ok) {
     std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
     return 1;

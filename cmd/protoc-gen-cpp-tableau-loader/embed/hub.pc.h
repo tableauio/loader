@@ -14,19 +14,26 @@ enum class Format {
 };
 
 constexpr const char* kJSONExt = ".json";
-constexpr const char* kTextExt = ".text";
-constexpr const char* kWireExt = ".wire";
+constexpr const char* kTextExt = ".txt";
+constexpr const char* kBinExt = ".bin";
 
 static const std::string kEmpty = "";
 const std::string& GetErrMsg();
+struct LoadOptions {
+  // Whether to ignore unknown JSON fields during parsing.
+  // See
+  // https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.util.json_util#JsonParseOptions.
+  bool ignore_unknown_fields;
+};
 
 bool Message2JSON(const google::protobuf::Message& message, std::string& json);
-bool JSON2Message(const std::string& json, google::protobuf::Message& message);
+bool JSON2Message(const std::string& json, google::protobuf::Message& message, const LoadOptions* options = nullptr);
 bool Text2Message(const std::string& text, google::protobuf::Message& message);
-bool Wire2Message(const std::string& wire, google::protobuf::Message& message);
+bool Bin2Message(const std::string& bin, google::protobuf::Message& message);
 void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& message);
 const std::string& GetProtoName(const google::protobuf::Message& message);
-bool LoadMessage(const std::string& dir, google::protobuf::Message& message, Format fmt = Format::kJSON);
+bool LoadMessage(const std::string& dir, google::protobuf::Message& message, Format fmt = Format::kJSON,
+                 const LoadOptions* options = nullptr);
 
 namespace internal {
 class Scheduler {
@@ -55,7 +62,7 @@ class Messager {
  public:
   virtual ~Messager() = default;
   static const std::string& Name() { return kEmpty; };
-  virtual bool Load(const std::string& dir, Format fmt) = 0;
+  virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) = 0;
 
  protected:
   virtual bool ProcessAfterLoad() { return true; };
@@ -70,12 +77,14 @@ class Hub {
  public:
   /***** Synchronously Loading *****/
   // Load messagers from dir using the specified format, and store them in MessagerContainer.
-  bool Load(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON);
+  bool Load(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON,
+            const LoadOptions* options = nullptr);
 
   /***** Asynchronously Loading *****/
   // Load configs into temp MessagerContainer, and you should call LoopOnce() in you app's main loop,
   // in order to take the temp MessagerContainer into effect.
-  bool AsyncLoad(const std::string& dir, Filter filter, Format fmt = Format::kJSON);
+  bool AsyncLoad(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON,
+                 const LoadOptions* options = nullptr);
   int LoopOnce();
   // You'd better initialize the scheduler in the main thread.
   void InitScheduler();
@@ -96,7 +105,7 @@ class Hub {
 
  private:
   MessagerContainer LoadNewMessagerContainer(const std::string& dir, Filter filter = nullptr,
-                                             Format fmt = Format::kJSON);
+                                             Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
   MessagerContainer NewMessagerContainer(Filter filter = nullptr);
   void SetMessagerContainer(MessagerContainer msger_container);
   MessagerContainer GetMessagerContainerWithProvider() const;

@@ -89,7 +89,7 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	g.P("class ", message.Desc.Name(), " : public Messager {")
 	g.P(" public:")
 	g.P("  static const std::string& Name() { return kProtoName; };")
-	g.P("  virtual bool Load(const std::string& dir, Format fmt) override;")
+	g.P("  virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;")
 	g.P("  const ", cppFullName, "& Data() const { return data_; };")
 	g.P()
 
@@ -230,10 +230,15 @@ func genHppIndexFinders(depth int, params []string, g *protogen.GeneratedFile, m
 		vectorName := fmt.Sprintf("Index_%sVector", info.IndexName)
 		mapName := fmt.Sprintf("Index_%sMap", info.IndexName)
 		g.P("  using ", vectorName, " = std::vector<const ", info.FullClassName, "*>;")
-		g.P("  using ", mapName, " = std::unordered_map<", info.IndexFieldType, ", ", vectorName, ">;")
+		keyType := info.IndexFieldTypeStr
+		if info.IndexFieldType == index.TypeEnum {
+			// treat enum as integer
+			keyType = "int"
+		}
+		g.P("  using ", mapName, " = std::unordered_map<", keyType, ", ", vectorName, ">;")
 		g.P("  const ", mapName, "& Find", info.IndexName, "() const;")
-		g.P("  const ", vectorName, "* Find", info.IndexName, "(", info.IndexFieldType, " ", info.IndexFieldName, ") const;")
-		g.P("  const ", info.FullClassName, "* FindFirst", info.IndexName, "(", info.IndexFieldType, " ", info.IndexFieldName, ") const;")
+		g.P("  const ", vectorName, "* Find", info.IndexName, "(", info.IndexFieldTypeStr, " ", info.IndexFieldName, ") const;")
+		g.P("  const ", info.FullClassName, "* FindFirst", info.IndexName, "(", info.IndexFieldTypeStr, " ", info.IndexFieldName, ") const;")
 		g.P()
 
 		g.P(" private:")
@@ -253,8 +258,12 @@ func genCppIndexFinders(messagerName string, g *protogen.GeneratedFile, md proto
 		g.P("const ", messagerName, "::", mapName, "& "+messagerName+"::Find", info.IndexName, "() const { return "+indexContainerName+" ;}")
 		g.P()
 
-		g.P("const ", messagerName, "::", vectorName, "* "+messagerName+"::Find", info.IndexName, "(", info.IndexFieldType, " ", info.IndexFieldName, ") const {")
-		g.P("  auto iter = ", indexContainerName, ".find(", info.IndexFieldName, ");")
+		g.P("const ", messagerName, "::", vectorName, "* "+messagerName+"::Find", info.IndexName, "(", info.IndexFieldTypeStr, " ", info.IndexFieldName, ") const {")
+		key := info.IndexFieldName
+		if info.IndexFieldType == index.TypeEnum {
+			key = "static_cast<int>(" + key + ")"
+		}
+		g.P("  auto iter = ", indexContainerName, ".find(", key, ");")
 		g.P("  if (iter == ", indexContainerName, ".end()) {")
 		g.P("    return nullptr;")
 		g.P("  }")
@@ -262,7 +271,7 @@ func genCppIndexFinders(messagerName string, g *protogen.GeneratedFile, md proto
 		g.P("}")
 		g.P()
 
-		g.P("const ", info.FullClassName, "* "+messagerName+"::FindFirst", info.IndexName, "(", info.IndexFieldType, " ", info.IndexFieldName, ") const {")
+		g.P("const ", info.FullClassName, "* "+messagerName+"::FindFirst", info.IndexName, "(", info.IndexFieldTypeStr, " ", info.IndexFieldName, ") const {")
 		g.P("  auto conf = Find", info.IndexName, "(", info.IndexFieldName, ");")
 		g.P("  if (conf == nullptr || conf->size() == 0) {")
 		g.P("    return nullptr;")
@@ -306,7 +315,25 @@ func genOneCppIndexLoader(depth int, indexContainerName string, parentDataName s
 		genOneCppIndexLoader(depth+1, indexContainerName, parentDataName, info.NextLevel, g)
 		g.P(strings.Repeat("  ", depth), "}")
 	} else {
-		g.P(strings.Repeat("  ", depth), indexContainerName, "["+parentDataName+"."+info.FieldName+"()].push_back(&"+parentDataName+");")
+
+		if info.Card == index.CardList {
+			itemName := fmt.Sprintf("item%d", depth)
+			g.P(strings.Repeat("  ", depth), "for (auto&& "+itemName+" : "+parentDataName+"."+info.FieldName+"()) {")
+			key := itemName
+			if info.Type == index.TypeEnum {
+				// convert enum to integer, which is used as unorderd map key that need hash and comparator
+				key = "static_cast<int>(" + itemName + ")"
+			}
+			g.P(strings.Repeat("  ", depth+1), indexContainerName, "["+key+"].push_back(&"+parentDataName+");")
+			g.P(strings.Repeat("  ", depth), "}")
+		} else {
+			key := parentDataName + "." + info.FieldName + "()"
+			if info.Type == index.TypeEnum {
+				// convert enum to integer, which is used as unorderd map key that need hash and comparator
+				key = "static_cast<int>(" + key + ")"
+			}
+			g.P(strings.Repeat("  ", depth), indexContainerName, "["+key+"].push_back(&"+parentDataName+");")
+		}
 	}
 }
 
@@ -330,8 +357,8 @@ func generateCppFileContent(gen *protogen.Plugin, file *protogen.File, g *protog
 func genCppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P("const std::string ", message.Desc.Name(), "::kProtoName = ", `"`, message.Desc.Name(), `";`)
 	g.P()
-	g.P("bool ", message.Desc.Name(), "::Load(const std::string& dir, Format fmt) {")
-	g.P("  bool ok = LoadMessage(dir, data_, fmt);")
+	g.P("bool ", message.Desc.Name(), "::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {")
+	g.P("  bool ok = LoadMessage(dir, data_, fmt, options);")
 	g.P("  return ok ? ProcessAfterLoad() : false;")
 	g.P("}")
 	g.P()

@@ -1,6 +1,7 @@
 #include "hub.pc.h"
 
 #include <google/protobuf/stubs/logging.h>
+#include <google/protobuf/stubs/status.h>
 #include <google/protobuf/text_format.h>
 
 #include <fstream>
@@ -36,8 +37,16 @@ bool Message2JSON(const google::protobuf::Message& message, std::string& json) {
   return google::protobuf::util::MessageToJsonString(message, &json, options).ok();
 }
 
-bool JSON2Message(const std::string& json, google::protobuf::Message& message) {
-  auto status = google::protobuf::util::JsonStringToMessage(json, &message);
+bool JSON2Message(const std::string& json, google::protobuf::Message& message,
+                  const LoadOptions* options /* = nullptr */) {
+  google::protobuf::util::Status status;
+  if (options != nullptr) {
+    google::protobuf::util::JsonParseOptions parse_options;
+    parse_options.ignore_unknown_fields = options->ignore_unknown_fields;
+    status = google::protobuf::util::JsonStringToMessage(json, &message, parse_options);
+  } else {
+    status = google::protobuf::util::JsonStringToMessage(json, &message);
+  }
   if (!status.ok()) {
     g_err_msg = "failed to parse " + GetProtoName(message) + kJSONExt + ": " + status.ToString();
     return false;
@@ -52,9 +61,9 @@ bool Text2Message(const std::string& text, google::protobuf::Message& message) {
   }
   return true;
 }
-bool Wire2Message(const std::string& wire, google::protobuf::Message& message) {
-  if (!message.ParseFromString(wire)) {
-    g_err_msg = "failed to parse " + GetProtoName(message) + kWireExt;
+bool Bin2Message(const std::string& bin, google::protobuf::Message& message) {
+  if (!message.ParseFromString(bin)) {
+    g_err_msg = "failed to parse " + GetProtoName(message) + kBinExt;
     return false;
   }
   return true;
@@ -77,10 +86,11 @@ bool ReadFile(const std::string& filename, std::string& content) {
   return true;
 }
 
-bool LoadMessage(const std::string& dir, google::protobuf::Message& message, Format fmt) {
+bool LoadMessage(const std::string& dir, google::protobuf::Message& message, Format fmt,
+                 const LoadOptions* options /* = nullptr*/) {
   message.Clear();
   std::string basepath = dir + GetProtoName(message);
-  // TODO: support 3 formats: json, text, and wire.
+  // TODO: support 3 formats: json, text, and bin.
   std::string content;
   switch (fmt) {
     case Format::kJSON: {
@@ -88,7 +98,7 @@ bool LoadMessage(const std::string& dir, google::protobuf::Message& message, For
       if (!ok) {
         return false;
       }
-      return JSON2Message(content, message);
+      return JSON2Message(content, message, options);
     }
     case Format::kText: {
       bool ok = ReadFile(basepath + kTextExt, content);
@@ -98,11 +108,11 @@ bool LoadMessage(const std::string& dir, google::protobuf::Message& message, For
       return Text2Message(content, message);
     }
     case Format::kWire: {
-      bool ok = ReadFile(basepath + kWireExt, content);
+      bool ok = ReadFile(basepath + kBinExt, content);
       if (!ok) {
         return false;
       }
-      return Wire2Message(content, message);
+      return Bin2Message(content, message);
     }
     default: {
       g_err_msg = "unsupported format: %d" + static_cast<int>(fmt);
@@ -112,12 +122,13 @@ bool LoadMessage(const std::string& dir, google::protobuf::Message& message, For
 }
 
 bool StoreMessage(const std::string& dir, google::protobuf::Message& message, Format fmt) {
-  // TODO: write protobuf message to file, support 3 formats: json, text, and wire.
+  // TODO: write protobuf message to file, support 3 formats: json, text, and bin.
   return false;
 }
 
-bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
-  auto msger_container = LoadNewMessagerContainer(dir, filter, fmt);
+bool Hub::Load(const std::string& dir, Filter filter /* = nullptr */, Format fmt /* = Format::kJSON */,
+               const LoadOptions* options /* = nullptr */) {
+  auto msger_container = LoadNewMessagerContainer(dir, filter, fmt, options);
   if (!msger_container) {
     return false;
   }
@@ -125,8 +136,9 @@ bool Hub::Load(const std::string& dir, Filter filter, Format fmt) {
   return true;
 }
 
-bool Hub::AsyncLoad(const std::string& dir, Filter filter, Format fmt) {
-  auto msger_container = LoadNewMessagerContainer(dir, filter, fmt);
+bool Hub::AsyncLoad(const std::string& dir, Filter filter /* = nullptr */, Format fmt /* = Format::kJSON */,
+                    const LoadOptions* options /* = nullptr */) {
+  auto msger_container = LoadNewMessagerContainer(dir, filter, fmt, options);
   if (!msger_container) {
     return false;
   }
@@ -140,7 +152,9 @@ void Hub::InitScheduler() {
   sched_->Current();
 }
 
-MessagerContainer Hub::LoadNewMessagerContainer(const std::string& dir, Filter filter, Format fmt) {
+MessagerContainer Hub::LoadNewMessagerContainer(const std::string& dir, Filter filter /* = nullptr */,
+                                                Format fmt /* = Format::kJSON */,
+                                                const LoadOptions* options /* = nullptr */) {
   // intercept protobuf error logs
   auto old_handler = google::protobuf::SetLogHandler(ProtobufLogHandler);
 
@@ -148,7 +162,7 @@ MessagerContainer Hub::LoadNewMessagerContainer(const std::string& dir, Filter f
   for (auto iter : *msger_container) {
     auto&& name = iter.first;
     ATOM_TRACE("loading %s", name.c_str());
-    bool ok = iter.second->Load(dir, fmt);
+    bool ok = iter.second->Load(dir, fmt, options);
     if (!ok) {
       ATOM_ERROR("load %s failed: %s", name.c_str(), GetErrMsg().c_str());
       // restore to old protobuf log hanlder

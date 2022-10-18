@@ -51,13 +51,25 @@ const (
 	TypeMap
 	TypeList
 	TypeStruct
+	TypeEnum
+	TypeScalar
+)
+
+type Card int
+
+const (
+	CardUnknown Card = iota
+	CardMap
+	CardList
 )
 
 type IndexInfo struct {
-	FullClassName  string
-	IndexName      string
-	IndexFieldType string
-	IndexFieldName string
+	FullClassName     string
+	IndexName         string
+	IndexFieldType    Type
+	IndexFieldCard    Card
+	IndexFieldTypeStr string
+	IndexFieldName    string
 
 	LevelInfo *LevelInfo
 }
@@ -69,6 +81,7 @@ type LevelInfo struct {
 
 	FieldName string
 	Type      Type
+	Card      Card
 
 	NextLevel *LevelInfo
 }
@@ -98,7 +111,17 @@ func ParseIndexLevelInfo(indexColumnName string, prefix string, md protoreflect.
 			levelInfo.Type = TypeStruct
 			levelInfo.NextLevel = ParseIndexLevelInfo(indexColumnName, prefix+fieldOptName, fd.Message())
 		} else {
-			// treated as scalar type
+			if fd.IsMap() {
+				levelInfo.Card = CardMap
+			} else if fd.IsList() {
+				levelInfo.Card = CardList
+			}
+			// treated as scalar or enum type
+			if fd.Kind() == protoreflect.EnumKind {
+				levelInfo.Type = TypeEnum
+			} else {
+				levelInfo.Type = TypeScalar
+			}
 			if prefix+fieldOptName == indexColumnName {
 				levelInfo.MD = md
 				levelInfo.FD = fd
@@ -130,7 +153,9 @@ func ParseIndexInfo(md protoreflect.MessageDescriptor) []*IndexInfo {
 			tempIndexInfo = tempIndexInfo.NextLevel
 		}
 		indexInfo.FullClassName = helper.ParseCppClassType(deepestLevelInfo.MD)
-		indexInfo.IndexFieldType = helper.ParseCppType(deepestLevelInfo.FD)
+		indexInfo.IndexFieldType = deepestLevelInfo.Type
+		indexInfo.IndexFieldCard = deepestLevelInfo.Card
+		indexInfo.IndexFieldTypeStr = helper.ParseCppType(deepestLevelInfo.FD)
 		indexInfo.IndexFieldName = string(deepestLevelInfo.FD.Name())
 		indexInfo.IndexName = indexName
 		if indexInfo.IndexName == "" {

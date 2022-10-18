@@ -6,21 +6,32 @@
         },
         "1": {
             "id": 1,
-            "name": "coin1",
+            "name": "apple",
             "path": {
                 "dir": "/home/protoconf/",
                 "name": "icon.png"
             },
-            "expiry": "2021-01-01T18:00:00Z"
+            "expiry": "2021-01-01T18:00:00Z",
+            "type": "FRUIT_TYPE_APPLE",
+            "params": [
+                1,
+                2,
+                3
+            ],
+            "extTypeList": [
+                "FRUIT_TYPE_APPLE",
+                "FRUIT_TYPE_ORANGE"
+            ]
         },
         "2": {
             "id": 2,
-            "name": "coin2",
+            "name": "orange",
             "path": {
                 "dir": "/home/protoconf/",
                 "name": "icon.png"
             },
-            "expiry": "2022-01-01T08:00:00Z"
+            "expiry": "2022-01-01T08:00:00Z",
+            "type": "FRUIT_TYPE_ORANGE"
         },
         "3": {
             "id": 3,

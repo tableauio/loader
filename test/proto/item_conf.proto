@@ -1,11 +1,13 @@
 syntax = "proto3";
+
 package protoconf;
-option go_package = "github.com/tableauio/loader/test/protoconf";
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "tableau/protobuf/tableau.proto";
+import "common_conf.proto";
 
+option go_package = "github.com/tableauio/loader/test/protoconf";
 option (tableau.workbook) = {
   name: "Test.xlsx"
 };
@@ -14,14 +16,20 @@ message ItemConf {
   option (tableau.worksheet) = {
     name: "ItemConf"
     ordered_map: true
+    index: "Type"
+    index: "Param@ItemInfo"
+    index: "ExtType@ItemExtInfo"
   };
   map<uint32, Item> item_map = 1 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
   message Item {
-    uint32 id = 1 [(tableau.field) = { name: "ID"}];
-    string name = 2 [(tableau.field) = { name: "Name"}];
-    Path path = 4;
-    google.protobuf.Timestamp expiry = 5;
-    google.protobuf.Duration duration = 6;
+    uint32 id = 1 [(tableau.field) = { name: "ID" }];
+    string name = 2 [(tableau.field) = { name: "Name" }];
+    Path path = 4 [(tableau.field) = { name: "Path" }];
+    google.protobuf.Timestamp expiry = 5 [(tableau.field) = { name: "Expiry" }];
+    google.protobuf.Duration duration = 6 [(tableau.field) = { name: "Duration" }];
+    FruitType type = 7 [(tableau.field) = { name: "Type" }];
+    repeated int32 param_list = 8 [(tableau.field) = { name: "Param" }];
+    repeated FruitType ext_type_list = 9 [(tableau.field) = { name: "ExtType" }];
   }
 }
 
