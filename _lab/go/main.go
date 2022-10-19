@@ -7,6 +7,7 @@ import (
 
 	"github.com/tableauio/loader/_lab/go/tableau"
 	"github.com/tableauio/tableau/format"
+	"github.com/tableauio/tableau/load"
 )
 
 type MyHub struct {
@@ -28,7 +29,7 @@ func GetHub() *MyHub {
 }
 
 func main() {
-	err := GetHub().Load("../../test/testdata/", nil, format.JSON)
+	err := GetHub().Load("../../test/testdata/", nil, format.JSON, load.IgnoreUnknownFields(true))
 	if err != nil {
 		panic(err)
 	}
@@ -41,14 +42,14 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	if err := conf.InternalCheck(GetHub().Hub); err != nil {
+	if err := conf.Check(GetHub().Hub); err != nil {
 		panic(err)
 	}
 	fmt.Printf("ActivityConf: %v\n", chapter)
 
 	debug()
 	time.AfterFunc(time.Second*5, func() {
-		err := GetHub().Load("../../test/testdata/", nil, format.JSON)
+		err := GetHub().Load("../../test/testdata/", nil, format.JSON, load.IgnoreUnknownFields(true))
 		if err != nil {
 			panic(err)
 		}

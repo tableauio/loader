@@ -106,10 +106,10 @@ func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
 	h.messagerMap = messagerMap
 }
 
-func (h *Hub) Load(dir string, filter Filter, format format.Format) error {
+func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...load.Option) error {
 	messagerMap := h.NewMessagerMap(filter)
 	for name, msger := range messagerMap {
-		if err := msger.Load(dir, format); err != nil {
+		if err := msger.Load(dir, format, options...); err != nil {
 			return errors.WithMessagef(err, "failed to load: %v", name)
 		}
 		fmt.Println("Loaded: " + msger.Name())

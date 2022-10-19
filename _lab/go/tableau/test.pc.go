@@ -28,15 +28,7 @@ func (x *ActivityConf) Messager() Messager {
 }
 
 // Check is used to implement Checker interface.
-func (x *ActivityConf) Check() error {
-	return nil
-}
-
-func (x *ActivityConf) Load(dir string, fmt format.Format) error {
-	return load.Load(&x.data, dir, fmt)
-}
-
-func (x *ActivityConf) InternalCheck(hub *Hub) error {
+func (x *ActivityConf) Check(hub *Hub) error {
 	conf := hub.GetItemConf()
 	if conf == nil {
 		return fmt.Errorf("ItemConf is nil")
@@ -49,6 +41,10 @@ func (x *ActivityConf) InternalCheck(hub *Hub) error {
 		}
 	}
 	return nil
+}
+
+func (x *ActivityConf) Load(dir string, fmt format.Format, options ...load.Option) error {
+	return load.Load(&x.data, dir, fmt, options...)
 }
 
 func (x *ActivityConf) Get1(key1 uint64) (*protoconf.ActivityConf_Activity, error) {

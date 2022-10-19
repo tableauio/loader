@@ -26,16 +26,12 @@ func (x *ItemConf) Messager() Messager {
 }
 
 // Check is used to implement Checker interface.
-func (x *ItemConf) Check() error {
+func (x *ItemConf) Check(hub *Hub) error {
 	return nil
 }
 
-func (x *ItemConf) Load(dir string, format format.Format) error {
-	return load.Load(&x.data, dir, format)
-}
-
-func (x *ItemConf) InternalCheck(hub *Hub) error {
-	return nil
+func (x *ItemConf) Load(dir string, format format.Format, options ...load.Option) error {
+	return load.Load(&x.data, dir, format, options...)
 }
 
 func (x *ItemConf) Get1(key1 uint32) (*protoconf.ItemConf_Item, error) {

@@ -99,8 +99,10 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	g.P("// Check is used to implement Checker interface.")
 	g.P("func (x *", messagerName, ") Check(hub *Hub) error {")
 
-	levelInfos := check.ParseReferLevelInfo(*protoconfPkg, "", message.Desc)
-	genCheckRefer(1, levelInfos, g, messagerName)
+	// NOTE(wenchyzhu): field prop "refer" feature already implemented in tableau.
+	// So just comment codes below, maybe reused in the future.
+	// levelInfos := check.ParseReferLevelInfo(*protoconfPkg, "", message.Desc)
+	// genCheckRefer(1, levelInfos, g, messagerName)
 
 	g.P("return nil")
 	g.P("}")

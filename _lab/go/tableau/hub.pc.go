@@ -6,18 +6,18 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/tableauio/tableau/format"
+	"github.com/tableauio/tableau/load"
 )
 
 type Messager interface {
 	Checker
 	Name() string
-	Load(dir string, fmt format.Format) error
-	InternalCheck(hub *Hub) error
+	Load(dir string, fmt format.Format, options ...load.Option) error
 }
 
 type Checker interface {
 	Messager() Messager
-	Check() error
+	Check(hub *Hub) error
 }
 
 type MessagerMap = map[string]Messager
@@ -75,10 +75,10 @@ func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
 	h.messagerMap = messagerMap
 }
 
-func (h *Hub) Load(dir string, filter Filter, format format.Format) error {
+func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...load.Option) error {
 	messagerMap := h.NewMessagerMap(filter)
 	for name, msger := range messagerMap {
-		if err := msger.Load(dir, format); err != nil {
+		if err := msger.Load(dir, format, options...); err != nil {
 			return errors.WithMessagef(err, "failed to load: %v", name)
 		}
 		fmt.Println("Loaded: " + msger.Name())

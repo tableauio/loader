@@ -8,6 +8,7 @@ import (
 	"github.com/tableauio/loader/test/protoconf/loader/code"
 	"github.com/tableauio/loader/test/protoconf/loader/xerrors"
 	"github.com/tableauio/tableau/format"
+	"github.com/tableauio/tableau/load"
 )
 
 type MyHub struct {
@@ -29,7 +30,7 @@ func GetHub() *MyHub {
 }
 
 func main() {
-	err := GetHub().Load("../testdata/", nil, format.JSON)
+	err := GetHub().Load("../testdata/", nil, format.JSON, load.IgnoreUnknownFields(true))
 	if err != nil {
 		panic(err)
 	}

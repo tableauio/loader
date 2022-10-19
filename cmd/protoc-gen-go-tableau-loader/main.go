@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-const version = "0.2.3"
+const version = "0.2.4"
 
 var pkg *string
 var protoconfPkg *string
