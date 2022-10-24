@@ -37,6 +37,11 @@ bool ItemConf::ProcessAfterLoad() {
     }
   }
 
+  for (auto&& item1 : data_.item_map()) {
+    Index_AwardItemKey key{item1.second.id(), item1.second.name()};
+    index_award_item_map_[key].push_back(&item1.second);
+  }
+
   return true;
 }
 
@@ -48,11 +53,9 @@ const protoconf::ItemConf::Item* ItemConf::Get(uint32_t key1) const {
   return &iter->second;
 }
 
-const ItemConf::Item_OrderedMap* ItemConf::GetOrderedMap() const {
-  return &ordered_map_; 
-}
+const ItemConf::Item_OrderedMap* ItemConf::GetOrderedMap() const { return &ordered_map_; }
 
-const ItemConf::Index_ItemInfoMap& ItemConf::FindItemInfo() const { return index_item_info_map_ ;}
+const ItemConf::Index_ItemInfoMap& ItemConf::FindItemInfo() const { return index_item_info_map_; }
 
 const ItemConf::Index_ItemInfoVector* ItemConf::FindItemInfo(int32_t param_list) const {
   auto iter = index_item_info_map_.find(param_list);
@@ -70,7 +73,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItemInfo(int32_t param_list)
   return (*conf)[0];
 }
 
-const ItemConf::Index_ItemExtInfoMap& ItemConf::FindItemExtInfo() const { return index_item_ext_info_map_ ;}
+const ItemConf::Index_ItemExtInfoMap& ItemConf::FindItemExtInfo() const { return index_item_ext_info_map_; }
 
 const ItemConf::Index_ItemExtInfoVector* ItemConf::FindItemExtInfo(protoconf::FruitType ext_type_list) const {
   auto iter = index_item_ext_info_map_.find(static_cast<int>(ext_type_list));
@@ -88,7 +91,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItemExtInfo(protoconf::Fruit
   return (*conf)[0];
 }
 
-const ItemConf::Index_ItemMap& ItemConf::FindItem() const { return index_item_map_ ;}
+const ItemConf::Index_ItemMap& ItemConf::FindItem() const { return index_item_map_; }
 
 const ItemConf::Index_ItemVector* ItemConf::FindItem(protoconf::FruitType type) const {
   auto iter = index_item_map_.find(static_cast<int>(type));
@@ -106,5 +109,22 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItem(protoconf::FruitType ty
   return (*conf)[0];
 }
 
+const ItemConf::Index_AwardItemMap& ItemConf::FindAwardItem() const { return index_award_item_map_; }
+
+const ItemConf::Index_AwardItemVector* ItemConf::FindAwardItem(const Index_AwardItemKey& key) const {
+  auto iter = index_award_item_map_.find(key);
+  if (iter == index_award_item_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::ItemConf::Item* ItemConf::FindFirstAwardItem(const Index_AwardItemKey& key) const {
+  auto conf = FindAwardItem(key);
+  if (conf == nullptr || conf->size() == 0) {
+    return nullptr;
+  }
+  return (*conf)[0];
+}
 
 }  // namespace tableau

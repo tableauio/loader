@@ -1,6 +1,7 @@
 #pragma once
 #include <google/protobuf/util/json_util.h>
 
+#include <cstddef>
 #include <functional>
 #include <mutex>
 #include <string>
@@ -10,7 +11,7 @@ namespace tableau {
 enum class Format {
   kJSON,
   kText,
-  kWire,
+  kBin,
 };
 
 constexpr const char* kJSONExt = ".json";
@@ -21,7 +22,7 @@ static const std::string kEmpty = "";
 const std::string& GetErrMsg();
 struct LoadOptions {
   // Whether to ignore unknown JSON fields during parsing.
-  // See
+  //
   // https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.util.json_util#JsonParseOptions.
   bool ignore_unknown_fields;
 };
@@ -142,5 +143,23 @@ const U* Hub::GetOrderedMap(Args... args) const {
   auto msger = std::dynamic_pointer_cast<T>(msg);
   return msger ? msger->GetOrderedMap(args...) : nullptr;
 }
+
+namespace util {
+
+// Combine hash values
+//
+// References:
+//  - https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x
+//  - https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
+inline void HashCombine(std::size_t& seed) {}
+
+template <typename T, typename... O>
+inline void HashCombine(std::size_t& seed, const T& v, O... others) {
+  std::hash<T> hasher;
+  seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  HashCombine(seed, others...);
+}
+
+}  // namespace util
 
 }  // namespace tableau

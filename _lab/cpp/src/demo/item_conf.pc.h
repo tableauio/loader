@@ -5,10 +5,11 @@
 // source: item_conf.proto
 
 #pragma once
+#include <cstdint>
 #include <string>
 
 #include "hub.pc.h"
-#include "item_conf.pb.h"
+#include "protoconf/item_conf.pb.h"
 
 namespace tableau {
 class ItemConf : public Messager {
@@ -66,6 +67,27 @@ class ItemConf : public Messager {
  private:
   Index_ItemExtInfoMap index_item_ext_info_map_;
 
+ public:
+  struct Index_AwardItemKey {
+    uint32_t id;
+    std::string name;
+    bool operator==(const Index_AwardItemKey& other) const { return (id == other.id && name == other.name); }
+  };
+  struct Index_AwardItemKeyHasher {
+    std::size_t operator()(const Index_AwardItemKey& k) const {
+      std::size_t seed = 0; // start with a hash value 0
+      util::HashCombine(seed, k.id, k.name);
+      return seed;
+    }
+  };
+  using Index_AwardItemVector = std::vector<const protoconf::ItemConf::Item*>;
+  using Index_AwardItemMap = std::unordered_map<Index_AwardItemKey, Index_AwardItemVector, Index_AwardItemKeyHasher>;
+  const Index_AwardItemMap& FindAwardItem() const;
+  const Index_AwardItemVector* FindAwardItem(const Index_AwardItemKey& key) const;
+  const protoconf::ItemConf::Item* FindFirstAwardItem(const Index_AwardItemKey& key) const;
+
+ private:
+  Index_AwardItemMap index_award_item_map_;
 };
 
 }  // namespace tableau

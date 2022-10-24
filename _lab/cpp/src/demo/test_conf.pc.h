@@ -8,7 +8,7 @@
 #include <string>
 
 #include "hub.pc.h"
-#include "test_conf.pb.h"
+#include "protoconf/test_conf.pb.h"
 
 namespace tableau {
 class ActivityConf : public Messager {

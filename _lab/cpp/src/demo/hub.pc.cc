@@ -107,7 +107,7 @@ bool LoadMessage(const std::string& dir, google::protobuf::Message& message, For
       }
       return Text2Message(content, message);
     }
-    case Format::kWire: {
+    case Format::kBin: {
       bool ok = ReadFile(basepath + kBinExt, content);
       if (!ok) {
         return false;
