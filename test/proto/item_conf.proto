@@ -19,7 +19,7 @@ message ItemConf {
     index: "Type"
     index: "Param@ItemInfo"
     index: "ExtType@ItemExtInfo"
-    // index: "(ID,Name)@AwardItem"
+    index: "(ID,Name)@AwardItem"
   };
   map<uint32, Item> item_map = 1 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
   message Item {

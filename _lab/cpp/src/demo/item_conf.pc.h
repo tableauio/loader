@@ -71,14 +71,10 @@ class ItemConf : public Messager {
   struct Index_AwardItemKey {
     uint32_t id;
     std::string name;
-    bool operator==(const Index_AwardItemKey& other) const { return (id == other.id && name == other.name); }
+    bool operator==(const Index_AwardItemKey& other) const { return id == other.id && name == other.name; }
   };
   struct Index_AwardItemKeyHasher {
-    std::size_t operator()(const Index_AwardItemKey& k) const {
-      std::size_t seed = 0; // start with a hash value 0
-      util::HashCombine(seed, k.id, k.name);
-      return seed;
-    }
+    std::size_t operator()(const Index_AwardItemKey& key) const { return util::SugaredHashCombine(key.id, key.name); }
   };
   using Index_AwardItemVector = std::vector<const protoconf::ItemConf::Item*>;
   using Index_AwardItemMap = std::unordered_map<Index_AwardItemKey, Index_AwardItemVector, Index_AwardItemKeyHasher>;

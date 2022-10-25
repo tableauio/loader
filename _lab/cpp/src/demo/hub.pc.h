@@ -160,6 +160,13 @@ inline void HashCombine(std::size_t& seed, const T& v, O... others) {
   HashCombine(seed, others...);
 }
 
+template <typename T, typename... O>
+inline std::size_t SugaredHashCombine(const T& v, O... others) {
+  std::size_t seed = 0;  // start with a hash value 0
+  HashCombine(seed, v, others...);
+  return seed;
+}
+
 }  // namespace util
 
 }  // namespace tableau
