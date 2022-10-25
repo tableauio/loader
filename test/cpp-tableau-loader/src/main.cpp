@@ -69,7 +69,8 @@ int main() {
   tableau::Registry::Init();
   tableau::LoadOptions options;
   options.ignore_unknown_fields = true;
-  bool ok = MyHub::Instance().Load("../../testdata/", [](const std::string& name) { return true; }, tableau::Format::kJSON, &options);
+  bool ok = MyHub::Instance().Load(
+      "../../testdata/", [](const std::string& name) { return true; }, tableau::Format::kJSON, &options);
   if (!ok) {
     std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
     return 1;
@@ -79,7 +80,16 @@ int main() {
     std::cout << "protobuf hub get Item failed!" << std::endl;
     return 1;
   }
-  std::cout << "item1: " << item_mgr->Data().DebugString() << std::endl;
+  // std::cout << "item1: " << item_mgr->Data().DebugString() << std::endl;
+
+  std::cout << "-----Index: multi-column index test" << std::endl;
+  tableau::ItemConf::Index_AwardItemKey key{1, "apple"};
+  auto item = item_mgr->FindFirstAwardItem(key);
+  if (!item) {
+    std::cout << "ItemConf FindFirstAwardItem failed!" << std::endl;
+    return 1;
+  }
+  std::cout << "item: " << item->ShortDebugString() << std::endl;
 
   //   auto activity_conf = MyHub::Instance().Get<tableau::ActivityConf>();
   //   if (!activity_conf) {
