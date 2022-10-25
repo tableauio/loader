@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/iancoleman/strcase"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -83,4 +84,52 @@ func ParseCppType(fd protoreflect.FieldDescriptor) string {
 func ParseCppClassType(md protoreflect.MessageDescriptor) string {
 	protoFullName := string(md.FullName())
 	return strings.ReplaceAll(protoFullName, ".", "::")
+}
+
+type MapKey struct {
+	Type string
+	Name string
+}
+
+func AddMapKey(fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
+	opts := fd.Options().(*descriptorpb.FieldOptions)
+	fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
+	name := strcase.ToSnake(strings.TrimSpace(fdOpts.GetKey()))
+	if name == "" {
+		name = fmt.Sprintf("key%d", len(keys)+1)
+	} else {
+		for _, key := range keys {
+			if key.Name == name {
+				// rewrite to avoid name confict
+				name = fmt.Sprintf("%s_key%d", name, len(keys)+1)
+				break
+			}
+		}
+	}
+	keys = append(keys, MapKey{ParseCppType(fd.MapKey()), name})
+	return keys
+}
+
+// GenGetParams generates function parameters, which are the names listed in the function's definition.
+func GenGetParams(keys []MapKey) string {
+	var params string
+	for i, key := range keys {
+		params += key.Type + " " + key.Name
+		if i != len(keys)-1 {
+			params += ", "
+		}
+	}
+	return params
+}
+
+// GenGetArguments generates function arguments, which are the real values passed to the function.
+func GenGetArguments(keys []MapKey) string {
+	var params string
+	for i, key := range keys {
+		params += key.Name
+		if i != len(keys)-1 {
+			params += ", "
+		}
+	}
+	return params
 }

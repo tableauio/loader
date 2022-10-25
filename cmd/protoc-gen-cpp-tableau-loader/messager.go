@@ -117,18 +117,17 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	g.P()
 }
 
-func genHppMapGetters(depth int, params []string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
+func genHppMapGetters(depth int, keys []helper.MapKey, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
 			if depth == 1 {
 				g.P(" public:")
 			}
-			keyParam := helper.ParseCppType(fd.MapKey()) + fmt.Sprintf(" key%d", depth)
-			params = append(params, keyParam)
-			g.P("  const ", helper.ParseCppType(fd.MapValue()), "* Get(", strings.Join(params, ", "), ") const;")
+			keys = helper.AddMapKey(fd, keys)
+			g.P("  const ", helper.ParseCppType(fd.MapValue()), "* Get(", helper.GenGetParams(keys), ") const;")
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				genHppMapGetters(depth+1, params, g, fd.MapValue().Message())
+				genHppMapGetters(depth+1, keys, g, fd.MapValue().Message())
 			}
 			break
 		}
@@ -139,7 +138,7 @@ const mapSuffix = "_Map"
 const orderedMapSuffix = "_OrderedMap"
 const orderedMapValueSuffix = "_OrderedMapValue"
 
-func genHppOrderedMapGetters(depth int, params []string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, messagerFullName string) {
+func genHppOrderedMapGetters(depth int, keys []helper.MapKey, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, messagerFullName string) {
 	if depth == 1 && !helper.NeedGenOrderedMap(md) {
 		return
 	}
@@ -150,12 +149,11 @@ func genHppOrderedMapGetters(depth int, params []string, g *protogen.GeneratedFi
 				g.P("  // OrderedMap accessers.")
 				g.P(" public:")
 			}
-			keyType := helper.ParseCppType(fd.MapKey())
-			keyParam := keyType + fmt.Sprintf(" key%d", depth)
-			nextParams := append(params, keyParam)
+			nextKeys := helper.AddMapKey(fd, keys)
+			keyType := nextKeys[len(nextKeys)-1].Type
 
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				genHppOrderedMapGetters(depth+1, nextParams, g, fd.MapValue().Message(), messagerFullName)
+				genHppOrderedMapGetters(depth+1, nextKeys, g, fd.MapValue().Message(), messagerFullName)
 			}
 
 			prefix := parseOrderedMapPrefix(fd, messagerFullName)
@@ -172,7 +170,7 @@ func genHppOrderedMapGetters(depth int, params []string, g *protogen.GeneratedFi
 				g.P("  using ", nextMap, " = ::google::protobuf::Map<", nextKeyType, ", ", nextValueType, ">;")
 				g.P("  using ", orderedMapValue, " = std::pair<", nextOrderedMap, ", const ", nextMap, "*>;")
 				g.P("  using ", orderedMap, " = std::map<", keyType, ", ", orderedMapValue, ">;")
-				g.P("  const ", orderedMap, "* GetOrderedMap(", strings.Join(params, ", "), ") const;")
+				g.P("  const ", orderedMap, "* GetOrderedMap(", helper.GenGetParams(keys), ") const;")
 				g.P()
 			} else {
 				orderedMapValue := helper.ParseCppType(fd.MapValue())
@@ -182,7 +180,7 @@ func genHppOrderedMapGetters(depth int, params []string, g *protogen.GeneratedFi
 					constStr = "const "
 				}
 				g.P("  using ", orderedMap, " = std::map<", keyType, ", ", constStr, orderedMapValue, ">;")
-				g.P("  const ", orderedMap, "* GetOrderedMap(", strings.Join(params, ", "), ") const;")
+				g.P("  const ", orderedMap, "* GetOrderedMap(", helper.GenGetParams(keys), ") const;")
 				g.P()
 			}
 			if depth == 1 {
@@ -322,7 +320,7 @@ func genCppIndexFinders(messagerName string, g *protogen.GeneratedFile, md proto
 			// single-column index
 			field := descriptor.Fields[0] // just take first field
 			keyType = field.TypeStr
-			keyName = field.Name
+			keyName = field.ScalarName
 			keyVariable = keyName
 			if field.Type == index.TypeEnum {
 				keyVariable = "static_cast<int>(" + keyVariable + ")"
@@ -494,32 +492,26 @@ func genCppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	}
 }
 
-func genCppMapGetters(depth int, params []string, messagerName string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
+func genCppMapGetters(depth int, keys []helper.MapKey, messagerName string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
-			keyType := helper.ParseCppType(fd.MapKey())
-			keyName := fmt.Sprintf("key%d", depth)
-
-			params = append(params, keyType+" "+keyName)
-
-			g.P("const ", helper.ParseCppType(fd.MapValue()), "* ", messagerName, "::Get(", strings.Join(params, ", "), ") const {")
+			keys = helper.AddMapKey(fd, keys)
+			g.P("const ", helper.ParseCppType(fd.MapValue()), "* ", messagerName, "::Get(", helper.GenGetParams(keys), ") const {")
 
 			var container string
 			if depth == 1 {
 				container = "data_." + string(fd.Name()) + "()"
 			} else {
 				container = "conf->" + string(fd.Name()) + "()"
-				var findParams []string
-				for i := 1; i < depth; i++ {
-					findParams = append(findParams, fmt.Sprintf("key%d", i))
-				}
-				g.P("  const auto* conf = Get(", strings.Join(findParams, ", "), ");")
+				prevKeys := keys[:len(keys)-1]
+				g.P("  const auto* conf = Get(", helper.GenGetArguments(prevKeys), ");")
 				g.P("  if (conf == nullptr) {")
 				g.P("    return nullptr;")
 				g.P("  }")
 			}
-			g.P("  auto iter = ", container, ".find(", keyName, ");")
+			lastKeyName := keys[len(keys)-1].Name
+			g.P("  auto iter = ", container, ".find(", lastKeyName, ");")
 			g.P("  if (iter == ", container, ".end()) {")
 			g.P("    return nullptr;")
 			g.P("  }")
@@ -528,14 +520,14 @@ func genCppMapGetters(depth int, params []string, messagerName string, g *protog
 			g.P()
 
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				genCppMapGetters(depth+1, params, messagerName, g, fd.MapValue().Message())
+				genCppMapGetters(depth+1, keys, messagerName, g, fd.MapValue().Message())
 			}
 			break
 		}
 	}
 }
 
-func genCppOrderedMapGetters(depth int, params []string, messagerName, messagerFullName string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
+func genCppOrderedMapGetters(depth int, keys []helper.MapKey, messagerName, messagerFullName string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
 	if depth == 1 && !helper.NeedGenOrderedMap(md) {
 		return
 	}
@@ -545,21 +537,18 @@ func genCppOrderedMapGetters(depth int, params []string, messagerName, messagerF
 			prefix := parseOrderedMapPrefix(fd, messagerFullName)
 			orderedMap := prefix + orderedMapSuffix
 
-			g.P("const ", messagerName, "::", orderedMap, "* ", messagerName, "::GetOrderedMap(", strings.Join(params, ", "), ") const {")
+			g.P("const ", messagerName, "::", orderedMap, "* ", messagerName, "::GetOrderedMap(", helper.GenGetParams(keys), ") const {")
 			if depth == 1 {
 				g.P("  return &ordered_map_; ")
 			} else {
-				keyName := fmt.Sprintf("key%d", depth-1)
-				var findParams []string
-				for i := 1; i < depth-1; i++ {
-					findParams = append(findParams, fmt.Sprintf("key%d", i))
-				}
-				g.P("  const auto* conf = GetOrderedMap(", strings.Join(findParams, ", "), ");")
+				lastKeyName := keys[len(keys)-1].Name
+				prevKeys := keys[:len(keys)-1]
+				g.P("  const auto* conf = GetOrderedMap(", helper.GenGetArguments(prevKeys), ");")
 				g.P("  if (conf == nullptr) {")
 				g.P("    return nullptr;")
 				g.P("  }")
 				g.P()
-				g.P("  auto iter = conf->find(", keyName, ");")
+				g.P("  auto iter = conf->find(", lastKeyName, ");")
 				g.P("  if (iter == conf->end()) {")
 				g.P("    return nullptr;")
 				g.P("  }")
@@ -569,11 +558,9 @@ func genCppOrderedMapGetters(depth int, params []string, messagerName, messagerF
 			g.P("}")
 			g.P()
 
-			keyType := helper.ParseCppType(fd.MapKey())
-			keyParam := keyType + fmt.Sprintf(" key%d", depth)
-			nextParams := append(params, keyParam)
+			keys = helper.AddMapKey(fd, keys)
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				genCppOrderedMapGetters(depth+1, nextParams, messagerName, messagerFullName, g, fd.MapValue().Message())
+				genCppOrderedMapGetters(depth+1, keys, messagerName, messagerFullName, g, fd.MapValue().Message())
 			}
 			break
 		}
