@@ -16,19 +16,6 @@ func generateHub(gen *protogen.Plugin) {
 	g.P()
 	g.P(staticHubContent)
 	g.P()
-
-	for _, messager := range messagers {
-		g.P("func (h *Hub) Get", messager, "() *", messager, " {")
-		g.P(`msger := h.messagerMap["`, messager, `"]`)
-		g.P("if msger != nil {")
-		g.P("if conf, ok := msger.(*", messager, "); ok {")
-		g.P("return conf")
-		g.P("}")
-		g.P("}")
-		g.P("return nil")
-		g.P("}")
-		g.P()
-	}
 }
 
 const staticHubContent = `import (
@@ -118,4 +105,19 @@ func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...l
 	return nil
 }
 
-// Auto-generated getters below`
+func Get[T Messager](h *Hub) T {
+	var t T
+	if h == nil {
+		return t
+	}
+	msgers := h.messagerMap
+	msger := msgers[t.Name()]
+	if msger != nil {
+		if t, ok := msger.(T); ok {
+			return t
+		}
+	}
+	return t
+}
+
+`

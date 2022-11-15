@@ -28,13 +28,17 @@ func GetHub() *MyHub {
 	return hubSingleton
 }
 
+func Get[T tableau.Messager]() T {
+	return tableau.Get[T](GetHub().Hub)
+}
+
 func main() {
 	err := GetHub().Load("../../test/testdata/", nil, format.JSON, load.IgnoreUnknownFields(true))
 	if err != nil {
 		panic(err)
 	}
 
-	conf := GetHub().GetActivityConf()
+	conf := Get[*tableau.ActivityConf]()
 	if conf == nil {
 		panic("ActivityConf is nil")
 	}
@@ -59,7 +63,7 @@ func main() {
 }
 
 func debug() {
-	itemConf := GetHub().GetItemConf()
+	itemConf := Get[*tableau.ItemConf]() 
 	if itemConf == nil {
 		panic("ItemConf is nil")
 	}

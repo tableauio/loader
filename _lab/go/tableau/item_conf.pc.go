@@ -9,15 +9,18 @@ import (
 )
 
 type ItemConf struct {
-	data protoconf.ItemConf
+	data *protoconf.ItemConf
 }
 
 func (x *ItemConf) Name() string {
-	return string((&x.data).ProtoReflect().Descriptor().Name())
+	return string(x.Data().ProtoReflect().Descriptor().Name())
 }
 
 func (x *ItemConf) Data() *protoconf.ItemConf {
-	return &x.data
+	if x == nil {
+		return nil
+	}
+	return x.data
 }
 
 // Messager is used to implement Checker interface.
@@ -31,11 +34,11 @@ func (x *ItemConf) Check(hub *Hub) error {
 }
 
 func (x *ItemConf) Load(dir string, format format.Format, options ...load.Option) error {
-	return load.Load(&x.data, dir, format, options...)
+	return load.Load(x.data, dir, format, options...)
 }
 
 func (x *ItemConf) Get1(key1 uint32) (*protoconf.ItemConf_Item, error) {
-	d := x.data.ItemMap
+	d := x.Data().GetItemMap()
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "ItemMap is nil")
 	}
@@ -48,6 +51,6 @@ func (x *ItemConf) Get1(key1 uint32) (*protoconf.ItemConf_Item, error) {
 
 func init() {
 	register("ItemConf", func() Messager {
-		return &ItemConf{}
+		return &ItemConf{data: &protoconf.ItemConf{}}
 	})
 }
