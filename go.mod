@@ -6,7 +6,7 @@ require (
 	github.com/iancoleman/strcase v0.2.0
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/tableauio/tableau v0.10.6-0.20221019082252-50078ad9c88b
+	github.com/tableauio/tableau v0.10.6
 	go.uber.org/zap v1.17.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0

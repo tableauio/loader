@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/check"
@@ -74,17 +73,26 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	messagerName := string(message.Desc.Name())
 
 	// messager definition
+	g.P("// ", messagerName, " is a wrapper around protobuf message: ", file.GoImportPath.Ident(messagerName), ".")
+	g.P("//")
+	g.P("// It is designed for three goals:")
+	g.P("//")
+	g.P("//  1. Easy use: simple yet powerful accessers.")
+	g.P("//  2. Elegant API: concise and clean functions.")
+	g.P("//  3. Extensibility: Map, OrdererdMap, Index...")
 	g.P("type ", messagerName, " struct {")
 	g.P("data ", file.GoImportPath.Ident(messagerName))
 	g.P("}")
 	g.P()
 
 	// messager methods
+	g.P("// Name returns the ", messagerName, "'s message name.")
 	g.P("func (x *", messagerName, ") Name() string {")
 	g.P("return string((&x.data).ProtoReflect().Descriptor().Name())")
 	g.P("}")
 	g.P()
 
+	g.P("// Data returns the ", messagerName, "'s inner message data.")
 	g.P("func (x *", messagerName, ") Data() *", file.GoImportPath.Ident(messagerName), " {")
 	g.P("return &x.data")
 	g.P("}")
@@ -108,6 +116,7 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	g.P("}")
 	g.P()
 
+	g.P("// Load fills ", messagerName, "'s inner message data from the specified direcotry and format.")
 	g.P("func (x *", messagerName, ") Load(dir string, format ", formatPackage.Ident("Format"), " , options ...", loadPackage.Ident("Option"), ") error {")
 	g.P("return ", loadPackage.Ident("Load"), "(&x.data, dir, format, options...)")
 	g.P("}")
@@ -154,19 +163,19 @@ func genCheckRefer(depth int, levelInfos []*check.LevelInfo, g *protogen.Generat
 	}
 }
 
-func genMapGetters(depth int, params []string, messagerName string, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) {
+func genMapGetters(depth int, keys []helper.MapKey, messagerName string, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) {
 	for _, field := range message.Fields {
 		fd := field.Desc
 		if field.Desc.IsMap() {
-			keyType := helper.ParseGoType(file, fd.MapKey())
-			keyName := fmt.Sprintf("key%d", depth)
-			params = append(params, keyName+" "+keyType)
-
+			keys = helper.AddMapKey(file, fd, keys)
+			getter := fmt.Sprintf("Get%v", depth)
+			g.P("// ", getter, " finds value in the ", depth, "-level map. It will return nil if")
+			g.P("// the deepest key is not found, otherwise return an error.")
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				g.P("func (x *", messagerName, ") Get", depth, "(", strings.Join(params, ", "), ") (*", getGoIdent(file, message, fd.MapValue()), ", error) {")
+				g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") (*", getGoIdent(file, message, fd.MapValue()), ", error) {")
 			} else {
 				returnValType := helper.ParseGoType(file, fd.MapValue())
-				g.P("func (x *", messagerName, ") Get", depth, "(", strings.Join(params, ", "), ") (", returnValType, ", error) {")
+				g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") (", returnValType, ", error) {")
 			}
 
 			returnEmptyValue := helper.GetTypeEmptyValue(fd.MapValue())
@@ -176,12 +185,9 @@ func genMapGetters(depth int, params []string, messagerName string, file *protog
 				container = "x.data"
 			} else {
 				container = "conf"
-				var findParams []string
-				for i := 1; i < depth; i++ {
-					findParams = append(findParams, fmt.Sprintf("key%d", i))
-				}
-				getter := fmt.Sprintf("Get%v", depth-1)
-				g.P("conf, err := x.", getter, "(", strings.Join(findParams, ", "), ")")
+				prevKeys := keys[:len(keys)-1]
+				prevGetter := fmt.Sprintf("Get%v", depth-1)
+				g.P("conf, err := x.", prevGetter, "(", helper.GenGetArguments(prevKeys), ")")
 				g.P("if err != nil {")
 				g.P(`return `, returnEmptyValue, `, err`)
 				g.P("}")
@@ -192,9 +198,9 @@ func genMapGetters(depth int, params []string, messagerName string, file *protog
 			g.P("if d == nil {")
 			g.P(`return `, returnEmptyValue, `, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("Nil"), `, "`, field.GoName, ` is nil")`)
 			g.P("}")
-			keyer := fmt.Sprintf("key%v", depth)
-			g.P("if val, ok := d[", keyer, "]; !ok {")
-			g.P(`return `, returnEmptyValue, `, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("NotFound"), `, "`, keyer, `(%v)not found", key1)`)
+			lastKeyName := keys[len(keys)-1].Name
+			g.P("if val, ok := d[", lastKeyName, "]; !ok {")
+			g.P(`return `, returnEmptyValue, `, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("NotFound"), `, "`, lastKeyName, `(%v)not found", `, lastKeyName, `)`)
 			g.P("} else {")
 			g.P(`return val, nil`)
 			g.P("}")
@@ -204,7 +210,7 @@ func genMapGetters(depth int, params []string, messagerName string, file *protog
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
 				msg := getMessage(file.Messages, fd.MapValue().Message())
 				if msg != nil {
-					genMapGetters(depth+1, params, messagerName, file, g, msg)
+					genMapGetters(depth+1, keys, messagerName, file, g, msg)
 				}
 			}
 			break

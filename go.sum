@@ -368,6 +368,8 @@ github.com/tableauio/tableau v0.10.6-0.20221019081809-f5a8649c2951 h1:yhmRcU9jAC
 github.com/tableauio/tableau v0.10.6-0.20221019081809-f5a8649c2951/go.mod h1:htRsBqz8X5TmfIJPduRNw/RB9OFwwN6GId+EiT1ZLSg=
 github.com/tableauio/tableau v0.10.6-0.20221019082252-50078ad9c88b h1:FjITqsLomMw9M2z6jQHLbwqEygnPtlSwW9NHUaRmGY4=
 github.com/tableauio/tableau v0.10.6-0.20221019082252-50078ad9c88b/go.mod h1:htRsBqz8X5TmfIJPduRNw/RB9OFwwN6GId+EiT1ZLSg=
+github.com/tableauio/tableau v0.10.6 h1:2Su9EgwVcWWr+XRm6RG//gnDxYK//2oO24eNfHeS0K8=
+github.com/tableauio/tableau v0.10.6/go.mod h1:htRsBqz8X5TmfIJPduRNw/RB9OFwwN6GId+EiT1ZLSg=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/xuri/efp v0.0.0-20210322160811-ab561f5b45e3 h1:EpI0bqf/eX9SdZDwlMmahKM+CDBgNbsXMhsN28XrM8o=
 github.com/xuri/efp v0.0.0-20210322160811-ab561f5b45e3/go.mod h1:ybY/Jr0T0GTCnYjKqmdwxyxn2BQf2RcQIIvex5QldPI=
