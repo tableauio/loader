@@ -11,8 +11,8 @@ The configuration loader for Tableau.
 
 ### C++
 
-- Install: **CMake 2.8+**
-- Change into dir: `cd test/cpp-tableau-loader`
+- Install: **CMake 3.22** or above
+- Change dir: `cd test/cpp-tableau-loader`
 - Generate protoconf: `bash ./gen.sh`
 - Create build dir: `mkdir build && cd build`
 - Run cmake: `cmake ../src/`
@@ -20,8 +20,9 @@ The configuration loader for Tableau.
 
 ### Golang
 
-- Change into dir: `cd test/go-tableau-loader`
+- Change dir: `cd test/go-tableau-loader`
 - Generate protoconf: `bash ./gen.sh`
+- Build: `go build`
 
 ## TODO
 
