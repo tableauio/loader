@@ -9,6 +9,7 @@
 
 namespace tableau {
 enum class Format {
+  kUnknown,
   kJSON,
   kText,
   kBin,
@@ -27,6 +28,10 @@ struct LoadOptions {
   bool ignore_unknown_fields;
 };
 
+Format Ext2Format(const std::string& ext);
+// Empty string will be returned if an unsupported enum value has been passed,
+// and the error message could be obtained by GetErrMsg().
+const std::string& Format2Ext(Format fmt);
 bool Message2JSON(const google::protobuf::Message& message, std::string& json);
 bool JSON2Message(const std::string& json, google::protobuf::Message& message, const LoadOptions* options = nullptr);
 bool Text2Message(const std::string& text, google::protobuf::Message& message);

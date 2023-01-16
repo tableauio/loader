@@ -15,6 +15,33 @@ namespace tableau {
 static thread_local std::string g_err_msg;
 const std::string& GetErrMsg() { return g_err_msg; }
 
+Format Ext2Format(const std::string& ext) {
+  if (ext == kJSONExt) {
+    return Format::kJSON;
+  }
+  if (ext == kTextExt) {
+    return Format::kText;
+  }
+  if (ext == kBinExt) {
+    return Format::kBin;
+  }
+  return Format::kUnknown;
+}
+
+const std::string& Format2Ext(Format fmt) {
+  switch (fmt) {
+    case Format::kJSON:
+      return kJSONExt;
+    case Format::kText:
+      return kTextExt;
+    case Format::kBin:
+      return kBinExt;
+    default:
+      g_err_msg = "unsupported format: " + std::to_string(static_cast<int>(fmt));
+      return kEmpty;
+  }
+}
+
 // refer: https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/stubs/logging.h
 void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& message) {
   static const std::unordered_map<int, log::Level> kLevelMap = {{google::protobuf::LOGLEVEL_INFO, log::kInfo},
