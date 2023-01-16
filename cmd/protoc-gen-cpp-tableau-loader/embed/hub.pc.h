@@ -15,9 +15,9 @@ enum class Format {
   kBin,
 };
 
-constexpr const char* kJSONExt = ".json";
-constexpr const char* kTextExt = ".txt";
-constexpr const char* kBinExt = ".bin";
+extern const std::string kJSONExt;
+extern const std::string kTextExt;
+extern const std::string kBinExt;
 
 static const std::string kEmpty = "";
 const std::string& GetErrMsg();
