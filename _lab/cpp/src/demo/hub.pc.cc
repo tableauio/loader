@@ -15,6 +15,10 @@ namespace tableau {
 static thread_local std::string g_err_msg;
 const std::string& GetErrMsg() { return g_err_msg; }
 
+const std::string kJSONExt = ".json";
+const std::string kTextExt = ".txt";
+const std::string kBinExt = ".bin";
+
 Format Ext2Format(const std::string& ext) {
   if (ext == kJSONExt) {
     return Format::kJSON;
