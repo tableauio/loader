@@ -37,6 +37,7 @@ const std::string& Format2Ext(Format fmt) {
     case Format::kBin:
       return kBinExt;
     default:
+      g_err_msg = "unsupported format: " + std::to_string(static_cast<int>(fmt));
       return kEmpty;
   }
 }
