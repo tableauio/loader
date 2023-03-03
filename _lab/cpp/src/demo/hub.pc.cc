@@ -163,6 +163,10 @@ bool Hub::Load(const std::string& dir, Filter filter /* = nullptr */, Format fmt
   if (!msger_container) {
     return false;
   }
+  bool ok = internal::Postprocess(options->postprocessor, msger_container);
+  if (!ok) {
+    return false;
+  }
   SetMessagerContainer(msger_container);
   return true;
 }
@@ -171,6 +175,10 @@ bool Hub::AsyncLoad(const std::string& dir, Filter filter /* = nullptr */, Forma
                     const LoadOptions* options /* = nullptr */) {
   auto msger_container = LoadNewMessagerContainer(dir, filter, fmt, options);
   if (!msger_container) {
+    return false;
+  }
+  bool ok = internal::Postprocess(options->postprocessor, msger_container);
+  if (!ok) {
     return false;
   }
   sched_->Dispatch(std::bind(&Hub::SetMessagerContainer, this, msger_container));
@@ -286,6 +294,32 @@ void Scheduler::AssertInLoopThread() const {
   if (!IsLoopThread()) {
     abort();
   }
+}
+
+bool Postprocess(Postprocessor postprocessor, MessagerContainer container) {
+  // create a temporary hub with messager container for post process
+  Hub hub(container);
+
+  // messager-level postprocess
+  for (auto iter : *container) {
+    auto msger = iter.second;
+    bool ok = msger->ProcessAfterLoadAll(hub);
+    if (!ok) {
+      g_err_msg = "hub call ProcessAfterLoadAll failed, messager: " + msger->Name();
+      return false;
+    }
+  }
+
+  // hub-level postprocess
+  if (postprocessor != nullptr) {
+    bool ok = postprocessor(hub);
+    if (!ok) {
+      g_err_msg = "hub call Postprocesser failed, you'd better check your custom 'postprocessor' load option";
+      return false;
+    }
+  }
+
+  return true;
 }
 
 }  // namespace internal
