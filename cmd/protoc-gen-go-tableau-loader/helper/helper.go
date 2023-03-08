@@ -98,7 +98,7 @@ func AddMapKey(file *protogen.File, fd protoreflect.FieldDescriptor, keys []MapK
 			}
 		}
 	}
-	keys = append(keys, MapKey{ParseGoType(file, fd.MapKey()), name})
+	keys = append(keys, MapKey{ParseGoType(file, fd.MapKey()), KeywordEscape(name)})
 	return keys
 }
 
