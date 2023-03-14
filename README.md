@@ -24,11 +24,8 @@ The configuration loader for Tableau.
 - Generate protoconf: `bash ./gen.sh`
 - Build: `go build`
 
-## TODO
-
-- [ ] Log: support setting log handler
-
 ## References
 
 - [Protocol Buffers C++ Installation](https://github.com/protocolbuffers/protobuf/tree/master/src)
-
+- [Protocol Buffers C++ Reference](https://protobuf.dev/reference/cpp/)
+- [Protocol Buffers Go Reference](https://protobuf.dev/reference/go/)

@@ -69,6 +69,11 @@ int main() {
   tableau::Registry::Init();
   tableau::LoadOptions options;
   options.ignore_unknown_fields = true;
+  options.postprocessor = [](const tableau::Hub& hub) {
+    std::cout << "post process done!" << std::endl;
+    return 1;
+  };
+
   bool ok = MyHub::Instance().Load(
       "../../testdata/", [](const std::string& name) { return true; }, tableau::Format::kJSON, &options);
   if (!ok) {
