@@ -8,9 +8,10 @@ import (
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/pluginpb"
 )
 
-const version = "0.2.4"
+const version = "0.2.5"
 
 var pkg *string
 var protoconfPkg *string
@@ -24,6 +25,7 @@ func main() {
 	protogen.Options{
 		ParamFunc: flags.Set,
 	}.Run(func(gen *protogen.Plugin) error {
+		gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
 		firstpass.Init(gen)
 		for _, f := range gen.Files {
 			if !f.Generate {

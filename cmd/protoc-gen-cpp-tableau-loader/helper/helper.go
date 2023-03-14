@@ -106,7 +106,7 @@ func AddMapKey(fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
 			}
 		}
 	}
-	keys = append(keys, MapKey{ParseCppType(fd.MapKey()), name})
+	keys = append(keys, MapKey{ParseCppType(fd.MapKey()), KeywordEscape(name)})
 	return keys
 }
 
