@@ -21,16 +21,33 @@ extern const std::string kBinExt;
 
 static const std::string kEmpty = "";
 const std::string& GetErrMsg();
+
+class Messager;
+class Hub;
+
+using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
+using MessagerContainer = std::shared_ptr<MessagerMap>;
+using Filter = std::function<bool(const std::string& name)>;
+using MessagerContainerProvider = std::function<MessagerContainer()>;
+using Postprocessor = std::function<bool(const Hub& hub)>;
+
 struct LoadOptions {
   // Whether to ignore unknown JSON fields during parsing.
   //
   // https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.util.json_util#JsonParseOptions.
   bool ignore_unknown_fields;
+  // postprocessor is called after loading all configurations.
+  Postprocessor postprocessor;
 };
 
+// Convert file extension to Format type.
+// NOTE: ext includes dot ".", such as:
+//  - kJSONExt：".json"
+//  - kTextExt".txt"
+//  - kBinExt".bin"
 Format Ext2Format(const std::string& ext);
 // Empty string will be returned if an unsupported enum value has been passed,
-// and the error message could be obtained by GetErrMsg().
+// and the error message can be obtained by GetErrMsg().
 const std::string& Format2Ext(Format fmt);
 bool Message2JSON(const google::protobuf::Message& message, std::string& json);
 bool JSON2Message(const std::string& json, google::protobuf::Message& message, const LoadOptions* options = nullptr);
@@ -62,6 +79,8 @@ class Scheduler {
   std::vector<Job> jobs_;
 };
 
+bool Postprocess(Postprocessor postprocessor, MessagerContainer container);
+
 }  // namespace internal
 
 class Messager {
@@ -71,22 +90,24 @@ class Messager {
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) = 0;
 
  protected:
+  // callback after this messager loaded.
   virtual bool ProcessAfterLoad() { return true; };
-};
 
-using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
-using MessagerContainer = std::shared_ptr<MessagerMap>;
-using Filter = std::function<bool(const std::string& name)>;
-using MessagerContainerProvider = std::function<MessagerContainer()>;
+ public:
+  // callback after all messagers loaded.
+  virtual bool ProcessAfterLoadAll(const Hub& hub) { return true; };
+};
 
 class Hub {
  public:
-  /***** Synchronously Loading *****/
+  Hub() = default;
+  Hub(MessagerContainer container) { SetMessagerContainer(container); }
+  /***** Synchronous Loading *****/
   // Load messagers from dir using the specified format, and store them in MessagerContainer.
   bool Load(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON,
             const LoadOptions* options = nullptr);
 
-  /***** Asynchronously Loading *****/
+  /***** Asynchronous Loading *****/
   // Load configs into temp MessagerContainer, and you should call LoopOnce() in you app's main loop,
   // in order to take the temp MessagerContainer into effect.
   bool AsyncLoad(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON,
