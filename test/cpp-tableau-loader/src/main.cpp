@@ -132,9 +132,13 @@ int main() {
     }
 
     std::cout << "---" << it.first << " -----section_map" << std::endl;
-    for (auto&& item : *it.second.second) {
+    for (auto&& item : it.second.second->section_map()) {
       std::cout << item.first << std::endl;
     }
+
+    std::cout << "chapter_id: " << it.second.second->chapter_id() << std::endl;
+    std::cout << "chapter_name: " << it.second.second->chapter_name() << std::endl;
+    std::cout << "award_id:" << it.second.second->award_id() << std::endl;
   }
 
   const auto* rank_ordered_map =

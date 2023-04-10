@@ -162,13 +162,11 @@ func genHppOrderedMapGetters(depth int, keys []helper.MapKey, g *protogen.Genera
 
 			nextMapFD := getNextLevelMapFD(fd.MapValue())
 			if nextMapFD != nil {
-				nextKeyType, nextValueType := parseMapType(nextMapFD)
+				_, currValueType := parseMapType(fd)
 				nextPrefix := parseOrderedMapPrefix(nextMapFD, messagerFullName)
-				nextMap := nextPrefix + mapSuffix
 				nextOrderedMap := nextPrefix + orderedMapSuffix
 				// nextOrderedMapValue := nextPrefix + orderedMapValueSuffix
-				g.P("  using ", nextMap, " = ::google::protobuf::Map<", nextKeyType, ", ", nextValueType, ">;")
-				g.P("  using ", orderedMapValue, " = std::pair<", nextOrderedMap, ", const ", nextMap, "*>;")
+				g.P("  using ", orderedMapValue, " = std::pair<", nextOrderedMap, ", const ", currValueType, "*>;")
 				g.P("  using ", orderedMap, " = std::map<", keyType, ", ", orderedMapValue, ">;")
 				g.P("  const ", orderedMap, "* GetOrderedMap(", helper.GenGetParams(keys), ") const;")
 				g.P()
@@ -594,7 +592,7 @@ func genCppOrderedMapLoader(depth int, messagerFullName string, g *protogen.Gene
 				nextPrefix := parseOrderedMapPrefix(nextMapFD, messagerFullName)
 				// nextMap := nextPrefix + mapSuffix
 				nextOrderedMap := nextPrefix + orderedMapSuffix
-				g.P(strings.Repeat("  ", depth+1), prevTmpOrderedMapName, "[", itemName, ".first] = ", orderedMapValue, "(", nextOrderedMap, "(), &", itemName, ".second.", string(nextMapFD.Name()), "());")
+				g.P(strings.Repeat("  ", depth+1), prevTmpOrderedMapName, "[", itemName, ".first] = ", orderedMapValue, "(", nextOrderedMap, "(), &", itemName, ".second);")
 				g.P(strings.Repeat("  ", depth+1), "auto&& ", tmpOrderedMapName, " = ", prevTmpOrderedMapName, "[", itemName, ".first].first;")
 			} else {
 				ref := "&"
