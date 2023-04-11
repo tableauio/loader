@@ -17,17 +17,15 @@ const pbExt = "pb" // protobuf file extension
 var namespace *string
 var messagerSuffix *string
 
-// genMode can control only the `registry` code, or only generate the `loader` code
+// genMode can control only the `registry` code, or only generate the `messager` code
 // To avoid each change need a fully regenerated, for better dependency management
 var genMode *string
 
+// Available gen modes
 const (
-	// normalMode All configuration protocols need to be entered at once to regenerate all code, the default option
-	normalMode = "normal"
-	// registryOnly Only the registry code is generated. Depend on all protocol files. If any protocol changes, the registry code need update
-	registryOnly = "registry_only"
-	// loaderOnly Only the loader code is generated. Could generate code only for protocols that change
-	loaderOnly = "loader_only"
+	ModeDefault  = "default"  // generate all at once.
+	ModeRegistry = "registry" // only generate "registry.pc.h/cc" files.
+	ModeMessager = "messager" // only generate "*.pc.h/cc" files.
 )
 
 func main() {
@@ -53,22 +51,22 @@ func main() {
 			}
 
 			switch *genMode {
-			case loaderOnly:
+			case ModeMessager:
 				fallthrough
-			case normalMode:
+			case ModeDefault:
 				generateMessager(gen, f)
-			case registryOnly:
+			case ModeRegistry:
 				recordFileAndMessagers(gen, f)
 			}
 		}
 
 		switch *genMode {
-		case loaderOnly:
+		case ModeMessager:
 			// skip common code generation
-		case normalMode:
+		case ModeDefault:
 			generateRegistry(gen)
 			generateEmbed(gen)
-		case registryOnly:
+		case ModeRegistry:
 			generateRegistry(gen)
 		}
 		return nil
