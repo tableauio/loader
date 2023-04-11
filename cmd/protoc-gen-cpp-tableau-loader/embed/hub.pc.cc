@@ -200,7 +200,7 @@ MessagerContainer Hub::LoadNewMessagerContainer(const std::string& dir, Filter f
   auto msger_container = NewMessagerContainer(filter);
   for (auto iter : *msger_container) {
     auto&& name = iter.first;
-    ATOM_TRACE("loading %s", name.c_str());
+    ATOM_DEBUG("loading %s", name.c_str());
     bool ok = iter.second->Load(dir, fmt, options);
     if (!ok) {
       ATOM_ERROR("load %s failed: %s", name.c_str(), GetErrMsg().c_str());
@@ -208,7 +208,7 @@ MessagerContainer Hub::LoadNewMessagerContainer(const std::string& dir, Filter f
       google::protobuf::SetLogHandler(old_handler);
       return nullptr;
     }
-    ATOM_TRACE("loaded %s", name.c_str());
+    ATOM_DEBUG("loaded %s", name.c_str());
   }
 
   // restore to old protobuf log hanlder
