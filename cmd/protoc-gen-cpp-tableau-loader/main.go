@@ -14,25 +14,30 @@ const version = "0.4.7"
 const pcExt = "pc" // protoconf file extension
 const pbExt = "pb" // protobuf file extension
 
+// specify protobuf namespace
 var namespace *string
+
+// specify messager suffix
 var messagerSuffix *string
 
-// genMode can control only the `registry` code, or only generate the `messager` code
-// To avoid each change need a fully regenerated, for better dependency management
-var genMode *string
+// mode control generating rules for better dependency management.
+var mode *string
 
-// Available gen modes
 const (
 	ModeDefault  = "default"  // generate all at once.
 	ModeRegistry = "registry" // only generate "registry.pc.h/cc" files.
-	ModeMessager = "messager" // only generate "*.pc.h/cc" files.
+	ModeMessager = "messager" // only generate "*.pc.h/cc" for each .proto files.
 )
 
 func main() {
 	var flags flag.FlagSet
 	namespace = flags.String("namespace", "tableau", "tableau namespace")
 	messagerSuffix = flags.String("suffix", "Mgr", "tableau messager name suffix")
-	genMode = flags.String("gen-mode", "normal", "gen registry code only")
+	mode = flags.String("mode", "default", `available mode: default, registry, and messager. 
+  - default: generate all at once.
+  - registry: only generate "registry.pc.h/cc" files.
+  - messager: only generate "*.pc.h/cc" for each .proto files.
+`)
 	flag.Parse()
 
 	protogen.Options{
@@ -50,22 +55,22 @@ func main() {
 				continue
 			}
 
-			switch *genMode {
+			switch *mode {
 			case ModeMessager:
-				fallthrough
-			case ModeDefault:
 				generateMessager(gen, f)
 			case ModeRegistry:
-				recordFileAndMessagers(gen, f)
+				recordFilesAndMessagers(gen, f)
+			case ModeDefault:
+				generateMessager(gen, f)
 			}
 		}
 
-		switch *genMode {
-		case ModeMessager:
-			// skip common code generation
+		switch *mode {
 		case ModeDefault:
 			generateRegistry(gen)
 			generateEmbed(gen)
+		case ModeMessager:
+			// nothing to do
 		case ModeRegistry:
 			generateRegistry(gen)
 		}
