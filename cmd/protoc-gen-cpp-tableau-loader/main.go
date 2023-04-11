@@ -17,10 +17,22 @@ const pbExt = "pb" // protobuf file extension
 var namespace *string
 var messagerSuffix *string
 
+// genMode can control only the `registry` code, or only generate the `messager` code
+// To avoid each change need a fully regenerated, for better dependency management
+var genMode *string
+
+// Available gen modes
+const (
+	ModeDefault  = "default"  // generate all at once.
+	ModeRegistry = "registry" // only generate "registry.pc.h/cc" files.
+	ModeMessager = "messager" // only generate "*.pc.h/cc" files.
+)
+
 func main() {
 	var flags flag.FlagSet
 	namespace = flags.String("namespace", "tableau", "tableau namespace")
 	messagerSuffix = flags.String("suffix", "Mgr", "tableau messager name suffix")
+	genMode = flags.String("gen-mode", "normal", "gen registry code only")
 	flag.Parse()
 
 	protogen.Options{
@@ -37,10 +49,26 @@ func main() {
 			if workbook == nil {
 				continue
 			}
-			generateMessager(gen, f)
+
+			switch *genMode {
+			case ModeMessager:
+				fallthrough
+			case ModeDefault:
+				generateMessager(gen, f)
+			case ModeRegistry:
+				recordFileAndMessagers(gen, f)
+			}
 		}
-		generateRegistry(gen)
-		generateEmbed(gen)
+
+		switch *genMode {
+		case ModeMessager:
+			// skip common code generation
+		case ModeDefault:
+			generateRegistry(gen)
+			generateEmbed(gen)
+		case ModeRegistry:
+			generateRegistry(gen)
+		}
 		return nil
 	})
 }
