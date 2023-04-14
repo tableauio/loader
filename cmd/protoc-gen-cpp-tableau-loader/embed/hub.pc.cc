@@ -324,4 +324,25 @@ bool Postprocess(Postprocessor postprocessor, MessagerContainer container) {
 
 }  // namespace internal
 
+namespace util {
+int Mkdir(const std::string& path) {
+  std::string path_ = path + "/";
+  struct stat info;
+  for (size_t pos = path_.find('/', 0); pos != std::string::npos; pos = path_.find('/', pos)) {
+    ++pos;
+    auto sub_dir = path_.substr(0, pos);
+    if (stat(sub_dir.c_str(), &info) == 0 && info.st_mode & S_IFDIR) {
+      continue;
+    }
+    int status = mkdir(sub_dir.c_str(), 0755);
+    if (status != 0) {
+      std::cerr << "system error: " << strerror(errno) << std::endl;
+      return -1;
+    }
+  }
+  return 0;
+}
+
+}  // namespace util
+
 }  // namespace tableau
