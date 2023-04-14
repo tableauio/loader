@@ -193,6 +193,9 @@ inline std::size_t SugaredHashCombine(const T& v, O... others) {
   return seed;
 }
 
+// Mkdir recursively
+int Mkdir(const std::string& path);
+
 }  // namespace util
 
 }  // namespace tableau

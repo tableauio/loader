@@ -10,6 +10,8 @@
 #include <thread>
 #include <unordered_map>
 
+#include "hub.pc.h"
+
 #define gettid() syscall(SYS_gettid)
 
 namespace tableau {
@@ -35,16 +37,16 @@ Logger* DefaultLogger() {
   return g_default_logger;
 }
 
-void SetDefaultLogger(Logger* logger) { g_default_logger = logger; }
+void SetDefaultLogger(Logger* logger) {
+  g_default_logger = logger;
+}
 
 int Logger::Init(const std::string& path, Level level) {
-  std::string dir = path.substr(0, path.find_last_of("/\\"));
-  std::string cmd = "mkdir -p " + dir;
+  std::string dir = path.substr(0, path.find_last_of('/'));
   // prepare the specified directory
-  int status = system(cmd.c_str());
+  int status = util::Mkdir(dir);
   if (status == -1) {
-    std::cerr << "system error: " << strerror(errno) << std::endl;
-    return -1;
+    return status;
   }
   ofs_.open(path, std::ofstream::out | std::ofstream::app);
   os_ = &ofs_;  // use file stream as output stream
