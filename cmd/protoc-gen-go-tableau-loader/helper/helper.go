@@ -12,6 +12,16 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
+func NeedGenOrderedMap(md protoreflect.MessageDescriptor) bool {
+	opts := md.Options().(*descriptorpb.MessageOptions)
+	wsOpts := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
+	if wsOpts == nil || !wsOpts.OrderedMap {
+		// Not an ordered map.
+		return false
+	}
+	return true
+}
+
 // ParseGoType converts a FieldDescriptor to Go type string.
 func ParseGoType(file *protogen.File, fd protoreflect.FieldDescriptor) string {
 	switch fd.Kind() {
