@@ -1,6 +1,6 @@
 module github.com/tableauio/loader
 
-go 1.17
+go 1.18
 
 require (
 	github.com/iancoleman/strcase v0.2.0
@@ -20,7 +20,7 @@ require (
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/go-cmp v0.5.6 // indirect
+	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/jhump/protoreflect v1.12.0 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
@@ -34,6 +34,7 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.0.0-20220408190544-5352b0902921 // indirect
+	golang.org/x/exp v0.0.0-20230418202329-0354be287a23 // indirect
 	golang.org/x/net v0.0.0-20220407224826-aac1ed45d8e3 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/text v0.3.7 // indirect
