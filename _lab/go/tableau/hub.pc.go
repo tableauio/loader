@@ -87,24 +87,17 @@ func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...l
 	return nil
 }
 
-// Auto-generated getters below
-
-func (h *Hub) GetActivityConf() *ActivityConf {
-	msger := h.messagerMap["ActivityConf"]
+func Get[T Messager](h *Hub) T {
+	var t T
+	if h == nil {
+		return t
+	}
+	msgers := h.messagerMap
+	msger := msgers[t.Name()]
 	if msger != nil {
-		if conf, ok := msger.(*ActivityConf); ok {
-			return conf
+		if t, ok := msger.(T); ok {
+			return t
 		}
 	}
-	return nil
-}
-
-func (h *Hub) GetItemConf() *ItemConf {
-	msger := h.messagerMap["ItemConf"]
-	if msger != nil {
-		if conf, ok := msger.(*ItemConf); ok {
-			return conf
-		}
-	}
-	return nil
+	return t
 }

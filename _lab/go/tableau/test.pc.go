@@ -11,15 +11,18 @@ import (
 )
 
 type ActivityConf struct {
-	data protoconf.ActivityConf
+	data *protoconf.ActivityConf
 }
 
 func (x *ActivityConf) Name() string {
-	return string((&x.data).ProtoReflect().Descriptor().Name())
+	return string(x.Data().ProtoReflect().Descriptor().Name())
 }
 
 func (x *ActivityConf) Data() *protoconf.ActivityConf {
-	return &x.data
+	if x == nil {
+		return nil
+	}
+	return x.data
 }
 
 // Messager is used to implement Checker interface.
@@ -29,13 +32,13 @@ func (x *ActivityConf) Messager() Messager {
 
 // Check is used to implement Checker interface.
 func (x *ActivityConf) Check(hub *Hub) error {
-	conf := hub.GetItemConf()
+	conf := Get[*ItemConf](hub)
 	if conf == nil {
 		return fmt.Errorf("ItemConf is nil")
 	}
 	for _, val1 := range x.data.ActivityMap {
 		for key2 := range val1.ChapterMap {
-			if _, ok := conf.Data().ItemMap[key2]; !ok {
+			if _, ok := conf.Data().GetItemMap()[key2]; !ok {
 				return fmt.Errorf("refer: %v not found in ItemConf.ID", key2)
 			}
 		}
@@ -44,7 +47,7 @@ func (x *ActivityConf) Check(hub *Hub) error {
 }
 
 func (x *ActivityConf) Load(dir string, fmt format.Format, options ...load.Option) error {
-	return load.Load(&x.data, dir, fmt, options...)
+	return load.Load(x.data, dir, fmt, options...)
 }
 
 func (x *ActivityConf) Get1(key1 uint64) (*protoconf.ActivityConf_Activity, error) {
@@ -112,6 +115,6 @@ func (x *ActivityConf) Get4(key1 uint64, key2 uint32, key3 uint32, key4 uint32) 
 
 func init() {
 	register("ActivityConf", func() Messager {
-		return &ActivityConf{}
+		return &ActivityConf{data: &protoconf.ActivityConf{}}
 	})
 }

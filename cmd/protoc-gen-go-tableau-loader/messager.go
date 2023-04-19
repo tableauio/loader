@@ -54,15 +54,15 @@ func generateFileContent(gen *protogen.Plugin, file *protogen.File, g *protogen.
 		}
 	}
 	messagers = append(messagers, fileMessagers...)
-	generateRegister(fileMessagers, g)
+	generateRegister(fileMessagers, g, file)
 }
 
-func generateRegister(messagers []string, g *protogen.GeneratedFile) {
+func generateRegister(messagers []string, g *protogen.GeneratedFile, file *protogen.File) {
 	// register messagers
 	g.P("func init() {")
 	for _, messager := range messagers {
 		g.P(`register("`, messager, `", func() Messager {`)
-		g.P("return &", messager, "{}")
+		g.P("return &", messager, "{data: &", file.GoImportPath.Ident(messager), "{}}")
 		g.P("})")
 	}
 	g.P("}")
@@ -81,20 +81,23 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	g.P("//  2. Elegant API: concise and clean functions.")
 	g.P("//  3. Extensibility: Map, OrdererdMap, Index...")
 	g.P("type ", messagerName, " struct {")
-	g.P("data ", file.GoImportPath.Ident(messagerName))
+	g.P("data *", file.GoImportPath.Ident(messagerName))
 	g.P("}")
 	g.P()
 
 	// messager methods
 	g.P("// Name returns the ", messagerName, "'s message name.")
 	g.P("func (x *", messagerName, ") Name() string {")
-	g.P("return string((&x.data).ProtoReflect().Descriptor().Name())")
+	g.P("return string(x.Data().ProtoReflect().Descriptor().Name())")
 	g.P("}")
 	g.P()
 
 	g.P("// Data returns the ", messagerName, "'s inner message data.")
 	g.P("func (x *", messagerName, ") Data() *", file.GoImportPath.Ident(messagerName), " {")
-	g.P("return &x.data")
+	g.P("if x == nil {")
+	g.P("return nil")
+	g.P("}")
+	g.P("return x.data")
 	g.P("}")
 	g.P()
 
@@ -118,7 +121,7 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 
 	g.P("// Load fills ", messagerName, "'s inner message data from the specified direcotry and format.")
 	g.P("func (x *", messagerName, ") Load(dir string, format ", formatPackage.Ident("Format"), " , options ...", loadPackage.Ident("Option"), ") error {")
-	g.P("return ", loadPackage.Ident("Load"), "(&x.data, dir, format, options...)")
+	g.P("return ", loadPackage.Ident("Load"), "(x.data, dir, format, options...)")
 	g.P("}")
 	g.P()
 
@@ -182,7 +185,7 @@ func genMapGetters(depth int, keys []helper.MapKey, messagerName string, file *p
 
 			var container string
 			if depth == 1 {
-				container = "x.data"
+				container = "x.Data()"
 			} else {
 				container = "conf"
 				prevKeys := keys[:len(keys)-1]
@@ -194,7 +197,7 @@ func genMapGetters(depth int, keys []helper.MapKey, messagerName string, file *p
 				g.P()
 			}
 
-			g.P("d := ", container, ".", field.GoName)
+			g.P("d := ", container, ".Get", field.GoName, "()")
 			g.P("if d == nil {")
 			g.P(`return `, returnEmptyValue, `, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("Nil"), `, "`, field.GoName, ` is nil")`)
 			g.P("}")

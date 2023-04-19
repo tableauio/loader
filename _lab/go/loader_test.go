@@ -3,16 +3,17 @@ package main
 import (
 	"testing"
 
-	"github.com/tableauio/tableau/options"
+	"github.com/tableauio/loader/_lab/go/tableau"
+	"github.com/tableauio/tableau/format"
 )
 
 func Test_Loader(t *testing.T) {
-	err := GetHub().Load("../../testdata/", nil, options.JSON)
+	err := GetHub().Load("../../testdata/", nil, format.JSON)
 	if err != nil {
 		panic(err)
 	}
 
-	conf := GetHub().GetActivityConf()
+	conf := Get[*tableau.ActivityConf]()
 	if conf == nil {
 		panic("ActivityConf is nil")
 	}
