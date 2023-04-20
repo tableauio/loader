@@ -279,7 +279,12 @@ func genOrderedMapGetters(depth int, keys []helper.MapKey, messagerName string, 
 					g.P("}")
 				}
 				lastKeyName := keys[len(keys)-1].Name
-				g.P("if val, ok := conf.Get(", lastKeyName, "); !ok {")
+				lastKeyType := keys[len(keys)-1].Type
+				keyName := lastKeyName
+				if lastKeyType == "bool" {
+					keyName = fmt.Sprintf("BoolToInt(%s)", keyName)
+				}
+				g.P("if val, ok := conf.Get(", keyName, "); !ok {")
 				g.P(`return nil, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("NotFound"), `, "`, lastKeyName, `(%v)not found", `, lastKeyName, `)`)
 				g.P("} else {")
 				g.P(`return val.First, nil`)
@@ -321,18 +326,18 @@ func genOrderedMapTypeDef(depth int, keys []helper.MapKey, messagerName string, 
 			}
 			nextKeys := helper.AddMapKey(file, fd, keys)
 			keyType := nextKeys[len(nextKeys)-1].Type
-
+			if keyType == "bool" {
+				keyType = "int"
+			}
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
 				msg := getMessage(file.Messages, fd.MapValue().Message())
 				if msg != nil {
 					genOrderedMapTypeDef(depth+1, nextKeys, messagerName, file, g, msg)
 				}
 			}
-
 			prefix := parseOrderedMapPrefix(fd, messagerName)
 			orderedMap := prefix + orderedMapSuffix
 			orderedMapValue := prefix + orderedMapValueSuffix
-
 			nextMapFD := getNextLevelMapFD(fd.MapValue())
 			if nextMapFD != nil {
 				currValueType := getGoIdent(file, message, fd.MapValue())
@@ -366,8 +371,17 @@ func genOrderedMapLoader(depth int, keys []helper.MapKey, messagerName string, f
 	for _, field := range message.Fields {
 		fd := field.Desc
 		if fd.IsMap() {
+			needConvertBool := false
+			if len(keys) > 0 && keys[len(keys)-1].Type == "bool" {
+				needConvertBool = true
+			}
 			nextKeys := helper.AddMapKey(file, fd, keys)
 			keyType := nextKeys[len(nextKeys)-1].Type
+			needConvertBoolNext := false
+			if keyType == "bool" {
+				keyType = "int"
+				needConvertBoolNext = true
+			}
 			prefix := parseOrderedMapPrefix(fd, messagerName)
 			orderedMapValue := prefix + orderedMapValueSuffix
 			mapName := fmt.Sprintf("x.Data().%s", field.GoName)
@@ -385,25 +399,23 @@ func genOrderedMapLoader(depth int, keys []helper.MapKey, messagerName string, f
 			}
 			if depth != 1 {
 				mapName = fmt.Sprintf("v%d.%s", depth-1, field.GoName)
+				keyName := fmt.Sprintf("k%d", depth-1)
+				if needConvertBool {
+					keyName = fmt.Sprintf("BoolToInt(%s)", keyName)
+				}
+				g.P("map", depth-1, ".Put(", keyName, ", ", lastOrderedMapValue, "{")
 				if nextMapFD == nil {
 					if fd.MapValue().Kind() == protoreflect.MessageKind {
-						g.P("map", depth-1, ".Put(k", depth-1, ", ", lastOrderedMapValue, "{")
 						g.P("First: ", treeMapPackage.Ident("New"), "[", keyType, ", *", getGoIdent(file, message, fd.MapValue()), "](),")
-						g.P("Second: v", depth-1, ",")
-						g.P("})")
 					} else {
-						g.P("map", depth-1, ".Put(k", depth-1, ", ", lastOrderedMapValue, "{")
 						g.P("First: ", treeMapPackage.Ident("New"), "[", keyType, ", ", helper.ParseGoType(file, fd.MapValue()), "](),")
-						g.P("Second: v", depth-1, ",")
-						g.P("})")
 					}
 				} else {
-					g.P("map", depth-1, ".Put(k", depth-1, ", ", lastOrderedMapValue, "{")
 					g.P("First: ", treeMapPackage.Ident("New"), "[", keyType, ", ", orderedMapValue, "](),")
-					g.P("Second: v", depth-1, ",")
-					g.P("})")
 				}
-				g.P(" k", depth-1, "v, _ := map", depth-1, ".Get(k", depth-1, ")")
+				g.P("Second: v", depth-1, ",")
+				g.P("})")
+				g.P(" k", depth-1, "v, _ := map", depth-1, ".Get(", keyName, ")")
 			}
 			g.P("for k", depth, ", v", depth, " := range ", mapName, "{")
 			if depth == 1 {
@@ -417,7 +429,11 @@ func genOrderedMapLoader(depth int, keys []helper.MapKey, messagerName string, f
 					genOrderedMapLoader(depth+1, nextKeys, messagerName, file, g, msg, orderedMapValue)
 				}
 			} else {
-				g.P("map", depth, ".Put(k", depth, ", v", depth, ")")
+				keyName := fmt.Sprintf("k%d", depth)
+				if needConvertBoolNext {
+					keyName = fmt.Sprintf("BoolToInt(%s)", keyName)
+				}
+				g.P("map", depth, ".Put(", keyName, ", v", depth, ")")
 			}
 			g.P("}")
 			break
