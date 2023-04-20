@@ -73,6 +73,13 @@ func getRegistrar() *Registrar {
 	return registrarSingleton
 }
 
+func BoolToInt(ok bool) int {
+	if ok {
+		return 1
+	}
+	return 0
+}
+
 func register(name string, gen MessagerGenerator) {
 	getRegistrar().register(name, gen)
 }
