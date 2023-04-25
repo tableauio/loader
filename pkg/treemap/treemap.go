@@ -77,16 +77,28 @@ func (m *TreeMap[K, V]) Max() (key K, value V, ok bool) {
 	return key, value, false
 }
 
-// LowerBound returns the iterator of the smallest key that is not smaller than the given key.
-// If key is not found, this returns the iterator past the last element (one-past-the-end).
-// This may either because the map is empty, or because all keys in the map are smaller than the given key.
+// LowerBound returns an iterator pointing to the first element that is not less than key.
+// If no such element is found, a past-the-end iterator is returned.
 func (m *TreeMap[K, V]) LowerBound(key K) TreeMapIterator[K, V] {
-	node, found := m.tree.Ceiling(key)
-	if found {
-		return TreeMapIterator[K, V]{m.tree.IteratorAt(node)}
-	}
 	iter := m.tree.Iterator()
 	iter.End()
+	node, found := m.tree.Ceiling(key)
+	if found {
+		iter = m.tree.IteratorAt(node)
+	}
+	return TreeMapIterator[K, V]{iter}
+}
+
+// UpperBound returns an iterator pointing to the first element that is greater than key.
+// If no such element is found, a past-the-end iterator is returned.
+func (m *TreeMap[K, V]) UpperBound(key K) TreeMapIterator[K, V] {
+	iter := m.tree.Iterator()
+	iter.Begin()
+	node, found := m.tree.Floor(key)
+	if found {
+		iter = m.tree.IteratorAt(node)
+	}
+	iter.Next()
 	return TreeMapIterator[K, V]{iter}
 }
 

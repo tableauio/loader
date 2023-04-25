@@ -197,11 +197,11 @@ func TestMapRemove(t *testing.T) {
 	}
 }
 
-type lowerBoundTestCase[T any, U any] struct {
-	LowerBoundKey T
-	Key           T
-	Value         U
-	Exist         bool
+type boundTestCase[T any, U any] struct {
+	boundKey T
+	Key      T
+	Value    U
+	Exist    bool
 }
 
 func TestMapLowerBound(t *testing.T) {
@@ -211,7 +211,7 @@ func TestMapLowerBound(t *testing.T) {
 	m.Put(1, "a")
 
 	// key,expectedKey,expectedValue,expectedFound
-	tests1 := []lowerBoundTestCase[int, string]{
+	tests1 := []boundTestCase[int, string]{
 		{-1, 1, "a", true},
 		{0, 1, "a", true},
 		{1, 1, "a", true},
@@ -224,7 +224,41 @@ func TestMapLowerBound(t *testing.T) {
 
 	for _, test := range tests1 {
 		// retrievals
-		iter := m.LowerBound(test.LowerBoundKey)
+		iter := m.LowerBound(test.boundKey)
+		if !test.Exist {
+			if !iter.IsEnd() {
+				t.Errorf("Got %v, %v, expected end", iter.Key(), iter.Value())
+			}
+		} else {
+			actualKey, actualValue := iter.Key(), iter.Value()
+			if actualKey != test.Key || actualValue != test.Value {
+				t.Errorf("Got %v, %v, expected %v, %v", actualKey, actualValue, test.Value, test.Exist)
+			}
+		}
+	}
+}
+
+func TestMapUpperBound(t *testing.T) {
+	m := New[int, string]()
+	m.Put(7, "g")
+	m.Put(3, "c")
+	m.Put(1, "a")
+
+	// key,expectedKey,expectedValue,expectedFound
+	tests1 := []boundTestCase[int, string]{
+		{-1, 1, "a", true},
+		{0, 1, "a", true},
+		{1, 3, "c", true},
+		{2, 3, "c", true},
+		{3, 7, "g", true},
+		{4, 7, "g", true},
+		{7, 0, "", false},
+		{8, 0, "", false},
+	}
+
+	for _, test := range tests1 {
+		// retrievals
+		iter := m.UpperBound(test.boundKey)
 		if !test.Exist {
 			if !iter.IsEnd() {
 				t.Errorf("Got %v, %v, expected end", iter.Key(), iter.Value())
