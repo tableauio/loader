@@ -251,7 +251,7 @@ const orderedMapSuffix = "_OrderedMap"
 const orderedMapValueSuffix = "_OrderedMapValue"
 
 func genOrderedMapGetters(depth int, keys []helper.MapKey, messagerName string, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) {
-	if !*enableOrderedMap {
+	if *disableOrderedMap {
 		return
 	}
 	if depth == 1 && !helper.NeedGenOrderedMap(message.Desc) {
@@ -318,7 +318,7 @@ func genGetterName(depth int) string {
 }
 
 func genOrderedMapTypeDef(depth int, keys []helper.MapKey, messagerName string, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) string {
-	if !*enableOrderedMap {
+	if *disableOrderedMap {
 		return ""
 	}
 	if depth == 1 && !helper.NeedGenOrderedMap(message.Desc) {
@@ -371,7 +371,7 @@ func genOrderedMapTypeDef(depth int, keys []helper.MapKey, messagerName string, 
 }
 
 func genOrderedMapLoader(depth int, keys []helper.MapKey, messagerName string, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message, lastOrderedMapValue string) {
-	if !*enableOrderedMap {
+	if *disableOrderedMap {
 		return
 	}
 	if depth == 1 {
