@@ -15,11 +15,13 @@ const version = "0.2.5"
 
 var pkg *string
 var protoconfPkg *string
+var disableOrderedMap *bool
 
 func main() {
 	var flags flag.FlagSet
 	pkg = flags.String("pkg", "tableau", "tableau package name")
 	protoconfPkg = flags.String("protoconf-pkg", "protoconf", "protoconf package name")
+	disableOrderedMap = flags.Bool("disable-ordered-map", false, "disable ordered map to accelerate compiling")
 	flag.Parse()
 
 	protogen.Options{
