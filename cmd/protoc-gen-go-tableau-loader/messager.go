@@ -9,6 +9,8 @@ import (
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/check"
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
 	"github.com/tableauio/tableau/proto/tableaupb"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -27,6 +29,7 @@ const (
 var messagers []string
 var errorsPackage protogen.GoImportPath
 var codePackage protogen.GoImportPath
+var orderedMapTypeDefMap map[string]bool = make(map[string]bool)
 
 // generateMessager generates a protoconf file corresponding to the protobuf file.
 // Each wrapped struct type implement the Messager interface.
@@ -344,23 +347,28 @@ func genOrderedMapTypeDef(depth int, keys []helper.MapKey, messagerName string, 
 			prefix := parseOrderedMapPrefix(fd, messagerName)
 			orderedMap := prefix + orderedMapSuffix
 			orderedMapValue := prefix + orderedMapValueSuffix
-			nextMapFD := getNextLevelMapFD(fd.MapValue())
-			if nextMapFD != nil {
-				currValueType := getGoIdent(file, message, fd.MapValue())
-				nextPrefix := parseOrderedMapPrefix(nextMapFD, messagerName)
-				nextOrderedMap := nextPrefix + orderedMapSuffix
-				g.P("  type ", orderedMapValue, "= ", pairPackage.Ident("Pair"), "[*", nextOrderedMap, ", *", currValueType, "];")
-				g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", ", orderedMapValue, "]")
-				g.P()
-			} else {
-				orderedMapValue := helper.ParseGoType(file, fd.MapValue())
-				if fd.MapValue().Kind() == protoreflect.MessageKind {
-					g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", *", getGoIdent(file, message, fd.MapValue()), "]")
-				} else {
+			_, ok := orderedMapTypeDefMap[orderedMap]
+			if !ok {
+				orderedMapTypeDefMap[orderedMap] = true
+				nextMapFD := getNextLevelMapFD(fd.MapValue())
+				if nextMapFD != nil {
+					currValueType := getGoIdent(file, message, fd.MapValue())
+					nextPrefix := parseOrderedMapPrefix(nextMapFD, messagerName)
+					nextOrderedMap := nextPrefix + orderedMapSuffix
+					g.P("  type ", orderedMapValue, "= ", pairPackage.Ident("Pair"), "[*", nextOrderedMap, ", *", currValueType, "];")
 					g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", ", orderedMapValue, "]")
+					g.P()
+				} else {
+					orderedMapValue := helper.ParseGoType(file, fd.MapValue())
+					if fd.MapValue().Kind() == protoreflect.MessageKind {
+						g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", *", getGoIdent(file, message, fd.MapValue()), "]")
+					} else {
+						g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", ", orderedMapValue, "]")
+					}
+					g.P()
 				}
-				g.P()
 			}
+
 			if depth == 1 {
 				return orderedMap
 			}
@@ -456,7 +464,10 @@ func parseOrderedMapPrefix(mapFd protoreflect.FieldDescriptor, messagerFullName 
 		if len(fields) == 0 {
 			return messagerFullName
 		}
-		return fmt.Sprintf("%s_%s", messagerFullName, strings.Join(fields[1:], "_"))
+		if len(fields) == 2 {
+			return fmt.Sprintf("%s_%s", cases.Title(language.Und).String(mapFd.MapKey().Kind().String()), fields[1])
+		}
+		return strings.Join(fields[1:], "_")
 	}
 	return fmt.Sprintf("%s_%s", messagerFullName, mapFd.MapValue().Kind())
 }
