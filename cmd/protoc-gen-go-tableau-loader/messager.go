@@ -251,6 +251,9 @@ const orderedMapSuffix = "_OrderedMap"
 const orderedMapValueSuffix = "_OrderedMapValue"
 
 func genOrderedMapGetters(depth int, keys []helper.MapKey, messagerName string, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) {
+	if !*enableOrderedMap {
+		return
+	}
 	if depth == 1 && !helper.NeedGenOrderedMap(message.Desc) {
 		return
 	}
@@ -315,6 +318,9 @@ func genGetterName(depth int) string {
 }
 
 func genOrderedMapTypeDef(depth int, keys []helper.MapKey, messagerName string, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) string {
+	if !*enableOrderedMap {
+		return ""
+	}
 	if depth == 1 && !helper.NeedGenOrderedMap(message.Desc) {
 		return ""
 	}
@@ -365,6 +371,9 @@ func genOrderedMapTypeDef(depth int, keys []helper.MapKey, messagerName string, 
 }
 
 func genOrderedMapLoader(depth int, keys []helper.MapKey, messagerName string, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message, lastOrderedMapValue string) {
+	if !*enableOrderedMap {
+		return
+	}
 	if depth == 1 {
 		g.P("  // OrderedMap init.")
 	}
@@ -447,7 +456,7 @@ func parseOrderedMapPrefix(mapFd protoreflect.FieldDescriptor, messagerFullName 
 		if len(fields) == 0 {
 			return messagerFullName
 		}
-		return strings.Join(fields[1:], "_")
+		return fmt.Sprintf("%s_%s", messagerFullName, strings.Join(fields[1:], "_"))
 	}
 	return fmt.Sprintf("%s_%s", messagerFullName, mapFd.MapValue().Kind())
 }
