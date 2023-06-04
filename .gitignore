@@ -35,4 +35,6 @@ cmd/protoc-gen-go-tableau-loader/protoc-gen-go-tableau-loader
 test/protoconf
 test/go-tableau-loader/go-tableau-loader
 _lab/cpp/src/tableau/
+_lab/ts/src/protoconf
 .idea
+node_modules
