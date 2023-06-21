@@ -38,6 +38,9 @@ Logger* DefaultLogger() {
 }
 
 void SetDefaultLogger(Logger* logger) {
+  if (g_default_logger != nullptr) {
+    delete g_default_logger;
+  }
   g_default_logger = logger;
 }
 

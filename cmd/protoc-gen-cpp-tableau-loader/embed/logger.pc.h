@@ -47,6 +47,9 @@ class Logger {
     os_ = &std::cout;
     writer_ = DefaultWrite;
   }
+  ~Logger() {
+    ofs_.close();
+  }
   // Init the logger with the specified path.
   // NOTE: no guarantee of thread-safety.
   int Init(const std::string& path, Level level);
