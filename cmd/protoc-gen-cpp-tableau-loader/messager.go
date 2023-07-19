@@ -258,8 +258,8 @@ func genHppIndexFinders(depth int, params []string, g *protogen.GeneratedFile, m
 			}
 			g.P("  using ", mapType, " = std::unordered_map<", keyType, ", ", vectorType, ">;")
 			g.P("  const ", mapType, "& Find", descriptor.Name, "() const;")
-			g.P("  const ", vectorType, "* Find", descriptor.Name, "(", helper.ConvertCppTypeToConstRef(field.TypeStr), " ", field.ScalarName, ") const;")
-			g.P("  const ", descriptor.FullClassName, "* FindFirst", descriptor.Name, "(", helper.ConvertCppTypeToConstRef(field.TypeStr), " ", field.ScalarName, ") const;")
+			g.P("  const ", vectorType, "* Find", descriptor.Name, "(", helper.ToConstRefType(field.TypeStr), " ", field.ScalarName, ") const;")
+			g.P("  const ", descriptor.FullClassName, "* FindFirst", descriptor.Name, "(", helper.ToConstRefType(field.TypeStr), " ", field.ScalarName, ") const;")
 			g.P()
 
 			g.P(" private:")
@@ -351,7 +351,7 @@ func genCppIndexFinders(messagerName string, g *protogen.GeneratedFile, md proto
 			keyVariable = keyName
 		}
 
-		g.P("const ", messagerName, "::", vectorType, "* "+messagerName+"::Find", descriptor.Name, "(", helper.ConvertCppTypeToConstRef(keyType), " ", keyName, ") const {")
+		g.P("const ", messagerName, "::", vectorType, "* "+messagerName+"::Find", descriptor.Name, "(", helper.ToConstRefType(keyType), " ", keyName, ") const {")
 		g.P("  auto iter = ", indexContainerName, ".find(", keyVariable, ");")
 		g.P("  if (iter == ", indexContainerName, ".end()) {")
 		g.P("    return nullptr;")
@@ -360,7 +360,7 @@ func genCppIndexFinders(messagerName string, g *protogen.GeneratedFile, md proto
 		g.P("}")
 		g.P()
 
-		g.P("const ", descriptor.FullClassName, "* "+messagerName+"::FindFirst", descriptor.Name, "(", helper.ConvertCppTypeToConstRef(keyType), " ", keyName, ") const {")
+		g.P("const ", descriptor.FullClassName, "* "+messagerName+"::FindFirst", descriptor.Name, "(", helper.ToConstRefType(keyType), " ", keyName, ") const {")
 		g.P("  auto conf = Find", descriptor.Name, "(", keyName, ");")
 		g.P("  if (conf == nullptr || conf->size() == 0) {")
 		g.P("    return nullptr;")
