@@ -81,7 +81,7 @@ func ParseCppType(fd protoreflect.FieldDescriptor) string {
 	}
 }
 
-func ConvertCppTypeToConstRef(cpptype string) string {
+func ToConstRefType(cpptype string) string {
 	if cpptype == "std::string" {
 		return "const std::string&"
 	}
@@ -121,7 +121,7 @@ func AddMapKey(fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
 func GenGetParams(keys []MapKey) string {
 	var params string
 	for i, key := range keys {
-		params += ConvertCppTypeToConstRef(key.Type) + " " + key.Name
+		params += ToConstRefType(key.Type) + " " + key.Name
 		if i != len(keys)-1 {
 			params += ", "
 		}
