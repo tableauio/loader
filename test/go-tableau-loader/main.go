@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sync"
 
-	tableau "github.com/tableauio/loader/test/protoconf/loader"
-	"github.com/tableauio/loader/test/protoconf/loader/code"
-	"github.com/tableauio/loader/test/protoconf/loader/xerrors"
+	tableau "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader"
+	"github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
+	"github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
 	"github.com/tableauio/tableau/format"
 	"github.com/tableauio/tableau/load"
 )

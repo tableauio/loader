@@ -34,6 +34,9 @@ cmd/protoc-gen-go-tableau-loader/protoc-gen-go-tableau-loader
 
 test/protoconf
 test/go-tableau-loader/go-tableau-loader
+test/go-tableau-loader/protoconf
+test/cpp-tableau-loader/src/protoconf
+test/cpp-tableau-loader/src/tableau
 _lab/cpp/src/tableau/
 _lab/ts/src/protoconf
 .idea

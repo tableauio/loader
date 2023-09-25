@@ -43,6 +43,11 @@ func (x *ActivityConf) Check(hub *Hub) error {
 	return nil
 }
 
+// CheckCompatibility is used to implement Checker interface.
+func (x *ActivityConf) CheckCompatibility(hub, newHub *Hub) error {
+	return nil
+}
+
 func (x *ActivityConf) Load(dir string, fmt format.Format, options ...load.Option) error {
 	return load.Load(&x.data, dir, fmt, options...)
 }

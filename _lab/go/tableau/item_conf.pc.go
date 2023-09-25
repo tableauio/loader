@@ -30,6 +30,11 @@ func (x *ItemConf) Check(hub *Hub) error {
 	return nil
 }
 
+// CheckCompatibility is used to implement Checker interface.
+func (x *ItemConf) CheckCompatibility(hub, newHub *Hub) error {
+	return nil
+}
+
 func (x *ItemConf) Load(dir string, format format.Format, options ...load.Option) error {
 	return load.Load(&x.data, dir, format, options...)
 }

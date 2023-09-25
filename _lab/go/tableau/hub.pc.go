@@ -18,6 +18,7 @@ type Messager interface {
 type Checker interface {
 	Messager() Messager
 	Check(hub *Hub) error
+	CheckCompatibility(hub, newHub *Hub) error
 }
 
 type MessagerMap = map[string]Messager

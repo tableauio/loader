@@ -53,6 +53,11 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 - [google.protobuf.Timestamp deserialization incompatible with canonical JSON representation](https://github.com/protobufjs/protobuf.js/issues/893)
 - [Implement wrapper for google.protobuf.Timestamp, and correctly generate wrappers for static target.](https://github.com/protobufjs/protobuf.js/pull/1258)
 
+
+> [protobufjs: Reflection vs. static code](https://github.com/protobufjs/protobuf.js/blob/master/cli/README.md#reflection-vs-static-code) 
+
+If using reflection (`.proto` or `JSON`) but not static code, then [proto3-json-serializer](https://github.com/googleapis/proto3-json-serializer-nodejs) is a good option.
+
 ### References:
 
 - [How to Setup a TypeScript + Node.js Project](https://khalilstemmler.com/blogs/typescript/node-starter-project/)

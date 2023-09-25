@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package protoconf;
 
-option go_package = "github.com/tableauio/loader/test/protoconf";
+option go_package = "github.com/tableauio/loader/test/go-tableau-loader/protoconf";
 
 import "tableau/protobuf/tableau.proto";
 

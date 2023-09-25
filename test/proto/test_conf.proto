@@ -5,7 +5,7 @@ package protoconf;
 import "tableau/protobuf/tableau.proto";
 import "common_conf.proto";
 
-option go_package = "github.com/tableauio/loader/test/protoconf";
+option go_package = "github.com/tableauio/loader/test/go-tableau-loader/protoconf";
 option (tableau.workbook) = {
   name: "Test.xlsx"
 };

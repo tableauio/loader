@@ -10,7 +10,7 @@ PROTOBUF_PROTO="./third_party/_submodules/protobuf/src"
 TABLEAU_PROTO="./third_party/_submodules/tableau/proto"
 PLGUIN_DIR="./cmd/protoc-gen-go-tableau-loader"
 PROTOCONF_IN="./test/proto"
-PROTOCONF_OUT="./test/protoconf"
+PROTOCONF_OUT="./test/go-tableau-loader/protoconf"
 LOADER_OUT="$PROTOCONF_OUT/loader"
 
 # remove old generated files
