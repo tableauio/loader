@@ -24,17 +24,17 @@ type Checker interface {
 type MessagerMap = map[string]Messager
 type MessagerGenerator = func() Messager
 type Registrar struct {
-	generators map[string]MessagerGenerator
+	Generators map[string]MessagerGenerator
 }
 
 func NewRegistrar() *Registrar {
 	return &Registrar{
-		generators: map[string]MessagerGenerator{},
+		Generators: map[string]MessagerGenerator{},
 	}
 }
 
 func (r *Registrar) Register(name string, gen MessagerGenerator) {
-	r.generators[name] = gen
+	r.Generators[name] = gen
 }
 
 var registrarSingleton *Registrar
@@ -75,7 +75,7 @@ func NewHub() *Hub {
 
 func (h *Hub) NewMessagerMap(filter Filter) MessagerMap {
 	messagerMap := MessagerMap{}
-	for name, gen := range getRegistrar().generators {
+	for name, gen := range getRegistrar().Generators {
 		if filter == nil || filter.Filter(name) {
 			messagerMap[name] = gen()
 		}
