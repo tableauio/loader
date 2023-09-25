@@ -58,7 +58,13 @@ type Registrar struct {
 	generators map[string]MessagerGenerator
 }
 
-func (r *Registrar) register(name string, gen MessagerGenerator) {
+func NewRegistrar() *Registrar {
+	return &Registrar{
+		generators: map[string]MessagerGenerator{},
+	}
+}
+
+func (r *Registrar) Register(name string, gen MessagerGenerator) {
 	r.generators[name] = gen
 }
 
@@ -67,11 +73,17 @@ var once sync.Once
 
 func getRegistrar() *Registrar {
 	once.Do(func() {
-		registrarSingleton = &Registrar{
-			generators: map[string]MessagerGenerator{},
-		}
+		registrarSingleton = NewRegistrar()
 	})
 	return registrarSingleton
+}
+
+func register(name string, gen MessagerGenerator) {
+	getRegistrar().Register(name, gen)
+}
+
+type Filter interface {
+	Filter(name string) bool
 }
 
 func BoolToInt(ok bool) int {
@@ -79,14 +91,6 @@ func BoolToInt(ok bool) int {
 		return 1
 	}
 	return 0
-}
-
-func register(name string, gen MessagerGenerator) {
-	getRegistrar().register(name, gen)
-}
-
-type Filter interface {
-	Filter(name string) bool
 }
 
 // Hub is the holder for managing configurations.
