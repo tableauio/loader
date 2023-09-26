@@ -64,8 +64,8 @@ func NewRegistrar() *Registrar {
 	}
 }
 
-func (r *Registrar) Register(name string, gen MessagerGenerator) {
-	r.Generators[name] = gen
+func (r *Registrar) Register(gen MessagerGenerator) {
+	r.Generators[gen().Name()] = gen
 }
 
 var registrarSingleton *Registrar
@@ -78,8 +78,8 @@ func getRegistrar() *Registrar {
 	return registrarSingleton
 }
 
-func register(name string, gen MessagerGenerator) {
-	getRegistrar().Register(name, gen)
+func register(gen MessagerGenerator) {
+	getRegistrar().Register(gen)
 }
 
 type Filter interface {
@@ -93,7 +93,7 @@ func BoolToInt(ok bool) int {
 	return 0
 }
 
-// Hub is the holder for managing configurations.
+// Hub is the messager manager.
 type Hub struct {
 	messagerMap MessagerMap
 }

@@ -67,8 +67,8 @@ func generateRegister(messagers []string, g *protogen.GeneratedFile) {
 	// register messagers
 	g.P("func init() {")
 	for _, messager := range messagers {
-		g.P(`register("`, messager, `", func() Messager {`)
-		g.P("return &", messager, "{}")
+		g.P(`register(func() Messager {`)
+		g.P("return new(", messager, ")")
 		g.P("})")
 	}
 	g.P("}")
