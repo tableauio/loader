@@ -6,6 +6,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <unordered_map>
 
 namespace tableau {
 enum class Format {
@@ -36,6 +37,11 @@ struct LoadOptions {
   //
   // https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.util.json_util#JsonParseOptions.
   bool ignore_unknown_fields;
+  // Paths maps each messager name to a corresponding config file path.
+  // If a messager name is existed, then the messager will be parsed from
+  // the config file directly.
+  // NOTE: only JSON, bin, and text formats are supported.
+  std::unordered_map<std::string, std::string> paths;
   // postprocessor is called after loading all configurations.
   Postprocessor postprocessor;
 };
@@ -193,8 +199,16 @@ inline std::size_t SugaredHashCombine(const T& v, O... others) {
   return seed;
 }
 
-// Mkdir recursively
+// Mkdir makes dir recursively.
 int Mkdir(const std::string& path);
+// GetDir returns all but the last element of path, typically the path's
+// directory.
+std::string GetDir(const std::string& path);
+// GetExt returns the file name extension used by path.
+// The extension is the suffix beginning at the final dot
+// in the final element of path; it is empty if there is
+// no dot.
+std::string GetExt(const std::string& path);
 
 }  // namespace util
 

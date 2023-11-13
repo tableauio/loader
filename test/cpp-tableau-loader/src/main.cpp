@@ -73,6 +73,7 @@ int main() {
     std::cout << "post process done!" << std::endl;
     return 1;
   };
+  options.paths["ItemConf"] = "../../testdata/ItemConf.json";
 
   bool ok = MyHub::Instance().Load(
       "../../testdata/", [](const std::string& name) { return true; }, tableau::Format::kJSON, &options);

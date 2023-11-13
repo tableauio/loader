@@ -108,7 +108,7 @@ const std::string& GetProtoName(const google::protobuf::Message& message) {
 bool ReadFile(const std::string& filename, std::string& content) {
   std::ifstream file(filename);
   if (!file.is_open()) {
-    g_err_msg = "failed to open file: " + filename;
+    g_err_msg = "failed to open " + filename + ": " + strerror(errno);
     return false;
   }
   std::stringstream ss;
@@ -120,29 +120,50 @@ bool ReadFile(const std::string& filename, std::string& content) {
 bool LoadMessage(const std::string& dir, google::protobuf::Message& message, Format fmt,
                  const LoadOptions* options /* = nullptr*/) {
   message.Clear();
-  std::string basepath = dir + GetProtoName(message);
-  // TODO: support 3 formats: json, text, and bin.
-  std::string content;
-  switch (fmt) {
-    case Format::kJSON: {
-      bool ok = ReadFile(basepath + kJSONExt, content);
-      if (!ok) {
+  std::string path;
+  std::string name = GetProtoName(message);
+  if (options) {
+    auto iter = options->paths.find(name);
+    if (iter != options->paths.end()) {
+      // path specified explicitly, then use it directly
+      path = iter->second;
+      fmt = Ext2Format(util::GetExt(iter->second));
+    }
+  }
+  // Support 3 formats: json, text, and bin
+  if (path.empty()) {
+    switch (fmt) {
+      case Format::kJSON: {
+        path = dir + name + kJSONExt;
+        break;
+      }
+      case Format::kText: {
+        path = dir + name + kTextExt;
+        break;
+      }
+      case Format::kBin: {
+        path = dir + name + kBinExt;
+        break;
+      }
+      default: {
+        g_err_msg = "unsupported format: %d" + static_cast<int>(fmt);
         return false;
       }
+    }
+  }
+  std::string content;
+  bool ok = ReadFile(path, content);
+  if (!ok) {
+    return false;
+  }
+  switch (fmt) {
+    case Format::kJSON: {
       return JSON2Message(content, message, options);
     }
     case Format::kText: {
-      bool ok = ReadFile(basepath + kTextExt, content);
-      if (!ok) {
-        return false;
-      }
       return Text2Message(content, message);
     }
     case Format::kBin: {
-      bool ok = ReadFile(basepath + kBinExt, content);
-      if (!ok) {
-        return false;
-      }
       return Bin2Message(content, message);
     }
     default: {
@@ -341,6 +362,22 @@ int Mkdir(const std::string& path) {
     }
   }
   return 0;
+}
+
+std::string GetDir(const std::string& path) {
+  std::size_t pos = path.find_last_of("/\\");
+  if (pos != std::string::npos) {
+    return path.substr(0, pos);
+  }
+  return kEmpty;
+}
+
+std::string GetExt(const std::string& path) {
+  std::size_t pos = path.find_last_of(".");
+  if (pos != std::string::npos) {
+    return path.substr(pos);
+  }
+  return kEmpty;
 }
 
 }  // namespace util

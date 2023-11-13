@@ -30,7 +30,11 @@ func GetHub() *MyHub {
 }
 
 func main() {
-	err := GetHub().Load("../testdata/", nil, format.JSON, load.IgnoreUnknownFields(true))
+	err := GetHub().Load("../testdata/", nil, format.JSON,
+		load.IgnoreUnknownFields(),
+		load.Paths(map[string]string{
+			"ItemConf": "../testdata/ItemConf.json",
+		}))
 	if err != nil {
 		panic(err)
 	}
