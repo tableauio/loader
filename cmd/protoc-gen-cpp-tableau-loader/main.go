@@ -59,7 +59,7 @@ func main() {
 			case ModeMessager:
 				generateMessager(gen, f)
 			case ModeRegistry:
-				recordFilesAndMessagers(gen, f)
+				// pass
 			case ModeDefault:
 				generateMessager(gen, f)
 			}
@@ -70,7 +70,7 @@ func main() {
 			generateRegistry(gen)
 			generateEmbed(gen)
 		case ModeMessager:
-			// nothing to do
+			// pass
 		case ModeRegistry:
 			generateRegistry(gen)
 		}

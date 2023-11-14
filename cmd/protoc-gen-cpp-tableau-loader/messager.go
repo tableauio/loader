@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -15,34 +14,9 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-// global container for record all proto filenames and messager names
-var protofiles []string
-var messagers []string
-
-func recordFilesAndMessagers(gen *protogen.Plugin, file *protogen.File) {
-	protofiles = append(protofiles, file.GeneratedFilenamePrefix)
-	var fileMessagers []string
-	for _, message := range file.Messages {
-		opts, ok := message.Desc.Options().(*descriptorpb.MessageOptions)
-		if !ok {
-			gen.Error(errors.New("get message options failed"))
-		}
-		worksheet, ok := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
-		if !ok {
-			gen.Error(errors.New("get worksheet extension failed"))
-		}
-		if worksheet != nil {
-			messagerName := string(message.Desc.Name())
-			fileMessagers = append(fileMessagers, messagerName)
-		}
-	}
-	messagers = append(messagers, fileMessagers...)
-}
-
 // generateMessager generates protobuf message wrapped classes
 // which inherit from base class Messager.
 func generateMessager(gen *protogen.Plugin, file *protogen.File) {
-	protofiles = append(protofiles, file.GeneratedFilenamePrefix)
 	generateHppFile(gen, file)
 	generateCppFile(gen, file)
 }
@@ -87,7 +61,6 @@ func generateHppFileContent(gen *protogen.Plugin, file *protogen.File, g *protog
 			fileMessagers = append(fileMessagers, messagerName)
 		}
 	}
-	messagers = append(messagers, fileMessagers...)
 	g.P("}  // namespace ", *namespace)
 	g.P()
 

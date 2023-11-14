@@ -35,8 +35,8 @@ using Postprocessor = std::function<bool(const Hub& hub)>;
 struct LoadOptions {
   // Whether to ignore unknown JSON fields during parsing.
   //
-  // https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.util.json_util#JsonParseOptions.
-  bool ignore_unknown_fields;
+  // Refer https://protobuf.dev/reference/cpp/api-docs/google.protobuf.util.json_util/#JsonParseOptions.
+  bool ignore_unknown_fields = false;
   // Paths maps each messager name to a corresponding config file path.
   // If a messager name is existed, then the messager will be parsed from
   // the config file directly.
