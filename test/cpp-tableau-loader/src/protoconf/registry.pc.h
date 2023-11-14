@@ -12,6 +12,9 @@ using Registrar = std::unordered_map<std::string, MessagerGenerator>;
 class Registry {
  public:
   static void Init();
+  static void InitShard0();
+  static void InitShard1();
+
   template <typename T>
   static void Register();
 

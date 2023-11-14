@@ -40,7 +40,7 @@ export PATH="${PATH}:${PLGUIN_DIR}"
 ${PROTOC} \
 --plugin "$PLUGIN" \
 --cpp-tableau-loader_out="$PROTOCONF_OUT" \
---cpp-tableau-loader_opt=paths=source_relative \
+--cpp-tableau-loader_opt=paths=source_relative,registry-shards=2 \
 --cpp_out="$PROTOCONF_OUT" \
 --proto_path="$PROTOBUF_PROTO" \
 --proto_path="$TABLEAU_PROTO" \

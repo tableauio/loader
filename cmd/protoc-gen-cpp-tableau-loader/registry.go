@@ -2,7 +2,9 @@ package main
 
 import (
 	"errors"
+	"math"
 	"sort"
+	"strconv"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
 	"github.com/tableauio/tableau/proto/tableaupb"
@@ -11,7 +13,8 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-func getAllOrderedFilesAndMessagers(gen *protogen.Plugin) (protofiles, messagers []string) {
+func getAllOrderedFilesAndMessagers(gen *protogen.Plugin) (protofiles []string, fileMessagers map[string][]string) {
+	fileMessagers = map[string][]string{}
 	for _, f := range gen.Files {
 		if !f.Generate {
 			continue
@@ -22,6 +25,7 @@ func getAllOrderedFilesAndMessagers(gen *protogen.Plugin) (protofiles, messagers
 			continue
 		}
 		protofiles = append(protofiles, f.GeneratedFilenamePrefix)
+		var messagers []string
 		for _, message := range f.Messages {
 			opts, ok := message.Desc.Options().(*descriptorpb.MessageOptions)
 			if !ok {
@@ -36,32 +40,39 @@ func getAllOrderedFilesAndMessagers(gen *protogen.Plugin) (protofiles, messagers
 				messagers = append(messagers, messagerName)
 			}
 		}
+		// sort messagers in one file to keep in order
+		sort.Strings(messagers)
+		fileMessagers[f.GeneratedFilenamePrefix] = messagers
 	}
-	// sort to keep in order
+	// sort all files to keep in order
 	sort.Strings(protofiles)
-	sort.Strings(messagers)
 	return
 }
 
 // generateRegistry generates related registry files.
 func generateRegistry(gen *protogen.Plugin) {
-	hppFilename := "registry." + pcExt + ".h"
-	g1 := gen.NewGeneratedFile(hppFilename, "")
-	helper.GenerateCommonHeader(gen, g1, version)
-	g1.P()
-	g1.P(registryHpp)
+	if *registryShards <= 1 {
+		hppFilename := "registry." + pcExt + ".h"
+		g1 := gen.NewGeneratedFile(hppFilename, "")
+		helper.GenerateCommonHeader(gen, g1, version)
+		g1.P()
+		g1.P(registryHppTop)
+		g1.P(registryHppBottom)
 
-	cppFilename := "registry." + pcExt + ".cc"
-	g2 := gen.NewGeneratedFile(cppFilename, "")
-	helper.GenerateCommonHeader(gen, g2, version)
-	g2.P()
-	generateRegistryCppFileContent(gen, g2)
+		protofiles, fileMessagers := getAllOrderedFilesAndMessagers(gen)
+		cppFilename := "registry." + pcExt + ".cc"
+		g2 := gen.NewGeneratedFile(cppFilename, "")
+		helper.GenerateCommonHeader(gen, g2, version)
+		g2.P()
+		generateRegistryCppFileContent(gen, g2, protofiles, fileMessagers)
+	} else {
+		// sharding
+		generateShardedRegistry(gen)
+	}
 }
 
-// generateRegistryCppFileContent generates type definitions.
-func generateRegistryCppFileContent(gen *protogen.Plugin, g *protogen.GeneratedFile) {
-	protofiles, messagers := getAllOrderedFilesAndMessagers(gen)
-
+// generateRegistryCppFileContent generates the registry logic.
+func generateRegistryCppFileContent(gen *protogen.Plugin, g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
 	g.P(`#include "`, "registry.", pcExt, `.h"`)
 	g.P()
 	for _, proto := range protofiles {
@@ -72,14 +83,89 @@ func generateRegistryCppFileContent(gen *protogen.Plugin, g *protogen.GeneratedF
 	g.P("namespace ", *namespace, " {")
 	g.P("Registrar Registry::registrar = Registrar();")
 	g.P("void Registry::Init() {")
-	for _, messager := range messagers {
-		g.P("  Register<", messager, ">();")
+	for _, messagers := range fileMessagers {
+		for _, messager := range messagers {
+			g.P("  Register<", messager, ">();")
+		}
 	}
 	g.P("}")
 	g.P("}  // namespace ", *namespace)
 }
 
-const registryHpp = `#pragma once
+// generateShardedRegistry generates related registry files.
+func generateShardedRegistry(gen *protogen.Plugin) {
+	protofiles, fileMessagers := getAllOrderedFilesAndMessagers(gen)
+
+	hppFilename := "registry." + pcExt + ".h"
+	g1 := gen.NewGeneratedFile(hppFilename, "")
+	helper.GenerateCommonHeader(gen, g1, version)
+	g1.P()
+	g1.P(registryHppTop)
+	for i := 0; i < *registryShards; i++ {
+		g1.P("  static void InitShard", i, "();")
+	}
+	g1.P(registryHppBottom)
+
+	cppFilename := "registry." + pcExt + ".cc"
+	g2 := gen.NewGeneratedFile(cppFilename, "")
+	helper.GenerateCommonHeader(gen, g2, version)
+	g2.P()
+	generateMainShardedRegistryCppFileContent(gen, g2)
+
+	shardSize := int(math.Ceil(float64(len(protofiles)) / float64((*registryShards))))
+	for i := 0; i < *registryShards; i++ {
+		cppFilename := "registry_shard" + strconv.Itoa(i) + "." + pcExt + ".cc"
+		g := gen.NewGeneratedFile(cppFilename, "")
+		helper.GenerateCommonHeader(gen, g, version)
+		g.P()
+		cursor := (i+1)*shardSize
+		if cursor > len(protofiles) {
+			cursor = len(protofiles)
+		}
+		shardedProtofiles := protofiles[i*shardSize : cursor]
+		generateShardedRegistryCppFileContent(gen, g, i, shardedProtofiles, fileMessagers)
+	}
+}
+
+// generateShardedRegistryCppFileContent generates the registry logic.
+func generateMainShardedRegistryCppFileContent(gen *protogen.Plugin, g *protogen.GeneratedFile) {
+	g.P(`#include "`, "registry.", pcExt, `.h"`)
+	g.P()
+
+	g.P("namespace ", *namespace, " {")
+	g.P("Registrar Registry::registrar = Registrar();")
+	g.P("void Registry::Init() {")
+
+	for i := 0; i < *registryShards; i++ {
+		g.P("  InitShard", i, "();")
+	}
+	g.P("}")
+	g.P("}  // namespace ", *namespace)
+}
+
+// generateShardedRegistryCppFileContent generates one registry shard logic.
+func generateShardedRegistryCppFileContent(gen *protogen.Plugin, g *protogen.GeneratedFile, shardIndex int, protofiles []string, fileMessagers map[string][]string) {
+	g.P(`#include "`, "registry.", pcExt, `.h"`)
+	g.P()
+	for _, proto := range protofiles {
+		g.P(`#include "`, proto, ".", pcExt, `.h"`)
+	}
+	g.P()
+
+	g.P("namespace ", *namespace, " {")
+	g.P("void Registry::InitShard", shardIndex, "() {")
+	for _, proto := range protofiles {
+		messagers := fileMessagers[proto]
+		for _, messager := range messagers {
+			g.P("  Register<", messager, ">();")
+		}
+	}
+
+	g.P("}")
+	g.P("}  // namespace ", *namespace)
+}
+
+const registryHppTop = `#pragma once
 #include "hub.pc.h"
 namespace tableau {
 using MessagerGenerator = std::function<std::shared_ptr<Messager>()>;
@@ -87,7 +173,9 @@ using MessagerGenerator = std::function<std::shared_ptr<Messager>()>;
 using Registrar = std::unordered_map<std::string, MessagerGenerator>;
 class Registry {
  public:
-  static void Init();
+  static void Init();`
+
+const registryHppBottom = `
   template <typename T>
   static void Register();
 

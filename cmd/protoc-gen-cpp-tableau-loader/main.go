@@ -23,6 +23,9 @@ var messagerSuffix *string
 // mode control generating rules for better dependency management.
 var mode *string
 
+// count of generated registry files, aimed to boost compiling speed.
+var registryShards *int
+
 const (
 	ModeDefault  = "default"  // generate all at once.
 	ModeRegistry = "registry" // only generate "registry.pc.h/cc" files.
@@ -38,6 +41,7 @@ func main() {
   - registry: only generate "registry.pc.h/cc" files.
   - messager: only generate "*.pc.h/cc" for each .proto files.
 `)
+	registryShards = flags.Int("registry-shards", 1, "count of generated registry files")
 	flag.Parse()
 
 	protogen.Options{
