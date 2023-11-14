@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
-const version = "0.4.7"
+const version = "0.4.8"
 const pcExt = "pc" // protoconf file extension
 const pbExt = "pb" // protobuf file extension
 

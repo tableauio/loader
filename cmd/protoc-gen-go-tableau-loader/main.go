@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
-const version = "0.2.5"
+const version = "0.2.6"
 
 var pkg *string
 var protoconfPkg *string
