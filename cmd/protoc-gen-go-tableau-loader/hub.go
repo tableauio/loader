@@ -19,6 +19,8 @@ func generateHub(gen *protogen.Plugin) {
 
 	for _, messager := range messagers {
 		g.P("func (h *Hub) Get", messager, "() *", messager, " {")
+		g.P("h.mu.RLock()")
+		g.P("defer h.mu.RUnlock()")
 		g.P(`msger := h.messagerMap["`, messager, `"]`)
 		g.P("if msger != nil {")
 		g.P("if conf, ok := msger.(*", messager, "); ok {")
@@ -95,6 +97,7 @@ func BoolToInt(ok bool) int {
 
 // Hub is the messager manager.
 type Hub struct {
+	mu          sync.RWMutex
 	messagerMap MessagerMap
 }
 
@@ -115,6 +118,8 @@ func (h *Hub) NewMessagerMap(filter Filter) MessagerMap {
 }
 
 func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	h.messagerMap = messagerMap
 }
 
