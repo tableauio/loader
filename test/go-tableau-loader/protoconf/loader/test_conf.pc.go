@@ -42,18 +42,18 @@ type ActivityConf struct {
 
 // Name returns the ActivityConf's message name.
 func (x *ActivityConf) Name() string {
-	if x == nil {
-		return ""
+	if x != nil {
+		return string((&x.data).ProtoReflect().Descriptor().Name())
 	}
-	return string((&x.data).ProtoReflect().Descriptor().Name())
+	return ""
 }
 
 // Data returns the ActivityConf's inner message data.
 func (x *ActivityConf) Data() *protoconf.ActivityConf {
-	if x == nil {
-		return nil
+	if x != nil {
+		return &x.data
 	}
-	return &x.data
+	return nil
 }
 
 // Messager is used to implement Checker interface.
@@ -243,18 +243,18 @@ type ChapterConf struct {
 
 // Name returns the ChapterConf's message name.
 func (x *ChapterConf) Name() string {
-	if x == nil {
-		return ""
+	if x != nil {
+		return string((&x.data).ProtoReflect().Descriptor().Name())
 	}
-	return string((&x.data).ProtoReflect().Descriptor().Name())
+	return ""
 }
 
 // Data returns the ChapterConf's inner message data.
 func (x *ChapterConf) Data() *protoconf.ChapterConf {
-	if x == nil {
-		return nil
+	if x != nil {
+		return &x.data
 	}
-	return &x.data
+	return nil
 }
 
 // Messager is used to implement Checker interface.
@@ -313,18 +313,18 @@ type ThemeConf struct {
 
 // Name returns the ThemeConf's message name.
 func (x *ThemeConf) Name() string {
-	if x == nil {
-		return ""
+	if x != nil {
+		return string((&x.data).ProtoReflect().Descriptor().Name())
 	}
-	return string((&x.data).ProtoReflect().Descriptor().Name())
+	return ""
 }
 
 // Data returns the ThemeConf's inner message data.
 func (x *ThemeConf) Data() *protoconf.ThemeConf {
-	if x == nil {
-		return nil
+	if x != nil {
+		return &x.data
 	}
-	return &x.data
+	return nil
 }
 
 // Messager is used to implement Checker interface.

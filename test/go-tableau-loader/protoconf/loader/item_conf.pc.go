@@ -32,18 +32,18 @@ type ItemConf struct {
 
 // Name returns the ItemConf's message name.
 func (x *ItemConf) Name() string {
-	if x == nil {
-		return ""
+	if x != nil {
+		return string((&x.data).ProtoReflect().Descriptor().Name())
 	}
-	return string((&x.data).ProtoReflect().Descriptor().Name())
+	return ""
 }
 
 // Data returns the ItemConf's inner message data.
 func (x *ItemConf) Data() *protoconf.ItemConf {
-	if x == nil {
-		return nil
+	if x != nil {
+		return &x.data
 	}
-	return &x.data
+	return nil
 }
 
 // Messager is used to implement Checker interface.

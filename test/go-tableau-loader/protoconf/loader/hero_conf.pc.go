@@ -36,18 +36,18 @@ type HeroConf struct {
 
 // Name returns the HeroConf's message name.
 func (x *HeroConf) Name() string {
-	if x == nil {
-		return ""
+	if x != nil {
+		return string((&x.data).ProtoReflect().Descriptor().Name())
 	}
-	return string((&x.data).ProtoReflect().Descriptor().Name())
+	return ""
 }
 
 // Data returns the HeroConf's inner message data.
 func (x *HeroConf) Data() *protoconf.HeroConf {
-	if x == nil {
-		return nil
+	if x != nil {
+		return &x.data
 	}
-	return &x.data
+	return nil
 }
 
 // Messager is used to implement Checker interface.
