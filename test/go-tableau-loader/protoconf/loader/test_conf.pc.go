@@ -42,11 +42,17 @@ type ActivityConf struct {
 
 // Name returns the ActivityConf's message name.
 func (x *ActivityConf) Name() string {
+	if x == nil {
+		return ""
+	}
 	return string((&x.data).ProtoReflect().Descriptor().Name())
 }
 
 // Data returns the ActivityConf's inner message data.
 func (x *ActivityConf) Data() *protoconf.ActivityConf {
+	if x == nil {
+		return nil
+	}
 	return &x.data
 }
 
@@ -67,7 +73,7 @@ func (x *ActivityConf) CheckCompatibility(hub, newHub *Hub) error {
 
 // Load fills ActivityConf's inner message data from the specified direcotry and format.
 func (x *ActivityConf) Load(dir string, format format.Format, options ...load.Option) error {
-	err := load.Load(&x.data, dir, format, options...)
+	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
 	}
@@ -78,28 +84,28 @@ func (x *ActivityConf) Load(dir string, format format.Format, options ...load.Op
 func (x *ActivityConf) AfterLoad() error {
 	// OrderedMap init.
 	x.orderedMap = treemap.New[uint64, ActivityConf_Activity_OrderedMapValue]()
-	for k1, v1 := range x.Data().ActivityMap {
+	for k1, v1 := range x.Data().GetActivityMap() {
 		map1 := x.orderedMap
 		map1.Put(k1, ActivityConf_Activity_OrderedMapValue{
 			First:  treemap.New[uint32, ActivityConf_Activity_Chapter_OrderedMapValue](),
 			Second: v1,
 		})
 		k1v, _ := map1.Get(k1)
-		for k2, v2 := range v1.ChapterMap {
+		for k2, v2 := range v1.GetChapterMap() {
 			map2 := k1v.First
 			map2.Put(k2, ActivityConf_Activity_Chapter_OrderedMapValue{
 				First:  treemap.New[uint32, Uint32_Section_OrderedMapValue](),
 				Second: v2,
 			})
 			k2v, _ := map2.Get(k2)
-			for k3, v3 := range v2.SectionMap {
+			for k3, v3 := range v2.GetSectionMap() {
 				map3 := k2v.First
 				map3.Put(k3, Uint32_Section_OrderedMapValue{
 					First:  treemap.New[uint32, int32](),
 					Second: v3,
 				})
 				k3v, _ := map3.Get(k3)
-				for k4, v4 := range v3.SectionRankMap {
+				for k4, v4 := range v3.GetSectionRankMap() {
 					map4 := k3v.First
 					map4.Put(k4, v4)
 				}
@@ -112,7 +118,7 @@ func (x *ActivityConf) AfterLoad() error {
 // Get1 finds value in the 1-level map. It will return nil if
 // the deepest key is not found, otherwise return an error.
 func (x *ActivityConf) Get1(activityID uint64) (*protoconf.ActivityConf_Activity, error) {
-	d := x.data.ActivityMap
+	d := x.Data().GetActivityMap()
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "ActivityMap is nil")
 	}
@@ -131,7 +137,7 @@ func (x *ActivityConf) Get2(activityID uint64, chapterID uint32) (*protoconf.Act
 		return nil, err
 	}
 
-	d := conf.ChapterMap
+	d := conf.GetChapterMap()
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "ChapterMap is nil")
 	}
@@ -150,7 +156,7 @@ func (x *ActivityConf) Get3(activityID uint64, chapterID uint32, sectionID uint3
 		return nil, err
 	}
 
-	d := conf.SectionMap
+	d := conf.GetSectionMap()
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "SectionMap is nil")
 	}
@@ -169,7 +175,7 @@ func (x *ActivityConf) Get4(activityID uint64, chapterID uint32, sectionID uint3
 		return 0, err
 	}
 
-	d := conf.SectionRankMap
+	d := conf.GetSectionRankMap()
 	if d == nil {
 		return 0, xerrors.Errorf(code.Nil, "SectionRankMap is nil")
 	}
@@ -237,11 +243,17 @@ type ChapterConf struct {
 
 // Name returns the ChapterConf's message name.
 func (x *ChapterConf) Name() string {
+	if x == nil {
+		return ""
+	}
 	return string((&x.data).ProtoReflect().Descriptor().Name())
 }
 
 // Data returns the ChapterConf's inner message data.
 func (x *ChapterConf) Data() *protoconf.ChapterConf {
+	if x == nil {
+		return nil
+	}
 	return &x.data
 }
 
@@ -262,7 +274,7 @@ func (x *ChapterConf) CheckCompatibility(hub, newHub *Hub) error {
 
 // Load fills ChapterConf's inner message data from the specified direcotry and format.
 func (x *ChapterConf) Load(dir string, format format.Format, options ...load.Option) error {
-	err := load.Load(&x.data, dir, format, options...)
+	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
 	}
@@ -277,7 +289,7 @@ func (x *ChapterConf) AfterLoad() error {
 // Get1 finds value in the 1-level map. It will return nil if
 // the deepest key is not found, otherwise return an error.
 func (x *ChapterConf) Get1(id uint64) (*protoconf.ChapterConf_Chapter, error) {
-	d := x.data.ChapterMap
+	d := x.Data().GetChapterMap()
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "ChapterMap is nil")
 	}
@@ -301,11 +313,17 @@ type ThemeConf struct {
 
 // Name returns the ThemeConf's message name.
 func (x *ThemeConf) Name() string {
+	if x == nil {
+		return ""
+	}
 	return string((&x.data).ProtoReflect().Descriptor().Name())
 }
 
 // Data returns the ThemeConf's inner message data.
 func (x *ThemeConf) Data() *protoconf.ThemeConf {
+	if x == nil {
+		return nil
+	}
 	return &x.data
 }
 
@@ -326,7 +344,7 @@ func (x *ThemeConf) CheckCompatibility(hub, newHub *Hub) error {
 
 // Load fills ThemeConf's inner message data from the specified direcotry and format.
 func (x *ThemeConf) Load(dir string, format format.Format, options ...load.Option) error {
-	err := load.Load(&x.data, dir, format, options...)
+	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
 	}
@@ -341,7 +359,7 @@ func (x *ThemeConf) AfterLoad() error {
 // Get1 finds value in the 1-level map. It will return nil if
 // the deepest key is not found, otherwise return an error.
 func (x *ThemeConf) Get1(name string) (*protoconf.ThemeConf_Theme, error) {
-	d := x.data.ThemeMap
+	d := x.Data().GetThemeMap()
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "ThemeMap is nil")
 	}

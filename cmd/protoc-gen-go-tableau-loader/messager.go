@@ -103,12 +103,18 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	// messager methods
 	g.P("// Name returns the ", messagerName, "'s message name.")
 	g.P("func (x *", messagerName, ") Name() string {")
+	g.P("if x == nil {")
+	g.P(`return ""`)
+	g.P("}")
 	g.P("return string((&x.data).ProtoReflect().Descriptor().Name())")
 	g.P("}")
 	g.P()
 
 	g.P("// Data returns the ", messagerName, "'s inner message data.")
 	g.P("func (x *", messagerName, ") Data() *", file.GoImportPath.Ident(messagerName), " {")
+	g.P("if x == nil {")
+	g.P(`return nil`)
+	g.P("}")
 	g.P("return &x.data")
 	g.P("}")
 	g.P()
@@ -137,7 +143,7 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 
 	g.P("// Load fills ", messagerName, "'s inner message data from the specified direcotry and format.")
 	g.P("func (x *", messagerName, ") Load(dir string, format ", formatPackage.Ident("Format"), " , options ...", loadPackage.Ident("Option"), ") error {")
-	g.P("err := ", loadPackage.Ident("Load"), "(&x.data, dir, format, options...)")
+	g.P("err := ", loadPackage.Ident("Load"), "(x.Data(), dir, format, options...)")
 	g.P("if err != nil {")
 	g.P("return err")
 	g.P("}")
@@ -173,9 +179,9 @@ func genCheckRefer(depth int, levelInfos []*check.LevelInfo, g *protogen.Generat
 		fieldName := fmt.Sprintf("%s.%s", prevItemName, strcase.ToCamel(levelInfo.GoFieldName))
 		if depth == 1 {
 			if accesser != nil {
-				fieldName = fmt.Sprintf("x.data.%s", strcase.ToCamel(levelInfo.GoFieldName))
+				fieldName = fmt.Sprintf("x.Data().Get%s()", strcase.ToCamel(levelInfo.GoFieldName))
 			} else {
-				g.P("for _, " + itemName + " := range x.data." + levelInfo.GoFieldName + "{")
+				g.P("for _, " + itemName + " := range x.Data().Get" + levelInfo.GoFieldName + "() {")
 			}
 		} else {
 			if levelInfo.FD == nil {
@@ -218,7 +224,7 @@ func genMapGetters(depth int, keys []helper.MapKey, messagerName string, file *p
 
 			var container string
 			if depth == 1 {
-				container = "x.data"
+				container = "x.Data()"
 			} else {
 				container = "conf"
 				prevKeys := keys[:len(keys)-1]
@@ -230,7 +236,7 @@ func genMapGetters(depth int, keys []helper.MapKey, messagerName string, file *p
 				g.P()
 			}
 
-			g.P("d := ", container, ".", field.GoName)
+			g.P("d := ", container, ".Get", field.GoName, "()")
 			g.P("if d == nil {")
 			g.P(`return `, returnEmptyValue, `, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("Nil"), `, "`, field.GoName, ` is nil")`)
 			g.P("}")
@@ -405,7 +411,7 @@ func genOrderedMapLoader(depth int, keys []helper.MapKey, messagerName string, f
 			}
 			prefix := parseOrderedMapPrefix(fd, messagerName)
 			orderedMapValue := prefix + orderedMapValueSuffix
-			mapName := fmt.Sprintf("x.Data().%s", field.GoName)
+			mapName := fmt.Sprintf("x.Data().Get%s()", field.GoName)
 			nextMapFD := getNextLevelMapFD(fd.MapValue())
 			if depth == 1 {
 				if nextMapFD == nil {
@@ -419,7 +425,7 @@ func genOrderedMapLoader(depth int, keys []helper.MapKey, messagerName string, f
 				}
 			}
 			if depth != 1 {
-				mapName = fmt.Sprintf("v%d.%s", depth-1, field.GoName)
+				mapName = fmt.Sprintf("v%d.Get%s()", depth-1, field.GoName)
 				keyName := fmt.Sprintf("k%d", depth-1)
 				if needConvertBool {
 					keyName = fmt.Sprintf("BoolToInt(%s)", keyName)
