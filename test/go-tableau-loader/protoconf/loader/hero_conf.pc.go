@@ -36,12 +36,18 @@ type HeroConf struct {
 
 // Name returns the HeroConf's message name.
 func (x *HeroConf) Name() string {
-	return string((&x.data).ProtoReflect().Descriptor().Name())
+	if x != nil {
+		return string((&x.data).ProtoReflect().Descriptor().Name())
+	}
+	return ""
 }
 
 // Data returns the HeroConf's inner message data.
 func (x *HeroConf) Data() *protoconf.HeroConf {
-	return &x.data
+	if x != nil {
+		return &x.data
+	}
+	return nil
 }
 
 // Messager is used to implement Checker interface.
@@ -61,7 +67,7 @@ func (x *HeroConf) CheckCompatibility(hub, newHub *Hub) error {
 
 // Load fills HeroConf's inner message data from the specified direcotry and format.
 func (x *HeroConf) Load(dir string, format format.Format, options ...load.Option) error {
-	err := load.Load(&x.data, dir, format, options...)
+	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
 	}
@@ -72,14 +78,14 @@ func (x *HeroConf) Load(dir string, format format.Format, options ...load.Option
 func (x *HeroConf) AfterLoad() error {
 	// OrderedMap init.
 	x.orderedMap = treemap.New[string, HeroConf_Hero_OrderedMapValue]()
-	for k1, v1 := range x.Data().HeroMap {
+	for k1, v1 := range x.Data().GetHeroMap() {
 		map1 := x.orderedMap
 		map1.Put(k1, HeroConf_Hero_OrderedMapValue{
 			First:  treemap.New[string, *protoconf.HeroConf_Hero_Attr](),
 			Second: v1,
 		})
 		k1v, _ := map1.Get(k1)
-		for k2, v2 := range v1.AttrMap {
+		for k2, v2 := range v1.GetAttrMap() {
 			map2 := k1v.First
 			map2.Put(k2, v2)
 		}
@@ -90,7 +96,7 @@ func (x *HeroConf) AfterLoad() error {
 // Get1 finds value in the 1-level map. It will return nil if
 // the deepest key is not found, otherwise return an error.
 func (x *HeroConf) Get1(name string) (*protoconf.HeroConf_Hero, error) {
-	d := x.data.HeroMap
+	d := x.Data().GetHeroMap()
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "HeroMap is nil")
 	}
@@ -109,7 +115,7 @@ func (x *HeroConf) Get2(name string, title string) (*protoconf.HeroConf_Hero_Att
 		return nil, err
 	}
 
-	d := conf.AttrMap
+	d := conf.GetAttrMap()
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "AttrMap is nil")
 	}

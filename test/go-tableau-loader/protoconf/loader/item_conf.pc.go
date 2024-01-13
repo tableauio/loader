@@ -32,12 +32,18 @@ type ItemConf struct {
 
 // Name returns the ItemConf's message name.
 func (x *ItemConf) Name() string {
-	return string((&x.data).ProtoReflect().Descriptor().Name())
+	if x != nil {
+		return string((&x.data).ProtoReflect().Descriptor().Name())
+	}
+	return ""
 }
 
 // Data returns the ItemConf's inner message data.
 func (x *ItemConf) Data() *protoconf.ItemConf {
-	return &x.data
+	if x != nil {
+		return &x.data
+	}
+	return nil
 }
 
 // Messager is used to implement Checker interface.
@@ -57,7 +63,7 @@ func (x *ItemConf) CheckCompatibility(hub, newHub *Hub) error {
 
 // Load fills ItemConf's inner message data from the specified direcotry and format.
 func (x *ItemConf) Load(dir string, format format.Format, options ...load.Option) error {
-	err := load.Load(&x.data, dir, format, options...)
+	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
 	}
@@ -68,7 +74,7 @@ func (x *ItemConf) Load(dir string, format format.Format, options ...load.Option
 func (x *ItemConf) AfterLoad() error {
 	// OrderedMap init.
 	x.orderedMap = treemap.New[uint32, *protoconf.ItemConf_Item]()
-	for k1, v1 := range x.Data().ItemMap {
+	for k1, v1 := range x.Data().GetItemMap() {
 		map1 := x.orderedMap
 		map1.Put(k1, v1)
 	}
@@ -78,7 +84,7 @@ func (x *ItemConf) AfterLoad() error {
 // Get1 finds value in the 1-level map. It will return nil if
 // the deepest key is not found, otherwise return an error.
 func (x *ItemConf) Get1(id uint32) (*protoconf.ItemConf_Item, error) {
-	d := x.data.ItemMap
+	d := x.Data().GetItemMap()
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "ItemMap is nil")
 	}
