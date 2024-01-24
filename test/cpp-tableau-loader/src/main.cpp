@@ -2,71 +2,14 @@
 #include <iostream>
 #include <string>
 
+#include "hub/custom/item/custom_item_conf.h"
+#include "hub/hub.h"
 #include "protoconf/hub.pc.h"
 #include "protoconf/item_conf.pc.h"
-#include "protoconf/logger.pc.h"
-#include "protoconf/registry.pc.h"
 #include "protoconf/test_conf.pc.h"
 
-void WriteFile(const std::string& filename, const std::string& input) {
-  std::ofstream out(filename);
-  out << input;
-  out.close();
-}
-
-template <class T, const bool threaded = false>
-class Singleton {
- private:
-  Singleton(const T&) = delete;
-  Singleton(T&&) = delete;
-  void operator=(const T&) = delete;
-  static inline T* GetInstancePtr() {
-    T* ptr = nullptr;
-    if (threaded) {
-      static thread_local T* new_ptr = new T();
-      ptr = new_ptr;
-    } else {
-      static T* new_ptr = new T();
-      ptr = new_ptr;
-    }
-    assert(ptr != nullptr);
-    return ptr;
-  }
-
- public:
-  static inline T& Instance() { return *GetInstancePtr(); }
-
- protected:
-  Singleton() = default;
-};
-
-class MyHub : public Singleton<tableau::Hub, true> {};
-
-// syntactic sugar
-template <typename T>
-const std::shared_ptr<T> Get() {
-  return MyHub::Instance().Get<T>();
-}
-
-void LogWrite(std::ostream* os, const tableau::log::SourceLocation& loc, const tableau::log::LevelInfo& lvl,
-              const std::string& content) {
-  // clang-format off
-  *os << tableau::log::NowStr() << " "
-    // << std::this_thread::get_id() << "|"
-    // << gettid() << " "
-    << lvl.name << " [" 
-    << loc.filename << ":" << loc.line << "][" 
-    << loc.funcname << "]" 
-    << content
-    << std::endl << std::flush;
-  // clang-format on
-}
-
 int main() {
-  // custom log
-  tableau::log::DefaultLogger()->SetWriter(LogWrite);
-
-  tableau::Registry::Init();
+  Hub::Instance().Init();
   tableau::LoadOptions options;
   options.ignore_unknown_fields = true;
   options.postprocessor = [](const tableau::Hub& hub) {
@@ -75,13 +18,13 @@ int main() {
   };
   options.paths["ItemConf"] = "../../testdata/ItemConf.json";
 
-  bool ok = MyHub::Instance().Load(
+  bool ok = Hub::Instance().Load(
       "../../testdata/", [](const std::string& name) { return true; }, tableau::Format::kJSON, &options);
   if (!ok) {
     std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
     return 1;
   }
-  auto item_mgr = MyHub::Instance().Get<protoconf::ItemConfMgr>();
+  auto item_mgr = Hub::Instance().Get<protoconf::ItemConfMgr>();
   if (!item_mgr) {
     std::cout << "protobuf hub get Item failed!" << std::endl;
     return 1;
@@ -97,7 +40,7 @@ int main() {
   }
   std::cout << "item: " << item->ShortDebugString() << std::endl;
 
-  //   auto activity_conf = MyHub::Instance().Get<tableau::ActivityConf>();
+  //   auto activity_conf = Hub::Instance().Get<tableau::ActivityConf>();
   //   if (!activity_conf) {
   //     std::cout << "protobuf hub get ActivityConf failed!" << std::endl;
   //     return 1;
@@ -109,7 +52,7 @@ int main() {
   //     return 1;
   //   }
 
-  //   const auto* section_conf = MyHub::Instance().Get<protoconf::ActivityConfMgr, protoconf::Section>(100001, 1, 2);
+  //   const auto* section_conf = Hub::Instance().Get<protoconf::ActivityConfMgr, protoconf::Section>(100001, 1, 2);
   //   if (!section_conf) {
   //     std::cout << "ActivityConf get section failed!" << std::endl;
   //     return 1;
@@ -119,7 +62,7 @@ int main() {
   //   std::cout << section_conf->DebugString() << std::endl;
 
   const auto* chapter_ordered_map =
-      MyHub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::Activity_Chapter_OrderedMap>(
+      Hub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::Activity_Chapter_OrderedMap>(
           100001);
   if (!chapter_ordered_map) {
     std::cout << "ActivityConf GetOrderedMap chapter failed!" << std::endl;
@@ -143,8 +86,7 @@ int main() {
   }
 
   const auto* rank_ordered_map =
-      MyHub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::int32_OrderedMap>(100001, 1,
-                                                                                                           2);
+      Hub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::int32_OrderedMap>(100001, 1, 2);
   if (!rank_ordered_map) {
     std::cout << "ActivityConf GetOrderedMap rank failed!" << std::endl;
     return 1;
@@ -154,7 +96,7 @@ int main() {
     std::cout << it.first << std::endl;
   }
 
-  auto activity_conf = MyHub::Instance().Get<tableau::ActivityConf>();
+  auto activity_conf = Hub::Instance().Get<tableau::ActivityConf>();
   if (!activity_conf) {
     std::cout << "protobuf hub get ActivityConf failed!" << std::endl;
     return 1;
@@ -179,5 +121,7 @@ int main() {
 
   std::cout << "-----FindFirstChapter" << std::endl;
   std::cout << index_first_chapter->ShortDebugString() << std::endl;
+
+  std::cout << "specialItemName: " << Hub::Instance().Get<CustomItemConf>()->GetSpecialItemName() << std::endl;
   return 0;
 }

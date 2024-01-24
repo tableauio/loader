@@ -16,14 +16,45 @@ import (
 
 type Messager interface {
 	Checker
+	// Name returns the unique message name.
 	Name() string
+	// Load fills inner message data from the specified direcotry and format.
 	Load(dir string, fmt format.Format, options ...load.Option) error
+	// ProcessAfterLoadAll is invoked after all messagers loaded.
+	ProcessAfterLoadAll(hub *Hub) error
 }
 
 type Checker interface {
 	Messager() Messager
 	Check(hub *Hub) error
 	CheckCompatibility(hub, newHub *Hub) error
+}
+
+type UnimplementedMessager struct {
+}
+
+func (x *UnimplementedMessager) Name() string {
+	return ""
+}
+
+func (x *UnimplementedMessager) Load(dir string, format format.Format, options ...load.Option) error {
+	return nil
+}
+
+func (x *UnimplementedMessager) ProcessAfterLoadAll(hub *Hub) error {
+	return nil
+}
+
+func (x *UnimplementedMessager) Messager() Messager {
+	return nil
+}
+
+func (x *UnimplementedMessager) Check(hub *Hub) error {
+	return nil
+}
+
+func (x *UnimplementedMessager) CheckCompatibility(hub, newHub *Hub) error {
+	return nil
 }
 
 type MessagerMap = map[string]Messager
@@ -39,6 +70,9 @@ func NewRegistrar() *Registrar {
 }
 
 func (r *Registrar) Register(gen MessagerGenerator) {
+	if _, ok := r.Generators[gen().Name()]; ok {
+		panic("register duplicate messager: " + gen().Name())
+	}
 	r.Generators[gen().Name()] = gen
 }
 
@@ -52,7 +86,7 @@ func getRegistrar() *Registrar {
 	return registrarSingleton
 }
 
-func register(gen MessagerGenerator) {
+func Register(gen MessagerGenerator) {
 	getRegistrar().Register(gen)
 }
 
@@ -92,6 +126,10 @@ func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
 	h.messagerMap = messagerMap
 }
 
+func (h *Hub) GetMessager(name string) Messager {
+	return h.messagerMap[name]
+}
+
 func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...load.Option) error {
 	messagerMap := h.NewMessagerMap(filter)
 	for name, msger := range messagerMap {
@@ -100,6 +138,13 @@ func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...l
 		}
 		fmt.Println("Loaded: " + msger.Name())
 	}
+	// create a temporary hub with messager container for post process
+	tmpHub := &Hub{messagerMap: messagerMap}
+	for name, msger := range messagerMap {
+		if err := msger.ProcessAfterLoadAll(tmpHub); err != nil {
+			return errors.WithMessagef(err, "failed to process messager %s after load all", name)
+		}
+	}
 	h.SetMessagerMap(messagerMap)
 	return nil
 }
@@ -107,7 +152,7 @@ func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...l
 // Auto-generated getters below
 
 func (h *Hub) GetHeroConf() *HeroConf {
-	msger := h.messagerMap["HeroConf"]
+	msger := h.GetMessager("HeroConf")
 	if msger != nil {
 		if conf, ok := msger.(*HeroConf); ok {
 			return conf
@@ -117,7 +162,7 @@ func (h *Hub) GetHeroConf() *HeroConf {
 }
 
 func (h *Hub) GetItemConf() *ItemConf {
-	msger := h.messagerMap["ItemConf"]
+	msger := h.GetMessager("ItemConf")
 	if msger != nil {
 		if conf, ok := msger.(*ItemConf); ok {
 			return conf
@@ -127,7 +172,7 @@ func (h *Hub) GetItemConf() *ItemConf {
 }
 
 func (h *Hub) GetActivityConf() *ActivityConf {
-	msger := h.messagerMap["ActivityConf"]
+	msger := h.GetMessager("ActivityConf")
 	if msger != nil {
 		if conf, ok := msger.(*ActivityConf); ok {
 			return conf
@@ -137,7 +182,7 @@ func (h *Hub) GetActivityConf() *ActivityConf {
 }
 
 func (h *Hub) GetChapterConf() *ChapterConf {
-	msger := h.messagerMap["ChapterConf"]
+	msger := h.GetMessager("ChapterConf")
 	if msger != nil {
 		if conf, ok := msger.(*ChapterConf); ok {
 			return conf
@@ -147,7 +192,7 @@ func (h *Hub) GetChapterConf() *ChapterConf {
 }
 
 func (h *Hub) GetThemeConf() *ThemeConf {
-	msger := h.messagerMap["ThemeConf"]
+	msger := h.GetMessager("ThemeConf")
 	if msger != nil {
 		if conf, ok := msger.(*ThemeConf); ok {
 			return conf

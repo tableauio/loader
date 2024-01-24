@@ -30,6 +30,7 @@ type HeroConf_Hero_OrderedMap = treemap.TreeMap[string, HeroConf_Hero_OrderedMap
 //  2. Elegant API: concise and clean functions.
 //  3. Extensibility: Map, OrdererdMap, Index...
 type HeroConf struct {
+	UnimplementedMessager
 	data       protoconf.HeroConf
 	orderedMap *HeroConf_Hero_OrderedMap
 }
@@ -47,21 +48,6 @@ func (x *HeroConf) Data() *protoconf.HeroConf {
 	if x != nil {
 		return &x.data
 	}
-	return nil
-}
-
-// Messager is used to implement Checker interface.
-func (x *HeroConf) Messager() Messager {
-	return x
-}
-
-// Check is used to implement Checker interface.
-func (x *HeroConf) Check(hub *Hub) error {
-	return nil
-}
-
-// CheckCompatibility is used to implement Checker interface.
-func (x *HeroConf) CheckCompatibility(hub, newHub *Hub) error {
 	return nil
 }
 
@@ -143,7 +129,7 @@ func (x *HeroConf) GetOrderedMap1(name string) (*HeroConf_Hero_Attr_OrderedMap, 
 }
 
 func init() {
-	register(func() Messager {
+	Register(func() Messager {
 		return new(HeroConf)
 	})
 }
