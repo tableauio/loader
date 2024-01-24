@@ -26,6 +26,7 @@ type ItemConf_Item_OrderedMap = treemap.TreeMap[uint32, *protoconf.ItemConf_Item
 //  2. Elegant API: concise and clean functions.
 //  3. Extensibility: Map, OrdererdMap, Index...
 type ItemConf struct {
+	UnimplementedMessager
 	data       protoconf.ItemConf
 	orderedMap *ItemConf_Item_OrderedMap
 }
@@ -43,21 +44,6 @@ func (x *ItemConf) Data() *protoconf.ItemConf {
 	if x != nil {
 		return &x.data
 	}
-	return nil
-}
-
-// Messager is used to implement Checker interface.
-func (x *ItemConf) Messager() Messager {
-	return x
-}
-
-// Check is used to implement Checker interface.
-func (x *ItemConf) Check(hub *Hub) error {
-	return nil
-}
-
-// CheckCompatibility is used to implement Checker interface.
-func (x *ItemConf) CheckCompatibility(hub, newHub *Hub) error {
 	return nil
 }
 
@@ -101,7 +87,7 @@ func (x *ItemConf) GetOrderedMap() *ItemConf_Item_OrderedMap {
 }
 
 func init() {
-	register(func() Messager {
+	Register(func() Messager {
 		return new(ItemConf)
 	})
 }

@@ -36,6 +36,7 @@ type ActivityConf_Activity_OrderedMap = treemap.TreeMap[uint64, ActivityConf_Act
 //  2. Elegant API: concise and clean functions.
 //  3. Extensibility: Map, OrdererdMap, Index...
 type ActivityConf struct {
+	UnimplementedMessager
 	data       protoconf.ActivityConf
 	orderedMap *ActivityConf_Activity_OrderedMap
 }
@@ -53,21 +54,6 @@ func (x *ActivityConf) Data() *protoconf.ActivityConf {
 	if x != nil {
 		return &x.data
 	}
-	return nil
-}
-
-// Messager is used to implement Checker interface.
-func (x *ActivityConf) Messager() Messager {
-	return x
-}
-
-// Check is used to implement Checker interface.
-func (x *ActivityConf) Check(hub *Hub) error {
-	return nil
-}
-
-// CheckCompatibility is used to implement Checker interface.
-func (x *ActivityConf) CheckCompatibility(hub, newHub *Hub) error {
 	return nil
 }
 
@@ -238,6 +224,7 @@ func (x *ActivityConf) GetOrderedMap3(activityID uint64, chapterID uint32, secti
 //  2. Elegant API: concise and clean functions.
 //  3. Extensibility: Map, OrdererdMap, Index...
 type ChapterConf struct {
+	UnimplementedMessager
 	data protoconf.ChapterConf
 }
 
@@ -254,21 +241,6 @@ func (x *ChapterConf) Data() *protoconf.ChapterConf {
 	if x != nil {
 		return &x.data
 	}
-	return nil
-}
-
-// Messager is used to implement Checker interface.
-func (x *ChapterConf) Messager() Messager {
-	return x
-}
-
-// Check is used to implement Checker interface.
-func (x *ChapterConf) Check(hub *Hub) error {
-	return nil
-}
-
-// CheckCompatibility is used to implement Checker interface.
-func (x *ChapterConf) CheckCompatibility(hub, newHub *Hub) error {
 	return nil
 }
 
@@ -308,6 +280,7 @@ func (x *ChapterConf) Get1(id uint64) (*protoconf.ChapterConf_Chapter, error) {
 //  2. Elegant API: concise and clean functions.
 //  3. Extensibility: Map, OrdererdMap, Index...
 type ThemeConf struct {
+	UnimplementedMessager
 	data protoconf.ThemeConf
 }
 
@@ -324,21 +297,6 @@ func (x *ThemeConf) Data() *protoconf.ThemeConf {
 	if x != nil {
 		return &x.data
 	}
-	return nil
-}
-
-// Messager is used to implement Checker interface.
-func (x *ThemeConf) Messager() Messager {
-	return x
-}
-
-// Check is used to implement Checker interface.
-func (x *ThemeConf) Check(hub *Hub) error {
-	return nil
-}
-
-// CheckCompatibility is used to implement Checker interface.
-func (x *ThemeConf) CheckCompatibility(hub, newHub *Hub) error {
 	return nil
 }
 
@@ -371,13 +329,13 @@ func (x *ThemeConf) Get1(name string) (*protoconf.ThemeConf_Theme, error) {
 }
 
 func init() {
-	register(func() Messager {
+	Register(func() Messager {
 		return new(ActivityConf)
 	})
-	register(func() Messager {
+	Register(func() Messager {
 		return new(ChapterConf)
 	})
-	register(func() Messager {
+	Register(func() Messager {
 		return new(ThemeConf)
 	})
 }

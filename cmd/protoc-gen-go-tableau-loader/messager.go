@@ -67,7 +67,7 @@ func generateRegister(messagers []string, g *protogen.GeneratedFile) {
 	// register messagers
 	g.P("func init() {")
 	for _, messager := range messagers {
-		g.P(`register(func() Messager {`)
+		g.P(`Register(func() Messager {`)
 		g.P("return new(", messager, ")")
 		g.P("})")
 	}
@@ -93,6 +93,7 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	g.P("//  3. Extensibility: Map, OrdererdMap, Index...")
 	// messager definition
 	g.P("type ", messagerName, " struct {")
+	g.P("UnimplementedMessager")
 	g.P("data ", file.GoImportPath.Ident(messagerName))
 	if helper.NeedGenOrderedMap(message.Desc) && orderedMapTypeName != "" {
 		g.P("orderedMap *", orderedMapTypeName)
@@ -116,28 +117,6 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	g.P("return &x.data")
 	g.P("}")
 	g.P(`return nil`)
-	g.P("}")
-	g.P()
-
-	g.P("// Messager is used to implement Checker interface.")
-	g.P("func (x *", messagerName, ") Messager() Messager {")
-	g.P("return x")
-	g.P("}")
-	g.P()
-
-	g.P("// Check is used to implement Checker interface.")
-	g.P("func (x *", messagerName, ") Check(hub *Hub) error {")
-	// NOTE(wenchyzhu): field prop "refer" feature already implemented in tableau.
-	// So just comment codes below, maybe reused in the future.
-	// levelInfos := check.ParseReferLevelInfo(*protoconfPkg, "", message.Desc)
-	// genCheckRefer(1, levelInfos, g, messagerName)
-	g.P("return nil")
-	g.P("}")
-	g.P()
-
-	g.P("// CheckCompatibility is used to implement Checker interface.")
-	g.P("func (x *", messagerName, ") CheckCompatibility(hub, newHub *Hub) error {")
-	g.P("return nil")
 	g.P("}")
 	g.P()
 

@@ -1,3 +1,5 @@
+// NOTE: field prop "refer" feature already implemented in tableau.
+// Logic hear may be reused in the future.
 package check
 
 import (

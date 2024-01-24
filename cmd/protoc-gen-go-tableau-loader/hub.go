@@ -19,7 +19,7 @@ func generateHub(gen *protogen.Plugin) {
 
 	for _, messager := range messagers {
 		g.P("func (h *Hub) Get", messager, "() *", messager, " {")
-		g.P(`msger := h.messagerMap["`, messager, `"]`)
+		g.P(`msger := h.GetMessager("`, messager, `")`)
 		g.P("if msger != nil {")
 		g.P("if conf, ok := msger.(*", messager, "); ok {")
 		g.P("return conf")
@@ -42,14 +42,45 @@ const staticHubContent = `import (
 
 type Messager interface {
 	Checker
+	// Name returns the unique message name.
 	Name() string
+	// Load fills inner message data from the specified direcotry and format.
 	Load(dir string, fmt format.Format, options ...load.Option) error
+	// ProcessAfterLoadAll is invoked after all messagers loaded.
+	ProcessAfterLoadAll(hub *Hub) error
 }
 
 type Checker interface {
 	Messager() Messager
 	Check(hub *Hub) error
 	CheckCompatibility(hub, newHub *Hub) error
+}
+
+type UnimplementedMessager struct {
+}
+
+func (x *UnimplementedMessager) Name() string {
+	return ""
+}
+
+func (x *UnimplementedMessager) Load(dir string, format format.Format, options ...load.Option) error {
+	return nil
+}
+
+func (x *UnimplementedMessager) ProcessAfterLoadAll(hub *Hub) error {
+	return nil
+}
+
+func (x *UnimplementedMessager) Messager() Messager {
+	return nil
+}
+
+func (x *UnimplementedMessager) Check(hub *Hub) error {
+	return nil
+}
+
+func (x *UnimplementedMessager) CheckCompatibility(hub, newHub *Hub) error {
+	return nil
 }
 
 type MessagerMap = map[string]Messager
@@ -65,6 +96,9 @@ func NewRegistrar() *Registrar {
 }
 
 func (r *Registrar) Register(gen MessagerGenerator) {
+	if _, ok:= r.Generators[gen().Name()]; ok{
+		panic("register duplicate messager: " + gen().Name())
+	}
 	r.Generators[gen().Name()] = gen
 }
 
@@ -78,7 +112,7 @@ func getRegistrar() *Registrar {
 	return registrarSingleton
 }
 
-func register(gen MessagerGenerator) {
+func Register(gen MessagerGenerator) {
 	getRegistrar().Register(gen)
 }
 
@@ -118,6 +152,10 @@ func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
 	h.messagerMap = messagerMap
 }
 
+func (h *Hub) GetMessager(name string) Messager {
+	return h.messagerMap[name]
+}
+
 func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...load.Option) error {
 	messagerMap := h.NewMessagerMap(filter)
 	for name, msger := range messagerMap {
@@ -125,6 +163,13 @@ func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...l
 			return errors.WithMessagef(err, "failed to load: %v", name)
 		}
 		fmt.Println("Loaded: " + msger.Name())
+	}
+	// create a temporary hub with messager container for post process
+  	tmpHub := &Hub{messagerMap: messagerMap};
+	for name, msger := range messagerMap {
+		if err := msger.ProcessAfterLoadAll(tmpHub); err != nil {
+			return errors.WithMessagef(err, "failed to process messager %s after load all", name)
+		}
 	}
 	h.SetMessagerMap(messagerMap)
 	return nil

@@ -2,35 +2,16 @@ package main
 
 import (
 	"fmt"
-	"sync"
 
-	tableau "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader"
+	"github.com/tableauio/loader/test/go-tableau-loader/hub"
 	"github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
 	"github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
 	"github.com/tableauio/tableau/format"
 	"github.com/tableauio/tableau/load"
 )
 
-type MyHub struct {
-	*tableau.Hub
-}
-
-var hubSingleton *MyHub
-var once sync.Once
-
-// GetHub return the singleton of MyHub
-func GetHub() *MyHub {
-	once.Do(func() {
-		// new instance
-		hubSingleton = &MyHub{
-			Hub: tableau.NewHub(),
-		}
-	})
-	return hubSingleton
-}
-
 func main() {
-	err := GetHub().Load("../testdata/", nil, format.JSON,
+	err := hub.GetHub().Load("../testdata/", nil, format.JSON,
 		load.IgnoreUnknownFields(),
 		load.Paths(map[string]string{
 			"ItemConf": "../testdata/ItemConf.json",
@@ -39,7 +20,7 @@ func main() {
 		panic(err)
 	}
 
-	conf := GetHub().GetActivityConf()
+	conf := hub.GetHub().GetActivityConf()
 	if conf == nil {
 		panic("ActivityConf is nil")
 	}
@@ -70,7 +51,8 @@ func main() {
 		}
 	}
 
-	if err := conf.Check(GetHub().Hub); err != nil {
+	if err := conf.Check(hub.GetHub().Hub); err != nil {
 		panic(err)
 	}
+	fmt.Printf("specialItemName: %v\n", hub.GetHub().GetCustomItemConf().GetSpecialItemName())
 }
