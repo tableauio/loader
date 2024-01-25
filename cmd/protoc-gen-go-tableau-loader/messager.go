@@ -130,6 +130,12 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	g.P("}")
 	g.P()
 
+	g.P("// Messager is used to implement Checker interface.")
+	g.P("func (x *", messagerName, ") Messager() Messager {")
+	g.P("return x")
+	g.P("}")
+	g.P()
+
 	g.P("// AfterLoad runs after this messager is loaded.")
 	g.P("func (x *", messagerName, ") AfterLoad() error {")
 	if helper.NeedGenOrderedMap(message.Desc) {
