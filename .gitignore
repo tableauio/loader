@@ -28,6 +28,7 @@
 *.app
 
 # custom files and directories 
+_out/
 third_party/_submodules
 cmd/protoc-gen-cpp-tableau-loader/protoc-gen-cpp-tableau-loader
 cmd/protoc-gen-go-tableau-loader/protoc-gen-go-tableau-loader

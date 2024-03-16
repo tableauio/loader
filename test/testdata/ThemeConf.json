@@ -2,11 +2,11 @@
     "themeMap": {
         "theme1": {
             "name": "theme1",
-            "value": 1
+            "value": "1"
         },
         "theme2": {
             "name": "theme2",
-            "value": 1
+            "value": "1"
         }
     }
 }

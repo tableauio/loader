@@ -20,6 +20,7 @@ import (
 const (
 	formatPackage  = protogen.GoImportPath("github.com/tableauio/tableau/format")
 	loadPackage    = protogen.GoImportPath("github.com/tableauio/tableau/load")
+	storePackage   = protogen.GoImportPath("github.com/tableauio/tableau/store")
 	errors         = protogen.GoImportPath("github.com/pkg/errors")
 	treeMapPackage = protogen.GoImportPath("github.com/tableauio/loader/pkg/treemap")
 	pairPackage    = protogen.GoImportPath("github.com/tableauio/loader/pkg/pair")
@@ -120,13 +121,20 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	g.P("}")
 	g.P()
 
-	g.P("// Load fills ", messagerName, "'s inner message data from the specified direcotry and format.")
+	g.P("// Load fills ", messagerName, "'s inner message from file in the specified directory and format.")
 	g.P("func (x *", messagerName, ") Load(dir string, format ", formatPackage.Ident("Format"), " , options ...", loadPackage.Ident("Option"), ") error {")
 	g.P("err := ", loadPackage.Ident("Load"), "(x.Data(), dir, format, options...)")
 	g.P("if err != nil {")
 	g.P("return err")
 	g.P("}")
 	g.P("return x.AfterLoad()")
+	g.P("}")
+	g.P()
+
+	g.P("// Store writes ", messagerName, "'s inner message to file in the specified directory and format.")
+	g.P("// Available formats: JSON, Bin, and Text.")
+	g.P("func (x *", messagerName, ") Store(dir string, format ", formatPackage.Ident("Format"), " , options ...", storePackage.Ident("Option"), ") error {")
+	g.P("return ", storePackage.Ident("Store"), "(x.Data(), dir, format, options...)")
 	g.P("}")
 	g.P()
 
@@ -227,7 +235,7 @@ func genMapGetters(depth int, keys []helper.MapKey, messagerName string, file *p
 			g.P("}")
 			lastKeyName := keys[len(keys)-1].Name
 			g.P("if val, ok := d[", lastKeyName, "]; !ok {")
-			g.P(`return `, returnEmptyValue, `, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("NotFound"), `, "`, lastKeyName, `(%v)not found", `, lastKeyName, `)`)
+			g.P(`return `, returnEmptyValue, `, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("NotFound"), `, "`, lastKeyName, `(%v) not found", `, lastKeyName, `)`)
 			g.P("} else {")
 			g.P(`return val, nil`)
 			g.P("}")
@@ -286,7 +294,7 @@ func genOrderedMapGetters(depth int, keys []helper.MapKey, messagerName string, 
 					keyName = fmt.Sprintf("BoolToInt(%s)", keyName)
 				}
 				g.P("if val, ok := conf.Get(", keyName, "); !ok {")
-				g.P(`return nil, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("NotFound"), `, "`, lastKeyName, `(%v)not found", `, lastKeyName, `)`)
+				g.P(`return nil, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("NotFound"), `, "`, lastKeyName, `(%v) not found", `, lastKeyName, `)`)
 				g.P("} else {")
 				g.P(`return val.First, nil`)
 				g.P("}")

@@ -4,7 +4,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 ## Prerequisites
 
-> TODO: docker container-dev
+> TODO: [devcontainer](https://code.visualstudio.com/docs/devcontainers/containers)
 
 - Development OS: linux
 - Init protobuf: `bash init.sh`

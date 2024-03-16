@@ -13,6 +13,7 @@ import (
 	xerrors "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
+	store "github.com/tableauio/tableau/store"
 )
 
 // OrderedMap types.
@@ -47,13 +48,24 @@ func (x *ItemConf) Data() *protoconf.ItemConf {
 	return nil
 }
 
-// Load fills ItemConf's inner message data from the specified direcotry and format.
+// Load fills ItemConf's inner message from file in the specified directory and format.
 func (x *ItemConf) Load(dir string, format format.Format, options ...load.Option) error {
 	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
 	}
 	return x.AfterLoad()
+}
+
+// Store writes ItemConf's inner message to file in the specified directory and format.
+// Available formats: JSON, Bin, and Text.
+func (x *ItemConf) Store(dir string, format format.Format, options ...store.Option) error {
+	return store.Store(x.Data(), dir, format, options...)
+}
+
+// Messager is used to implement Checker interface.
+func (x *ItemConf) Messager() Messager {
+	return x
 }
 
 // AfterLoad runs after this messager is loaded.
@@ -75,7 +87,7 @@ func (x *ItemConf) Get1(id uint32) (*protoconf.ItemConf_Item, error) {
 		return nil, xerrors.Errorf(code.Nil, "ItemMap is nil")
 	}
 	if val, ok := d[id]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "id(%v)not found", id)
+		return nil, xerrors.Errorf(code.NotFound, "id(%v) not found", id)
 	} else {
 		return val, nil
 	}

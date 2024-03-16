@@ -1,7 +1,6 @@
 {
     "itemMap": {
         "0": {
-            "id": 0,
             "name": "coin1"
         },
         "1": {
@@ -13,11 +12,6 @@
             },
             "expiry": "2021-01-01T18:00:00Z",
             "type": "FRUIT_TYPE_APPLE",
-            "params": [
-                1,
-                2,
-                3
-            ],
             "extTypeList": [
                 "FRUIT_TYPE_APPLE",
                 "FRUIT_TYPE_ORANGE"
