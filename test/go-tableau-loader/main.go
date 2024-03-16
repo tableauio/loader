@@ -35,9 +35,12 @@ func main() {
 	fmt.Printf("ActivityConf: %v\n", chapter)
 	chapter.SectionName = "updated section 2"
 
-	hub.GetHub().Store("_out/", nil, format.JSON,
+	err = hub.GetHub().Store("_out/", nil, format.JSON,
 		store.Pretty(true),
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	ordMap := conf.GetOrderedMap()
 	for iter := ordMap.Iterator(); iter.Next(); {
