@@ -94,6 +94,8 @@ github.com/richardlehane/msoleps v1.0.1/go.mod h1:BWev5JBpU9Ko2WAgmZEuiz4/u3ZYTK
 github.com/richardlehane/msoleps v1.0.3 h1:aznSZzrwYRl3rLKRT3gUk9am7T/mLNSnJINvN0AQoVM=
 github.com/richardlehane/msoleps v1.0.3/go.mod h1:BWev5JBpU9Ko2WAgmZEuiz4/u3ZYTKbjLycmwiWUfWg=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
+github.com/rogpeppe/go-internal v1.10.0 h1:TMyTOH3F/DB16zRVcYyreMH6GnZZrwQVAoYjRBZyWFQ=
+github.com/rogpeppe/go-internal v1.10.0/go.mod h1:UQnix2H7Ngw/k4C5ijL5+65zddjncjaFoBhdsK/akog=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
@@ -103,6 +105,14 @@ github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.2 h1:+h33VjcLVPDHtOdpUCuF+7gSuG3yGIftsP1YvFihtJ8=
 github.com/tableauio/tableau v0.10.8-0.20231114072616-342aeb2f683e h1:yPuXnG3W9fwPmprT+fBQc0xpOktLGiblaiuOsAB/q8o=
 github.com/tableauio/tableau v0.10.8-0.20231114072616-342aeb2f683e/go.mod h1:O8IFfmVLHCfnZ5Mqot83VUjgnbM4brUHlpLwjCrPUM8=
+github.com/tableauio/tableau v0.10.8-0.20240315151757-208b5adf3456 h1:zuCDzi3iyxta7lNw0Ki9mVaApCweREVDGZW87WeLM44=
+github.com/tableauio/tableau v0.10.8-0.20240315151757-208b5adf3456/go.mod h1:O8IFfmVLHCfnZ5Mqot83VUjgnbM4brUHlpLwjCrPUM8=
+github.com/tableauio/tableau v0.10.8-0.20240315165149-16db744c2967 h1:8dMmYa9Y5/CqTq+V7cMSoNKDOA1H3wh9qtN8y2IrrlY=
+github.com/tableauio/tableau v0.10.8-0.20240315165149-16db744c2967/go.mod h1:O8IFfmVLHCfnZ5Mqot83VUjgnbM4brUHlpLwjCrPUM8=
+github.com/tableauio/tableau v0.10.8-0.20240315170938-713a5bc0a755 h1:squcxXza0qkq74Iwbgm33i3vZv4iJsdPJuiHC4MJtcU=
+github.com/tableauio/tableau v0.10.8-0.20240315170938-713a5bc0a755/go.mod h1:O8IFfmVLHCfnZ5Mqot83VUjgnbM4brUHlpLwjCrPUM8=
+github.com/tableauio/tableau v0.10.8-0.20240316034207-98906734d902 h1:lSCJP95Tkv3aNsuU2cMQAyng+SuTLDjlOtRfv6VVNv4=
+github.com/tableauio/tableau v0.10.8-0.20240316034207-98906734d902/go.mod h1:O8IFfmVLHCfnZ5Mqot83VUjgnbM4brUHlpLwjCrPUM8=
 github.com/xuri/efp v0.0.0-20220603152613-6918739fd470 h1:6932x8ltq1w4utjmfMPVj09jdMlkY0aiA6+Skbtl3/c=
 github.com/xuri/efp v0.0.0-20220603152613-6918739fd470/go.mod h1:ybY/Jr0T0GTCnYjKqmdwxyxn2BQf2RcQIIvex5QldPI=
 github.com/xuri/excelize/v2 v2.6.1 h1:ICBdtw803rmhLN3zfvyEGH3cwSmZv+kde7LhTDT659k=

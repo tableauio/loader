@@ -14,6 +14,7 @@ import (
 	xerrors "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
+	store "github.com/tableauio/tableau/store"
 )
 
 // OrderedMap types.
@@ -51,13 +52,24 @@ func (x *HeroConf) Data() *protoconf.HeroConf {
 	return nil
 }
 
-// Load fills HeroConf's inner message data from the specified direcotry and format.
+// Load fills HeroConf's inner message from file in the specified directory and format.
 func (x *HeroConf) Load(dir string, format format.Format, options ...load.Option) error {
 	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
 	}
 	return x.AfterLoad()
+}
+
+// Store writes HeroConf's inner message to file in the specified directory and format.
+// Available formats: JSON, Bin, and Text.
+func (x *HeroConf) Store(dir string, format format.Format, options ...store.Option) error {
+	return store.Store(x.Data(), dir, format, options...)
+}
+
+// Messager is used to implement Checker interface.
+func (x *HeroConf) Messager() Messager {
+	return x
 }
 
 // AfterLoad runs after this messager is loaded.
@@ -87,7 +99,7 @@ func (x *HeroConf) Get1(name string) (*protoconf.HeroConf_Hero, error) {
 		return nil, xerrors.Errorf(code.Nil, "HeroMap is nil")
 	}
 	if val, ok := d[name]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "name(%v)not found", name)
+		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
 	} else {
 		return val, nil
 	}
@@ -106,7 +118,7 @@ func (x *HeroConf) Get2(name string, title string) (*protoconf.HeroConf_Hero_Att
 		return nil, xerrors.Errorf(code.Nil, "AttrMap is nil")
 	}
 	if val, ok := d[title]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "title(%v)not found", title)
+		return nil, xerrors.Errorf(code.NotFound, "title(%v) not found", title)
 	} else {
 		return val, nil
 	}
@@ -122,7 +134,7 @@ func (x *HeroConf) GetOrderedMap() *HeroConf_Hero_OrderedMap {
 func (x *HeroConf) GetOrderedMap1(name string) (*HeroConf_Hero_Attr_OrderedMap, error) {
 	conf := x.orderedMap
 	if val, ok := conf.Get(name); !ok {
-		return nil, xerrors.Errorf(code.NotFound, "name(%v)not found", name)
+		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
 	} else {
 		return val.First, nil
 	}

@@ -1,7 +1,7 @@
 {
     "activityMap": {
         "100001": {
-            "activityId": 100001,
+            "activityId": "100001",
             "activityName": "活动1",
             "chapterMap": {
                 "1": {
@@ -10,7 +10,7 @@
                     "sectionMap": {
                         "2": {
                             "sectionId": 2,
-                            "sectionName": "签到活动节2",
+                            "sectionName": "updated section 2",
                             "sectionItemList": [
                                 {
                                     "id": 2001,
@@ -22,9 +22,9 @@
                                 }
                             ],
                             "sectionRankMap": {
-                                "2009": 1,
                                 "2001": 2,
-                                "2007": 3  
+                                "2007": 3,
+                                "2009": 1
                             }
                         },
                         "3": {
@@ -39,8 +39,7 @@
                         },
                         "4": {
                             "sectionId": 4,
-                            "sectionName": "签到活动节4",
-                            "sectionItemList": []
+                            "sectionName": "签到活动节4"
                         }
                     }
                 },
@@ -71,7 +70,7 @@
             }
         },
         "100002": {
-            "activityId": 100002,
+            "activityId": "100002",
             "activityName": "活动2",
             "chapterMap": {
                 "1": {
@@ -101,7 +100,7 @@
             }
         },
         "100003": {
-            "activityId": 100003,
+            "activityId": "100003",
             "activityName": "活动3",
             "chapterMap": {
                 "1": {

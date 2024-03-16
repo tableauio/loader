@@ -14,6 +14,7 @@ import (
 	xerrors "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
+	store "github.com/tableauio/tableau/store"
 )
 
 // OrderedMap types.
@@ -57,13 +58,24 @@ func (x *ActivityConf) Data() *protoconf.ActivityConf {
 	return nil
 }
 
-// Load fills ActivityConf's inner message data from the specified direcotry and format.
+// Load fills ActivityConf's inner message from file in the specified directory and format.
 func (x *ActivityConf) Load(dir string, format format.Format, options ...load.Option) error {
 	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
 	}
 	return x.AfterLoad()
+}
+
+// Store writes ActivityConf's inner message to file in the specified directory and format.
+// Available formats: JSON, Bin, and Text.
+func (x *ActivityConf) Store(dir string, format format.Format, options ...store.Option) error {
+	return store.Store(x.Data(), dir, format, options...)
+}
+
+// Messager is used to implement Checker interface.
+func (x *ActivityConf) Messager() Messager {
+	return x
 }
 
 // AfterLoad runs after this messager is loaded.
@@ -109,7 +121,7 @@ func (x *ActivityConf) Get1(activityID uint64) (*protoconf.ActivityConf_Activity
 		return nil, xerrors.Errorf(code.Nil, "ActivityMap is nil")
 	}
 	if val, ok := d[activityID]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "activityID(%v)not found", activityID)
+		return nil, xerrors.Errorf(code.NotFound, "activityID(%v) not found", activityID)
 	} else {
 		return val, nil
 	}
@@ -128,7 +140,7 @@ func (x *ActivityConf) Get2(activityID uint64, chapterID uint32) (*protoconf.Act
 		return nil, xerrors.Errorf(code.Nil, "ChapterMap is nil")
 	}
 	if val, ok := d[chapterID]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "chapterID(%v)not found", chapterID)
+		return nil, xerrors.Errorf(code.NotFound, "chapterID(%v) not found", chapterID)
 	} else {
 		return val, nil
 	}
@@ -147,7 +159,7 @@ func (x *ActivityConf) Get3(activityID uint64, chapterID uint32, sectionID uint3
 		return nil, xerrors.Errorf(code.Nil, "SectionMap is nil")
 	}
 	if val, ok := d[sectionID]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "sectionID(%v)not found", sectionID)
+		return nil, xerrors.Errorf(code.NotFound, "sectionID(%v) not found", sectionID)
 	} else {
 		return val, nil
 	}
@@ -166,7 +178,7 @@ func (x *ActivityConf) Get4(activityID uint64, chapterID uint32, sectionID uint3
 		return 0, xerrors.Errorf(code.Nil, "SectionRankMap is nil")
 	}
 	if val, ok := d[key4]; !ok {
-		return 0, xerrors.Errorf(code.NotFound, "key4(%v)not found", key4)
+		return 0, xerrors.Errorf(code.NotFound, "key4(%v) not found", key4)
 	} else {
 		return val, nil
 	}
@@ -182,7 +194,7 @@ func (x *ActivityConf) GetOrderedMap() *ActivityConf_Activity_OrderedMap {
 func (x *ActivityConf) GetOrderedMap1(activityID uint64) (*ActivityConf_Activity_Chapter_OrderedMap, error) {
 	conf := x.orderedMap
 	if val, ok := conf.Get(activityID); !ok {
-		return nil, xerrors.Errorf(code.NotFound, "activityID(%v)not found", activityID)
+		return nil, xerrors.Errorf(code.NotFound, "activityID(%v) not found", activityID)
 	} else {
 		return val.First, nil
 	}
@@ -196,7 +208,7 @@ func (x *ActivityConf) GetOrderedMap2(activityID uint64, chapterID uint32) (*Uin
 		return nil, err
 	}
 	if val, ok := conf.Get(chapterID); !ok {
-		return nil, xerrors.Errorf(code.NotFound, "chapterID(%v)not found", chapterID)
+		return nil, xerrors.Errorf(code.NotFound, "chapterID(%v) not found", chapterID)
 	} else {
 		return val.First, nil
 	}
@@ -210,7 +222,7 @@ func (x *ActivityConf) GetOrderedMap3(activityID uint64, chapterID uint32, secti
 		return nil, err
 	}
 	if val, ok := conf.Get(sectionID); !ok {
-		return nil, xerrors.Errorf(code.NotFound, "sectionID(%v)not found", sectionID)
+		return nil, xerrors.Errorf(code.NotFound, "sectionID(%v) not found", sectionID)
 	} else {
 		return val.First, nil
 	}
@@ -244,13 +256,24 @@ func (x *ChapterConf) Data() *protoconf.ChapterConf {
 	return nil
 }
 
-// Load fills ChapterConf's inner message data from the specified direcotry and format.
+// Load fills ChapterConf's inner message from file in the specified directory and format.
 func (x *ChapterConf) Load(dir string, format format.Format, options ...load.Option) error {
 	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
 	}
 	return x.AfterLoad()
+}
+
+// Store writes ChapterConf's inner message to file in the specified directory and format.
+// Available formats: JSON, Bin, and Text.
+func (x *ChapterConf) Store(dir string, format format.Format, options ...store.Option) error {
+	return store.Store(x.Data(), dir, format, options...)
+}
+
+// Messager is used to implement Checker interface.
+func (x *ChapterConf) Messager() Messager {
+	return x
 }
 
 // AfterLoad runs after this messager is loaded.
@@ -266,7 +289,7 @@ func (x *ChapterConf) Get1(id uint64) (*protoconf.ChapterConf_Chapter, error) {
 		return nil, xerrors.Errorf(code.Nil, "ChapterMap is nil")
 	}
 	if val, ok := d[id]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "id(%v)not found", id)
+		return nil, xerrors.Errorf(code.NotFound, "id(%v) not found", id)
 	} else {
 		return val, nil
 	}
@@ -300,13 +323,24 @@ func (x *ThemeConf) Data() *protoconf.ThemeConf {
 	return nil
 }
 
-// Load fills ThemeConf's inner message data from the specified direcotry and format.
+// Load fills ThemeConf's inner message from file in the specified directory and format.
 func (x *ThemeConf) Load(dir string, format format.Format, options ...load.Option) error {
 	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
 	}
 	return x.AfterLoad()
+}
+
+// Store writes ThemeConf's inner message to file in the specified directory and format.
+// Available formats: JSON, Bin, and Text.
+func (x *ThemeConf) Store(dir string, format format.Format, options ...store.Option) error {
+	return store.Store(x.Data(), dir, format, options...)
+}
+
+// Messager is used to implement Checker interface.
+func (x *ThemeConf) Messager() Messager {
+	return x
 }
 
 // AfterLoad runs after this messager is loaded.
@@ -322,7 +356,7 @@ func (x *ThemeConf) Get1(name string) (*protoconf.ThemeConf_Theme, error) {
 		return nil, xerrors.Errorf(code.Nil, "ThemeMap is nil")
 	}
 	if val, ok := d[name]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "name(%v)not found", name)
+		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
 	} else {
 		return val, nil
 	}

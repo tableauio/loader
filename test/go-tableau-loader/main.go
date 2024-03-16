@@ -8,6 +8,7 @@ import (
 	"github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
 	"github.com/tableauio/tableau/format"
 	"github.com/tableauio/tableau/load"
+	"github.com/tableauio/tableau/store"
 )
 
 func main() {
@@ -32,7 +33,14 @@ func main() {
 		}
 	}
 	fmt.Printf("ActivityConf: %v\n", chapter)
-	fmt.Println()
+	chapter.SectionName = "updated section 2"
+
+	err = hub.GetHub().Store("_out/", nil, format.JSON,
+		store.Pretty(true),
+	)
+	if err != nil {
+		panic(err)
+	}
 
 	ordMap := conf.GetOrderedMap()
 	for iter := ordMap.Iterator(); iter.Next(); {

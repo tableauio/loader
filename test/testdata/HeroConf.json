@@ -1,20 +1,20 @@
 {
     "heroMap": {
-        "zeus": {
-            "name": "zeus",
-            "attrMap": {
-                "title1": {
-                    "title": "title1",
-                    "attr": "attr1"
-                }
-            }
-        },
         "venus": {
             "name": "venus",
             "attrMap": {
                 "title2": {
                     "title": "title2",
                     "attr": "attr2"
+                }
+            }
+        },
+        "zeus": {
+            "name": "zeus",
+            "attrMap": {
+                "title1": {
+                    "title": "title1",
+                    "attr": "attr1"
                 }
             }
         }

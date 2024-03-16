@@ -12,14 +12,17 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tableauio/tableau/format"
 	"github.com/tableauio/tableau/load"
+	"github.com/tableauio/tableau/store"
 )
 
 type Messager interface {
 	Checker
 	// Name returns the unique message name.
 	Name() string
-	// Load fills inner message data from the specified direcotry and format.
+	// Load fills message from file in the specified directory and format.
 	Load(dir string, fmt format.Format, options ...load.Option) error
+	// Store writes message to file in the specified directory and format.
+	Store(dir string, fmt format.Format, options ...store.Option) error
 	// ProcessAfterLoadAll is invoked after all messagers loaded.
 	ProcessAfterLoadAll(hub *Hub) error
 }
@@ -38,6 +41,10 @@ func (x *UnimplementedMessager) Name() string {
 }
 
 func (x *UnimplementedMessager) Load(dir string, format format.Format, options ...load.Option) error {
+	return nil
+}
+
+func (x *UnimplementedMessager) Store(dir string, format format.Format, options ...store.Option) error {
 	return nil
 }
 
@@ -112,6 +119,7 @@ func NewHub() *Hub {
 	}
 }
 
+// NewMessagerMap creates a new MessagerMap.
 func (h *Hub) NewMessagerMap(filter Filter) MessagerMap {
 	messagerMap := MessagerMap{}
 	for name, gen := range getRegistrar().Generators {
@@ -122,14 +130,17 @@ func (h *Hub) NewMessagerMap(filter Filter) MessagerMap {
 	return messagerMap
 }
 
+// SetMessagerMap sets hub's inner field messagerMap.
 func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
 	h.messagerMap = messagerMap
 }
 
+// GetMessager finds and returns the specified Messenger in hub.
 func (h *Hub) GetMessager(name string) Messager {
 	return h.messagerMap[name]
 }
 
+// Load fills messages from files in the specified directory and format.
 func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...load.Option) error {
 	messagerMap := h.NewMessagerMap(filter)
 	for name, msger := range messagerMap {
@@ -146,6 +157,20 @@ func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...l
 		}
 	}
 	h.SetMessagerMap(messagerMap)
+	return nil
+}
+
+// Store stores protobuf messages to files in the specified directory and format.
+// Available formats: JSON, Bin, and Text.
+func (h *Hub) Store(dir string, filter Filter, format format.Format, options ...store.Option) error {
+	for name, msger := range h.messagerMap {
+		if filter == nil || filter.Filter(name) {
+			if err := msger.Store(dir, format, options...); err != nil {
+				return errors.WithMessagef(err, "failed to store: %v", name)
+			}
+			fmt.Println("Stored: " + msger.Name())
+		}
+	}
 	return nil
 }
 
