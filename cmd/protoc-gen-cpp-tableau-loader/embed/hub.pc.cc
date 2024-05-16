@@ -113,7 +113,7 @@ bool ReadFile(const std::string& filename, std::string& content) {
   }
   std::stringstream ss;
   ss << file.rdbuf();
-  content = std::move(ss.str());
+  content = ss.str();
   return true;
 }
 
@@ -146,7 +146,7 @@ bool LoadMessage(const std::string& dir, google::protobuf::Message& message, For
         break;
       }
       default: {
-        g_err_msg = "unsupported format: %d" + static_cast<int>(fmt);
+        g_err_msg = "unsupported format: %d" + std::to_string(static_cast<int>(fmt));
         return false;
       }
     }
@@ -167,7 +167,7 @@ bool LoadMessage(const std::string& dir, google::protobuf::Message& message, For
       return Bin2Message(content, message);
     }
     default: {
-      g_err_msg = "unsupported format: %d" + static_cast<int>(fmt);
+      g_err_msg = "unsupported format: %d" + std::to_string(static_cast<int>(fmt));
       return false;
     }
   }

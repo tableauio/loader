@@ -5,10 +5,12 @@
 
 #include "registry.pc.h"
 
+#include "hero_conf.pc.h"
+#include "item_conf.pc.h"
+
 namespace tableau {
-Registrar Registry::registrar = Registrar();
-void Registry::Init() {
-  InitShard0();
-  InitShard1();
+void Registry::InitShard0() {
+  Register<HeroConf>();
+  Register<ItemConf>();
 }
 }  // namespace tableau
