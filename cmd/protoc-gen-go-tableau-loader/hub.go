@@ -145,7 +145,7 @@ type Hub struct {
 func NewHub() *Hub {
 	return &Hub{
 		messagerMap:    MessagerMap{},
-		lastLoadedTime: time.Now(),
+		lastLoadedTime: time.Unix(0, 0),
 	}
 }
 

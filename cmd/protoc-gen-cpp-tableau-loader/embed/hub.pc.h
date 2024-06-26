@@ -158,7 +158,7 @@ class Hub {
   // Loading scheduler.
   internal::Scheduler* sched_ = nullptr;
   // Last loaded time
-  std::time_t last_loaded_time_ = std::time(nullptr);
+  std::time_t last_loaded_time_ = 0;
 };
 
 template <typename T>
