@@ -137,6 +137,7 @@ class Hub {
   template <typename T, typename U, typename... Args>
   const U* GetOrderedMap(Args... args) const;
 
+  // GetLastLoadedTime returns the time when hub's msger_container_ was last set.
   inline std::time_t GetLastLoadedTime() const { return last_loaded_time_; }
 
  private:
