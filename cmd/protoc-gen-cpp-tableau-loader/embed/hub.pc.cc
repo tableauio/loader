@@ -251,6 +251,7 @@ void Hub::SetMessagerContainer(MessagerContainer msger_container) {
   // replace with thread-safe guarantee.
   std::unique_lock<std::mutex> lock(mutex_);
   msger_container_ = msger_container;
+  last_loaded_time_ = std::time(nullptr);
 }
 
 MessagerContainer Hub::GetMessagerContainerWithProvider() const {
