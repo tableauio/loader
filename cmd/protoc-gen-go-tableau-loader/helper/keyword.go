@@ -3,6 +3,8 @@ package helper
 import (
 	"strings"
 	"unicode"
+
+	"github.com/iancoleman/strcase"
 )
 
 var golangKeywords map[string]bool
@@ -16,11 +18,13 @@ func escapeIdentifier(str string) string {
 		}
 	}
 	str = result.String()
+	// To camel case
+	str = strcase.ToLowerCamel(str)
 	// Go variables must not start with digits
 	if len(str) != 0 && unicode.IsDigit(rune(str[0])) {
 		str = "_" + str
 	}
-	// avoid go keywords
+	// Avoid go keywords
 	if _, ok := golangKeywords[str]; ok {
 		return str + "_"
 	}
