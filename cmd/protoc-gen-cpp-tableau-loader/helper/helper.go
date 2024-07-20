@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/iancoleman/strcase"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -101,19 +100,24 @@ type MapKey struct {
 func AddMapKey(fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
 	opts := fd.Options().(*descriptorpb.FieldOptions)
 	fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
-	name := strcase.ToSnake(strings.TrimSpace(fdOpts.GetKey()))
+	name := fdOpts.GetKey()
+	if fd.MapValue().Kind() == protoreflect.MessageKind {
+		valueFd := fd.MapValue().Message().Fields().Get(0)
+		name = string(valueFd.Name())
+	}
+	name = escapeIdentifier(name)
 	if name == "" {
 		name = fmt.Sprintf("key%d", len(keys)+1)
 	} else {
 		for _, key := range keys {
 			if key.Name == name {
 				// rewrite to avoid name confict
-				name = fmt.Sprintf("%s_key%d", name, len(keys)+1)
+				name = fmt.Sprintf("%s%d", name, len(keys)+1)
 				break
 			}
 		}
 	}
-	keys = append(keys, MapKey{ParseCppType(fd.MapKey()), KeywordEscape(name)})
+	keys = append(keys, MapKey{ParseCppType(fd.MapKey()), name})
 	return keys
 }
 
