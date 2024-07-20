@@ -1,8 +1,26 @@
 package helper
 
+import (
+	"strings"
+	"unicode"
+)
+
 var golangKeywords map[string]bool
 
-func KeywordEscape(str string) string {
+func escapeIdentifier(str string) string {
+	// Filter invalid runes
+	var result strings.Builder
+	for _, r := range str {
+		if unicode.IsLetter(r) || unicode.IsNumber(r) || r == '_' {
+			result.WriteRune(r)
+		}
+	}
+	str = result.String()
+	// Go variables must not start with digits
+	if len(str) != 0 && unicode.IsDigit(rune(str[0])) {
+		str = "_" + str
+	}
+	// avoid go keywords
 	if _, ok := golangKeywords[str]; ok {
 		return str + "_"
 	}

@@ -102,7 +102,8 @@ func AddMapKey(fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
 	opts := fd.Options().(*descriptorpb.FieldOptions)
 	fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
 	name := strcase.ToSnake(strings.TrimSpace(fdOpts.GetKey()))
-	if name == "" {
+	name = escapeIdentifier(name)
+	if name == "" || name == "key" {
 		name = fmt.Sprintf("key%d", len(keys)+1)
 	} else {
 		for _, key := range keys {
@@ -113,7 +114,7 @@ func AddMapKey(fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
 			}
 		}
 	}
-	keys = append(keys, MapKey{ParseCppType(fd.MapKey()), KeywordEscape(name)})
+	keys = append(keys, MapKey{ParseCppType(fd.MapKey()), name})
 	return keys
 }
 

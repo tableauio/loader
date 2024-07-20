@@ -97,7 +97,8 @@ func AddMapKey(file *protogen.File, fd protoreflect.FieldDescriptor, keys []MapK
 	opts := fd.Options().(*descriptorpb.FieldOptions)
 	fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
 	name := strcase.ToLowerCamel(strings.TrimSpace(fdOpts.GetKey()))
-	if name == "" {
+	name = escapeIdentifier(name)
+	if name == "" || name == "key" {
 		name = fmt.Sprintf("key%d", len(keys)+1)
 	} else {
 		for _, key := range keys {
@@ -108,7 +109,7 @@ func AddMapKey(file *protogen.File, fd protoreflect.FieldDescriptor, keys []MapK
 			}
 		}
 	}
-	keys = append(keys, MapKey{ParseGoType(file, fd.MapKey()), KeywordEscape(name)})
+	keys = append(keys, MapKey{ParseGoType(file, fd.MapKey()), name})
 	return keys
 }
 
