@@ -22,7 +22,7 @@ const (
 	loadPackage    = protogen.GoImportPath("github.com/tableauio/tableau/load")
 	storePackage   = protogen.GoImportPath("github.com/tableauio/tableau/store")
 	errors         = protogen.GoImportPath("github.com/pkg/errors")
-	treeMapPackage = protogen.GoImportPath("github.com/tableauio/loader/pkg/treemap")
+	treeMapPackage = protogen.GoImportPath("github.com/emirpasic/gods/v2/maps/treemap")
 	pairPackage    = protogen.GoImportPath("github.com/tableauio/loader/pkg/pair")
 )
 
@@ -359,14 +359,14 @@ func genOrderedMapTypeDef(depth int, keys []helper.MapKey, messagerName string, 
 					nextPrefix := parseOrderedMapPrefix(nextMapFD, messagerName)
 					nextOrderedMap := nextPrefix + orderedMapSuffix
 					g.P("  type ", orderedMapValue, "= ", pairPackage.Ident("Pair"), "[*", nextOrderedMap, ", *", currValueType, "];")
-					g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", ", orderedMapValue, "]")
+					g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("Map"), "[", keyType, ", ", orderedMapValue, "]")
 					g.P()
 				} else {
 					orderedMapValue := helper.ParseGoType(file, fd.MapValue())
 					if fd.MapValue().Kind() == protoreflect.MessageKind {
-						g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", *", getGoIdent(file, message, fd.MapValue()), "]")
+						g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("Map"), "[", keyType, ", *", getGoIdent(file, message, fd.MapValue()), "]")
 					} else {
-						g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", ", orderedMapValue, "]")
+						g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("Map"), "[", keyType, ", ", orderedMapValue, "]")
 					}
 					g.P()
 				}
