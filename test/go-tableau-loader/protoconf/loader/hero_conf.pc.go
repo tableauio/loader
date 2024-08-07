@@ -7,8 +7,8 @@
 package loader
 
 import (
+	treemap "github.com/emirpasic/gods/v2/maps/treemap"
 	pair "github.com/tableauio/loader/pkg/pair"
-	treemap "github.com/tableauio/loader/pkg/treemap"
 	protoconf "github.com/tableauio/loader/test/go-tableau-loader/protoconf"
 	code "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
 	xerrors "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
@@ -18,10 +18,10 @@ import (
 )
 
 // OrderedMap types.
-type HeroConf_Hero_Attr_OrderedMap = treemap.TreeMap[string, *protoconf.HeroConf_Hero_Attr]
+type HeroConf_Hero_Attr_OrderedMap = treemap.Map[string, *protoconf.HeroConf_Hero_Attr]
 
 type HeroConf_Hero_OrderedMapValue = pair.Pair[*HeroConf_Hero_Attr_OrderedMap, *protoconf.HeroConf_Hero]
-type HeroConf_Hero_OrderedMap = treemap.TreeMap[string, HeroConf_Hero_OrderedMapValue]
+type HeroConf_Hero_OrderedMap = treemap.Map[string, HeroConf_Hero_OrderedMapValue]
 
 // HeroConf is a wrapper around protobuf message: protoconf.HeroConf.
 //
