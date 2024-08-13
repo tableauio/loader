@@ -30,14 +30,10 @@
 # custom files and directories 
 _out/
 third_party/_submodules
-cmd/protoc-gen-cpp-tableau-loader/protoc-gen-cpp-tableau-loader
-cmd/protoc-gen-go-tableau-loader/protoc-gen-go-tableau-loader
+cmd/protoc-gen-cpp-tableau-loader/protoc-gen-cpp-tableau-loader*
+cmd/protoc-gen-go-tableau-loader/protoc-gen-go-tableau-loader*
 
 test/protoconf
-test/go-tableau-loader/go-tableau-loader
-test/go-tableau-loader/protoconf
-test/cpp-tableau-loader/src/protoconf
-test/cpp-tableau-loader/src/tableau
 _lab/cpp/src/tableau/
 _lab/ts/src/protoconf
 .idea

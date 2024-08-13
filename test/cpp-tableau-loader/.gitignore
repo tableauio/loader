@@ -1,4 +1,5 @@
 build
 bin
-src/protoconf
+src/protoconf/*.pb.h
+src/protoconf/*.pb.cc
 src/tableau

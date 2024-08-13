@@ -151,7 +151,7 @@ bool LoadMessage(const std::string& dir, google::protobuf::Message& message, For
         break;
       }
       default: {
-        g_err_msg = "unsupported format: %d" + std::to_string(static_cast<int>(fmt));
+        g_err_msg = "unsupported format: " + std::to_string(static_cast<int>(fmt));
         return false;
       }
     }
@@ -172,7 +172,7 @@ bool LoadMessage(const std::string& dir, google::protobuf::Message& message, For
       return Bin2Message(content, message);
     }
     default: {
-      g_err_msg = "unsupported format: %d" + std::to_string(static_cast<int>(fmt));
+      g_err_msg = "unsupported format: " + std::to_string(static_cast<int>(fmt));
       return false;
     }
   }
@@ -256,6 +256,7 @@ void Hub::SetMessagerContainer(MessagerContainer msger_container) {
   // replace with thread-safe guarantee.
   std::unique_lock<std::mutex> lock(mutex_);
   msger_container_ = msger_container;
+  last_loaded_time_ = std::time(nullptr);
 }
 
 MessagerContainer Hub::GetMessagerContainerWithProvider() const {

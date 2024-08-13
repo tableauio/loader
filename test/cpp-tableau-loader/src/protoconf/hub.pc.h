@@ -7,6 +7,7 @@
 #include <google/protobuf/util/json_util.h>
 
 #include <cstddef>
+#include <ctime>
 #include <functional>
 #include <mutex>
 #include <string>
@@ -141,6 +142,9 @@ class Hub {
   template <typename T, typename U, typename... Args>
   const U* GetOrderedMap(Args... args) const;
 
+  // GetLastLoadedTime returns the time when hub's msger_container_ was last set.
+  inline std::time_t GetLastLoadedTime() const { return last_loaded_time_; }
+
  private:
   MessagerContainer LoadNewMessagerContainer(const std::string& dir, Filter filter = nullptr,
                                              Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
@@ -159,6 +163,8 @@ class Hub {
   MessagerContainerProvider msger_container_provider_;
   // Loading scheduler.
   internal::Scheduler* sched_ = nullptr;
+  // Last loaded time
+  std::time_t last_loaded_time_ = 0;
 };
 
 template <typename T>

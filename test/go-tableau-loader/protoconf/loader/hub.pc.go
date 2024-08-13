@@ -8,6 +8,7 @@ package loader
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/tableauio/tableau/format"
@@ -110,12 +111,14 @@ func BoolToInt(ok bool) int {
 
 // Hub is the messager manager.
 type Hub struct {
-	messagerMap MessagerMap
+	messagerMap    MessagerMap
+	lastLoadedTime time.Time
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		messagerMap: MessagerMap{},
+		messagerMap:    MessagerMap{},
+		lastLoadedTime: time.Unix(0, 0),
 	}
 }
 
@@ -133,6 +136,7 @@ func (h *Hub) NewMessagerMap(filter Filter) MessagerMap {
 // SetMessagerMap sets hub's inner field messagerMap.
 func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
 	h.messagerMap = messagerMap
+	h.lastLoadedTime = time.Now()
 }
 
 // GetMessager finds and returns the specified Messenger in hub.
@@ -172,6 +176,11 @@ func (h *Hub) Store(dir string, filter Filter, format format.Format, options ...
 		}
 	}
 	return nil
+}
+
+// GetLastLoadedTime returns the time when hub's messagerMap was last set.
+func (h *Hub) GetLastLoadedTime() time.Time {
+	return h.lastLoadedTime
 }
 
 // Auto-generated getters below
