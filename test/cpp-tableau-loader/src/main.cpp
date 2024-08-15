@@ -16,10 +16,10 @@ int main() {
     std::cout << "post process done!" << std::endl;
     return 1;
   };
-  options.paths["ItemConf"] = "../../testdata/ItemConf.json";
+  options.paths["ItemConf"] = "../../testdata/conf/ItemConf.json";
 
   bool ok = Hub::Instance().Load(
-      "../../testdata/", [](const std::string& name) { return true; }, tableau::Format::kJSON, &options);
+      "../../testdata/conf/", [](const std::string& name) { return true; }, tableau::Format::kJSON, &options);
   if (!ok) {
     std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
     return 1;

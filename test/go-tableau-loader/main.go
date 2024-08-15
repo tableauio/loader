@@ -12,10 +12,10 @@ import (
 )
 
 func main() {
-	err := hub.GetHub().Load("../testdata/", nil, format.JSON,
+	err := hub.GetHub().Load("../testdata/conf/", nil, format.JSON,
 		load.IgnoreUnknownFields(),
 		load.Paths(map[string]string{
-			"ItemConf": "../testdata/ItemConf.json",
+			"ItemConf": "../testdata/conf/ItemConf.json",
 		}))
 	if err != nil {
 		panic(err)
@@ -25,16 +25,20 @@ func main() {
 	if conf == nil {
 		panic("ActivityConf is nil")
 	}
-	// chapter, err := conf.Get3(100001, 1, 9)
-	chapter, err := conf.Get3(100001, 1, 2)
-	if err != nil {
+
+	// error: not found
+	if _, err := conf.Get3(100001, 1, 999); err != nil {
 		if xerrors.Is(err, code.NotFound) {
-			panic(err)
+			fmt.Println("error: not found:", err)
 		}
 	}
-	fmt.Printf("ActivityConf: %v\n", chapter)
-	chapter.SectionName = "updated section 2"
 
+	// update and store
+	chapter, err := conf.Get3(100001, 1, 2)
+	if err != nil {
+		panic(err)
+	}
+	chapter.SectionName = "updated section 2"
 	err = hub.GetHub().Store("_out/", nil, format.JSON,
 		store.Pretty(true),
 	)
@@ -42,25 +46,22 @@ func main() {
 		panic(err)
 	}
 
-	ordMap := conf.GetOrderedMap()
-	for iter := ordMap.Iterator(); iter.Next(); {
+	// OrderedMap
+	orderedMap := conf.GetOrderedMap()
+	for iter := orderedMap.Iterator(); iter.Next(); {
 		key := iter.Key()
-		conf := iter.Value().Second
-		fmt.Printf("Key1: %v\n", key)
-		fmt.Printf("Conf1: %v\n", conf)
+		value := iter.Value().Second
+		fmt.Println("key:", key)
+		fmt.Println("value:", value)
 		fmt.Println()
-		nextMap := iter.Value().First
-		for iter2 := nextMap.Iterator(); iter2.Next(); {
+		subOrderedMap := iter.Value().First
+		for iter2 := subOrderedMap.Iterator(); iter2.Next(); {
 			key2 := iter2.Key()
-			conf2 := iter2.Value().Second
-			fmt.Printf("Key2: %v\n", key2)
-			fmt.Printf("Conf2: %v\n", conf2)
+			value2 := iter2.Value().Second
+			fmt.Println("key2:", key2)
+			fmt.Println("value2:", value2)
 			fmt.Println()
 		}
-	}
-
-	if err := conf.Check(hub.GetHub().Hub); err != nil {
-		panic(err)
 	}
 	fmt.Printf("specialItemName: %v\n", hub.GetHub().GetCustomItemConf().GetSpecialItemName())
 }

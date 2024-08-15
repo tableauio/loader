@@ -73,17 +73,6 @@ class ActivityConf : public Messager {
  private:
   Index_NamedChapterMap index_named_chapter_map_;
 
-  // Index: SectionItemId@Award
- public:
-  using Index_AwardVector = std::vector<const protoconf::Item*>;
-  using Index_AwardMap = std::unordered_map<uint32_t, Index_AwardVector>;
-  const Index_AwardMap& FindAward() const;
-  const Index_AwardVector* FindAward(uint32_t id) const;
-  const protoconf::Item* FindFirstAward(uint32_t id) const;
-
- private:
-  Index_AwardMap index_award_map_;
-
 };
 
 class ChapterConf : public Messager {
