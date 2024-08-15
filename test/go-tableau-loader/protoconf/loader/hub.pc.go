@@ -98,10 +98,6 @@ func Register(gen MessagerGenerator) {
 	getRegistrar().Register(gen)
 }
 
-type Filter interface {
-	Filter(name string) bool
-}
-
 func BoolToInt(ok bool) int {
 	if ok {
 		return 1
@@ -123,10 +119,10 @@ func NewHub() *Hub {
 }
 
 // NewMessagerMap creates a new MessagerMap.
-func (h *Hub) NewMessagerMap(filter Filter) MessagerMap {
+func (h *Hub) NewMessagerMap(filter load.FilterFunc) MessagerMap {
 	messagerMap := MessagerMap{}
 	for name, gen := range getRegistrar().Generators {
-		if filter == nil || filter.Filter(name) {
+		if filter == nil || filter(name) {
 			messagerMap[name] = gen()
 		}
 	}
@@ -145,7 +141,7 @@ func (h *Hub) GetMessager(name string) Messager {
 }
 
 // Load fills messages from files in the specified directory and format.
-func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...load.Option) error {
+func (h *Hub) Load(dir string, filter load.FilterFunc, format format.Format, options ...load.Option) error {
 	messagerMap := h.NewMessagerMap(filter)
 	for name, msger := range messagerMap {
 		if err := msger.Load(dir, format, options...); err != nil {
@@ -166,9 +162,9 @@ func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...l
 
 // Store stores protobuf messages to files in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
-func (h *Hub) Store(dir string, filter Filter, format format.Format, options ...store.Option) error {
+func (h *Hub) Store(dir string, filter load.FilterFunc, format format.Format, options ...store.Option) error {
 	for name, msger := range h.messagerMap {
-		if filter == nil || filter.Filter(name) {
+		if filter == nil || filter(name) {
 			if err := msger.Store(dir, format, options...); err != nil {
 				return errors.WithMessagef(err, "failed to store: %v", name)
 			}

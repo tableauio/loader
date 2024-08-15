@@ -56,6 +56,8 @@ github.com/google/uuid v1.1.2/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+
 github.com/grpc-ecosystem/grpc-gateway v1.16.0/go.mod h1:BDjrQk3hbvj6Nolgz8mAMFbcEtjT1g+wF4CSlocrBnw=
 github.com/iancoleman/strcase v0.2.0 h1:05I4QRnGpI0m37iZQRuskXh+w77mr6Z41lwQzuHLwW0=
 github.com/iancoleman/strcase v0.2.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
+github.com/iancoleman/strcase v0.3.0 h1:nTXanmYxhfFAMjZL34Ov6gkzEsSJZ5DbhxWjvSASxEI=
+github.com/iancoleman/strcase v0.3.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
 github.com/jhump/gopoet v0.0.0-20190322174617-17282ff210b3/go.mod h1:me9yfT6IJSlOL3FCfrg+L6yzUEZ+5jW6WHt4Sk+UPUI=
 github.com/jhump/gopoet v0.1.0/go.mod h1:me9yfT6IJSlOL3FCfrg+L6yzUEZ+5jW6WHt4Sk+UPUI=
 github.com/jhump/goprotoc v0.5.0/go.mod h1:VrbvcYrQOrTi3i0Vf+m+oqQWk9l72mjkJCYo7UvLHRQ=
@@ -113,6 +115,12 @@ github.com/tableauio/tableau v0.10.8-0.20240315170938-713a5bc0a755 h1:squcxXza0q
 github.com/tableauio/tableau v0.10.8-0.20240315170938-713a5bc0a755/go.mod h1:O8IFfmVLHCfnZ5Mqot83VUjgnbM4brUHlpLwjCrPUM8=
 github.com/tableauio/tableau v0.10.8-0.20240316034207-98906734d902 h1:lSCJP95Tkv3aNsuU2cMQAyng+SuTLDjlOtRfv6VVNv4=
 github.com/tableauio/tableau v0.10.8-0.20240316034207-98906734d902/go.mod h1:O8IFfmVLHCfnZ5Mqot83VUjgnbM4brUHlpLwjCrPUM8=
+github.com/tableauio/tableau v0.10.8-0.20240815085527-e79013cd3cc8 h1:P8nTyUuNK6iYsHOroSlgFNqR5BbjzI+l6BDfnmbhRLw=
+github.com/tableauio/tableau v0.10.8-0.20240815085527-e79013cd3cc8/go.mod h1:O8IFfmVLHCfnZ5Mqot83VUjgnbM4brUHlpLwjCrPUM8=
+github.com/tableauio/tableau v0.10.8-0.20240815093742-bff1cf5f3e81 h1:U3QM5ELtX1dagZSvFryPCK9SCT3sPevzYhNin3DZBa4=
+github.com/tableauio/tableau v0.10.8-0.20240815093742-bff1cf5f3e81/go.mod h1:O8IFfmVLHCfnZ5Mqot83VUjgnbM4brUHlpLwjCrPUM8=
+github.com/tableauio/tableau v0.10.8-0.20240815094628-62ff1b43fff5 h1:cSbZLrlS5sTLhQmmowj1bK0IMQb/NI7WdTdsQ74fqbs=
+github.com/tableauio/tableau v0.10.8-0.20240815094628-62ff1b43fff5/go.mod h1:O8IFfmVLHCfnZ5Mqot83VUjgnbM4brUHlpLwjCrPUM8=
 github.com/xuri/efp v0.0.0-20220603152613-6918739fd470 h1:6932x8ltq1w4utjmfMPVj09jdMlkY0aiA6+Skbtl3/c=
 github.com/xuri/efp v0.0.0-20220603152613-6918739fd470/go.mod h1:ybY/Jr0T0GTCnYjKqmdwxyxn2BQf2RcQIIvex5QldPI=
 github.com/xuri/excelize/v2 v2.6.1 h1:ICBdtw803rmhLN3zfvyEGH3cwSmZv+kde7LhTDT659k=
