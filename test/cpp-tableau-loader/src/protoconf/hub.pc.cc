@@ -183,9 +183,8 @@ bool StoreMessage(const std::string& dir, google::protobuf::Message& message, Fo
   return false;
 }
 
-bool Hub::Load(const std::string& dir, Filter filter /* = nullptr */, Format fmt /* = Format::kJSON */,
-               const LoadOptions* options /* = nullptr */) {
-  auto msger_container = LoadNewMessagerContainer(dir, filter, fmt, options);
+bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */, const LoadOptions* options /* = nullptr */) {
+  auto msger_container = LoadNewMessagerContainer(dir, fmt, options);
   if (!msger_container) {
     return false;
   }
@@ -197,9 +196,9 @@ bool Hub::Load(const std::string& dir, Filter filter /* = nullptr */, Format fmt
   return true;
 }
 
-bool Hub::AsyncLoad(const std::string& dir, Filter filter /* = nullptr */, Format fmt /* = Format::kJSON */,
+bool Hub::AsyncLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
                     const LoadOptions* options /* = nullptr */) {
-  auto msger_container = LoadNewMessagerContainer(dir, filter, fmt, options);
+  auto msger_container = LoadNewMessagerContainer(dir, fmt, options);
   if (!msger_container) {
     return false;
   }
@@ -217,12 +216,11 @@ void Hub::InitScheduler() {
   sched_->Current();
 }
 
-MessagerContainer Hub::LoadNewMessagerContainer(const std::string& dir, Filter filter /* = nullptr */,
-                                                Format fmt /* = Format::kJSON */,
+MessagerContainer Hub::LoadNewMessagerContainer(const std::string& dir, Format fmt /* = Format::kJSON */,
                                                 const LoadOptions* options /* = nullptr */) {
   // intercept protobuf error logs
   auto old_handler = google::protobuf::SetLogHandler(ProtobufLogHandler);
-
+  Filter filter = options != nullptr ? options->filter : nullptr;
   auto msger_container = NewMessagerContainer(filter);
   for (auto iter : *msger_container) {
     auto&& name = iter.first;

@@ -34,19 +34,23 @@ class Hub;
 
 using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
 using MessagerContainer = std::shared_ptr<MessagerMap>;
+// FilterFunc filter in messagers if returned value is true.
+// NOTE: name is the protobuf message name, e.g.: "message ItemConf{...}".
 using Filter = std::function<bool(const std::string& name)>;
 using MessagerContainerProvider = std::function<MessagerContainer()>;
 using Postprocessor = std::function<bool(const Hub& hub)>;
 
 struct LoadOptions {
+  // Filter can only filter in certain specific messagers based on the
+  // condition that you provide.
+  Filter filter = nullptr;
   // Whether to ignore unknown JSON fields during parsing.
   //
   // Refer https://protobuf.dev/reference/cpp/api-docs/google.protobuf.util.json_util/#JsonParseOptions.
   bool ignore_unknown_fields = false;
   // Paths maps each messager name to a corresponding config file path.
-  // If a messager name is existed, then the messager will be parsed from
-  // the config file directly.
-  // NOTE: only JSON, bin, and text formats are supported.
+  // If specified, then the main messager will be parsed from the file
+  // directly, other than the specified load dir.
   std::unordered_map<std::string, std::string> paths;
   // postprocessor is called after loading all configurations.
   Postprocessor postprocessor;
@@ -99,6 +103,7 @@ class Messager {
  public:
   virtual ~Messager() = default;
   static const std::string& Name() { return kEmpty; };
+  // Load fills message from file in the specified directory and format.
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) = 0;
 
  protected:
@@ -115,15 +120,13 @@ class Hub {
   Hub() = default;
   Hub(MessagerContainer container) { SetMessagerContainer(container); }
   /***** Synchronous Loading *****/
-  // Load messagers from dir using the specified format, and store them in MessagerContainer.
-  bool Load(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON,
-            const LoadOptions* options = nullptr);
+  // Load fills messages (in MessagerContainer) from files in the specified directory and format.
+  bool Load(const std::string& dir, Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
 
   /***** Asynchronous Loading *****/
   // Load configs into temp MessagerContainer, and you should call LoopOnce() in you app's main loop,
   // in order to take the temp MessagerContainer into effect.
-  bool AsyncLoad(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON,
-                 const LoadOptions* options = nullptr);
+  bool AsyncLoad(const std::string& dir, Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
   int LoopOnce();
   // You'd better initialize the scheduler in the main thread.
   void InitScheduler();
@@ -146,8 +149,8 @@ class Hub {
   inline std::time_t GetLastLoadedTime() const { return last_loaded_time_; }
 
  private:
-  MessagerContainer LoadNewMessagerContainer(const std::string& dir, Filter filter = nullptr,
-                                             Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
+  MessagerContainer LoadNewMessagerContainer(const std::string& dir, Format fmt = Format::kJSON,
+                                             const LoadOptions* options = nullptr);
   MessagerContainer NewMessagerContainer(Filter filter = nullptr);
   void SetMessagerContainer(MessagerContainer msger_container);
   MessagerContainer GetMessagerContainerWithProvider() const;

@@ -11,6 +11,7 @@
 int main() {
   Hub::Instance().Init();
   tableau::LoadOptions options;
+  options.filter = [](const std::string& name) { return true; };
   options.ignore_unknown_fields = true;
   options.postprocessor = [](const tableau::Hub& hub) {
     std::cout << "post process done!" << std::endl;
@@ -18,8 +19,7 @@ int main() {
   };
   options.paths["ItemConf"] = "../../testdata/conf/ItemConf.json";
 
-  bool ok = Hub::Instance().Load(
-      "../../testdata/conf/", [](const std::string& name) { return true; }, tableau::Format::kJSON, &options);
+  bool ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
   if (!ok) {
     std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
     return 1;
