@@ -141,8 +141,9 @@ func (h *Hub) GetMessager(name string) Messager {
 }
 
 // Load fills messages from files in the specified directory and format.
-func (h *Hub) Load(dir string, filter load.FilterFunc, format format.Format, options ...load.Option) error {
-	messagerMap := h.NewMessagerMap(filter)
+func (h *Hub) Load(dir string, format format.Format, options ...load.Option) error {
+	opts := load.ParseOptions(options...)
+	messagerMap := h.NewMessagerMap(opts.Filter)
 	for name, msger := range messagerMap {
 		if err := msger.Load(dir, format, options...); err != nil {
 			return errors.WithMessagef(err, "failed to load: %v", name)
@@ -162,9 +163,10 @@ func (h *Hub) Load(dir string, filter load.FilterFunc, format format.Format, opt
 
 // Store stores protobuf messages to files in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
-func (h *Hub) Store(dir string, filter load.FilterFunc, format format.Format, options ...store.Option) error {
+func (h *Hub) Store(dir string, format format.Format, options ...store.Option) error {
+	opts := store.ParseOptions(options...)
 	for name, msger := range h.messagerMap {
-		if filter == nil || filter(name) {
+		if opts.Filter == nil || opts.Filter(name) {
 			if err := msger.Store(dir, format, options...); err != nil {
 				return errors.WithMessagef(err, "failed to store: %v", name)
 			}

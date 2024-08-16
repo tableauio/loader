@@ -12,11 +12,14 @@ import (
 )
 
 func main() {
-	err := hub.GetHub().Load("../testdata/conf/", nil, format.JSON,
+	err := hub.GetHub().Load("../testdata/conf/", format.JSON,
 		load.IgnoreUnknownFields(),
 		load.Paths(map[string]string{
 			"ItemConf": "../testdata/conf/ItemConf.json",
 		}))
+		load.Filter(func(name string) bool {
+			return true
+		})
 	if err != nil {
 		panic(err)
 	}
@@ -39,7 +42,7 @@ func main() {
 		panic(err)
 	}
 	chapter.SectionName = "updated section 2"
-	err = hub.GetHub().Store("_out/", nil, format.JSON,
+	err = hub.GetHub().Store("_out/", format.JSON,
 		store.Pretty(true),
 	)
 	if err != nil {
