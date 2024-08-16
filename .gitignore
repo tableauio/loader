@@ -28,15 +28,17 @@
 *.app
 
 # custom files and directories 
-_out/
 third_party/_submodules
+_out/
+build/
+bin/
+.idea
+node_modules
+
+*.pb.*
+
 cmd/protoc-gen-cpp-tableau-loader/protoc-gen-cpp-tableau-loader
 cmd/protoc-gen-go-tableau-loader/protoc-gen-go-tableau-loader
 
-test/protoconf
 test/go-tableau-loader/go-tableau-loader
-test/go-tableau-loader/protoconf
-_lab/cpp/src/tableau/
 _lab/ts/src/protoconf
-.idea
-node_modules
