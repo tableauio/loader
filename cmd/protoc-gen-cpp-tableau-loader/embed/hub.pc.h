@@ -39,6 +39,8 @@ struct LoadOptions {
   // Filter can only filter in certain specific messagers based on the
   // condition that you provide.
   Filter filter = nullptr;
+  // postprocessor is called after loading all configurations.
+  Postprocessor postprocessor;
   // Whether to ignore unknown JSON fields during parsing.
   //
   // Refer https://protobuf.dev/reference/cpp/api-docs/google.protobuf.util.json_util/#JsonParseOptions.
@@ -47,8 +49,11 @@ struct LoadOptions {
   // If specified, then the main messager will be parsed from the file
   // directly, other than the specified load dir.
   std::unordered_map<std::string, std::string> paths;
-  // postprocessor is called after loading all configurations.
-  Postprocessor postprocessor;
+  // Patch paths maps each messager name to a corresponding patch file path.
+  // If specified, then main messager will patched.
+  std::unordered_map<std::string, std::string> patch_paths;
+  // Specifies the patch directory for config patching.
+  std::string patch_dir;
 };
 
 // Convert file extension to Format type.
@@ -66,7 +71,7 @@ bool Text2Message(const std::string& text, google::protobuf::Message& message);
 bool Bin2Message(const std::string& bin, google::protobuf::Message& message);
 void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& message);
 const std::string& GetProtoName(const google::protobuf::Message& message);
-bool LoadMessage(const std::string& dir, google::protobuf::Message& message, Format fmt = Format::kJSON,
+bool LoadMessage(google::protobuf::Message& message, const std::string& dir, Format fmt = Format::kJSON,
                  const LoadOptions* options = nullptr);
 
 namespace internal {

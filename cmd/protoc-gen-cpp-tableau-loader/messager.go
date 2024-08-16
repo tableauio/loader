@@ -457,7 +457,7 @@ func genCppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	g.P("const std::string ", message.Desc.Name(), "::kProtoName = ", `"`, message.Desc.Name(), `";`)
 	g.P()
 	g.P("bool ", message.Desc.Name(), "::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {")
-	g.P("  bool ok = LoadMessage(dir, data_, fmt, options);")
+	g.P("  bool ok = LoadMessage(data_, dir, fmt, options);")
 	g.P("  return ok ? ProcessAfterLoad() : false;")
 	g.P("}")
 	g.P()

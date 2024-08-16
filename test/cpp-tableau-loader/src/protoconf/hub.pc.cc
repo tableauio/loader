@@ -122,7 +122,7 @@ bool ReadFile(const std::string& filename, std::string& content) {
   return true;
 }
 
-bool LoadMessage(const std::string& dir, google::protobuf::Message& message, Format fmt,
+bool LoadMessage(google::protobuf::Message& message, const std::string& dir, Format fmt,
                  const LoadOptions* options /* = nullptr*/) {
   message.Clear();
   std::string path;

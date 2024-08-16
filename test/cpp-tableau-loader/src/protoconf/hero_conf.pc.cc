@@ -10,7 +10,7 @@ namespace tableau {
 const std::string HeroConf::kProtoName = "HeroConf";
 
 bool HeroConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
-  bool ok = LoadMessage(dir, data_, fmt, options);
+  bool ok = LoadMessage(data_, dir, fmt, options);
   return ok ? ProcessAfterLoad() : false;
 }
 
