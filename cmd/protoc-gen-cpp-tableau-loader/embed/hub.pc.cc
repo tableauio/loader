@@ -6,6 +6,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <string>
 #include <unordered_map>
 
 #include "logger.pc.h"
@@ -59,6 +60,40 @@ void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, 
   ATOM_LOGGER_CALL(tableau::log::DefaultLogger(), lvl, "[libprotobuf %s:%d] %s", filename, line, msg.c_str());
 }
 
+const std::string& GetProtoName(const google::protobuf::Message& msg) {
+  const auto* md = msg.GetDescriptor();
+  return md != nullptr ? md->name() : kEmpty;
+}
+
+bool ExistsFile(const std::string& filename) {
+  std::ifstream file(filename);
+  // returns true if the file exists and is accessible
+  return file.good();
+}
+
+bool ReadFile(const std::string& filename, std::string& content) {
+  std::ifstream file(filename);
+  if (!file.is_open()) {
+    g_err_msg = "failed to open " + filename + ": " + strerror(errno);
+    return false;
+  }
+  std::stringstream ss;
+  ss << file.rdbuf();
+  content = ss.str();
+  return true;
+}
+
+std::string GetPatchName(tableau::Patch patch) {
+  auto* descriptor = tableau::Patch_descriptor();
+  if (descriptor) {
+    auto* value = descriptor->FindValueByNumber(patch);
+    if (value) {
+      return value->name();
+    }
+  }
+  return std::to_string(static_cast<int>(patch));
+}
+
 bool Message2JSON(const google::protobuf::Message& msg, std::string& json) {
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;
@@ -98,69 +133,60 @@ bool Bin2Message(const std::string& bin, google::protobuf::Message& msg) {
   return true;
 }
 
-// MergeMessage merges patch into main message, which must be the same descriptor.
+// Merge merges src into dst, which must be a message with the same descriptor.
 //
-// 1. top none-map field (field value):
-//   - `replace`: if field present in both **main** and **patch** sheet
+// # Default Merge mechanism
+//   - scalar: Populated scalar fields in src are copied to dst.
+//   - message: Populated singular messages in src are merged into dst by
+//     recursively calling message.MergeFrom().
+//   - list: The elements of every list field in src are appended to the
+//     corresponded list fields in dst.
+//   - map: The entries of every map field in src are copied into the
+//     corresponding map field in dst, possibly replacing existing entries.
+//   - unknown: The unknown fields of src are appended to the unknown
+//     fields of dst.
 //
-// 2. top map field patch (key-value pair):
-//   - `add`: if key not exists in **main** sheet
-//   - `replace`: if key exists in both **main** and **patch** sheet
-bool MergeMessage(google::protobuf::Message& main, google::protobuf::Message& patch) {
+// # Top-field patch option "PATCH_REPLACE"
+//   - list: Clear field firstly, and then all elements of this list field
+//     in src are appended to the corresponded list fields in dst.
+//   - map: Clear field firstly, and then all entries of this map field in src
+//     are copied into the corresponding map field in dst.
+//
+// # References:
+//  - https://protobuf.dev/reference/cpp/api-docs/google.protobuf.message/#Reflection
+//  - https://protobuf.dev/reference/cpp/api-docs/google.protobuf.descriptor/#FieldDescriptor
+//  - https://protobuf.dev/reference/cpp/api-docs/google.protobuf.message/#Message.MergeFrom.details
+bool MergeMessage(google::protobuf::Message& dst, google::protobuf::Message& src) {
   // Ensure both messages are of the same type
-  if (main.GetDescriptor() != patch.GetDescriptor()) {
-    std::cerr << "Messages are not of the same type" << std::endl;
+  if (dst.GetDescriptor() != src.GetDescriptor()) {
+    g_err_msg = "dst and src are not messages with the same descriptor";
     return false;
   }
 
   // Get the reflection and descriptor for the messages
-  const google::protobuf::Reflection* main_reflection = main.GetReflection();
-  const google::protobuf::Reflection* patch_reflection = patch.GetReflection();
-  const google::protobuf::Descriptor* descriptor = main.GetDescriptor();
+  const google::protobuf::Reflection* dst_reflection = dst.GetReflection();
+  const google::protobuf::Reflection* src_reflection = src.GetReflection();
+  if (!dst_reflection || !src_reflection) {
+    g_err_msg = "failed to get reflection";
+    return false;
+  }
 
-  // Iterate over all fields in the message
-  for (int i = 0; i < descriptor->field_count(); ++i) {
-    const google::protobuf::FieldDescriptor* field = descriptor->field(i);
+  // List all populated fields
+  std::vector<const google::protobuf::FieldDescriptor*> populated_fields;
+  src_reflection->ListFields(src, &populated_fields);
 
-    if (field->is_repeated() && patch_reflection->FieldSize(patch, field) > 0) {
-      // if repeated field is set in patch message, then clear the repeated field
-      // in the main message ahead.
-      main_reflection->ClearField(&main, field);
+  // Iterates over every populated field.
+  for (auto&& fd : populated_fields) {
+    // Get the custom FieldOptions extension
+    const tableau::FieldOptions& opts = fd->options().GetExtension(tableau::field);
+    tableau::Patch patch = opts.prop().patch();
+    if (patch == tableau::PATCH_REPLACE) {
+      ATOM_DEBUG("patch(%s) field: %s", GetPatchName(patch).c_str(), fd->name().c_str());
+      dst_reflection->ClearField(&dst, fd);
     }
   }
 
-  // 1. Singular fields will be overwritten, if specified in from, except for
-  //    embedded messages which will be merged.
-  // 2. Repeated fields will be concatenated.
-  //
-  // References:
-  //  - https://protobuf.dev/reference/cpp/api-docs/google.protobuf.message/#Reflection
-  //  - https://protobuf.dev/reference/cpp/api-docs/google.protobuf.descriptor/#FieldDescriptor
-  //  - https://protobuf.dev/reference/cpp/api-docs/google.protobuf.message/#Message.MergeFrom.details
-  main.MergeFrom(patch);
-  return true;
-}
-
-const std::string& GetProtoName(const google::protobuf::Message& msg) {
-  const auto* md = msg.GetDescriptor();
-  return md != nullptr ? md->name() : kEmpty;
-}
-
-bool ExistsFile(const std::string& filename) {
-  std::ifstream file(filename);
-  // returns true if the file exists and is accessible
-  return file.good();
-}
-
-bool ReadFile(const std::string& filename, std::string& content) {
-  std::ifstream file(filename);
-  if (!file.is_open()) {
-    g_err_msg = "failed to open " + filename + ": " + strerror(errno);
-    return false;
-  }
-  std::stringstream ss;
-  ss << file.rdbuf();
-  content = ss.str();
+  dst.MergeFrom(src);
   return true;
 }
 
@@ -177,7 +203,7 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
       patch_fmt = Ext2Format(util::GetExt(iter->second));
     }
   }
-  if (path.empty()) {
+  if (patch_path.empty()) {
     if (!options || options->patch_dir.empty()) {
       // patch_dir not provided, then just load from file in the "main" dir.
       return LoadMessageByPath(msg, path, fmt, options);
@@ -188,9 +214,11 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
     // If patch file not exists, then just load from the "main" file.
     return LoadMessageByPath(msg, path, fmt, options);
   }
+  bool ok = false;
   switch (patch) {
     case tableau::PATCH_REPLACE: {
-      return LoadMessageByPath(msg, patch_path, patch_fmt, options);
+      ok = LoadMessageByPath(msg, patch_path, patch_fmt, options);
+      break;
     }
     case tableau::PATCH_MERGE: {
       // Create a new instance of the same type as the original message
@@ -203,13 +231,19 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
       if (!LoadMessageByPath(patch_msg, patch_path, patch_fmt, options)) {
         return false;
       }
-      return MergeMessage(msg, patch_msg);
+      ok = MergeMessage(msg, patch_msg);
+      break;
     }
     default: {
-      g_err_msg = "unknown patch type: " + std::to_string(static_cast<int>(patch));
+      g_err_msg = "unknown patch type: " + GetPatchName(patch);
       return false;
     }
   }
+  if (ok) {
+    ATOM_DEBUG("patched(%s) %s by %s: %s", GetPatchName(patch).c_str(), name.c_str(), patch_path.c_str(),
+               msg.ShortDebugString().c_str());
+  }
+  return ok;
 }
 
 bool LoadMessageByPath(google::protobuf::Message& msg, const std::string& path, Format fmt,
