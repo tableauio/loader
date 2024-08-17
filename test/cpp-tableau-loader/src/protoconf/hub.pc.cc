@@ -159,11 +159,13 @@ bool Bin2Message(const std::string& bin, google::protobuf::Message& msg) {
 //
 // # References:
 //  - https://protobuf.dev/reference/cpp/api-docs/google.protobuf.message/#Reflection
+//  - https://protobuf.dev/reference/cpp/api-docs/google.protobuf.descriptor/#Descriptor
 //  - https://protobuf.dev/reference/cpp/api-docs/google.protobuf.descriptor/#FieldDescriptor
 //  - https://protobuf.dev/reference/cpp/api-docs/google.protobuf.message/#Message.MergeFrom.details
 bool MergeMessage(google::protobuf::Message& dst, google::protobuf::Message& src) {
+  const google::protobuf::Descriptor* dst_descriptor = dst.GetDescriptor();
   // Ensure both messages are of the same type
-  if (dst.GetDescriptor() != src.GetDescriptor()) {
+  if (dst_descriptor != src.GetDescriptor()) {
     g_err_msg = "dst and src are not messages with the same descriptor";
     return false;
   }
@@ -186,7 +188,8 @@ bool MergeMessage(google::protobuf::Message& dst, google::protobuf::Message& src
     const tableau::FieldOptions& opts = fd->options().GetExtension(tableau::field);
     tableau::Patch patch = opts.prop().patch();
     if (patch == tableau::PATCH_REPLACE) {
-      ATOM_DEBUG("patch(%s) field: %s", GetPatchName(patch).c_str(), fd->name().c_str());
+      ATOM_DEBUG("patch(%s) %s's field: %s", GetPatchName(patch).c_str(), dst_descriptor->name().c_str(),
+                 fd->name().c_str());
       dst_reflection->ClearField(&dst, fd);
     }
   }
