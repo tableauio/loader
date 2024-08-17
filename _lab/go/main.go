@@ -29,7 +29,7 @@ func GetHub() *MyHub {
 }
 
 func main() {
-	err := GetHub().Load("../../test/testdata/", nil, format.JSON, load.IgnoreUnknownFields(true))
+	err := GetHub().Load("../../test/testdata/", nil, format.JSON, load.IgnoreUnknownFields())
 	if err != nil {
 		panic(err)
 	}
@@ -49,7 +49,7 @@ func main() {
 
 	debug()
 	time.AfterFunc(time.Second*5, func() {
-		err := GetHub().Load("../../test/testdata/", nil, format.JSON, load.IgnoreUnknownFields(true))
+		err := GetHub().Load("../../test/testdata/", nil, format.JSON, load.IgnoreUnknownFields())
 		if err != nil {
 			panic(err)
 		}
