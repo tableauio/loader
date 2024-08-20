@@ -3,7 +3,7 @@ name: Release Go
 on:
   release:
     types: [published]
-
+  workflow_dispatch:
 jobs:
   release:
     name: Release cmd/protoc-gen-go-tableau-loader
