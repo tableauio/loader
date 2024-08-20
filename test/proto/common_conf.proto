@@ -7,13 +7,13 @@ option go_package = "github.com/tableauio/loader/test/go-tableau-loader/protocon
 import "tableau/protobuf/tableau.proto";
 
 message Item {
-  uint32 id = 1 [(tableau.field) = {name:"Id" prop:{refer:"ItemConf.ID"}}];
-  int32 num = 2 [(tableau.field) = {name:"Num"}];
+  uint32 id = 1 [(tableau.field) = { name: "ID" }];
+  int32 num = 2 [(tableau.field) = { name: "Num" }];
 }
 
 enum FruitType {
   FRUIT_TYPE_UNKNOWN = 0 [(tableau.evalue).name = "Unknown"];
-  FRUIT_TYPE_APPLE   = 1 [(tableau.evalue).name = "Apple"];
-  FRUIT_TYPE_ORANGE  = 2 [(tableau.evalue).name = "Orange"];
-  FRUIT_TYPE_BANANA  = 3 [(tableau.evalue).name = "Banana"];
+  FRUIT_TYPE_APPLE = 1 [(tableau.evalue).name = "Apple"];
+  FRUIT_TYPE_ORANGE = 2 [(tableau.evalue).name = "Orange"];
+  FRUIT_TYPE_BANANA = 3 [(tableau.evalue).name = "Banana"];
 }

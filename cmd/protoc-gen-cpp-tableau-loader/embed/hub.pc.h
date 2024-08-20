@@ -1,5 +1,6 @@
 #pragma once
 #include <google/protobuf/util/json_util.h>
+#include <tableau/protobuf/tableau.pb.h>
 
 #include <cstddef>
 #include <ctime>
@@ -17,6 +18,7 @@ enum class Format {
   kBin,
 };
 
+extern const std::string kUnknownExt;
 extern const std::string kJSONExt;
 extern const std::string kTextExt;
 extern const std::string kBinExt;
@@ -29,22 +31,31 @@ class Hub;
 
 using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
 using MessagerContainer = std::shared_ptr<MessagerMap>;
+// FilterFunc filter in messagers if returned value is true.
+// NOTE: name is the protobuf message name, e.g.: "message ItemConf{...}".
 using Filter = std::function<bool(const std::string& name)>;
 using MessagerContainerProvider = std::function<MessagerContainer()>;
 using Postprocessor = std::function<bool(const Hub& hub)>;
 
 struct LoadOptions {
+  // Filter can only filter in certain specific messagers based on the
+  // condition that you provide.
+  Filter filter = nullptr;
+  // postprocessor is called after loading all configurations.
+  Postprocessor postprocessor;
   // Whether to ignore unknown JSON fields during parsing.
   //
   // Refer https://protobuf.dev/reference/cpp/api-docs/google.protobuf.util.json_util/#JsonParseOptions.
   bool ignore_unknown_fields = false;
   // Paths maps each messager name to a corresponding config file path.
-  // If a messager name is existed, then the messager will be parsed from
-  // the config file directly.
-  // NOTE: only JSON, bin, and text formats are supported.
+  // If specified, then the main messager will be parsed from the file
+  // directly, other than the specified load dir.
   std::unordered_map<std::string, std::string> paths;
-  // postprocessor is called after loading all configurations.
-  Postprocessor postprocessor;
+  // Patch paths maps each messager name to a corresponding patch file path.
+  // If specified, then main messager will patched.
+  std::unordered_map<std::string, std::string> patch_paths;
+  // Specifies the patch directory for config patching.
+  std::string patch_dir;
 };
 
 // Convert file extension to Format type.
@@ -56,13 +67,15 @@ Format Ext2Format(const std::string& ext);
 // Empty string will be returned if an unsupported enum value has been passed,
 // and the error message can be obtained by GetErrMsg().
 const std::string& Format2Ext(Format fmt);
-bool Message2JSON(const google::protobuf::Message& message, std::string& json);
-bool JSON2Message(const std::string& json, google::protobuf::Message& message, const LoadOptions* options = nullptr);
-bool Text2Message(const std::string& text, google::protobuf::Message& message);
-bool Bin2Message(const std::string& bin, google::protobuf::Message& message);
-void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& message);
-const std::string& GetProtoName(const google::protobuf::Message& message);
-bool LoadMessage(const std::string& dir, google::protobuf::Message& message, Format fmt = Format::kJSON,
+bool Message2JSON(const google::protobuf::Message& msg, std::string& json);
+bool JSON2Message(const std::string& json, google::protobuf::Message& msg, const LoadOptions* options = nullptr);
+bool Text2Message(const std::string& text, google::protobuf::Message& msg);
+bool Bin2Message(const std::string& bin, google::protobuf::Message& msg);
+void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& msg);
+const std::string& GetProtoName(const google::protobuf::Message& msg);
+bool LoadMessageByPath(google::protobuf::Message& msg, const std::string& path, Format fmt = Format::kJSON,
+                       const LoadOptions* options = nullptr);
+bool LoadMessage(google::protobuf::Message& msg, const std::string& dir, Format fmt = Format::kJSON,
                  const LoadOptions* options = nullptr);
 
 namespace internal {
@@ -94,6 +107,7 @@ class Messager {
  public:
   virtual ~Messager() = default;
   static const std::string& Name() { return kEmpty; };
+  // Load fills message from file in the specified directory and format.
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) = 0;
 
  protected:
@@ -110,15 +124,13 @@ class Hub {
   Hub() = default;
   Hub(MessagerContainer container) { SetMessagerContainer(container); }
   /***** Synchronous Loading *****/
-  // Load messagers from dir using the specified format, and store them in MessagerContainer.
-  bool Load(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON,
-            const LoadOptions* options = nullptr);
+  // Load fills messages (in MessagerContainer) from files in the specified directory and format.
+  bool Load(const std::string& dir, Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
 
   /***** Asynchronous Loading *****/
   // Load configs into temp MessagerContainer, and you should call LoopOnce() in you app's main loop,
   // in order to take the temp MessagerContainer into effect.
-  bool AsyncLoad(const std::string& dir, Filter filter = nullptr, Format fmt = Format::kJSON,
-                 const LoadOptions* options = nullptr);
+  bool AsyncLoad(const std::string& dir, Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
   int LoopOnce();
   // You'd better initialize the scheduler in the main thread.
   void InitScheduler();
@@ -141,8 +153,8 @@ class Hub {
   inline std::time_t GetLastLoadedTime() const { return last_loaded_time_; }
 
  private:
-  MessagerContainer LoadNewMessagerContainer(const std::string& dir, Filter filter = nullptr,
-                                             Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
+  MessagerContainer LoadNewMessagerContainer(const std::string& dir, Format fmt = Format::kJSON,
+                                             const LoadOptions* options = nullptr);
   MessagerContainer NewMessagerContainer(Filter filter = nullptr);
   void SetMessagerContainer(MessagerContainer msger_container);
   MessagerContainer GetMessagerContainerWithProvider() const;

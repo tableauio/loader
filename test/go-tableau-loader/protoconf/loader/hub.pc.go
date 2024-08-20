@@ -8,6 +8,7 @@ package loader
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/tableauio/tableau/format"
@@ -97,10 +98,6 @@ func Register(gen MessagerGenerator) {
 	getRegistrar().Register(gen)
 }
 
-type Filter interface {
-	Filter(name string) bool
-}
-
 func BoolToInt(ok bool) int {
 	if ok {
 		return 1
@@ -110,20 +107,22 @@ func BoolToInt(ok bool) int {
 
 // Hub is the messager manager.
 type Hub struct {
-	messagerMap MessagerMap
+	messagerMap    MessagerMap
+	lastLoadedTime time.Time
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		messagerMap: MessagerMap{},
+		messagerMap:    MessagerMap{},
+		lastLoadedTime: time.Unix(0, 0),
 	}
 }
 
 // NewMessagerMap creates a new MessagerMap.
-func (h *Hub) NewMessagerMap(filter Filter) MessagerMap {
+func (h *Hub) NewMessagerMap(filter load.FilterFunc) MessagerMap {
 	messagerMap := MessagerMap{}
 	for name, gen := range getRegistrar().Generators {
-		if filter == nil || filter.Filter(name) {
+		if filter == nil || filter(name) {
 			messagerMap[name] = gen()
 		}
 	}
@@ -133,6 +132,7 @@ func (h *Hub) NewMessagerMap(filter Filter) MessagerMap {
 // SetMessagerMap sets hub's inner field messagerMap.
 func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
 	h.messagerMap = messagerMap
+	h.lastLoadedTime = time.Now()
 }
 
 // GetMessager finds and returns the specified Messenger in hub.
@@ -141,8 +141,9 @@ func (h *Hub) GetMessager(name string) Messager {
 }
 
 // Load fills messages from files in the specified directory and format.
-func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...load.Option) error {
-	messagerMap := h.NewMessagerMap(filter)
+func (h *Hub) Load(dir string, format format.Format, options ...load.Option) error {
+	opts := load.ParseOptions(options...)
+	messagerMap := h.NewMessagerMap(opts.Filter)
 	for name, msger := range messagerMap {
 		if err := msger.Load(dir, format, options...); err != nil {
 			return errors.WithMessagef(err, "failed to load: %v", name)
@@ -162,9 +163,10 @@ func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...l
 
 // Store stores protobuf messages to files in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
-func (h *Hub) Store(dir string, filter Filter, format format.Format, options ...store.Option) error {
+func (h *Hub) Store(dir string, format format.Format, options ...store.Option) error {
+	opts := store.ParseOptions(options...)
 	for name, msger := range h.messagerMap {
-		if filter == nil || filter.Filter(name) {
+		if opts.Filter == nil || opts.Filter(name) {
 			if err := msger.Store(dir, format, options...); err != nil {
 				return errors.WithMessagef(err, "failed to store: %v", name)
 			}
@@ -172,6 +174,11 @@ func (h *Hub) Store(dir string, filter Filter, format format.Format, options ...
 		}
 	}
 	return nil
+}
+
+// GetLastLoadedTime returns the time when hub's messagerMap was last set.
+func (h *Hub) GetLastLoadedTime() time.Time {
+	return h.lastLoadedTime
 }
 
 // Auto-generated getters below
@@ -190,6 +197,26 @@ func (h *Hub) GetItemConf() *ItemConf {
 	msger := h.GetMessager("ItemConf")
 	if msger != nil {
 		if conf, ok := msger.(*ItemConf); ok {
+			return conf
+		}
+	}
+	return nil
+}
+
+func (h *Hub) GetPatchReplaceConf() *PatchReplaceConf {
+	msger := h.GetMessager("PatchReplaceConf")
+	if msger != nil {
+		if conf, ok := msger.(*PatchReplaceConf); ok {
+			return conf
+		}
+	}
+	return nil
+}
+
+func (h *Hub) GetPatchMergeConf() *PatchMergeConf {
+	msger := h.GetMessager("PatchMergeConf")
+	if msger != nil {
+		if conf, ok := msger.(*PatchMergeConf); ok {
 			return conf
 		}
 	}

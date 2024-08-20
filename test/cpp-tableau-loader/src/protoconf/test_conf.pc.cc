@@ -10,7 +10,7 @@ namespace tableau {
 const std::string ActivityConf::kProtoName = "ActivityConf";
 
 bool ActivityConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
-  bool ok = LoadMessage(dir, data_, fmt, options);
+  bool ok = LoadMessage(data_, dir, fmt, options);
   return ok ? ProcessAfterLoad() : false;
 }
 
@@ -44,17 +44,6 @@ bool ActivityConf::ProcessAfterLoad() {
   for (auto&& item1 : data_.activity_map()) {
     for (auto&& item2 : item1.second.chapter_map()) {
       index_named_chapter_map_[item2.second.chapter_name()].push_back(&item2.second);
-    }
-  }
-
-  // Index: SectionItemId@Award
-  for (auto&& item1 : data_.activity_map()) {
-    for (auto&& item2 : item1.second.chapter_map()) {
-      for (auto&& item3 : item2.second.section_map()) {
-        for (auto&& item4 : item3.second.section_item_list()) {
-          index_award_map_[item4.id()].push_back(&item4);
-        }
-      }
     }
   }
 
@@ -186,30 +175,11 @@ const protoconf::ActivityConf::Activity::Chapter* ActivityConf::FindFirstNamedCh
   return (*conf)[0];
 }
 
-// Index: SectionItemId@Award
-const ActivityConf::Index_AwardMap& ActivityConf::FindAward() const { return index_award_map_ ;}
-
-const ActivityConf::Index_AwardVector* ActivityConf::FindAward(uint32_t id) const {
-  auto iter = index_award_map_.find(id);
-  if (iter == index_award_map_.end()) {
-    return nullptr;
-  }
-  return &iter->second;
-}
-
-const protoconf::Item* ActivityConf::FindFirstAward(uint32_t id) const {
-  auto conf = FindAward(id);
-  if (conf == nullptr || conf->size() == 0) {
-    return nullptr;
-  }
-  return (*conf)[0];
-}
-
 
 const std::string ChapterConf::kProtoName = "ChapterConf";
 
 bool ChapterConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
-  bool ok = LoadMessage(dir, data_, fmt, options);
+  bool ok = LoadMessage(data_, dir, fmt, options);
   return ok ? ProcessAfterLoad() : false;
 }
 
@@ -224,7 +194,7 @@ const protoconf::ChapterConf::Chapter* ChapterConf::Get(uint64_t id) const {
 const std::string ThemeConf::kProtoName = "ThemeConf";
 
 bool ThemeConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
-  bool ok = LoadMessage(dir, data_, fmt, options);
+  bool ok = LoadMessage(data_, dir, fmt, options);
   return ok ? ProcessAfterLoad() : false;
 }
 

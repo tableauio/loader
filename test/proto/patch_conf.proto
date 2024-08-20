@@ -1,0 +1,29 @@
+// clang-format off
+syntax = "proto3";
+
+package protoconf;
+
+import "tableau/protobuf/tableau.proto";
+
+option go_package = "github.com/tableauio/loader/test/go-tableau-loader/protoconf";
+
+import "common_conf.proto";
+
+option (tableau.workbook) = {name: "Patch.xlsx"};
+
+message PatchReplaceConf {
+  option (tableau.worksheet) = {name:"PatchReplaceConf" namerow:1 typerow:2 noterow:3 datarow:4 patch:PATCH_REPLACE};
+  
+  string name = 1 [(tableau.field) = {name: "Name" }];
+  repeated int32 price_list = 2 [(tableau.field) = {name: "Price" layout: LAYOUT_INCELL }];
+}
+
+message PatchMergeConf {
+  option (tableau.worksheet) = {name:"PatchMergeConf" namerow:1 typerow:2 noterow:3 datarow:4 patch:PATCH_MERGE};
+  
+  string name = 1 [(tableau.field) = {name:"Name" }];
+  repeated int32 price_list = 2 [(tableau.field) = {name:"Price" layout:LAYOUT_INCELL }];
+  repeated int32 replace_price_list = 3 [(tableau.field) = {name:"ReplacePrice" layout:LAYOUT_INCELL prop:{patch:PATCH_REPLACE}}];
+  map<uint32, Item> item_map = 4 [(tableau.field) = {name:"Item" key:"ID" layout:LAYOUT_HORIZONTAL}];
+  map<uint32, Item> replace_item_map = 5 [(tableau.field) = {name:"ReplaceItem" key:"ID" layout:LAYOUT_HORIZONTAL prop:{patch:PATCH_REPLACE}}];
+}

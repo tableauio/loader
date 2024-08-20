@@ -115,13 +115,13 @@ func (x *ActivityConf) AfterLoad() error {
 
 // Get1 finds value in the 1-level map. It will return nil if
 // the deepest key is not found, otherwise return an error.
-func (x *ActivityConf) Get1(activityID uint64) (*protoconf.ActivityConf_Activity, error) {
+func (x *ActivityConf) Get1(activityId uint64) (*protoconf.ActivityConf_Activity, error) {
 	d := x.Data().GetActivityMap()
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "ActivityMap is nil")
 	}
-	if val, ok := d[activityID]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "activityID(%v) not found", activityID)
+	if val, ok := d[activityId]; !ok {
+		return nil, xerrors.Errorf(code.NotFound, "activityId(%v) not found", activityId)
 	} else {
 		return val, nil
 	}
@@ -129,8 +129,8 @@ func (x *ActivityConf) Get1(activityID uint64) (*protoconf.ActivityConf_Activity
 
 // Get2 finds value in the 2-level map. It will return nil if
 // the deepest key is not found, otherwise return an error.
-func (x *ActivityConf) Get2(activityID uint64, chapterID uint32) (*protoconf.ActivityConf_Activity_Chapter, error) {
-	conf, err := x.Get1(activityID)
+func (x *ActivityConf) Get2(activityId uint64, chapterId uint32) (*protoconf.ActivityConf_Activity_Chapter, error) {
+	conf, err := x.Get1(activityId)
 	if err != nil {
 		return nil, err
 	}
@@ -139,8 +139,8 @@ func (x *ActivityConf) Get2(activityID uint64, chapterID uint32) (*protoconf.Act
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "ChapterMap is nil")
 	}
-	if val, ok := d[chapterID]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "chapterID(%v) not found", chapterID)
+	if val, ok := d[chapterId]; !ok {
+		return nil, xerrors.Errorf(code.NotFound, "chapterId(%v) not found", chapterId)
 	} else {
 		return val, nil
 	}
@@ -148,8 +148,8 @@ func (x *ActivityConf) Get2(activityID uint64, chapterID uint32) (*protoconf.Act
 
 // Get3 finds value in the 3-level map. It will return nil if
 // the deepest key is not found, otherwise return an error.
-func (x *ActivityConf) Get3(activityID uint64, chapterID uint32, sectionID uint32) (*protoconf.Section, error) {
-	conf, err := x.Get2(activityID, chapterID)
+func (x *ActivityConf) Get3(activityId uint64, chapterId uint32, sectionId uint32) (*protoconf.Section, error) {
+	conf, err := x.Get2(activityId, chapterId)
 	if err != nil {
 		return nil, err
 	}
@@ -158,8 +158,8 @@ func (x *ActivityConf) Get3(activityID uint64, chapterID uint32, sectionID uint3
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "SectionMap is nil")
 	}
-	if val, ok := d[sectionID]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "sectionID(%v) not found", sectionID)
+	if val, ok := d[sectionId]; !ok {
+		return nil, xerrors.Errorf(code.NotFound, "sectionId(%v) not found", sectionId)
 	} else {
 		return val, nil
 	}
@@ -167,8 +167,8 @@ func (x *ActivityConf) Get3(activityID uint64, chapterID uint32, sectionID uint3
 
 // Get4 finds value in the 4-level map. It will return nil if
 // the deepest key is not found, otherwise return an error.
-func (x *ActivityConf) Get4(activityID uint64, chapterID uint32, sectionID uint32, key4 uint32) (int32, error) {
-	conf, err := x.Get3(activityID, chapterID, sectionID)
+func (x *ActivityConf) Get4(activityId uint64, chapterId uint32, sectionId uint32, key4 uint32) (int32, error) {
+	conf, err := x.Get3(activityId, chapterId, sectionId)
 	if err != nil {
 		return 0, err
 	}
@@ -191,10 +191,10 @@ func (x *ActivityConf) GetOrderedMap() *ActivityConf_Activity_OrderedMap {
 
 // GetOrderedMap1 finds value in the 1-level ordered map. It will return nil if
 // the deepest key is not found, otherwise return an error.
-func (x *ActivityConf) GetOrderedMap1(activityID uint64) (*ActivityConf_Activity_Chapter_OrderedMap, error) {
+func (x *ActivityConf) GetOrderedMap1(activityId uint64) (*ActivityConf_Activity_Chapter_OrderedMap, error) {
 	conf := x.orderedMap
-	if val, ok := conf.Get(activityID); !ok {
-		return nil, xerrors.Errorf(code.NotFound, "activityID(%v) not found", activityID)
+	if val, ok := conf.Get(activityId); !ok {
+		return nil, xerrors.Errorf(code.NotFound, "activityId(%v) not found", activityId)
 	} else {
 		return val.First, nil
 	}
@@ -202,13 +202,13 @@ func (x *ActivityConf) GetOrderedMap1(activityID uint64) (*ActivityConf_Activity
 
 // GetOrderedMap2 finds value in the 2-level ordered map. It will return nil if
 // the deepest key is not found, otherwise return an error.
-func (x *ActivityConf) GetOrderedMap2(activityID uint64, chapterID uint32) (*Uint32_Section_OrderedMap, error) {
-	conf, err := x.GetOrderedMap1(activityID)
+func (x *ActivityConf) GetOrderedMap2(activityId uint64, chapterId uint32) (*Uint32_Section_OrderedMap, error) {
+	conf, err := x.GetOrderedMap1(activityId)
 	if err != nil {
 		return nil, err
 	}
-	if val, ok := conf.Get(chapterID); !ok {
-		return nil, xerrors.Errorf(code.NotFound, "chapterID(%v) not found", chapterID)
+	if val, ok := conf.Get(chapterId); !ok {
+		return nil, xerrors.Errorf(code.NotFound, "chapterId(%v) not found", chapterId)
 	} else {
 		return val.First, nil
 	}
@@ -216,13 +216,13 @@ func (x *ActivityConf) GetOrderedMap2(activityID uint64, chapterID uint32) (*Uin
 
 // GetOrderedMap3 finds value in the 3-level ordered map. It will return nil if
 // the deepest key is not found, otherwise return an error.
-func (x *ActivityConf) GetOrderedMap3(activityID uint64, chapterID uint32, sectionID uint32) (*ActivityConf_int32_OrderedMap, error) {
-	conf, err := x.GetOrderedMap2(activityID, chapterID)
+func (x *ActivityConf) GetOrderedMap3(activityId uint64, chapterId uint32, sectionId uint32) (*ActivityConf_int32_OrderedMap, error) {
+	conf, err := x.GetOrderedMap2(activityId, chapterId)
 	if err != nil {
 		return nil, err
 	}
-	if val, ok := conf.Get(sectionID); !ok {
-		return nil, xerrors.Errorf(code.NotFound, "sectionID(%v) not found", sectionID)
+	if val, ok := conf.Get(sectionId); !ok {
+		return nil, xerrors.Errorf(code.NotFound, "sectionId(%v) not found", sectionId)
 	} else {
 		return val.First, nil
 	}

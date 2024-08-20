@@ -5,10 +5,13 @@
 
 #include "registry.pc.h"
 
+#include "patch_conf.pc.h"
 #include "test_conf.pc.h"
 
 namespace tableau {
 void Registry::InitShard1() {
+  Register<PatchMergeConf>();
+  Register<PatchReplaceConf>();
   Register<ActivityConf>();
   Register<ChapterConf>();
   Register<ThemeConf>();

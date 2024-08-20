@@ -79,7 +79,6 @@ func (x *UnimplementedMessager) ProcessAfterLoadAll(hub *Hub) error {
 	return nil
 }
 
-
 func (x *UnimplementedMessager) Messager() Messager {
 	return nil
 }
@@ -105,7 +104,7 @@ func NewRegistrar() *Registrar {
 }
 
 func (r *Registrar) Register(gen MessagerGenerator) {
-	if _, ok:= r.Generators[gen().Name()]; ok{
+	if _, ok := r.Generators[gen().Name()]; ok {
 		panic("register duplicate messager: " + gen().Name())
 	}
 	r.Generators[gen().Name()] = gen
@@ -123,10 +122,6 @@ func getRegistrar() *Registrar {
 
 func Register(gen MessagerGenerator) {
 	getRegistrar().Register(gen)
-}
-
-type Filter interface {
-	Filter(name string) bool
 }
 
 func BoolToInt(ok bool) int {
@@ -150,10 +145,10 @@ func NewHub() *Hub {
 }
 
 // NewMessagerMap creates a new MessagerMap.
-func (h *Hub) NewMessagerMap(filter Filter) MessagerMap {
+func (h *Hub) NewMessagerMap(filter load.FilterFunc) MessagerMap {
 	messagerMap := MessagerMap{}
 	for name, gen := range getRegistrar().Generators {
-		if filter == nil || filter.Filter(name) {
+		if filter == nil || filter(name) {
 			messagerMap[name] = gen()
 		}
 	}
@@ -172,8 +167,9 @@ func (h *Hub) GetMessager(name string) Messager {
 }
 
 // Load fills messages from files in the specified directory and format.
-func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...load.Option) error {
-	messagerMap := h.NewMessagerMap(filter)
+func (h *Hub) Load(dir string, format format.Format, options ...load.Option) error {
+	opts := load.ParseOptions(options...)
+	messagerMap := h.NewMessagerMap(opts.Filter)
 	for name, msger := range messagerMap {
 		if err := msger.Load(dir, format, options...); err != nil {
 			return errors.WithMessagef(err, "failed to load: %v", name)
@@ -181,7 +177,7 @@ func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...l
 		fmt.Println("Loaded: " + msger.Name())
 	}
 	// create a temporary hub with messager container for post process
-  	tmpHub := &Hub{messagerMap: messagerMap};
+	tmpHub := &Hub{messagerMap: messagerMap}
 	for name, msger := range messagerMap {
 		if err := msger.ProcessAfterLoadAll(tmpHub); err != nil {
 			return errors.WithMessagef(err, "failed to process messager %s after load all", name)
@@ -193,9 +189,10 @@ func (h *Hub) Load(dir string, filter Filter, format format.Format, options ...l
 
 // Store stores protobuf messages to files in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
-func (h *Hub) Store(dir string, filter Filter, format format.Format, options ...store.Option) error {
+func (h *Hub) Store(dir string, format format.Format, options ...store.Option) error {
+	opts := store.ParseOptions(options...)
 	for name, msger := range h.messagerMap {
-		if filter == nil || filter.Filter(name) {
+		if opts.Filter == nil || opts.Filter(name) {
 			if err := msger.Store(dir, format, options...); err != nil {
 				return errors.WithMessagef(err, "failed to store: %v", name)
 			}
