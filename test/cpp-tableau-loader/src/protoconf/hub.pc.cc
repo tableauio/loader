@@ -164,9 +164,16 @@ bool Bin2Message(const std::string& bin, google::protobuf::Message& msg) {
 //  - https://protobuf.dev/reference/cpp/api-docs/google.protobuf.message/#Message.MergeFrom.details
 bool MergeMessage(google::protobuf::Message& dst, google::protobuf::Message& src) {
   const google::protobuf::Descriptor* dst_descriptor = dst.GetDescriptor();
+  const google::protobuf::Descriptor* src_descriptor = dst.GetDescriptor();
+  if (!dst_descriptor || !src_descriptor) {
+    g_err_msg = "failed to get message descriptor";
+    return false;
+  }
   // Ensure both messages are of the same type
-  if (dst_descriptor != src.GetDescriptor()) {
+  if (dst_descriptor != src_descriptor) {
     g_err_msg = "dst and src are not messages with the same descriptor";
+    ATOM_ERROR("dst %s and src %s are not messages with the same descriptor", dst_descriptor->name().c_str(),
+               src_descriptor->name().c_str());
     return false;
   }
 
@@ -174,7 +181,7 @@ bool MergeMessage(google::protobuf::Message& dst, google::protobuf::Message& src
   const google::protobuf::Reflection* dst_reflection = dst.GetReflection();
   const google::protobuf::Reflection* src_reflection = src.GetReflection();
   if (!dst_reflection || !src_reflection) {
-    g_err_msg = "failed to get reflection";
+    g_err_msg = "failed to get message reflection";
     return false;
   }
 
