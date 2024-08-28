@@ -193,6 +193,16 @@ func (h *Hub) GetHeroConf() *HeroConf {
 	return nil
 }
 
+func (h *Hub) GetHeroBaseConf() *HeroBaseConf {
+	msger := h.GetMessager("HeroBaseConf")
+	if msger != nil {
+		if conf, ok := msger.(*HeroBaseConf); ok {
+			return conf
+		}
+	}
+	return nil
+}
+
 func (h *Hub) GetItemConf() *ItemConf {
 	msger := h.GetMessager("ItemConf")
 	if msger != nil {

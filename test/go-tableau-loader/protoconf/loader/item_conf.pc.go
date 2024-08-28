@@ -17,7 +17,7 @@ import (
 )
 
 // OrderedMap types.
-type ItemConf_Item_OrderedMap = treemap.TreeMap[uint32, *protoconf.ItemConf_Item]
+type ProtoconfItemConfItemMap_OrderedMap = treemap.TreeMap[uint32, *protoconf.ItemConf_Item]
 
 // ItemConf is a wrapper around protobuf message: protoconf.ItemConf.
 //
@@ -29,7 +29,7 @@ type ItemConf_Item_OrderedMap = treemap.TreeMap[uint32, *protoconf.ItemConf_Item
 type ItemConf struct {
 	UnimplementedMessager
 	data       protoconf.ItemConf
-	orderedMap *ItemConf_Item_OrderedMap
+	orderedMap *ProtoconfItemConfItemMap_OrderedMap
 }
 
 // Name returns the ItemConf's message name.
@@ -94,7 +94,7 @@ func (x *ItemConf) Get1(id uint32) (*protoconf.ItemConf_Item, error) {
 }
 
 // GetOrderedMap returns the 1-level ordered map.
-func (x *ItemConf) GetOrderedMap() *ItemConf_Item_OrderedMap {
+func (x *ItemConf) GetOrderedMap() *ProtoconfItemConfItemMap_OrderedMap {
 	return x.orderedMap
 }
 

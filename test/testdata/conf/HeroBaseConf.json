@@ -1,0 +1,30 @@
+{
+    "heroMap": {
+        "venus": {
+            "name": "venus",
+            "itemMap": {
+                "1": {
+                    "id": 1,
+                    "name": "apple"
+                },
+                "2": {
+                    "id": 2,
+                    "name": "orange"
+                }
+            }
+        },
+        "zeus": {
+            "name": "zeus",
+            "itemMap": {
+                "3": {
+                    "id": 3,
+                    "name": "banana"
+                },
+                "4": {
+                    "id": 4,
+                    "name": "mango"
+                }
+            }
+        }
+    }
+}

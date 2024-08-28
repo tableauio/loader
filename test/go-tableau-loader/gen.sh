@@ -11,16 +11,26 @@ TABLEAU_PROTO="./third_party/_submodules/tableau/proto"
 PLGUIN_DIR="./cmd/protoc-gen-go-tableau-loader"
 PROTOCONF_IN="./test/proto"
 PROTOCONF_OUT="./test/go-tableau-loader/protoconf"
+BASE_IN="./test/proto/base"
+BASE_OUT="./test/go-tableau-loader/base"
 LOADER_OUT="$PROTOCONF_OUT/loader"
 
 # remove old generated files
-rm -rfv "$PROTOCONF_OUT" "$LOADER_OUT"
-mkdir -p "$PROTOCONF_OUT" "$LOADER_OUT"
+rm -rfv "$PROTOCONF_OUT" "$LOADER_OUT" "$BASE_OUT"
+mkdir -p "$PROTOCONF_OUT" "$LOADER_OUT" "$BASE_OUT"
 
 # build
 cd "${PLGUIN_DIR}" && go build && cd -
 
 export PATH="${PLGUIN_DIR}:${PATH}"
+
+${PROTOC} \
+--go_out="$BASE_OUT" \
+--go_opt=paths=source_relative \
+--proto_path="$PROTOBUF_PROTO" \
+--proto_path="$TABLEAU_PROTO" \
+--proto_path="$BASE_IN" \
+"$BASE_IN"/*.proto
 
 ${PROTOC} \
 --go-tableau-loader_out="$LOADER_OUT" \
@@ -30,4 +40,5 @@ ${PROTOC} \
 --proto_path="$PROTOBUF_PROTO" \
 --proto_path="$TABLEAU_PROTO" \
 --proto_path="$PROTOCONF_IN" \
-"$PROTOCONF_IN"/*
+--proto_path="$BASE_IN" \
+"$PROTOCONF_IN"/*.proto

@@ -2,7 +2,6 @@ package helper
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -22,7 +21,7 @@ func NeedGenOrderedMap(md protoreflect.MessageDescriptor) bool {
 }
 
 // ParseGoType converts a FieldDescriptor to Go type string.
-func ParseGoType(file *protogen.File, fd protoreflect.FieldDescriptor) string {
+func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
 	switch fd.Kind() {
 	case protoreflect.BoolKind:
 		return "bool"
@@ -46,20 +45,40 @@ func ParseGoType(file *protogen.File, fd protoreflect.FieldDescriptor) string {
 	case protoreflect.BytesKind:
 		return "[]byte"
 	case protoreflect.MessageKind:
-		fullName := string(fd.Message().FullName())
-		pkg := string(file.Desc.Package())
-		protoName := fullName
-		if strings.HasPrefix(fullName, pkg) {
-			// defined at the same package
-			protoName = fullName[len(pkg)+1:]
-		}
-		goName := strings.ReplaceAll(protoName, ".", "_")
-		return string(file.GoImportPath.Ident(goName).GoName)
+		return FindMessageGoIdent(gen, fd.Message()).GoName
 	// case protoreflect.GroupKind:
 	// 	return "group"
 	default:
-		return fmt.Sprintf("<unknown:%d>", fd.Kind())
+		panic(fmt.Sprintf("unknown kind: %d", fd.Kind()))
 	}
+}
+
+func FindMessage(gen *protogen.Plugin, md protoreflect.MessageDescriptor) *protogen.Message {
+	if file, ok := gen.FilesByPath[md.ParentFile().Path()]; ok {
+		return FindMessageByDescriptor(file.Messages, md)
+	}
+	return nil
+}
+
+func FindMessageByDescriptor(messages []*protogen.Message, md protoreflect.MessageDescriptor) *protogen.Message {
+	for _, message := range messages {
+		if message.Desc.FullName() == md.FullName() {
+			return message
+		}
+		// Recursively search nested messages
+		if nestedMessage := FindMessageByDescriptor(message.Messages, md); nestedMessage != nil {
+			return nestedMessage
+		}
+	}
+	return nil
+}
+
+func FindMessageGoIdent(gen *protogen.Plugin, md protoreflect.MessageDescriptor) protogen.GoIdent {
+	msg := FindMessage(gen, md)
+	if msg == nil {
+		panic(fmt.Sprintf("unknown message: %s", md.FullName()))
+	}
+	return msg.GoIdent
 }
 
 func GetTypeEmptyValue(fd protoreflect.FieldDescriptor) string {
@@ -92,7 +111,7 @@ type MapKey struct {
 	Name string
 }
 
-func AddMapKey(file *protogen.File, fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
+func AddMapKey(gen *protogen.Plugin, fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
 	opts := fd.Options().(*descriptorpb.FieldOptions)
 	fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
 	name := fdOpts.GetKey()
@@ -112,7 +131,7 @@ func AddMapKey(file *protogen.File, fd protoreflect.FieldDescriptor, keys []MapK
 			}
 		}
 	}
-	keys = append(keys, MapKey{ParseGoType(file, fd.MapKey()), name})
+	keys = append(keys, MapKey{ParseGoType(gen, fd.MapKey()), name})
 	return keys
 }
 
