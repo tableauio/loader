@@ -47,7 +47,7 @@ func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
 	case protoreflect.MessageKind:
 		var mapValueMessage *protogen.Message
 		for _, f := range gen.Files {
-			mapValueMessage = findMessageByDescriptor(f, fd.Message())
+			mapValueMessage = findMessageByDescriptor(f.Messages, fd.Message())
 			if mapValueMessage != nil {
 				break
 			}
@@ -63,26 +63,13 @@ func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
 	}
 }
 
-func findMessageByDescriptor(file *protogen.File, desc protoreflect.MessageDescriptor) *protogen.Message {
-	for _, message := range file.Messages {
+func findMessageByDescriptor(messages []*protogen.Message, desc protoreflect.MessageDescriptor) *protogen.Message {
+	for _, message := range messages {
 		if message.Desc.FullName() == desc.FullName() {
 			return message
 		}
 		// Recursively search nested messages
-		if nestedMessage := findNestedMessageByDescriptor(message, desc); nestedMessage != nil {
-			return nestedMessage
-		}
-	}
-	return nil
-}
-
-func findNestedMessageByDescriptor(parent *protogen.Message, desc protoreflect.MessageDescriptor) *protogen.Message {
-	for _, nested := range parent.Messages {
-		if nested.Desc.FullName() == desc.FullName() {
-			return nested
-		}
-		// Recursively search nested messages
-		if nestedMessage := findNestedMessageByDescriptor(nested, desc); nestedMessage != nil {
+		if nestedMessage := findMessageByDescriptor(message.Messages, desc); nestedMessage != nil {
 			return nestedMessage
 		}
 	}
