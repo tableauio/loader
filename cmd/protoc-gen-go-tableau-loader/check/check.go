@@ -10,6 +10,7 @@ import (
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/firstpass"
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
 	"github.com/tableauio/tableau/proto/tableaupb"
+	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -32,7 +33,7 @@ type LevelInfo struct {
 	NextLevels []*LevelInfo
 }
 
-func ParseReferLevelInfo(protoconfPkg string, prefix string, md protoreflect.MessageDescriptor) []*LevelInfo {
+func ParseReferLevelInfo(gen *protogen.Plugin, protoconfPkg string, prefix string, md protoreflect.MessageDescriptor) []*LevelInfo {
 	var levelInfos []*LevelInfo
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
@@ -45,17 +46,17 @@ func ParseReferLevelInfo(protoconfPkg string, prefix string, md protoreflect.Mes
 			GoFieldName: strcase.ToCamel(string(fd.Name())),
 		}
 		if fd.IsMap() && fd.MapValue().Kind() == protoreflect.MessageKind {
-			levelInfo.NextLevels = ParseReferLevelInfo(protoconfPkg, prefix+fdOpts.Name, fd.MapValue().Message())
+			levelInfo.NextLevels = ParseReferLevelInfo(gen, protoconfPkg, prefix+fdOpts.Name, fd.MapValue().Message())
 			if len(levelInfo.NextLevels) != 0 {
 				levelInfos = append(levelInfos, levelInfo)
 			}
 		} else if fd.IsList() && fd.Kind() == protoreflect.MessageKind {
-			levelInfo.NextLevels = ParseReferLevelInfo(protoconfPkg, prefix+fdOpts.Name, fd.Message())
+			levelInfo.NextLevels = ParseReferLevelInfo(gen, protoconfPkg, prefix+fdOpts.Name, fd.Message())
 			if len(levelInfo.NextLevels) != 0 {
 				levelInfos = append(levelInfos, levelInfo)
 			}
 		} else if fd.Kind() == protoreflect.MessageKind {
-			levelInfo.NextLevels = ParseReferLevelInfo(protoconfPkg, prefix+fdOpts.Name, fd.Message())
+			levelInfo.NextLevels = ParseReferLevelInfo(gen, protoconfPkg, prefix+fdOpts.Name, fd.Message())
 			if len(levelInfo.NextLevels) != 0 {
 				levelInfos = append(levelInfos, levelInfo)
 			}
@@ -79,7 +80,7 @@ func ParseReferLevelInfo(protoconfPkg string, prefix string, md protoreflect.Mes
 			levelInfo.ColumnName = prefix + fdOpts.Name
 			levelInfo.MD = md
 			levelInfo.FD = fd
-			levelInfo.Accesser = ParseReferedMapAccesserInfo(columnName, "", msg)
+			levelInfo.Accesser = ParseReferedMapAccesserInfo(gen, columnName, "", msg)
 			if levelInfo.Accesser == nil {
 				log.Panicf("refer: %v, %s is not the key of map in %s", fdOpts.Prop.Refer, columnName, msgerName)
 			}
@@ -95,7 +96,7 @@ type ReferedAccesserInfo struct {
 	MapKeyType   string
 }
 
-func ParseReferedMapAccesserInfo(columnName string, prefix string, msg *firstpass.MessageInfo) *ReferedAccesserInfo {
+func ParseReferedMapAccesserInfo(gen *protogen.Plugin, columnName string, prefix string, msg *firstpass.MessageInfo) *ReferedAccesserInfo {
 	for _, field := range msg.Msg.Fields {
 		opts := field.Desc.Options().(*descriptorpb.FieldOptions)
 		fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
@@ -106,7 +107,7 @@ func ParseReferedMapAccesserInfo(columnName string, prefix string, msg *firstpas
 			return &ReferedAccesserInfo{
 				MessagerName: msg.Msg.GoIdent.GoName,
 				MapFieldName: field.GoName,
-				MapKeyType:   helper.ParseGoType(msg.File, field.Desc.MapKey()),
+				MapKeyType:   helper.ParseGoType(gen, field.Desc.MapKey()),
 			}
 		}
 

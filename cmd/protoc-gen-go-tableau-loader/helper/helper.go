@@ -2,7 +2,6 @@ package helper
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -22,7 +21,7 @@ func NeedGenOrderedMap(md protoreflect.MessageDescriptor) bool {
 }
 
 // ParseGoType converts a FieldDescriptor to Go type string.
-func ParseGoType(file *protogen.File, fd protoreflect.FieldDescriptor) string {
+func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
 	switch fd.Kind() {
 	case protoreflect.BoolKind:
 		return "bool"
@@ -46,20 +45,48 @@ func ParseGoType(file *protogen.File, fd protoreflect.FieldDescriptor) string {
 	case protoreflect.BytesKind:
 		return "[]byte"
 	case protoreflect.MessageKind:
-		fullName := string(fd.Message().FullName())
-		pkg := string(file.Desc.Package())
-		protoName := fullName
-		if strings.HasPrefix(fullName, pkg) {
-			// defined at the same package
-			protoName = fullName[len(pkg)+1:]
+		var mapValueMessage *protogen.Message
+		for _, f := range gen.Files {
+			mapValueMessage = findMessageByDescriptor(f, fd.Message())
+			if mapValueMessage != nil {
+				break
+			}
 		}
-		goName := strings.ReplaceAll(protoName, ".", "_")
-		return string(file.GoImportPath.Ident(goName).GoName)
+		if mapValueMessage != nil {
+			return mapValueMessage.GoIdent.GoName
+		}
+		fallthrough
 	// case protoreflect.GroupKind:
 	// 	return "group"
 	default:
 		return fmt.Sprintf("<unknown:%d>", fd.Kind())
 	}
+}
+
+func findMessageByDescriptor(file *protogen.File, desc protoreflect.MessageDescriptor) *protogen.Message {
+	for _, message := range file.Messages {
+		if message.Desc.FullName() == desc.FullName() {
+			return message
+		}
+		// Recursively search nested messages
+		if nestedMessage := findNestedMessageByDescriptor(message, desc); nestedMessage != nil {
+			return nestedMessage
+		}
+	}
+	return nil
+}
+
+func findNestedMessageByDescriptor(parent *protogen.Message, desc protoreflect.MessageDescriptor) *protogen.Message {
+	for _, nested := range parent.Messages {
+		if nested.Desc.FullName() == desc.FullName() {
+			return nested
+		}
+		// Recursively search nested messages
+		if nestedMessage := findNestedMessageByDescriptor(nested, desc); nestedMessage != nil {
+			return nestedMessage
+		}
+	}
+	return nil
 }
 
 func GetTypeEmptyValue(fd protoreflect.FieldDescriptor) string {
@@ -92,7 +119,7 @@ type MapKey struct {
 	Name string
 }
 
-func AddMapKey(file *protogen.File, fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
+func AddMapKey(gen *protogen.Plugin, fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
 	opts := fd.Options().(*descriptorpb.FieldOptions)
 	fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
 	name := fdOpts.GetKey()
@@ -112,7 +139,7 @@ func AddMapKey(file *protogen.File, fd protoreflect.FieldDescriptor, keys []MapK
 			}
 		}
 	}
-	keys = append(keys, MapKey{ParseGoType(file, fd.MapKey()), name})
+	keys = append(keys, MapKey{ParseGoType(gen, fd.MapKey()), name})
 	return keys
 }
 
