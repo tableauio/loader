@@ -45,17 +45,13 @@ func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
 	case protoreflect.BytesKind:
 		return "[]byte"
 	case protoreflect.MessageKind:
-		var mapValueMessage *protogen.Message
-		for _, f := range gen.Files {
-			mapValueMessage = findMessageByDescriptor(f.Messages, fd.Message())
-			if mapValueMessage != nil {
-				break
+		if file, ok := gen.FilesByPath[fd.Message().ParentFile().Path()]; ok {
+			message := findMessageByDescriptor(file.Messages, fd.Message())
+			if message != nil {
+				return message.GoIdent.GoName
 			}
 		}
-		if mapValueMessage != nil {
-			return mapValueMessage.GoIdent.GoName
-		}
-		fallthrough
+		return fmt.Sprintf("<not found:%s>", fd.Message().FullName())
 	// case protoreflect.GroupKind:
 	// 	return "group"
 	default:
