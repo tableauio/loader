@@ -9,6 +9,7 @@ package loader
 import (
 	pair "github.com/tableauio/loader/pkg/pair"
 	treemap "github.com/tableauio/loader/pkg/treemap"
+	base "github.com/tableauio/loader/test/go-tableau-loader/base"
 	protoconf "github.com/tableauio/loader/test/go-tableau-loader/protoconf"
 	code "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
 	xerrors "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
@@ -21,7 +22,7 @@ import (
 type HeroConf_Hero_Attr_OrderedMap = treemap.TreeMap[string, *protoconf.HeroConf_Hero_Attr]
 
 type HeroConf_Hero_OrderedMapValue = pair.Pair[*HeroConf_Hero_Attr_OrderedMap, *protoconf.HeroConf_Hero]
-type HeroConf_Hero_OrderedMap = treemap.TreeMap[string, HeroConf_Hero_OrderedMapValue]
+type HeroConf_Hero_OrderedMap = treemap.TreeMap[string, *HeroConf_Hero_OrderedMapValue]
 
 // HeroConf is a wrapper around protobuf message: protoconf.HeroConf.
 //
@@ -75,14 +76,14 @@ func (x *HeroConf) Messager() Messager {
 // AfterLoad runs after this messager is loaded.
 func (x *HeroConf) AfterLoad() error {
 	// OrderedMap init.
-	x.orderedMap = treemap.New[string, HeroConf_Hero_OrderedMapValue]()
+	x.orderedMap = treemap.New[string, *HeroConf_Hero_OrderedMapValue]()
 	for k1, v1 := range x.Data().GetHeroMap() {
 		map1 := x.orderedMap
-		map1.Put(k1, HeroConf_Hero_OrderedMapValue{
+		k1v := &HeroConf_Hero_OrderedMapValue{
 			First:  treemap.New[string, *protoconf.HeroConf_Hero_Attr](),
 			Second: v1,
-		})
-		k1v, _ := map1.Get(k1)
+		}
+		map1.Put(k1, k1v)
 		for k2, v2 := range v1.GetAttrMap() {
 			map2 := k1v.First
 			map2.Put(k2, v2)
@@ -140,8 +141,134 @@ func (x *HeroConf) GetOrderedMap1(name string) (*HeroConf_Hero_Attr_OrderedMap, 
 	}
 }
 
+// OrderedMap types.
+type HeroBaseConf_base_Item_OrderedMap = treemap.TreeMap[string, *base.Item]
+
+type HeroBaseConf_base_Hero_OrderedMapValue = pair.Pair[*HeroBaseConf_base_Item_OrderedMap, *base.Hero]
+type HeroBaseConf_base_Hero_OrderedMap = treemap.TreeMap[string, *HeroBaseConf_base_Hero_OrderedMapValue]
+
+// HeroBaseConf is a wrapper around protobuf message: protoconf.HeroBaseConf.
+//
+// It is designed for three goals:
+//
+//  1. Easy use: simple yet powerful accessers.
+//  2. Elegant API: concise and clean functions.
+//  3. Extensibility: Map, OrdererdMap, Index...
+type HeroBaseConf struct {
+	UnimplementedMessager
+	data       protoconf.HeroBaseConf
+	orderedMap *HeroBaseConf_base_Hero_OrderedMap
+}
+
+// Name returns the HeroBaseConf's message name.
+func (x *HeroBaseConf) Name() string {
+	if x != nil {
+		return string((&x.data).ProtoReflect().Descriptor().Name())
+	}
+	return ""
+}
+
+// Data returns the HeroBaseConf's inner message data.
+func (x *HeroBaseConf) Data() *protoconf.HeroBaseConf {
+	if x != nil {
+		return &x.data
+	}
+	return nil
+}
+
+// Load fills HeroBaseConf's inner message from file in the specified directory and format.
+func (x *HeroBaseConf) Load(dir string, format format.Format, options ...load.Option) error {
+	err := load.Load(x.Data(), dir, format, options...)
+	if err != nil {
+		return err
+	}
+	return x.AfterLoad()
+}
+
+// Store writes HeroBaseConf's inner message to file in the specified directory and format.
+// Available formats: JSON, Bin, and Text.
+func (x *HeroBaseConf) Store(dir string, format format.Format, options ...store.Option) error {
+	return store.Store(x.Data(), dir, format, options...)
+}
+
+// Messager is used to implement Checker interface.
+func (x *HeroBaseConf) Messager() Messager {
+	return x
+}
+
+// AfterLoad runs after this messager is loaded.
+func (x *HeroBaseConf) AfterLoad() error {
+	// OrderedMap init.
+	x.orderedMap = treemap.New[string, *HeroBaseConf_base_Hero_OrderedMapValue]()
+	for k1, v1 := range x.Data().GetHeroMap() {
+		map1 := x.orderedMap
+		k1v := &HeroBaseConf_base_Hero_OrderedMapValue{
+			First:  treemap.New[string, *base.Item](),
+			Second: v1,
+		}
+		map1.Put(k1, k1v)
+		for k2, v2 := range v1.GetItemMap() {
+			map2 := k1v.First
+			map2.Put(k2, v2)
+		}
+	}
+	return nil
+}
+
+// Get1 finds value in the 1-level map. It will return nil if
+// the deepest key is not found, otherwise return an error.
+func (x *HeroBaseConf) Get1(name string) (*base.Hero, error) {
+	d := x.Data().GetHeroMap()
+	if d == nil {
+		return nil, xerrors.Errorf(code.Nil, "HeroMap is nil")
+	}
+	if val, ok := d[name]; !ok {
+		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
+	} else {
+		return val, nil
+	}
+}
+
+// Get2 finds value in the 2-level map. It will return nil if
+// the deepest key is not found, otherwise return an error.
+func (x *HeroBaseConf) Get2(name string, id string) (*base.Item, error) {
+	conf, err := x.Get1(name)
+	if err != nil {
+		return nil, err
+	}
+
+	d := conf.GetItemMap()
+	if d == nil {
+		return nil, xerrors.Errorf(code.Nil, "ItemMap is nil")
+	}
+	if val, ok := d[id]; !ok {
+		return nil, xerrors.Errorf(code.NotFound, "id(%v) not found", id)
+	} else {
+		return val, nil
+	}
+}
+
+// GetOrderedMap returns the 1-level ordered map.
+func (x *HeroBaseConf) GetOrderedMap() *HeroBaseConf_base_Hero_OrderedMap {
+	return x.orderedMap
+}
+
+// GetOrderedMap1 finds value in the 1-level ordered map. It will return nil if
+// the deepest key is not found, otherwise return an error.
+func (x *HeroBaseConf) GetOrderedMap1(name string) (*HeroBaseConf_base_Item_OrderedMap, error) {
+	conf := x.orderedMap
+	if val, ok := conf.Get(name); !ok {
+		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
+	} else {
+		return val.First, nil
+	}
+}
+
 func init() {
 	Register(func() Messager {
 		return new(HeroConf)
+	})
+	Register(func() Messager {
+		return new(HeroBaseConf)
 	})
 }

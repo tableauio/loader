@@ -17,9 +17,9 @@ func main() {
 		load.Paths(map[string]string{
 			"ItemConf": "../testdata/conf/ItemConf.json",
 		}))
-		load.Filter(func(name string) bool {
-			return true
-		})
+	load.Filter(func(name string) bool {
+		return true
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -67,4 +67,5 @@ func main() {
 		}
 	}
 	fmt.Printf("specialItemName: %v\n", hub.GetHub().GetCustomItemConf().GetSpecialItemName())
+	fmt.Printf("HeroBaseConf: %v\n", hub.GetHub().GetHeroBaseConf().Data().GetHeroMap())
 }

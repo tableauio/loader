@@ -46,7 +46,7 @@ func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
 		return "[]byte"
 	case protoreflect.MessageKind:
 		if file, ok := gen.FilesByPath[fd.Message().ParentFile().Path()]; ok {
-			message := findMessageByDescriptor(file.Messages, fd.Message())
+			message := FindMessageByDescriptor(file.Messages, fd.Message())
 			if message != nil {
 				return message.GoIdent.GoName
 			}
@@ -59,13 +59,13 @@ func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
 	}
 }
 
-func findMessageByDescriptor(messages []*protogen.Message, desc protoreflect.MessageDescriptor) *protogen.Message {
+func FindMessageByDescriptor(messages []*protogen.Message, desc protoreflect.MessageDescriptor) *protogen.Message {
 	for _, message := range messages {
 		if message.Desc.FullName() == desc.FullName() {
 			return message
 		}
 		// Recursively search nested messages
-		if nestedMessage := findMessageByDescriptor(message.Messages, desc); nestedMessage != nil {
+		if nestedMessage := FindMessageByDescriptor(message.Messages, desc); nestedMessage != nil {
 			return nestedMessage
 		}
 	}

@@ -3,6 +3,7 @@ syntax = "proto3";
 package protoconf;
 
 import "tableau/protobuf/tableau.proto";
+import "base.proto";
 
 option go_package = "github.com/tableauio/loader/test/go-tableau-loader/protoconf";
 option (tableau.workbook) = {
@@ -15,14 +16,21 @@ message HeroConf {
     ordered_map: true
     index: "Title"
   };
-  map<string, Hero> hero_map = 1 [(tableau.field) = {key:"Name" layout:LAYOUT_VERTICAL}];
+  map<string, Hero> hero_map = 1 [(tableau.field) = { key: "Name" layout: LAYOUT_VERTICAL }];
   message Hero {
-    string name = 1 [(tableau.field) = {name:"Name"}];
-    map<string, Attr> attr_map = 2 [(tableau.field) = {key:"Title" layout:LAYOUT_VERTICAL}];
+    string name = 1 [(tableau.field) = { name: "Name" }];
+    map<string, Attr> attr_map = 2 [(tableau.field) = { key: "Title" layout: LAYOUT_VERTICAL }];
     message Attr {
-      string title = 1 [(tableau.field) = {name:"Title"}];
-      string attr = 2 [(tableau.field) = {name:"Attr"}];
+      string title = 1 [(tableau.field) = { name: "Title" }];
+      string attr = 2 [(tableau.field) = { name: "Attr" }];
     }
   }
 }
 
+message HeroBaseConf {
+  option (tableau.worksheet) = {
+    name: "HeroBaseConf"
+    ordered_map: true
+  };
+  map<string, base.Hero> hero_map = 1 [(tableau.field) = { key: "Name" layout: LAYOUT_VERTICAL }];
+}
