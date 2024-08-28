@@ -18,16 +18,16 @@ import (
 )
 
 // OrderedMap types.
-type ActivityConf_int32_OrderedMap = treemap.TreeMap[uint32, int32]
+type ProtoconfSectionSectionRankMap_OrderedMap = treemap.TreeMap[uint32, int32]
 
-type ActivityConf_protoconf_Section_OrderedMapValue = pair.Pair[*ActivityConf_int32_OrderedMap, *protoconf.Section]
-type ActivityConf_protoconf_Section_OrderedMap = treemap.TreeMap[uint32, *ActivityConf_protoconf_Section_OrderedMapValue]
+type ProtoconfActivityConfActivityChapterSectionMap_OrderedMapValue = pair.Pair[*ProtoconfSectionSectionRankMap_OrderedMap, *protoconf.Section]
+type ProtoconfActivityConfActivityChapterSectionMap_OrderedMap = treemap.TreeMap[uint32, *ProtoconfActivityConfActivityChapterSectionMap_OrderedMapValue]
 
-type ActivityConf_Activity_Chapter_OrderedMapValue = pair.Pair[*ActivityConf_protoconf_Section_OrderedMap, *protoconf.ActivityConf_Activity_Chapter]
-type ActivityConf_Activity_Chapter_OrderedMap = treemap.TreeMap[uint32, *ActivityConf_Activity_Chapter_OrderedMapValue]
+type ProtoconfActivityConfActivityChapterMap_OrderedMapValue = pair.Pair[*ProtoconfActivityConfActivityChapterSectionMap_OrderedMap, *protoconf.ActivityConf_Activity_Chapter]
+type ProtoconfActivityConfActivityChapterMap_OrderedMap = treemap.TreeMap[uint32, *ProtoconfActivityConfActivityChapterMap_OrderedMapValue]
 
-type ActivityConf_Activity_OrderedMapValue = pair.Pair[*ActivityConf_Activity_Chapter_OrderedMap, *protoconf.ActivityConf_Activity]
-type ActivityConf_Activity_OrderedMap = treemap.TreeMap[uint64, *ActivityConf_Activity_OrderedMapValue]
+type ProtoconfActivityConfActivityMap_OrderedMapValue = pair.Pair[*ProtoconfActivityConfActivityChapterMap_OrderedMap, *protoconf.ActivityConf_Activity]
+type ProtoconfActivityConfActivityMap_OrderedMap = treemap.TreeMap[uint64, *ProtoconfActivityConfActivityMap_OrderedMapValue]
 
 // ActivityConf is a wrapper around protobuf message: protoconf.ActivityConf.
 //
@@ -39,7 +39,7 @@ type ActivityConf_Activity_OrderedMap = treemap.TreeMap[uint64, *ActivityConf_Ac
 type ActivityConf struct {
 	UnimplementedMessager
 	data       protoconf.ActivityConf
-	orderedMap *ActivityConf_Activity_OrderedMap
+	orderedMap *ProtoconfActivityConfActivityMap_OrderedMap
 }
 
 // Name returns the ActivityConf's message name.
@@ -81,24 +81,24 @@ func (x *ActivityConf) Messager() Messager {
 // AfterLoad runs after this messager is loaded.
 func (x *ActivityConf) AfterLoad() error {
 	// OrderedMap init.
-	x.orderedMap = treemap.New[uint64, *ActivityConf_Activity_OrderedMapValue]()
+	x.orderedMap = treemap.New[uint64, *ProtoconfActivityConfActivityMap_OrderedMapValue]()
 	for k1, v1 := range x.Data().GetActivityMap() {
 		map1 := x.orderedMap
-		k1v := &ActivityConf_Activity_OrderedMapValue{
-			First:  treemap.New[uint32, *ActivityConf_Activity_Chapter_OrderedMapValue](),
+		k1v := &ProtoconfActivityConfActivityMap_OrderedMapValue{
+			First:  treemap.New[uint32, *ProtoconfActivityConfActivityChapterMap_OrderedMapValue](),
 			Second: v1,
 		}
 		map1.Put(k1, k1v)
 		for k2, v2 := range v1.GetChapterMap() {
 			map2 := k1v.First
-			k2v := &ActivityConf_Activity_Chapter_OrderedMapValue{
-				First:  treemap.New[uint32, *ActivityConf_protoconf_Section_OrderedMapValue](),
+			k2v := &ProtoconfActivityConfActivityChapterMap_OrderedMapValue{
+				First:  treemap.New[uint32, *ProtoconfActivityConfActivityChapterSectionMap_OrderedMapValue](),
 				Second: v2,
 			}
 			map2.Put(k2, k2v)
 			for k3, v3 := range v2.GetSectionMap() {
 				map3 := k2v.First
-				k3v := &ActivityConf_protoconf_Section_OrderedMapValue{
+				k3v := &ProtoconfActivityConfActivityChapterSectionMap_OrderedMapValue{
 					First:  treemap.New[uint32, int32](),
 					Second: v3,
 				}
@@ -185,13 +185,13 @@ func (x *ActivityConf) Get4(activityId uint64, chapterId uint32, sectionId uint3
 }
 
 // GetOrderedMap returns the 1-level ordered map.
-func (x *ActivityConf) GetOrderedMap() *ActivityConf_Activity_OrderedMap {
+func (x *ActivityConf) GetOrderedMap() *ProtoconfActivityConfActivityMap_OrderedMap {
 	return x.orderedMap
 }
 
 // GetOrderedMap1 finds value in the 1-level ordered map. It will return nil if
 // the deepest key is not found, otherwise return an error.
-func (x *ActivityConf) GetOrderedMap1(activityId uint64) (*ActivityConf_Activity_Chapter_OrderedMap, error) {
+func (x *ActivityConf) GetOrderedMap1(activityId uint64) (*ProtoconfActivityConfActivityChapterMap_OrderedMap, error) {
 	conf := x.orderedMap
 	if val, ok := conf.Get(activityId); !ok {
 		return nil, xerrors.Errorf(code.NotFound, "activityId(%v) not found", activityId)
@@ -202,7 +202,7 @@ func (x *ActivityConf) GetOrderedMap1(activityId uint64) (*ActivityConf_Activity
 
 // GetOrderedMap2 finds value in the 2-level ordered map. It will return nil if
 // the deepest key is not found, otherwise return an error.
-func (x *ActivityConf) GetOrderedMap2(activityId uint64, chapterId uint32) (*ActivityConf_protoconf_Section_OrderedMap, error) {
+func (x *ActivityConf) GetOrderedMap2(activityId uint64, chapterId uint32) (*ProtoconfActivityConfActivityChapterSectionMap_OrderedMap, error) {
 	conf, err := x.GetOrderedMap1(activityId)
 	if err != nil {
 		return nil, err
@@ -216,7 +216,7 @@ func (x *ActivityConf) GetOrderedMap2(activityId uint64, chapterId uint32) (*Act
 
 // GetOrderedMap3 finds value in the 3-level ordered map. It will return nil if
 // the deepest key is not found, otherwise return an error.
-func (x *ActivityConf) GetOrderedMap3(activityId uint64, chapterId uint32, sectionId uint32) (*ActivityConf_int32_OrderedMap, error) {
+func (x *ActivityConf) GetOrderedMap3(activityId uint64, chapterId uint32, sectionId uint32) (*ProtoconfSectionSectionRankMap_OrderedMap, error) {
 	conf, err := x.GetOrderedMap2(activityId, chapterId)
 	if err != nil {
 		return nil, err

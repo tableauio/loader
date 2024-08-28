@@ -3,13 +3,11 @@ package main
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/check"
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
 	"github.com/tableauio/tableau/proto/tableaupb"
-	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -206,7 +204,7 @@ func genMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey, messag
 			g.P("// ", getter, " finds value in the ", depth, "-level map. It will return nil if")
 			g.P("// the deepest key is not found, otherwise return an error.")
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") (*", getGoIdent(gen, fd.MapValue()), ", error) {")
+				g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") (*", helper.FindMessageGoIdent(gen, fd.MapValue().Message()), ", error) {")
 			} else {
 				returnValType := helper.ParseGoType(gen, fd.MapValue())
 				g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") (", returnValType, ", error) {")
@@ -242,11 +240,9 @@ func genMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey, messag
 			g.P()
 
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				if file, ok := gen.FilesByPath[fd.MapValue().Message().ParentFile().Path()]; ok {
-					msg := helper.FindMessageByDescriptor(file.Messages, fd.MapValue().Message())
-					if msg != nil {
-						genMapGetters(gen, depth+1, keys, messagerName, g, msg)
-					}
+				msg := helper.FindMessage(gen, fd.MapValue().Message())
+				if msg != nil {
+					genMapGetters(gen, depth+1, keys, messagerName, g, msg)
 				}
 			}
 			break
@@ -268,7 +264,7 @@ func genOrderedMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey,
 		fd := field.Desc
 		if fd.IsMap() {
 			getter := genGetterName(depth)
-			prefix := parseOrderedMapPrefix(fd, messagerName)
+			prefix := parseOrderedMapPrefix(fd)
 			orderedMap := prefix + orderedMapSuffix
 			if depth == 1 {
 				g.P("// ", getter, " returns the 1-level ordered map.")
@@ -306,11 +302,9 @@ func genOrderedMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey,
 
 			nextKeys := helper.AddMapKey(gen, fd, keys)
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				if file, ok := gen.FilesByPath[fd.MapValue().Message().ParentFile().Path()]; ok {
-					msg := helper.FindMessageByDescriptor(file.Messages, fd.MapValue().Message())
-					if msg != nil {
-						genOrderedMapGetters(gen, depth+1, nextKeys, messagerName, file, g, msg)
-					}
+				msg := helper.FindMessage(gen, fd.MapValue().Message())
+				if msg != nil {
+					genOrderedMapGetters(gen, depth+1, nextKeys, messagerName, file, g, msg)
 				}
 			}
 			break
@@ -345,14 +339,12 @@ func genOrderedMapTypeDef(gen *protogen.Plugin, depth int, keys []helper.MapKey,
 				keyType = "int"
 			}
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				if file, ok := gen.FilesByPath[fd.MapValue().Message().ParentFile().Path()]; ok {
-					msg := helper.FindMessageByDescriptor(file.Messages, fd.MapValue().Message())
-					if msg != nil {
-						genOrderedMapTypeDef(gen, depth+1, nextKeys, messagerName, g, msg)
-					}
+				msg := helper.FindMessage(gen, fd.MapValue().Message())
+				if msg != nil {
+					genOrderedMapTypeDef(gen, depth+1, nextKeys, messagerName, g, msg)
 				}
 			}
-			prefix := parseOrderedMapPrefix(fd, messagerName)
+			prefix := parseOrderedMapPrefix(fd)
 			orderedMap := prefix + orderedMapSuffix
 			orderedMapValue := prefix + orderedMapValueSuffix
 			_, ok := orderedMapTypeDefMap[orderedMap]
@@ -360,8 +352,8 @@ func genOrderedMapTypeDef(gen *protogen.Plugin, depth int, keys []helper.MapKey,
 				orderedMapTypeDefMap[orderedMap] = true
 				nextMapFD := getNextLevelMapFD(fd.MapValue())
 				if nextMapFD != nil {
-					currValueType := getGoIdent(gen, fd.MapValue())
-					nextPrefix := parseOrderedMapPrefix(nextMapFD, messagerName)
+					currValueType := helper.FindMessageGoIdent(gen, fd.MapValue().Message())
+					nextPrefix := parseOrderedMapPrefix(nextMapFD)
 					nextOrderedMap := nextPrefix + orderedMapSuffix
 					g.P("  type ", orderedMapValue, "= ", pairPackage.Ident("Pair"), "[*", nextOrderedMap, ", *", currValueType, "];")
 					g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", *", orderedMapValue, "]")
@@ -369,7 +361,7 @@ func genOrderedMapTypeDef(gen *protogen.Plugin, depth int, keys []helper.MapKey,
 				} else {
 					orderedMapValue := helper.ParseGoType(gen, fd.MapValue())
 					if fd.MapValue().Kind() == protoreflect.MessageKind {
-						g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", *", getGoIdent(gen, fd.MapValue()), "]")
+						g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", *", helper.FindMessageGoIdent(gen, fd.MapValue().Message()), "]")
 					} else {
 						g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", ", orderedMapValue, "]")
 					}
@@ -407,14 +399,14 @@ func genOrderedMapLoader(gen *protogen.Plugin, depth int, keys []helper.MapKey, 
 				keyType = "int"
 				needConvertBoolNext = true
 			}
-			prefix := parseOrderedMapPrefix(fd, messagerName)
+			prefix := parseOrderedMapPrefix(fd)
 			orderedMapValue := prefix + orderedMapValueSuffix
 			mapName := fmt.Sprintf("x.Data().Get%s()", field.GoName)
 			nextMapFD := getNextLevelMapFD(fd.MapValue())
 			if depth == 1 {
 				if nextMapFD == nil {
 					if fd.MapValue().Kind() == protoreflect.MessageKind {
-						g.P("x.orderedMap = ", treeMapPackage.Ident("New"), "[", keyType, ", *", getGoIdent(gen, fd.MapValue()), "]()")
+						g.P("x.orderedMap = ", treeMapPackage.Ident("New"), "[", keyType, ", *", helper.FindMessageGoIdent(gen, fd.MapValue().Message()), "]()")
 					} else {
 						g.P("x.orderedMap = ", treeMapPackage.Ident("New"), "[", keyType, ", ", helper.ParseGoType(gen, fd.MapValue()), "]()")
 					}
@@ -431,7 +423,7 @@ func genOrderedMapLoader(gen *protogen.Plugin, depth int, keys []helper.MapKey, 
 				g.P("k", depth-1, "v := &", lastOrderedMapValue, "{")
 				if nextMapFD == nil {
 					if fd.MapValue().Kind() == protoreflect.MessageKind {
-						g.P("First: ", treeMapPackage.Ident("New"), "[", keyType, ", *", getGoIdent(gen, fd.MapValue()), "](),")
+						g.P("First: ", treeMapPackage.Ident("New"), "[", keyType, ", *", helper.FindMessageGoIdent(gen, fd.MapValue().Message()), "](),")
 					} else {
 						g.P("First: ", treeMapPackage.Ident("New"), "[", keyType, ", ", helper.ParseGoType(gen, fd.MapValue()), "](),")
 					}
@@ -449,11 +441,9 @@ func genOrderedMapLoader(gen *protogen.Plugin, depth int, keys []helper.MapKey, 
 				g.P("map", depth, " := k", depth-1, "v.First")
 			}
 			if nextMapFD != nil {
-				if file, ok := gen.FilesByPath[fd.MapValue().Message().ParentFile().Path()]; ok {
-					msg := helper.FindMessageByDescriptor(file.Messages, fd.MapValue().Message())
-					if msg != nil {
-						genOrderedMapLoader(gen, depth+1, nextKeys, messagerName, g, msg, orderedMapValue)
-					}
+				msg := helper.FindMessage(gen, fd.MapValue().Message())
+				if msg != nil {
+					genOrderedMapLoader(gen, depth+1, nextKeys, messagerName, g, msg, orderedMapValue)
 				}
 			} else {
 				keyName := fmt.Sprintf("k%d", depth)
@@ -468,13 +458,8 @@ func genOrderedMapLoader(gen *protogen.Plugin, depth int, keys []helper.MapKey, 
 	}
 }
 
-func parseOrderedMapPrefix(mapFd protoreflect.FieldDescriptor, messagerFullName string) string {
-	if mapFd.MapValue().Kind() == protoreflect.MessageKind {
-		fields := strings.Split(string(mapFd.MapValue().Message().FullName()), ".")
-		idx := slices.Index(fields, messagerFullName)
-		return fmt.Sprintf("%s_%s", messagerFullName, strings.Join(fields[idx+1:], "_"))
-	}
-	return fmt.Sprintf("%s_%s", messagerFullName, mapFd.MapValue().Kind())
+func parseOrderedMapPrefix(mapFd protoreflect.FieldDescriptor) string {
+	return strcase.ToCamel(string(mapFd.FullName()))
 }
 
 func getNextLevelMapFD(fd protoreflect.FieldDescriptor) protoreflect.FieldDescriptor {
@@ -488,14 +473,4 @@ func getNextLevelMapFD(fd protoreflect.FieldDescriptor) protoreflect.FieldDescri
 		}
 	}
 	return nil
-}
-
-func getGoIdent(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) protogen.GoIdent {
-	if file, ok := gen.FilesByPath[fd.Message().ParentFile().Path()]; ok {
-		message := helper.FindMessageByDescriptor(file.Messages, fd.Message())
-		if message != nil {
-			return message.GoIdent
-		}
-	}
-	panic(fmt.Sprintf("unknown message: %s", fd.Message().FullName()))
 }

@@ -45,31 +45,40 @@ func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
 	case protoreflect.BytesKind:
 		return "[]byte"
 	case protoreflect.MessageKind:
-		if file, ok := gen.FilesByPath[fd.Message().ParentFile().Path()]; ok {
-			message := FindMessageByDescriptor(file.Messages, fd.Message())
-			if message != nil {
-				return message.GoIdent.GoName
-			}
-		}
-		return fmt.Sprintf("<not found:%s>", fd.Message().FullName())
+		return FindMessageGoIdent(gen, fd.Message()).GoName
 	// case protoreflect.GroupKind:
 	// 	return "group"
 	default:
-		return fmt.Sprintf("<unknown:%d>", fd.Kind())
+		panic(fmt.Sprintf("unknown kind: %d", fd.Kind()))
 	}
 }
 
-func FindMessageByDescriptor(messages []*protogen.Message, desc protoreflect.MessageDescriptor) *protogen.Message {
+func FindMessage(gen *protogen.Plugin, md protoreflect.MessageDescriptor) *protogen.Message {
+	if file, ok := gen.FilesByPath[md.ParentFile().Path()]; ok {
+		return FindMessageByDescriptor(file.Messages, md)
+	}
+	return nil
+}
+
+func FindMessageByDescriptor(messages []*protogen.Message, md protoreflect.MessageDescriptor) *protogen.Message {
 	for _, message := range messages {
-		if message.Desc.FullName() == desc.FullName() {
+		if message.Desc.FullName() == md.FullName() {
 			return message
 		}
 		// Recursively search nested messages
-		if nestedMessage := FindMessageByDescriptor(message.Messages, desc); nestedMessage != nil {
+		if nestedMessage := FindMessageByDescriptor(message.Messages, md); nestedMessage != nil {
 			return nestedMessage
 		}
 	}
 	return nil
+}
+
+func FindMessageGoIdent(gen *protogen.Plugin, md protoreflect.MessageDescriptor) protogen.GoIdent {
+	msg := FindMessage(gen, md)
+	if msg == nil {
+		panic(fmt.Sprintf("unknown message: %s", md.FullName()))
+	}
+	return msg.GoIdent
 }
 
 func GetTypeEmptyValue(fd protoreflect.FieldDescriptor) string {

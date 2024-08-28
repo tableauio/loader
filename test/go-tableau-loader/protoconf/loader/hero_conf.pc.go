@@ -19,10 +19,10 @@ import (
 )
 
 // OrderedMap types.
-type HeroConf_Hero_Attr_OrderedMap = treemap.TreeMap[string, *protoconf.HeroConf_Hero_Attr]
+type ProtoconfHeroConfHeroAttrMap_OrderedMap = treemap.TreeMap[string, *protoconf.HeroConf_Hero_Attr]
 
-type HeroConf_Hero_OrderedMapValue = pair.Pair[*HeroConf_Hero_Attr_OrderedMap, *protoconf.HeroConf_Hero]
-type HeroConf_Hero_OrderedMap = treemap.TreeMap[string, *HeroConf_Hero_OrderedMapValue]
+type ProtoconfHeroConfHeroMap_OrderedMapValue = pair.Pair[*ProtoconfHeroConfHeroAttrMap_OrderedMap, *protoconf.HeroConf_Hero]
+type ProtoconfHeroConfHeroMap_OrderedMap = treemap.TreeMap[string, *ProtoconfHeroConfHeroMap_OrderedMapValue]
 
 // HeroConf is a wrapper around protobuf message: protoconf.HeroConf.
 //
@@ -34,7 +34,7 @@ type HeroConf_Hero_OrderedMap = treemap.TreeMap[string, *HeroConf_Hero_OrderedMa
 type HeroConf struct {
 	UnimplementedMessager
 	data       protoconf.HeroConf
-	orderedMap *HeroConf_Hero_OrderedMap
+	orderedMap *ProtoconfHeroConfHeroMap_OrderedMap
 }
 
 // Name returns the HeroConf's message name.
@@ -76,10 +76,10 @@ func (x *HeroConf) Messager() Messager {
 // AfterLoad runs after this messager is loaded.
 func (x *HeroConf) AfterLoad() error {
 	// OrderedMap init.
-	x.orderedMap = treemap.New[string, *HeroConf_Hero_OrderedMapValue]()
+	x.orderedMap = treemap.New[string, *ProtoconfHeroConfHeroMap_OrderedMapValue]()
 	for k1, v1 := range x.Data().GetHeroMap() {
 		map1 := x.orderedMap
-		k1v := &HeroConf_Hero_OrderedMapValue{
+		k1v := &ProtoconfHeroConfHeroMap_OrderedMapValue{
 			First:  treemap.New[string, *protoconf.HeroConf_Hero_Attr](),
 			Second: v1,
 		}
@@ -126,13 +126,13 @@ func (x *HeroConf) Get2(name string, title string) (*protoconf.HeroConf_Hero_Att
 }
 
 // GetOrderedMap returns the 1-level ordered map.
-func (x *HeroConf) GetOrderedMap() *HeroConf_Hero_OrderedMap {
+func (x *HeroConf) GetOrderedMap() *ProtoconfHeroConfHeroMap_OrderedMap {
 	return x.orderedMap
 }
 
 // GetOrderedMap1 finds value in the 1-level ordered map. It will return nil if
 // the deepest key is not found, otherwise return an error.
-func (x *HeroConf) GetOrderedMap1(name string) (*HeroConf_Hero_Attr_OrderedMap, error) {
+func (x *HeroConf) GetOrderedMap1(name string) (*ProtoconfHeroConfHeroAttrMap_OrderedMap, error) {
 	conf := x.orderedMap
 	if val, ok := conf.Get(name); !ok {
 		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
@@ -142,10 +142,10 @@ func (x *HeroConf) GetOrderedMap1(name string) (*HeroConf_Hero_Attr_OrderedMap, 
 }
 
 // OrderedMap types.
-type HeroBaseConf_base_Item_OrderedMap = treemap.TreeMap[string, *base.Item]
+type BaseHeroItemMap_OrderedMap = treemap.TreeMap[string, *base.Item]
 
-type HeroBaseConf_base_Hero_OrderedMapValue = pair.Pair[*HeroBaseConf_base_Item_OrderedMap, *base.Hero]
-type HeroBaseConf_base_Hero_OrderedMap = treemap.TreeMap[string, *HeroBaseConf_base_Hero_OrderedMapValue]
+type ProtoconfHeroBaseConfHeroMap_OrderedMapValue = pair.Pair[*BaseHeroItemMap_OrderedMap, *base.Hero]
+type ProtoconfHeroBaseConfHeroMap_OrderedMap = treemap.TreeMap[string, *ProtoconfHeroBaseConfHeroMap_OrderedMapValue]
 
 // HeroBaseConf is a wrapper around protobuf message: protoconf.HeroBaseConf.
 //
@@ -157,7 +157,7 @@ type HeroBaseConf_base_Hero_OrderedMap = treemap.TreeMap[string, *HeroBaseConf_b
 type HeroBaseConf struct {
 	UnimplementedMessager
 	data       protoconf.HeroBaseConf
-	orderedMap *HeroBaseConf_base_Hero_OrderedMap
+	orderedMap *ProtoconfHeroBaseConfHeroMap_OrderedMap
 }
 
 // Name returns the HeroBaseConf's message name.
@@ -199,10 +199,10 @@ func (x *HeroBaseConf) Messager() Messager {
 // AfterLoad runs after this messager is loaded.
 func (x *HeroBaseConf) AfterLoad() error {
 	// OrderedMap init.
-	x.orderedMap = treemap.New[string, *HeroBaseConf_base_Hero_OrderedMapValue]()
+	x.orderedMap = treemap.New[string, *ProtoconfHeroBaseConfHeroMap_OrderedMapValue]()
 	for k1, v1 := range x.Data().GetHeroMap() {
 		map1 := x.orderedMap
-		k1v := &HeroBaseConf_base_Hero_OrderedMapValue{
+		k1v := &ProtoconfHeroBaseConfHeroMap_OrderedMapValue{
 			First:  treemap.New[string, *base.Item](),
 			Second: v1,
 		}
@@ -249,13 +249,13 @@ func (x *HeroBaseConf) Get2(name string, id string) (*base.Item, error) {
 }
 
 // GetOrderedMap returns the 1-level ordered map.
-func (x *HeroBaseConf) GetOrderedMap() *HeroBaseConf_base_Hero_OrderedMap {
+func (x *HeroBaseConf) GetOrderedMap() *ProtoconfHeroBaseConfHeroMap_OrderedMap {
 	return x.orderedMap
 }
 
 // GetOrderedMap1 finds value in the 1-level ordered map. It will return nil if
 // the deepest key is not found, otherwise return an error.
-func (x *HeroBaseConf) GetOrderedMap1(name string) (*HeroBaseConf_base_Item_OrderedMap, error) {
+func (x *HeroBaseConf) GetOrderedMap1(name string) (*BaseHeroItemMap_OrderedMap, error) {
 	conf := x.orderedMap
 	if val, ok := conf.Get(name); !ok {
 		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
