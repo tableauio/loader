@@ -17,13 +17,13 @@ bool ActivityConf::Load(const std::string& dir, Format fmt, const LoadOptions* o
 bool ActivityConf::ProcessAfterLoad() {
   // OrderedMap init.
   for (auto&& item1 : data_.activity_map()) {
-    ordered_map_[item1.first] = Activity_OrderedMapValue(Activity_Chapter_OrderedMap(), &item1.second);
+    ordered_map_[item1.first] = ProtoconfActivityConfActivityMap_OrderedMapValue(ProtoconfActivityConfActivityChapterMap_OrderedMap(), &item1.second);
     auto&& ordered_map1 = ordered_map_[item1.first].first;
     for (auto&& item2 : item1.second.chapter_map()) {
-      ordered_map1[item2.first] = Activity_Chapter_OrderedMapValue(protoconf_Section_OrderedMap(), &item2.second);
+      ordered_map1[item2.first] = ProtoconfActivityConfActivityChapterMap_OrderedMapValue(ProtoconfActivityConfActivityChapterSectionMap_OrderedMap(), &item2.second);
       auto&& ordered_map2 = ordered_map1[item2.first].first;
       for (auto&& item3 : item2.second.section_map()) {
-        ordered_map2[item3.first] = protoconf_Section_OrderedMapValue(int32_OrderedMap(), &item3.second);
+        ordered_map2[item3.first] = ProtoconfActivityConfActivityChapterSectionMap_OrderedMapValue(ProtoconfSectionSectionRankMap_OrderedMap(), &item3.second);
         auto&& ordered_map3 = ordered_map2[item3.first].first;
         for (auto&& item4 : item3.second.section_rank_map()) {
           ordered_map3[item4.first] = item4.second;
@@ -94,11 +94,11 @@ const int32_t* ActivityConf::Get(uint64_t activity_id, uint32_t chapter_id, uint
   return &iter->second;
 }
 
-const ActivityConf::Activity_OrderedMap* ActivityConf::GetOrderedMap() const {
+const ActivityConf::ProtoconfActivityConfActivityMap_OrderedMap* ActivityConf::GetOrderedMap() const {
   return &ordered_map_; 
 }
 
-const ActivityConf::Activity_Chapter_OrderedMap* ActivityConf::GetOrderedMap(uint64_t activity_id) const {
+const ActivityConf::ProtoconfActivityConfActivityChapterMap_OrderedMap* ActivityConf::GetOrderedMap(uint64_t activity_id) const {
   const auto* conf = GetOrderedMap();
   if (conf == nullptr) {
     return nullptr;
@@ -111,7 +111,7 @@ const ActivityConf::Activity_Chapter_OrderedMap* ActivityConf::GetOrderedMap(uin
   return &iter->second.first;
 }
 
-const ActivityConf::protoconf_Section_OrderedMap* ActivityConf::GetOrderedMap(uint64_t activity_id, uint32_t chapter_id) const {
+const ActivityConf::ProtoconfActivityConfActivityChapterSectionMap_OrderedMap* ActivityConf::GetOrderedMap(uint64_t activity_id, uint32_t chapter_id) const {
   const auto* conf = GetOrderedMap(activity_id);
   if (conf == nullptr) {
     return nullptr;
@@ -124,7 +124,7 @@ const ActivityConf::protoconf_Section_OrderedMap* ActivityConf::GetOrderedMap(ui
   return &iter->second.first;
 }
 
-const ActivityConf::int32_OrderedMap* ActivityConf::GetOrderedMap(uint64_t activity_id, uint32_t chapter_id, uint32_t section_id) const {
+const ActivityConf::ProtoconfSectionSectionRankMap_OrderedMap* ActivityConf::GetOrderedMap(uint64_t activity_id, uint32_t chapter_id, uint32_t section_id) const {
   const auto* conf = GetOrderedMap(activity_id, chapter_id);
   if (conf == nullptr) {
     return nullptr;

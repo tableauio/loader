@@ -67,7 +67,7 @@ const protoconf::ItemConf::Item* ItemConf::Get(uint32_t id) const {
   return &iter->second;
 }
 
-const ItemConf::Item_OrderedMap* ItemConf::GetOrderedMap() const {
+const ItemConf::ProtoconfItemConfItemMap_OrderedMap* ItemConf::GetOrderedMap() const {
   return &ordered_map_; 
 }
 

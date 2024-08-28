@@ -32,23 +32,23 @@ class ActivityConf : public Messager {
 
   // OrderedMap accessers.
  public:
-  using int32_OrderedMap = std::map<uint32_t, int32_t>;
-  const int32_OrderedMap* GetOrderedMap(uint64_t activity_id, uint32_t chapter_id, uint32_t section_id) const;
+  using ProtoconfSectionSectionRankMap_OrderedMap = std::map<uint32_t, int32_t>;
+  const ProtoconfSectionSectionRankMap_OrderedMap* GetOrderedMap(uint64_t activity_id, uint32_t chapter_id, uint32_t section_id) const;
 
-  using protoconf_Section_OrderedMapValue = std::pair<int32_OrderedMap, const protoconf::Section*>;
-  using protoconf_Section_OrderedMap = std::map<uint32_t, protoconf_Section_OrderedMapValue>;
-  const protoconf_Section_OrderedMap* GetOrderedMap(uint64_t activity_id, uint32_t chapter_id) const;
+  using ProtoconfActivityConfActivityChapterSectionMap_OrderedMapValue = std::pair<ProtoconfSectionSectionRankMap_OrderedMap, const protoconf::Section*>;
+  using ProtoconfActivityConfActivityChapterSectionMap_OrderedMap = std::map<uint32_t, ProtoconfActivityConfActivityChapterSectionMap_OrderedMapValue>;
+  const ProtoconfActivityConfActivityChapterSectionMap_OrderedMap* GetOrderedMap(uint64_t activity_id, uint32_t chapter_id) const;
 
-  using Activity_Chapter_OrderedMapValue = std::pair<protoconf_Section_OrderedMap, const protoconf::ActivityConf::Activity::Chapter*>;
-  using Activity_Chapter_OrderedMap = std::map<uint32_t, Activity_Chapter_OrderedMapValue>;
-  const Activity_Chapter_OrderedMap* GetOrderedMap(uint64_t activity_id) const;
+  using ProtoconfActivityConfActivityChapterMap_OrderedMapValue = std::pair<ProtoconfActivityConfActivityChapterSectionMap_OrderedMap, const protoconf::ActivityConf::Activity::Chapter*>;
+  using ProtoconfActivityConfActivityChapterMap_OrderedMap = std::map<uint32_t, ProtoconfActivityConfActivityChapterMap_OrderedMapValue>;
+  const ProtoconfActivityConfActivityChapterMap_OrderedMap* GetOrderedMap(uint64_t activity_id) const;
 
-  using Activity_OrderedMapValue = std::pair<Activity_Chapter_OrderedMap, const protoconf::ActivityConf::Activity*>;
-  using Activity_OrderedMap = std::map<uint64_t, Activity_OrderedMapValue>;
-  const Activity_OrderedMap* GetOrderedMap() const;
+  using ProtoconfActivityConfActivityMap_OrderedMapValue = std::pair<ProtoconfActivityConfActivityChapterMap_OrderedMap, const protoconf::ActivityConf::Activity*>;
+  using ProtoconfActivityConfActivityMap_OrderedMap = std::map<uint64_t, ProtoconfActivityConfActivityMap_OrderedMapValue>;
+  const ProtoconfActivityConfActivityMap_OrderedMap* GetOrderedMap() const;
 
  private:
-  Activity_OrderedMap ordered_map_;
+  ProtoconfActivityConfActivityMap_OrderedMap ordered_map_;
 
   // Index accessers.
   // Index: ChapterID

@@ -17,7 +17,7 @@ bool HeroConf::Load(const std::string& dir, Format fmt, const LoadOptions* optio
 bool HeroConf::ProcessAfterLoad() {
   // OrderedMap init.
   for (auto&& item1 : data_.hero_map()) {
-    ordered_map_[item1.first] = Hero_OrderedMapValue(Hero_Attr_OrderedMap(), &item1.second);
+    ordered_map_[item1.first] = ProtoconfHeroConfHeroMap_OrderedMapValue(ProtoconfHeroConfHeroAttrMap_OrderedMap(), &item1.second);
     auto&& ordered_map1 = ordered_map_[item1.first].first;
     for (auto&& item2 : item1.second.attr_map()) {
       ordered_map1[item2.first] = &item2.second;
@@ -55,11 +55,11 @@ const protoconf::HeroConf::Hero::Attr* HeroConf::Get(const std::string& name, co
   return &iter->second;
 }
 
-const HeroConf::Hero_OrderedMap* HeroConf::GetOrderedMap() const {
+const HeroConf::ProtoconfHeroConfHeroMap_OrderedMap* HeroConf::GetOrderedMap() const {
   return &ordered_map_; 
 }
 
-const HeroConf::Hero_Attr_OrderedMap* HeroConf::GetOrderedMap(const std::string& name) const {
+const HeroConf::ProtoconfHeroConfHeroAttrMap_OrderedMap* HeroConf::GetOrderedMap(const std::string& name) const {
   const auto* conf = GetOrderedMap();
   if (conf == nullptr) {
     return nullptr;
@@ -91,5 +91,62 @@ const protoconf::HeroConf::Hero::Attr* HeroConf::FindFirstAttr(const std::string
   return (*conf)[0];
 }
 
+
+const std::string HeroBaseConf::kProtoName = "HeroBaseConf";
+
+bool HeroBaseConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
+  bool ok = LoadMessage(data_, dir, fmt, options);
+  return ok ? ProcessAfterLoad() : false;
+}
+
+bool HeroBaseConf::ProcessAfterLoad() {
+  // OrderedMap init.
+  for (auto&& item1 : data_.hero_map()) {
+    ordered_map_[item1.first] = ProtoconfHeroBaseConfHeroMap_OrderedMapValue(BaseHeroItemMap_OrderedMap(), &item1.second);
+    auto&& ordered_map1 = ordered_map_[item1.first].first;
+    for (auto&& item2 : item1.second.item_map()) {
+      ordered_map1[item2.first] = &item2.second;
+    }
+  }
+
+  return true;
+}
+
+const base::Hero* HeroBaseConf::Get(const std::string& name) const {
+  auto iter = data_.hero_map().find(name);
+  if (iter == data_.hero_map().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const base::Item* HeroBaseConf::Get(const std::string& name, const std::string& id) const {
+  const auto* conf = Get(name);
+  if (conf == nullptr) {
+    return nullptr;
+  }
+  auto iter = conf->item_map().find(id);
+  if (iter == conf->item_map().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const HeroBaseConf::ProtoconfHeroBaseConfHeroMap_OrderedMap* HeroBaseConf::GetOrderedMap() const {
+  return &ordered_map_; 
+}
+
+const HeroBaseConf::BaseHeroItemMap_OrderedMap* HeroBaseConf::GetOrderedMap(const std::string& name) const {
+  const auto* conf = GetOrderedMap();
+  if (conf == nullptr) {
+    return nullptr;
+  }
+
+  auto iter = conf->find(name);
+  if (iter == conf->end()) {
+    return nullptr;
+  }
+  return &iter->second.first;
+}
 
 }  // namespace tableau
