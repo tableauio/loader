@@ -10,6 +10,7 @@
 
 namespace tableau {
 void Registry::InitShard0() {
+  Register<HeroBaseConf>();
   Register<HeroConf>();
   Register<ItemConf>();
 }

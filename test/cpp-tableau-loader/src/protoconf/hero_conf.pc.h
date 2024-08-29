@@ -54,9 +54,40 @@ class HeroConf : public Messager {
 
 };
 
+class HeroBaseConf : public Messager {
+ public:
+  static const std::string& Name() { return kProtoName; };
+  virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
+  const protoconf::HeroBaseConf& Data() const { return data_; };
+
+ private:
+  virtual bool ProcessAfterLoad() override final;
+
+ public:
+  const base::Hero* Get(const std::string& name) const;
+  const base::Item* Get(const std::string& name, const std::string& id) const;
+
+ private:
+  static const std::string kProtoName;
+  protoconf::HeroBaseConf data_;
+
+  // OrderedMap accessers.
+ public:
+  using base_Item_OrderedMap = std::map<std::string, const base::Item*>;
+  const base_Item_OrderedMap* GetOrderedMap(const std::string& name) const;
+
+  using base_Hero_OrderedMapValue = std::pair<base_Item_OrderedMap, const base::Hero*>;
+  using base_Hero_OrderedMap = std::map<std::string, base_Hero_OrderedMapValue>;
+  const base_Hero_OrderedMap* GetOrderedMap() const;
+
+ private:
+  base_Hero_OrderedMap ordered_map_;
+};
+
 }  // namespace tableau
 
 namespace protoconf {
 // Here are some type aliases for easy use.
 using HeroConfMgr = tableau::HeroConf;
+using HeroBaseConfMgr = tableau::HeroBaseConf;
 }  // namespace protoconf

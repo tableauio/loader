@@ -12,6 +12,8 @@ ROOTDIR="./test/cpp-tableau-loader"
 PLGUIN_DIR="./cmd/protoc-gen-cpp-tableau-loader"
 PROTOCONF_IN="./test/proto"
 PROTOCONF_OUT="${ROOTDIR}/src/protoconf"
+BASE_IN="./test/proto/base"
+BASE_OUT="${PROTOCONF_OUT}"
 
 # remove old generated files
 rm -rfv "$PROTOCONF_OUT"
@@ -38,6 +40,13 @@ cd "${PLGUIN_DIR}" && go build && cd -
 export PATH="${PATH}:${PLGUIN_DIR}"
 
 ${PROTOC} \
+--cpp_out="$BASE_OUT" \
+--proto_path="$PROTOBUF_PROTO" \
+--proto_path="$TABLEAU_PROTO" \
+--proto_path="$BASE_IN" \
+"$BASE_IN"/*.proto
+
+${PROTOC} \
 --plugin "$PLUGIN" \
 --cpp-tableau-loader_out="$PROTOCONF_OUT" \
 --cpp-tableau-loader_opt=paths=source_relative,registry-shards=2 \
@@ -45,7 +54,8 @@ ${PROTOC} \
 --proto_path="$PROTOBUF_PROTO" \
 --proto_path="$TABLEAU_PROTO" \
 --proto_path="$PROTOCONF_IN" \
-"$PROTOCONF_IN"/*
+--proto_path="$BASE_IN" \
+"$PROTOCONF_IN"/*.proto
 
 TABLEAU_IN="./third_party/_submodules/tableau/proto/tableau/protobuf"
 TABLEAU_OUT="${ROOTDIR}/src"
