@@ -117,6 +117,50 @@ class ItemConf : public Messager {
  private:
   Index_SpecialItemMap index_special_item_map_;
 
+  // Index: PathDir@ItemPathDir
+ public:
+  using Index_ItemPathDirVector = std::vector<const protoconf::ItemConf::Item*>;
+  using Index_ItemPathDirMap = std::unordered_map<std::string, Index_ItemPathDirVector>;
+  const Index_ItemPathDirMap& FindItemPathDir() const;
+  const Index_ItemPathDirVector* FindItemPathDir(const std::string& dir) const;
+  const protoconf::ItemConf::Item* FindFirstItemPathDir(const std::string& dir) const;
+
+ private:
+  Index_ItemPathDirMap index_item_path_dir_map_;
+
+  // Index: PathName@ItemPathName
+ public:
+  using Index_ItemPathNameVector = std::vector<const protoconf::ItemConf::Item*>;
+  using Index_ItemPathNameMap = std::unordered_map<std::string, Index_ItemPathNameVector>;
+  const Index_ItemPathNameMap& FindItemPathName() const;
+  const Index_ItemPathNameVector* FindItemPathName(const std::string& name) const;
+  const protoconf::ItemConf::Item* FindFirstItemPathName(const std::string& name) const;
+
+ private:
+  Index_ItemPathNameMap index_item_path_name_map_;
+
+  // Index: PathUserID@ItemPathUserID
+ public:
+  using Index_ItemPathUserIDVector = std::vector<const protoconf::ItemConf::Item*>;
+  using Index_ItemPathUserIDMap = std::unordered_map<uint32_t, Index_ItemPathUserIDVector>;
+  const Index_ItemPathUserIDMap& FindItemPathUserID() const;
+  const Index_ItemPathUserIDVector* FindItemPathUserID(uint32_t id) const;
+  const protoconf::ItemConf::Item* FindFirstItemPathUserID(uint32_t id) const;
+
+ private:
+  Index_ItemPathUserIDMap index_item_path_user_id_map_;
+
+  // Index: UseEffectType@UseEffectType
+ public:
+  using Index_UseEffectTypeVector = std::vector<const protoconf::ItemConf::Item*>;
+  using Index_UseEffectTypeMap = std::unordered_map<int, Index_UseEffectTypeVector>;
+  const Index_UseEffectTypeMap& FindUseEffectType() const;
+  const Index_UseEffectTypeVector* FindUseEffectType(protoconf::UseEffect::Type type) const;
+  const protoconf::ItemConf::Item* FindFirstUseEffectType(protoconf::UseEffect::Type type) const;
+
+ private:
+  Index_UseEffectTypeMap index_use_effect_type_map_;
+
 };
 
 }  // namespace tableau

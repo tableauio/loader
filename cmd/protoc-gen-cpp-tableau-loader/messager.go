@@ -105,7 +105,7 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	}
 	if index.NeedGenIndex(message.Desc) {
 		g.P()
-		genHppIndexFinders(1, nil, g, message.Desc, string(message.Desc.FullName()))
+		genHppIndexFinders(g, message.Desc)
 	}
 	g.P("};")
 	g.P()
@@ -212,7 +212,7 @@ func parseMapType(fd protoreflect.FieldDescriptor) (keyType, valueType string) {
 	return "", ""
 }
 
-func genHppIndexFinders(depth int, params []string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, messagerFullName string) {
+func genHppIndexFinders(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
 	g.P("  // Index accessers.")
 	descriptors := index.ParseIndexDescriptor(md)
 	for _, descriptor := range descriptors {
@@ -377,7 +377,11 @@ func genOneCppIndexLoader(depth int, descriptor *index.IndexDescriptor, parentDa
 			field := levelMessage.Fields[0] // just take the first field
 			if field.Card == index.CardList {
 				itemName := fmt.Sprintf("item%d", depth)
-				g.P(strings.Repeat("  ", depth), "for (auto&& "+itemName+" : "+parentDataName+"."+field.Name+"()) {")
+				fieldName := ""
+				for _, name := range field.Names {
+					fieldName += "." + name + "()"
+				}
+				g.P(strings.Repeat("  ", depth), "for (auto&& "+itemName+" : "+parentDataName+fieldName+") {")
 				key := itemName
 				if field.Type == index.TypeEnum {
 					// convert enum to integer, which is used as unorderd map key that need hash and comparator
@@ -386,7 +390,11 @@ func genOneCppIndexLoader(depth int, descriptor *index.IndexDescriptor, parentDa
 				g.P(strings.Repeat("  ", depth+1), indexContainerName, "["+key+"].push_back(&"+parentDataName+");")
 				g.P(strings.Repeat("  ", depth), "}")
 			} else {
-				key := parentDataName + "." + field.Name + "()"
+				fieldName := ""
+				for _, name := range field.Names {
+					fieldName += "." + name + "()"
+				}
+				key := parentDataName + fieldName
 				if field.Type == index.TypeEnum {
 					// convert enum to integer, which is used as unorderd map key that need hash and comparator
 					key = "static_cast<int>(" + key + ")"
@@ -425,12 +433,20 @@ func generateOneCppMulticolumnIndex(depth int, parentDataName string, descriptor
 	field := descriptor.Fields[cursor]
 	if field.Card == index.CardList {
 		itemName := fmt.Sprintf("index_item%d", cursor)
-		g.P(strings.Repeat("  ", depth), "for (auto&& "+itemName+" : "+parentDataName+"."+field.Name+"()) {")
+		fieldName := ""
+		for _, name := range field.Names {
+			fieldName += "." + name + "()"
+		}
+		g.P(strings.Repeat("  ", depth), "for (auto&& "+itemName+" : "+parentDataName+fieldName+") {")
 		*keys = append(*keys, itemName)
 		generateOneCppMulticolumnIndex(depth+1, parentDataName, descriptor, keys, g)
 		g.P(strings.Repeat("  ", depth), "}")
 	} else {
-		key := parentDataName + "." + field.Name + "()"
+		fieldName := ""
+		for _, name := range field.Names {
+			fieldName += "." + name + "()"
+		}
+		key := parentDataName + fieldName
 		*keys = append(*keys, key)
 		generateOneCppMulticolumnIndex(depth, parentDataName, descriptor, keys, g)
 	}

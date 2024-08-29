@@ -56,6 +56,28 @@ bool ItemConf::ProcessAfterLoad() {
     }
   }
 
+  // Index: PathDir@ItemPathDir
+  for (auto&& item1 : data_.item_map()) {
+    index_item_path_dir_map_[item1.second.path().dir()].push_back(&item1.second);
+  }
+
+  // Index: PathName@ItemPathName
+  for (auto&& item1 : data_.item_map()) {
+    for (auto&& item2 : item1.second.path().name()) {
+      index_item_path_name_map_[item2].push_back(&item1.second);
+    }
+  }
+
+  // Index: PathUserID@ItemPathUserID
+  for (auto&& item1 : data_.item_map()) {
+    index_item_path_user_id_map_[item1.second.path().user().id()].push_back(&item1.second);
+  }
+
+  // Index: UseEffectType@UseEffectType
+  for (auto&& item1 : data_.item_map()) {
+    index_use_effect_type_map_[static_cast<int>(item1.second.use_effect().type())].push_back(&item1.second);
+  }
+
   return true;
 }
 
@@ -160,6 +182,82 @@ const ItemConf::Index_SpecialItemVector* ItemConf::FindSpecialItem(const Index_S
 
 const protoconf::ItemConf::Item* ItemConf::FindFirstSpecialItem(const Index_SpecialItemKey& key) const {
   auto conf = FindSpecialItem(key);
+  if (conf == nullptr || conf->size() == 0) {
+    return nullptr;
+  }
+  return (*conf)[0];
+}
+
+// Index: PathDir@ItemPathDir
+const ItemConf::Index_ItemPathDirMap& ItemConf::FindItemPathDir() const { return index_item_path_dir_map_ ;}
+
+const ItemConf::Index_ItemPathDirVector* ItemConf::FindItemPathDir(const std::string& dir) const {
+  auto iter = index_item_path_dir_map_.find(dir);
+  if (iter == index_item_path_dir_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::ItemConf::Item* ItemConf::FindFirstItemPathDir(const std::string& dir) const {
+  auto conf = FindItemPathDir(dir);
+  if (conf == nullptr || conf->size() == 0) {
+    return nullptr;
+  }
+  return (*conf)[0];
+}
+
+// Index: PathName@ItemPathName
+const ItemConf::Index_ItemPathNameMap& ItemConf::FindItemPathName() const { return index_item_path_name_map_ ;}
+
+const ItemConf::Index_ItemPathNameVector* ItemConf::FindItemPathName(const std::string& name) const {
+  auto iter = index_item_path_name_map_.find(name);
+  if (iter == index_item_path_name_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::ItemConf::Item* ItemConf::FindFirstItemPathName(const std::string& name) const {
+  auto conf = FindItemPathName(name);
+  if (conf == nullptr || conf->size() == 0) {
+    return nullptr;
+  }
+  return (*conf)[0];
+}
+
+// Index: PathUserID@ItemPathUserID
+const ItemConf::Index_ItemPathUserIDMap& ItemConf::FindItemPathUserID() const { return index_item_path_user_id_map_ ;}
+
+const ItemConf::Index_ItemPathUserIDVector* ItemConf::FindItemPathUserID(uint32_t id) const {
+  auto iter = index_item_path_user_id_map_.find(id);
+  if (iter == index_item_path_user_id_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::ItemConf::Item* ItemConf::FindFirstItemPathUserID(uint32_t id) const {
+  auto conf = FindItemPathUserID(id);
+  if (conf == nullptr || conf->size() == 0) {
+    return nullptr;
+  }
+  return (*conf)[0];
+}
+
+// Index: UseEffectType@UseEffectType
+const ItemConf::Index_UseEffectTypeMap& ItemConf::FindUseEffectType() const { return index_use_effect_type_map_ ;}
+
+const ItemConf::Index_UseEffectTypeVector* ItemConf::FindUseEffectType(protoconf::UseEffect::Type type) const {
+  auto iter = index_use_effect_type_map_.find(static_cast<int>(type));
+  if (iter == index_use_effect_type_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::ItemConf::Item* ItemConf::FindFirstUseEffectType(protoconf::UseEffect::Type type) const {
+  auto conf = FindUseEffectType(type);
   if (conf == nullptr || conf->size() == 0) {
     return nullptr;
   }
