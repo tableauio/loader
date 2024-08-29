@@ -30,15 +30,15 @@ class HeroConf : public Messager {
 
   // OrderedMap accessers.
  public:
-  using ProtoconfHeroConfHeroAttrMap_OrderedMap = std::map<std::string, const protoconf::HeroConf::Hero::Attr*>;
-  const ProtoconfHeroConfHeroAttrMap_OrderedMap* GetOrderedMap(const std::string& name) const;
+  using Hero_Attr_OrderedMap = std::map<std::string, const protoconf::HeroConf::Hero::Attr*>;
+  const Hero_Attr_OrderedMap* GetOrderedMap(const std::string& name) const;
 
-  using ProtoconfHeroConfHeroMap_OrderedMapValue = std::pair<ProtoconfHeroConfHeroAttrMap_OrderedMap, const protoconf::HeroConf::Hero*>;
-  using ProtoconfHeroConfHeroMap_OrderedMap = std::map<std::string, ProtoconfHeroConfHeroMap_OrderedMapValue>;
-  const ProtoconfHeroConfHeroMap_OrderedMap* GetOrderedMap() const;
+  using Hero_OrderedMapValue = std::pair<Hero_Attr_OrderedMap, const protoconf::HeroConf::Hero*>;
+  using Hero_OrderedMap = std::map<std::string, Hero_OrderedMapValue>;
+  const Hero_OrderedMap* GetOrderedMap() const;
 
  private:
-  ProtoconfHeroConfHeroMap_OrderedMap ordered_map_;
+  Hero_OrderedMap ordered_map_;
 
   // Index accessers.
   // Index: Title
@@ -54,40 +54,9 @@ class HeroConf : public Messager {
 
 };
 
-class HeroBaseConf : public Messager {
- public:
-  static const std::string& Name() { return kProtoName; };
-  virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
-  const protoconf::HeroBaseConf& Data() const { return data_; };
-
- private:
-  virtual bool ProcessAfterLoad() override final;
-
- public:
-  const base::Hero* Get(const std::string& name) const;
-  const base::Item* Get(const std::string& name, const std::string& id) const;
-
- private:
-  static const std::string kProtoName;
-  protoconf::HeroBaseConf data_;
-
-  // OrderedMap accessers.
- public:
-  using BaseHeroItemMap_OrderedMap = std::map<std::string, const base::Item*>;
-  const BaseHeroItemMap_OrderedMap* GetOrderedMap(const std::string& name) const;
-
-  using ProtoconfHeroBaseConfHeroMap_OrderedMapValue = std::pair<BaseHeroItemMap_OrderedMap, const base::Hero*>;
-  using ProtoconfHeroBaseConfHeroMap_OrderedMap = std::map<std::string, ProtoconfHeroBaseConfHeroMap_OrderedMapValue>;
-  const ProtoconfHeroBaseConfHeroMap_OrderedMap* GetOrderedMap() const;
-
- private:
-  ProtoconfHeroBaseConfHeroMap_OrderedMap ordered_map_;
-};
-
 }  // namespace tableau
 
 namespace protoconf {
 // Here are some type aliases for easy use.
 using HeroConfMgr = tableau::HeroConf;
-using HeroBaseConfMgr = tableau::HeroBaseConf;
 }  // namespace protoconf

@@ -29,11 +29,11 @@ class ItemConf : public Messager {
 
   // OrderedMap accessers.
  public:
-  using ProtoconfItemConfItemMap_OrderedMap = std::map<uint32_t, const protoconf::ItemConf::Item*>;
-  const ProtoconfItemConfItemMap_OrderedMap* GetOrderedMap() const;
+  using Item_OrderedMap = std::map<uint32_t, const protoconf::ItemConf::Item*>;
+  const Item_OrderedMap* GetOrderedMap() const;
 
  private:
-  ProtoconfItemConfItemMap_OrderedMap ordered_map_;
+  Item_OrderedMap ordered_map_;
 
   // Index accessers.
   // Index: Type

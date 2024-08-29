@@ -150,14 +150,14 @@ func genHppOrderedMapGetters(depth int, keys []helper.MapKey, g *protogen.Genera
 				genHppOrderedMapGetters(depth+1, nextKeys, g, fd.MapValue().Message(), messagerFullName)
 			}
 
-			prefix := parseOrderedMapPrefix(fd)
+			prefix := parseOrderedMapPrefix(fd, messagerFullName)
 			orderedMap := prefix + orderedMapSuffix
 			orderedMapValue := prefix + orderedMapValueSuffix
 
 			nextMapFD := getNextLevelMapFD(fd.MapValue())
 			if nextMapFD != nil {
 				_, currValueType := parseMapType(fd)
-				nextPrefix := parseOrderedMapPrefix(nextMapFD)
+				nextPrefix := parseOrderedMapPrefix(nextMapFD, messagerFullName)
 				nextOrderedMap := nextPrefix + orderedMapSuffix
 				// nextOrderedMapValue := nextPrefix + orderedMapValueSuffix
 				g.P("  using ", orderedMapValue, " = std::pair<", nextOrderedMap, ", const ", currValueType, "*>;")
@@ -184,8 +184,12 @@ func genHppOrderedMapGetters(depth int, keys []helper.MapKey, g *protogen.Genera
 	}
 }
 
-func parseOrderedMapPrefix(mapFd protoreflect.FieldDescriptor) string {
-	return strcase.ToCamel(string(mapFd.FullName()))
+func parseOrderedMapPrefix(mapFd protoreflect.FieldDescriptor, messagerFullName string) string {
+	if mapFd.MapValue().Kind() == protoreflect.MessageKind {
+		localMsgProtoName := strings.TrimPrefix(string(mapFd.MapValue().Message().FullName()), messagerFullName+".")
+		return strings.ReplaceAll(localMsgProtoName, ".", "_")
+	}
+	return fmt.Sprintf("%s", mapFd.MapValue().Kind())
 }
 
 func getNextLevelMapFD(fd protoreflect.FieldDescriptor) protoreflect.FieldDescriptor {
@@ -522,7 +526,7 @@ func genCppOrderedMapGetters(depth int, keys []helper.MapKey, messagerName, mess
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
-			prefix := parseOrderedMapPrefix(fd)
+			prefix := parseOrderedMapPrefix(fd, messagerFullName)
 			orderedMap := prefix + orderedMapSuffix
 
 			g.P("const ", messagerName, "::", orderedMap, "* ", messagerName, "::GetOrderedMap(", helper.GenGetParams(keys), ") const {")
@@ -562,7 +566,7 @@ func genCppOrderedMapLoader(depth int, messagerFullName string, g *protogen.Gene
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
-			prefix := parseOrderedMapPrefix(fd)
+			prefix := parseOrderedMapPrefix(fd, messagerFullName)
 			// orderedMap := prefix + orderedMapSuffix
 			orderedMapValue := prefix + orderedMapValueSuffix
 			itemName := fmt.Sprintf("item%d", depth)
@@ -579,7 +583,7 @@ func genCppOrderedMapLoader(depth int, messagerFullName string, g *protogen.Gene
 			g.P(strings.Repeat("  ", depth), "for (auto&& ", itemName, " : ", prevContainer, ".", string(fd.Name()), "()) {")
 			nextMapFD := getNextLevelMapFD(fd.MapValue())
 			if nextMapFD != nil {
-				nextPrefix := parseOrderedMapPrefix(nextMapFD)
+				nextPrefix := parseOrderedMapPrefix(nextMapFD, messagerFullName)
 				// nextMap := nextPrefix + mapSuffix
 				nextOrderedMap := nextPrefix + orderedMapSuffix
 				g.P(strings.Repeat("  ", depth+1), prevTmpOrderedMapName, "[", itemName, ".first] = ", orderedMapValue, "(", nextOrderedMap, "(), &", itemName, ".second);")
