@@ -3,7 +3,7 @@ syntax = "proto3";
 package protoconf;
 
 import "tableau/protobuf/tableau.proto";
-import "base.proto";
+import "base/base.proto";
 
 option go_package = "github.com/tableauio/loader/test/go-tableau-loader/protoconf";
 option (tableau.workbook) = {

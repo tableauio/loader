@@ -9,8 +9,8 @@ package loader
 import (
 	pair "github.com/tableauio/loader/pkg/pair"
 	treemap "github.com/tableauio/loader/pkg/treemap"
-	base "github.com/tableauio/loader/test/go-tableau-loader/base"
 	protoconf "github.com/tableauio/loader/test/go-tableau-loader/protoconf"
+	base "github.com/tableauio/loader/test/go-tableau-loader/protoconf/base"
 	code "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
 	xerrors "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
 	format "github.com/tableauio/tableau/format"
