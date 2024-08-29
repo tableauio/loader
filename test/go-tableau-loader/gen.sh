@@ -4,6 +4,8 @@
 set -e
 set -o pipefail
 
+shopt -s globstar
+
 cd "$(git rev-parse --show-toplevel)"
 PROTOC="./third_party/_submodules/protobuf/src/protoc"
 PROTOBUF_PROTO="./third_party/_submodules/protobuf/src"
@@ -30,4 +32,4 @@ ${PROTOC} \
 --proto_path="$PROTOBUF_PROTO" \
 --proto_path="$TABLEAU_PROTO" \
 --proto_path="$PROTOCONF_IN" \
-"$PROTOCONF_IN"/*.proto "$PROTOCONF_IN"/base/*.proto
+"$PROTOCONF_IN"/**/*.proto
