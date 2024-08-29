@@ -7,8 +7,8 @@
 package loader
 
 import (
+	treemap "github.com/emirpasic/gods/v2/maps/treemap"
 	pair "github.com/tableauio/loader/pkg/pair"
-	treemap "github.com/tableauio/loader/pkg/treemap"
 	protoconf "github.com/tableauio/loader/test/go-tableau-loader/protoconf"
 	code "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
 	xerrors "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
@@ -18,16 +18,16 @@ import (
 )
 
 // OrderedMap types.
-type ProtoconfSectionSectionRankMap_OrderedMap = treemap.TreeMap[uint32, int32]
+type ProtoconfSectionSectionRankMap_OrderedMap = treemap.Map[uint32, int32]
 
 type ProtoconfActivityConfActivityChapterSectionMap_OrderedMapValue = pair.Pair[*ProtoconfSectionSectionRankMap_OrderedMap, *protoconf.Section]
-type ProtoconfActivityConfActivityChapterSectionMap_OrderedMap = treemap.TreeMap[uint32, *ProtoconfActivityConfActivityChapterSectionMap_OrderedMapValue]
+type ProtoconfActivityConfActivityChapterSectionMap_OrderedMap = treemap.Map[uint32, *ProtoconfActivityConfActivityChapterSectionMap_OrderedMapValue]
 
 type ProtoconfActivityConfActivityChapterMap_OrderedMapValue = pair.Pair[*ProtoconfActivityConfActivityChapterSectionMap_OrderedMap, *protoconf.ActivityConf_Activity_Chapter]
-type ProtoconfActivityConfActivityChapterMap_OrderedMap = treemap.TreeMap[uint32, *ProtoconfActivityConfActivityChapterMap_OrderedMapValue]
+type ProtoconfActivityConfActivityChapterMap_OrderedMap = treemap.Map[uint32, *ProtoconfActivityConfActivityChapterMap_OrderedMapValue]
 
 type ProtoconfActivityConfActivityMap_OrderedMapValue = pair.Pair[*ProtoconfActivityConfActivityChapterMap_OrderedMap, *protoconf.ActivityConf_Activity]
-type ProtoconfActivityConfActivityMap_OrderedMap = treemap.TreeMap[uint64, *ProtoconfActivityConfActivityMap_OrderedMapValue]
+type ProtoconfActivityConfActivityMap_OrderedMap = treemap.Map[uint64, *ProtoconfActivityConfActivityMap_OrderedMapValue]
 
 // ActivityConf is a wrapper around protobuf message: protoconf.ActivityConf.
 //
