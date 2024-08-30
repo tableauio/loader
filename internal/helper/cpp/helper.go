@@ -105,7 +105,7 @@ func AddMapKey(fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
 		valueFd := fd.MapValue().Message().Fields().Get(0)
 		name = string(valueFd.Name())
 	}
-	name = escapeIdentifier(name)
+	name = EscapeIdentifier(name)
 	if name == "" {
 		name = fmt.Sprintf("key%d", len(keys)+1)
 	} else {

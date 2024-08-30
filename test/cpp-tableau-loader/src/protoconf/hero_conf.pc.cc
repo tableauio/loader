@@ -23,7 +23,6 @@ bool HeroConf::ProcessAfterLoad() {
       ordered_map1[item2.first] = &item2.second;
     }
   }
-
   // Index init.
   // Index: Title
   for (auto&& item1 : data_.hero_map()) {
@@ -31,7 +30,6 @@ bool HeroConf::ProcessAfterLoad() {
       index_attr_map_[item2.second.title()].push_back(&item2.second);
     }
   }
-
   return true;
 }
 
@@ -64,7 +62,6 @@ const HeroConf::Hero_Attr_OrderedMap* HeroConf::GetOrderedMap(const std::string&
   if (conf == nullptr) {
     return nullptr;
   }
-
   auto iter = conf->find(name);
   if (iter == conf->end()) {
     return nullptr;
@@ -108,7 +105,6 @@ bool HeroBaseConf::ProcessAfterLoad() {
       ordered_map1[item2.first] = &item2.second;
     }
   }
-
   return true;
 }
 
@@ -141,7 +137,6 @@ const HeroBaseConf::base_Item_OrderedMap* HeroBaseConf::GetOrderedMap(const std:
   if (conf == nullptr) {
     return nullptr;
   }
-
   auto iter = conf->find(name);
   if (iter == conf->end()) {
     return nullptr;

@@ -24,6 +24,8 @@ type Messager interface {
 	Load(dir string, fmt format.Format, options ...load.Option) error
 	// Store writes message to file in the specified directory and format.
 	Store(dir string, fmt format.Format, options ...store.Option) error
+	// processAfterLoad is invoked after this messager loaded.
+	processAfterLoad() error
 	// ProcessAfterLoadAll is invoked after all messagers loaded.
 	ProcessAfterLoadAll(hub *Hub) error
 }
@@ -46,6 +48,10 @@ func (x *UnimplementedMessager) Load(dir string, format format.Format, options .
 }
 
 func (x *UnimplementedMessager) Store(dir string, format format.Format, options ...store.Option) error {
+	return nil
+}
+
+func (x *UnimplementedMessager) processAfterLoad() error {
 	return nil
 }
 

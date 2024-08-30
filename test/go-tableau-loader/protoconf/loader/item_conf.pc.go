@@ -19,6 +19,44 @@ import (
 // OrderedMap types.
 type ProtoconfItemConfItemMap_OrderedMap = treemap.TreeMap[uint32, *protoconf.ItemConf_Item]
 
+// Index types.
+// Index: Type
+type ItemConf_Index_ItemMap = map[protoconf.FruitType][]*protoconf.ItemConf_Item
+
+// Index: Param@ItemInfo
+type ItemConf_Index_ItemInfoMap = map[int32][]*protoconf.ItemConf_Item
+
+// Index: ExtType@ItemExtInfo
+type ItemConf_Index_ItemExtInfoMap = map[protoconf.FruitType][]*protoconf.ItemConf_Item
+
+// Index: (ID,Name)@AwardItem
+type ItemConf_Index_AwardItemKey struct {
+	Id   uint32
+	Name string
+}
+type ItemConf_Index_AwardItemMap = map[ItemConf_Index_AwardItemKey][]*protoconf.ItemConf_Item
+
+// Index: (ID,Type,Param,ExtType)@SpecialItem
+type ItemConf_Index_SpecialItemKey struct {
+	Id      uint32
+	Type    protoconf.FruitType
+	Param   int32
+	ExtType protoconf.FruitType
+}
+type ItemConf_Index_SpecialItemMap = map[ItemConf_Index_SpecialItemKey][]*protoconf.ItemConf_Item
+
+// Index: PathDir@ItemPathDir
+type ItemConf_Index_ItemPathDirMap = map[string][]*protoconf.ItemConf_Item
+
+// Index: PathName@ItemPathName
+type ItemConf_Index_ItemPathNameMap = map[string][]*protoconf.ItemConf_Item
+
+// Index: PathUserID@ItemPathUserID
+type ItemConf_Index_ItemPathUserIDMap = map[uint32][]*protoconf.ItemConf_Item
+
+// Index: UseEffectType@UseEffectType
+type ItemConf_Index_UseEffectTypeMap = map[protoconf.UseEffect_Type][]*protoconf.ItemConf_Item
+
 // ItemConf is a wrapper around protobuf message: protoconf.ItemConf.
 //
 // It is designed for three goals:
@@ -28,8 +66,17 @@ type ProtoconfItemConfItemMap_OrderedMap = treemap.TreeMap[uint32, *protoconf.It
 //  3. Extensibility: Map, OrdererdMap, Index...
 type ItemConf struct {
 	UnimplementedMessager
-	data       protoconf.ItemConf
-	orderedMap *ProtoconfItemConfItemMap_OrderedMap
+	data                   protoconf.ItemConf
+	orderedMap             *ProtoconfItemConfItemMap_OrderedMap
+	indexItemMap           ItemConf_Index_ItemMap
+	indexItemInfoMap       ItemConf_Index_ItemInfoMap
+	indexItemExtInfoMap    ItemConf_Index_ItemExtInfoMap
+	indexAwardItemMap      ItemConf_Index_AwardItemMap
+	indexSpecialItemMap    ItemConf_Index_SpecialItemMap
+	indexItemPathDirMap    ItemConf_Index_ItemPathDirMap
+	indexItemPathNameMap   ItemConf_Index_ItemPathNameMap
+	indexItemPathUserIdMap ItemConf_Index_ItemPathUserIDMap
+	indexUseEffectTypeMap  ItemConf_Index_UseEffectTypeMap
 }
 
 // Name returns the ItemConf's message name.
@@ -54,7 +101,7 @@ func (x *ItemConf) Load(dir string, format format.Format, options ...load.Option
 	if err != nil {
 		return err
 	}
-	return x.AfterLoad()
+	return x.processAfterLoad()
 }
 
 // Store writes ItemConf's inner message to file in the specified directory and format.
@@ -68,13 +115,62 @@ func (x *ItemConf) Messager() Messager {
 	return x
 }
 
-// AfterLoad runs after this messager is loaded.
-func (x *ItemConf) AfterLoad() error {
+// processAfterLoad runs after this messager is loaded.
+func (x *ItemConf) processAfterLoad() error {
 	// OrderedMap init.
 	x.orderedMap = treemap.New[uint32, *protoconf.ItemConf_Item]()
 	for k1, v1 := range x.Data().GetItemMap() {
 		map1 := x.orderedMap
 		map1.Put(k1, v1)
+	}
+	// Index init.
+	// Index: Type
+	for _, item1 := range x.data.GetItemMap() {
+		x.indexItemMap[item1.GetType()] = append(x.indexItemMap[item1.GetType()], item1)
+	}
+	// Index: Param@ItemInfo
+	for _, item1 := range x.data.GetItemMap() {
+		for _, item2 := range item1.GetParamList() {
+			x.indexItemInfoMap[item2] = append(x.indexItemInfoMap[item2], item1)
+		}
+	}
+	// Index: ExtType@ItemExtInfo
+	for _, item1 := range x.data.GetItemMap() {
+		for _, item2 := range item1.GetExtTypeList() {
+			x.indexItemExtInfoMap[item2] = append(x.indexItemExtInfoMap[item2], item1)
+		}
+	}
+	// Index: (ID,Name)@AwardItem
+	for _, item1 := range x.data.GetItemMap() {
+		key := ItemConf_Index_AwardItemKey{item1.GetId(), item1.GetName()}
+		x.indexAwardItemMap[key] = append(x.indexAwardItemMap[key], item1)
+	}
+	// Index: (ID,Type,Param,ExtType)@SpecialItem
+	for _, item1 := range x.data.GetItemMap() {
+		for _, indexItem2 := range item1.GetParamList() {
+			for _, indexItem3 := range item1.GetExtTypeList() {
+				key := ItemConf_Index_SpecialItemKey{item1.GetId(), item1.GetType(), indexItem2, indexItem3}
+				x.indexSpecialItemMap[key] = append(x.indexSpecialItemMap[key], item1)
+			}
+		}
+	}
+	// Index: PathDir@ItemPathDir
+	for _, item1 := range x.data.GetItemMap() {
+		x.indexItemPathDirMap[item1.GetPath().GetDir()] = append(x.indexItemPathDirMap[item1.GetPath().GetDir()], item1)
+	}
+	// Index: PathName@ItemPathName
+	for _, item1 := range x.data.GetItemMap() {
+		for _, item2 := range item1.GetPath().GetName() {
+			x.indexItemPathNameMap[item2] = append(x.indexItemPathNameMap[item2], item1)
+		}
+	}
+	// Index: PathUserID@ItemPathUserID
+	for _, item1 := range x.data.GetItemMap() {
+		x.indexItemPathUserIdMap[item1.GetPath().GetUser().GetId()] = append(x.indexItemPathUserIdMap[item1.GetPath().GetUser().GetId()], item1)
+	}
+	// Index: UseEffectType@UseEffectType
+	for _, item1 := range x.data.GetItemMap() {
+		x.indexUseEffectTypeMap[item1.GetUseEffect().GetType()] = append(x.indexUseEffectTypeMap[item1.GetUseEffect().GetType()], item1)
 	}
 	return nil
 }
@@ -96,6 +192,159 @@ func (x *ItemConf) Get1(id uint32) (*protoconf.ItemConf_Item, error) {
 // GetOrderedMap returns the 1-level ordered map.
 func (x *ItemConf) GetOrderedMap() *ProtoconfItemConfItemMap_OrderedMap {
 	return x.orderedMap
+}
+
+// Index: Type
+func (x *ItemConf) FindItemMap() ItemConf_Index_ItemMap {
+	return x.indexItemMap
+}
+
+func (x *ItemConf) FindItem(type_ protoconf.FruitType) []*protoconf.ItemConf_Item {
+	return x.indexItemMap[type_]
+}
+
+func (x *ItemConf) FindFirstItem(type_ protoconf.FruitType) *protoconf.ItemConf_Item {
+	val := x.indexItemMap[type_]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: Param@ItemInfo
+func (x *ItemConf) FindItemInfoMap() ItemConf_Index_ItemInfoMap {
+	return x.indexItemInfoMap
+}
+
+func (x *ItemConf) FindItemInfo(param int32) []*protoconf.ItemConf_Item {
+	return x.indexItemInfoMap[param]
+}
+
+func (x *ItemConf) FindFirstItemInfo(param int32) *protoconf.ItemConf_Item {
+	val := x.indexItemInfoMap[param]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: ExtType@ItemExtInfo
+func (x *ItemConf) FindItemExtInfoMap() ItemConf_Index_ItemExtInfoMap {
+	return x.indexItemExtInfoMap
+}
+
+func (x *ItemConf) FindItemExtInfo(extType protoconf.FruitType) []*protoconf.ItemConf_Item {
+	return x.indexItemExtInfoMap[extType]
+}
+
+func (x *ItemConf) FindFirstItemExtInfo(extType protoconf.FruitType) *protoconf.ItemConf_Item {
+	val := x.indexItemExtInfoMap[extType]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: (ID,Name)@AwardItem
+func (x *ItemConf) FindAwardItemMap() ItemConf_Index_AwardItemMap {
+	return x.indexAwardItemMap
+}
+
+func (x *ItemConf) FindAwardItem(key ItemConf_Index_AwardItemKey) []*protoconf.ItemConf_Item {
+	return x.indexAwardItemMap[key]
+}
+
+func (x *ItemConf) FindFirstAwardItem(key ItemConf_Index_AwardItemKey) *protoconf.ItemConf_Item {
+	val := x.indexAwardItemMap[key]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: (ID,Type,Param,ExtType)@SpecialItem
+func (x *ItemConf) FindSpecialItemMap() ItemConf_Index_SpecialItemMap {
+	return x.indexSpecialItemMap
+}
+
+func (x *ItemConf) FindSpecialItem(key ItemConf_Index_SpecialItemKey) []*protoconf.ItemConf_Item {
+	return x.indexSpecialItemMap[key]
+}
+
+func (x *ItemConf) FindFirstSpecialItem(key ItemConf_Index_SpecialItemKey) *protoconf.ItemConf_Item {
+	val := x.indexSpecialItemMap[key]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: PathDir@ItemPathDir
+func (x *ItemConf) FindItemPathDirMap() ItemConf_Index_ItemPathDirMap {
+	return x.indexItemPathDirMap
+}
+
+func (x *ItemConf) FindItemPathDir(dir string) []*protoconf.ItemConf_Item {
+	return x.indexItemPathDirMap[dir]
+}
+
+func (x *ItemConf) FindFirstItemPathDir(dir string) *protoconf.ItemConf_Item {
+	val := x.indexItemPathDirMap[dir]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: PathName@ItemPathName
+func (x *ItemConf) FindItemPathNameMap() ItemConf_Index_ItemPathNameMap {
+	return x.indexItemPathNameMap
+}
+
+func (x *ItemConf) FindItemPathName(name string) []*protoconf.ItemConf_Item {
+	return x.indexItemPathNameMap[name]
+}
+
+func (x *ItemConf) FindFirstItemPathName(name string) *protoconf.ItemConf_Item {
+	val := x.indexItemPathNameMap[name]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: PathUserID@ItemPathUserID
+func (x *ItemConf) FindItemPathUserIDMap() ItemConf_Index_ItemPathUserIDMap {
+	return x.indexItemPathUserIdMap
+}
+
+func (x *ItemConf) FindItemPathUserID(id uint32) []*protoconf.ItemConf_Item {
+	return x.indexItemPathUserIdMap[id]
+}
+
+func (x *ItemConf) FindFirstItemPathUserID(id uint32) *protoconf.ItemConf_Item {
+	val := x.indexItemPathUserIdMap[id]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: UseEffectType@UseEffectType
+func (x *ItemConf) FindUseEffectTypeMap() ItemConf_Index_UseEffectTypeMap {
+	return x.indexUseEffectTypeMap
+}
+
+func (x *ItemConf) FindUseEffectType(type_ protoconf.UseEffect_Type) []*protoconf.ItemConf_Item {
+	return x.indexUseEffectTypeMap[type_]
+}
+
+func (x *ItemConf) FindFirstUseEffectType(type_ protoconf.UseEffect_Type) *protoconf.ItemConf_Item {
+	val := x.indexUseEffectTypeMap[type_]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
 }
 
 func init() {

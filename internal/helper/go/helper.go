@@ -44,6 +44,8 @@ func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
 		return "string"
 	case protoreflect.BytesKind:
 		return "[]byte"
+	case protoreflect.EnumKind:
+		return FindEnumGoIdent(gen, fd.Enum()).GoName
 	case protoreflect.MessageKind:
 		return FindMessageGoIdent(gen, fd.Message()).GoName
 	// case protoreflect.GroupKind:
@@ -79,6 +81,46 @@ func FindMessageGoIdent(gen *protogen.Plugin, md protoreflect.MessageDescriptor)
 		panic(fmt.Sprintf("unknown message: %s", md.FullName()))
 	}
 	return msg.GoIdent
+}
+
+func FindEnum(gen *protogen.Plugin, ed protoreflect.EnumDescriptor) *protogen.Enum {
+	if file, ok := gen.FilesByPath[ed.ParentFile().Path()]; ok {
+		if enum := FindEnumByDescriptor(file.Enums, ed); enum != nil {
+			return enum
+		}
+		return FindEnumFromMessageByDescriptor(file.Messages, ed)
+	}
+	return nil
+}
+
+func FindEnumByDescriptor(enums []*protogen.Enum, ed protoreflect.EnumDescriptor) *protogen.Enum {
+	for _, enum := range enums {
+		if enum.Desc.FullName() == ed.FullName() {
+			return enum
+		}
+	}
+	return nil
+}
+
+func FindEnumFromMessageByDescriptor(messages []*protogen.Message, ed protoreflect.EnumDescriptor) *protogen.Enum {
+	for _, message := range messages {
+		if enum := FindEnumByDescriptor(message.Enums, ed); enum != nil {
+			return enum
+		}
+		// Recursively search nested messages
+		if nestedEnum := FindEnumFromMessageByDescriptor(message.Messages, ed); nestedEnum != nil {
+			return nestedEnum
+		}
+	}
+	return nil
+}
+
+func FindEnumGoIdent(gen *protogen.Plugin, ed protoreflect.EnumDescriptor) protogen.GoIdent {
+	enum := FindEnum(gen, ed)
+	if enum == nil {
+		panic(fmt.Sprintf("unknown enum: %s", ed.FullName()))
+	}
+	return enum.GoIdent
 }
 
 func GetTypeEmptyValue(fd protoreflect.FieldDescriptor) string {
@@ -119,7 +161,7 @@ func AddMapKey(gen *protogen.Plugin, fd protoreflect.FieldDescriptor, keys []Map
 		valueFd := fd.MapValue().Message().Fields().Get(0)
 		name = string(valueFd.Name())
 	}
-	name = escapeIdentifier(name)
+	name = EscapeIdentifier(name)
 	if name == "" {
 		name = fmt.Sprintf("key%d", len(keys)+1)
 	} else {

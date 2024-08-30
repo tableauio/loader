@@ -9,7 +9,6 @@ require (
 	github.com/tableauio/tableau v0.11.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/exp v0.0.0-20230418202329-0354be287a23
-	golang.org/x/text v0.9.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
@@ -35,6 +34,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8 // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
+	golang.org/x/text v0.9.0 // indirect
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

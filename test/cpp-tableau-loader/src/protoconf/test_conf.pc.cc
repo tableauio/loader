@@ -31,7 +31,6 @@ bool ActivityConf::ProcessAfterLoad() {
       }
     }
   }
-
   // Index init.
   // Index: ChapterID
   for (auto&& item1 : data_.activity_map()) {
@@ -39,14 +38,12 @@ bool ActivityConf::ProcessAfterLoad() {
       index_chapter_map_[item2.second.chapter_id()].push_back(&item2.second);
     }
   }
-
   // Index: ChapterName@NamedChapter
   for (auto&& item1 : data_.activity_map()) {
     for (auto&& item2 : item1.second.chapter_map()) {
       index_named_chapter_map_[item2.second.chapter_name()].push_back(&item2.second);
     }
   }
-
   return true;
 }
 
@@ -103,7 +100,6 @@ const ActivityConf::Activity_Chapter_OrderedMap* ActivityConf::GetOrderedMap(uin
   if (conf == nullptr) {
     return nullptr;
   }
-
   auto iter = conf->find(activity_id);
   if (iter == conf->end()) {
     return nullptr;
@@ -116,7 +112,6 @@ const ActivityConf::protoconf_Section_OrderedMap* ActivityConf::GetOrderedMap(ui
   if (conf == nullptr) {
     return nullptr;
   }
-
   auto iter = conf->find(chapter_id);
   if (iter == conf->end()) {
     return nullptr;
@@ -129,7 +124,6 @@ const ActivityConf::int32_OrderedMap* ActivityConf::GetOrderedMap(uint64_t activ
   if (conf == nullptr) {
     return nullptr;
   }
-
   auto iter = conf->find(section_id);
   if (iter == conf->end()) {
     return nullptr;

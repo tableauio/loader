@@ -24,6 +24,10 @@ type ProtoconfHeroConfHeroAttrMap_OrderedMap = treemap.TreeMap[string, *protocon
 type ProtoconfHeroConfHeroMap_OrderedMapValue = pair.Pair[*ProtoconfHeroConfHeroAttrMap_OrderedMap, *protoconf.HeroConf_Hero]
 type ProtoconfHeroConfHeroMap_OrderedMap = treemap.TreeMap[string, *ProtoconfHeroConfHeroMap_OrderedMapValue]
 
+// Index types.
+// Index: Title
+type HeroConf_Index_AttrMap = map[string][]*protoconf.HeroConf_Hero_Attr
+
 // HeroConf is a wrapper around protobuf message: protoconf.HeroConf.
 //
 // It is designed for three goals:
@@ -33,8 +37,9 @@ type ProtoconfHeroConfHeroMap_OrderedMap = treemap.TreeMap[string, *ProtoconfHer
 //  3. Extensibility: Map, OrdererdMap, Index...
 type HeroConf struct {
 	UnimplementedMessager
-	data       protoconf.HeroConf
-	orderedMap *ProtoconfHeroConfHeroMap_OrderedMap
+	data         protoconf.HeroConf
+	orderedMap   *ProtoconfHeroConfHeroMap_OrderedMap
+	indexAttrMap HeroConf_Index_AttrMap
 }
 
 // Name returns the HeroConf's message name.
@@ -59,7 +64,7 @@ func (x *HeroConf) Load(dir string, format format.Format, options ...load.Option
 	if err != nil {
 		return err
 	}
-	return x.AfterLoad()
+	return x.processAfterLoad()
 }
 
 // Store writes HeroConf's inner message to file in the specified directory and format.
@@ -73,8 +78,8 @@ func (x *HeroConf) Messager() Messager {
 	return x
 }
 
-// AfterLoad runs after this messager is loaded.
-func (x *HeroConf) AfterLoad() error {
+// processAfterLoad runs after this messager is loaded.
+func (x *HeroConf) processAfterLoad() error {
 	// OrderedMap init.
 	x.orderedMap = treemap.New[string, *ProtoconfHeroConfHeroMap_OrderedMapValue]()
 	for k1, v1 := range x.Data().GetHeroMap() {
@@ -87,6 +92,13 @@ func (x *HeroConf) AfterLoad() error {
 		for k2, v2 := range v1.GetAttrMap() {
 			map2 := k1v.First
 			map2.Put(k2, v2)
+		}
+	}
+	// Index init.
+	// Index: Title
+	for _, item1 := range x.data.GetHeroMap() {
+		for _, item2 := range item1.GetAttrMap() {
+			x.indexAttrMap[item2.GetTitle()] = append(x.indexAttrMap[item2.GetTitle()], item2)
 		}
 	}
 	return nil
@@ -141,6 +153,23 @@ func (x *HeroConf) GetOrderedMap1(name string) (*ProtoconfHeroConfHeroAttrMap_Or
 	}
 }
 
+// Index: Title
+func (x *HeroConf) FindAttrMap() HeroConf_Index_AttrMap {
+	return x.indexAttrMap
+}
+
+func (x *HeroConf) FindAttr(title string) []*protoconf.HeroConf_Hero_Attr {
+	return x.indexAttrMap[title]
+}
+
+func (x *HeroConf) FindFirstAttr(title string) *protoconf.HeroConf_Hero_Attr {
+	val := x.indexAttrMap[title]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
 // OrderedMap types.
 type BaseHeroItemMap_OrderedMap = treemap.TreeMap[string, *base.Item]
 
@@ -182,7 +211,7 @@ func (x *HeroBaseConf) Load(dir string, format format.Format, options ...load.Op
 	if err != nil {
 		return err
 	}
-	return x.AfterLoad()
+	return x.processAfterLoad()
 }
 
 // Store writes HeroBaseConf's inner message to file in the specified directory and format.
@@ -196,8 +225,8 @@ func (x *HeroBaseConf) Messager() Messager {
 	return x
 }
 
-// AfterLoad runs after this messager is loaded.
-func (x *HeroBaseConf) AfterLoad() error {
+// processAfterLoad runs after this messager is loaded.
+func (x *HeroBaseConf) processAfterLoad() error {
 	// OrderedMap init.
 	x.orderedMap = treemap.New[string, *ProtoconfHeroBaseConfHeroMap_OrderedMapValue]()
 	for k1, v1 := range x.Data().GetHeroMap() {

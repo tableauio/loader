@@ -39,7 +39,7 @@ class ItemConf : public Messager {
   // Index: Type
  public:
   using Index_ItemVector = std::vector<const protoconf::ItemConf::Item*>;
-  using Index_ItemMap = std::unordered_map<int, Index_ItemVector>;
+  using Index_ItemMap = std::unordered_map<protoconf::FruitType, Index_ItemVector>;
   const Index_ItemMap& FindItem() const;
   const Index_ItemVector* FindItem(protoconf::FruitType type) const;
   const protoconf::ItemConf::Item* FindFirstItem(protoconf::FruitType type) const;
@@ -61,7 +61,7 @@ class ItemConf : public Messager {
   // Index: ExtType@ItemExtInfo
  public:
   using Index_ItemExtInfoVector = std::vector<const protoconf::ItemConf::Item*>;
-  using Index_ItemExtInfoMap = std::unordered_map<int, Index_ItemExtInfoVector>;
+  using Index_ItemExtInfoMap = std::unordered_map<protoconf::FruitType, Index_ItemExtInfoVector>;
   const Index_ItemExtInfoMap& FindItemExtInfo() const;
   const Index_ItemExtInfoVector* FindItemExtInfo(protoconf::FruitType ext_type) const;
   const protoconf::ItemConf::Item* FindFirstItemExtInfo(protoconf::FruitType ext_type) const;
@@ -105,7 +105,7 @@ class ItemConf : public Messager {
   };
   struct Index_SpecialItemKeyHasher {
     std::size_t operator()(const Index_SpecialItemKey& key) const {
-      return util::SugaredHashCombine(key.id, static_cast<int>(key.type), key.param, static_cast<int>(key.ext_type));
+      return util::SugaredHashCombine(key.id, key.type, key.param, key.ext_type);
     }
   };
   using Index_SpecialItemVector = std::vector<const protoconf::ItemConf::Item*>;
@@ -153,7 +153,7 @@ class ItemConf : public Messager {
   // Index: UseEffectType@UseEffectType
  public:
   using Index_UseEffectTypeVector = std::vector<const protoconf::ItemConf::Item*>;
-  using Index_UseEffectTypeMap = std::unordered_map<int, Index_UseEffectTypeVector>;
+  using Index_UseEffectTypeMap = std::unordered_map<protoconf::UseEffect::Type, Index_UseEffectTypeVector>;
   const Index_UseEffectTypeMap& FindUseEffectType() const;
   const Index_UseEffectTypeVector* FindUseEffectType(protoconf::UseEffect::Type type) const;
   const protoconf::ItemConf::Item* FindFirstUseEffectType(protoconf::UseEffect::Type type) const;

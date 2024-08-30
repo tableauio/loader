@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 
-	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/firstpass"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -28,7 +27,6 @@ func main() {
 		ParamFunc: flags.Set,
 	}.Run(func(gen *protogen.Plugin) error {
 		gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
-		firstpass.Init(gen)
 		for _, f := range gen.Files {
 			if !f.Generate {
 				continue

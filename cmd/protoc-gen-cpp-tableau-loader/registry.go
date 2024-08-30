@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
+	helper "github.com/tableauio/loader/internal/helper/cpp"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -118,7 +118,7 @@ func generateShardedRegistry(gen *protogen.Plugin) {
 		g := gen.NewGeneratedFile(cppFilename, "")
 		helper.GenerateCommonHeader(gen, g, version)
 		g.P()
-		cursor := (i+1)*shardSize
+		cursor := (i + 1) * shardSize
 		if cursor > len(protofiles) {
 			cursor = len(protofiles)
 		}

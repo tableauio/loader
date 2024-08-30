@@ -4,22 +4,13 @@ import (
 	"strings"
 
 	"github.com/iancoleman/strcase"
-	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
+	cpphelper "github.com/tableauio/loader/internal/helper/cpp"
+	gohelper "github.com/tableauio/loader/internal/helper/go"
 	"github.com/tableauio/tableau/proto/tableaupb"
+	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
-)
-
-type Type int
-
-const (
-	TypeUnknown Type = iota
-	TypeMap
-	TypeList
-	TypeStruct
-	TypeEnum
-	TypeScalar
 )
 
 type Card int
@@ -30,12 +21,18 @@ const (
 	CardList
 )
 
+type IndexFieldName struct {
+	CppName string
+	GoName  string
+}
+
 type IndexDescriptor struct {
 	*Index
 
-	FullClassName string        // C++ full class name
-	Name          string        // index name
-	Fields        []*LevelField // index fields in the same struct (protobuf message), refer to the deepest level message's Fields.
+	CppFullClassName string // C++ full class name
+	GoIdent          protogen.GoIdent
+	Name             string        // index name
+	Fields           []*LevelField // index fields in the same struct (protobuf message), refer to the deepest level message's Fields.
 
 	LevelMessage *LevelMessage // message hierarchy to the deepest level message which contains all index fields.
 }
@@ -44,9 +41,10 @@ type LevelField struct {
 	FD protoreflect.FieldDescriptor // index field descriptor
 
 	Card       Card
-	Type       Type
 	TypeStr    string
-	ScalarName string // scalar name of incell-list element
+	CppTypeStr string
+	GoType     any             // string or protogen.GoIdent
+	ScalarName *IndexFieldName //  scalar name of incell-list element
 
 	// leveled field names
 	// For example, if you have a message described as below and created an index on "PathUserID"
@@ -70,7 +68,7 @@ type LevelField struct {
 	// 	  }
 	// 	}
 	// }
-	Names []string
+	Names []*IndexFieldName
 }
 
 // namespaced level info
@@ -81,11 +79,10 @@ type LevelMessage struct {
 	MD protoreflect.MessageDescriptor
 
 	// Current level mesage's field which contains index fields.
-	// NOTE: FD, FieldName, FieldCard, and FieldType are only valid when NextLevel is not nil.
+	// NOTE: FD, FieldName, and FieldCard are only valid when NextLevel is not nil.
 	FD        protoreflect.FieldDescriptor // index field descriptor
-	FieldName string
+	FieldName *IndexFieldName
 	FieldCard Card
-	FieldType Type
 
 	// Deepest level message fields corresponding to index fields
 	// NOTE: Fields is valid only when this level is the deepest level.
@@ -93,11 +90,11 @@ type LevelMessage struct {
 }
 
 // ParseRecursively parses multi-column index related info.
-func ParseRecursively(cols []string, prefix string, md protoreflect.MessageDescriptor) *LevelMessage {
-	// fmt.Println("indexColumnName: ", indexColumnName)
+func ParseRecursively(gen *protogen.Plugin, cols []string, prefix string, md protoreflect.MessageDescriptor) *LevelMessage {
 	levelInfo := &LevelMessage{
 		MD: md,
 	}
+	msg := gohelper.FindMessage(gen, md)
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 
@@ -107,33 +104,38 @@ func ParseRecursively(cols []string, prefix string, md protoreflect.MessageDescr
 		if fd.IsMap() && fd.MapValue().Kind() == protoreflect.MessageKind {
 			// assign current field name as the field name which contains index fields
 			levelInfo.FD = fd
-			levelInfo.FieldName = string(fd.Name())
-			levelInfo.FieldType = TypeMap
+			levelInfo.FieldName = &IndexFieldName{
+				CppName: string(fd.Name()),
+				GoName:  msg.Fields[i].GoName,
+			}
 			levelInfo.FieldCard = CardMap
-			levelInfo.NextLevel = ParseRecursively(cols, prefix+fieldOptName, fd.MapValue().Message())
+			levelInfo.NextLevel = ParseRecursively(gen, cols, prefix+fieldOptName, fd.MapValue().Message())
 			if levelInfo.NextLevel != nil {
 				return levelInfo
 			}
 		} else if fd.IsList() && fd.Kind() == protoreflect.MessageKind {
 			levelInfo.FD = fd
-			levelInfo.FieldName = string(fd.Name())
-			levelInfo.FieldType = TypeList
+			levelInfo.FieldName = &IndexFieldName{
+				CppName: string(fd.Name()),
+				GoName:  msg.Fields[i].GoName,
+			}
 			levelInfo.FieldCard = CardList
-			levelInfo.NextLevel = ParseRecursively(cols, prefix+fieldOptName, fd.Message())
+			levelInfo.NextLevel = ParseRecursively(gen, cols, prefix+fieldOptName, fd.Message())
 			if levelInfo.NextLevel != nil {
 				return levelInfo
 			}
 		}
 	}
-	levelInfo.Fields = ParseInSameLevel(cols, prefix, md, nil)
+	levelInfo.Fields = ParseInSameLevel(gen, cols, prefix, md, nil)
 	if len(levelInfo.Fields) != 0 {
 		return levelInfo
 	}
 	return nil
 }
 
-func ParseInSameLevel(cols []string, prefix string, md protoreflect.MessageDescriptor, names []string) []*LevelField {
+func ParseInSameLevel(gen *protogen.Plugin, cols []string, prefix string, md protoreflect.MessageDescriptor, names []*IndexFieldName) []*LevelField {
 	levelFields := []*LevelField{}
+	msg := gohelper.FindMessage(gen, md)
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 
@@ -145,9 +147,23 @@ func ParseInSameLevel(cols []string, prefix string, md protoreflect.MessageDescr
 			if prefix+fieldOptName == columnName {
 				field := &LevelField{
 					FD:         fd,
-					TypeStr:    helper.ParseCppType(fd),
-					Names:      append(names, string(fd.Name())),
-					ScalarName: string(fd.Name()),
+					CppTypeStr: cpphelper.ParseCppType(fd),
+					GoType: func() any {
+						switch fd.Kind() {
+						case protoreflect.EnumKind:
+							return gohelper.FindEnumGoIdent(gen, fd.Enum())
+						default:
+							return gohelper.ParseGoType(gen, fd)
+						}
+					}(),
+					Names: append(names, &IndexFieldName{
+						CppName: string(fd.Name()),
+						GoName:  msg.Fields[i].GoName,
+					}),
+					ScalarName: &IndexFieldName{
+						CppName: string(fd.Name()),
+						GoName:  msg.Fields[i].GoName,
+					},
 				}
 				if fd.IsMap() {
 					field.Card = CardMap
@@ -155,32 +171,33 @@ func ParseInSameLevel(cols []string, prefix string, md protoreflect.MessageDescr
 					field.Card = CardList
 					// trim suffix "_list"
 					// NOTE: use "name" instead list field "name_list"
-					field.ScalarName = strcase.ToSnake(fieldOptName)
-				}
-				// treated as scalar or enum type
-				if fd.Kind() == protoreflect.EnumKind {
-					field.Type = TypeEnum
-				} else {
-					field.Type = TypeScalar
+					field.ScalarName = &IndexFieldName{
+						CppName: strcase.ToSnake(fieldOptName),
+						GoName:  strcase.ToCamel(fieldOptName),
+					}
+
 				}
 				levelFields = append(levelFields, field)
 				break
 			} else if fd.Kind() == protoreflect.MessageKind && strings.HasPrefix(columnName, prefix+fieldOptName) {
-				levelFields = append(levelFields, ParseInSameLevel(cols, prefix+fieldOptName, fd.Message(), append(names, string(fd.Name())))...)
+				levelFields = append(levelFields, ParseInSameLevel(gen, cols, prefix+fieldOptName, fd.Message(), append(names, &IndexFieldName{
+					CppName: string(fd.Name()),
+					GoName:  msg.Fields[i].GoName,
+				}))...)
 			}
 		}
 	}
 	return levelFields
 }
 
-func ParseIndexDescriptor(md protoreflect.MessageDescriptor) []*IndexDescriptor {
+func ParseIndexDescriptor(gen *protogen.Plugin, md protoreflect.MessageDescriptor) []*IndexDescriptor {
 	descriptors := []*IndexDescriptor{}
 	indexes := parseWSOptionIndex(md)
 	for _, index := range indexes {
 		if len(index.Cols) == 0 {
 			continue
 		}
-		levelInfo := ParseRecursively(index.Cols, "", md)
+		levelInfo := ParseRecursively(gen, index.Cols, "", md)
 		if levelInfo == nil {
 			continue
 		}
@@ -192,7 +209,8 @@ func ParseIndexDescriptor(md protoreflect.MessageDescriptor) []*IndexDescriptor 
 		for deepestLevelMessage.NextLevel != nil {
 			deepestLevelMessage = deepestLevelMessage.NextLevel
 		}
-		descriptor.FullClassName = helper.ParseCppClassType(deepestLevelMessage.MD)
+		descriptor.CppFullClassName = cpphelper.ParseCppClassType(deepestLevelMessage.MD)
+		descriptor.GoIdent = gohelper.FindMessageGoIdent(gen, deepestLevelMessage.MD)
 		descriptor.Fields = deepestLevelMessage.Fields
 		descriptor.Name = index.Name
 		if descriptor.Name == "" {

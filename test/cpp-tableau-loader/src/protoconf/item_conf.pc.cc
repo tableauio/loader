@@ -19,65 +19,55 @@ bool ItemConf::ProcessAfterLoad() {
   for (auto&& item1 : data_.item_map()) {
     ordered_map_[item1.first] = &item1.second;
   }
-
   // Index init.
   // Index: Type
   for (auto&& item1 : data_.item_map()) {
-    index_item_map_[static_cast<int>(item1.second.type())].push_back(&item1.second);
+    index_item_map_[item1.second.type()].push_back(&item1.second);
   }
-
   // Index: Param@ItemInfo
   for (auto&& item1 : data_.item_map()) {
     for (auto&& item2 : item1.second.param_list()) {
       index_item_info_map_[item2].push_back(&item1.second);
     }
   }
-
   // Index: ExtType@ItemExtInfo
   for (auto&& item1 : data_.item_map()) {
     for (auto&& item2 : item1.second.ext_type_list()) {
-      index_item_ext_info_map_[static_cast<int>(item2)].push_back(&item1.second);
+      index_item_ext_info_map_[static_cast<protoconf::FruitType>(item2)].push_back(&item1.second);
     }
   }
-
   // Index: (ID,Name)@AwardItem
   for (auto&& item1 : data_.item_map()) {
     Index_AwardItemKey key{item1.second.id(), item1.second.name()};
     index_award_item_map_[key].push_back(&item1.second);
   }
-
   // Index: (ID,Type,Param,ExtType)@SpecialItem
   for (auto&& item1 : data_.item_map()) {
     for (auto&& index_item2 : item1.second.param_list()) {
       for (auto&& index_item3 : item1.second.ext_type_list()) {
-        Index_SpecialItemKey key{item1.second.id(), static_cast<protoconf::FruitType>(item1.second.type()), index_item2, static_cast<protoconf::FruitType>(index_item3)};
+        Index_SpecialItemKey key{item1.second.id(), item1.second.type(), index_item2, static_cast<protoconf::FruitType>(index_item3)};
         index_special_item_map_[key].push_back(&item1.second);
       }
     }
   }
-
   // Index: PathDir@ItemPathDir
   for (auto&& item1 : data_.item_map()) {
     index_item_path_dir_map_[item1.second.path().dir()].push_back(&item1.second);
   }
-
   // Index: PathName@ItemPathName
   for (auto&& item1 : data_.item_map()) {
     for (auto&& item2 : item1.second.path().name()) {
       index_item_path_name_map_[item2].push_back(&item1.second);
     }
   }
-
   // Index: PathUserID@ItemPathUserID
   for (auto&& item1 : data_.item_map()) {
     index_item_path_user_id_map_[item1.second.path().user().id()].push_back(&item1.second);
   }
-
   // Index: UseEffectType@UseEffectType
   for (auto&& item1 : data_.item_map()) {
-    index_use_effect_type_map_[static_cast<int>(item1.second.use_effect().type())].push_back(&item1.second);
+    index_use_effect_type_map_[item1.second.use_effect().type()].push_back(&item1.second);
   }
-
   return true;
 }
 
@@ -97,7 +87,7 @@ const ItemConf::Item_OrderedMap* ItemConf::GetOrderedMap() const {
 const ItemConf::Index_ItemMap& ItemConf::FindItem() const { return index_item_map_ ;}
 
 const ItemConf::Index_ItemVector* ItemConf::FindItem(protoconf::FruitType type) const {
-  auto iter = index_item_map_.find(static_cast<int>(type));
+  auto iter = index_item_map_.find(type);
   if (iter == index_item_map_.end()) {
     return nullptr;
   }
@@ -135,7 +125,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItemInfo(int32_t param) cons
 const ItemConf::Index_ItemExtInfoMap& ItemConf::FindItemExtInfo() const { return index_item_ext_info_map_ ;}
 
 const ItemConf::Index_ItemExtInfoVector* ItemConf::FindItemExtInfo(protoconf::FruitType ext_type) const {
-  auto iter = index_item_ext_info_map_.find(static_cast<int>(ext_type));
+  auto iter = index_item_ext_info_map_.find(ext_type);
   if (iter == index_item_ext_info_map_.end()) {
     return nullptr;
   }
@@ -249,7 +239,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItemPathUserID(uint32_t id) 
 const ItemConf::Index_UseEffectTypeMap& ItemConf::FindUseEffectType() const { return index_use_effect_type_map_ ;}
 
 const ItemConf::Index_UseEffectTypeVector* ItemConf::FindUseEffectType(protoconf::UseEffect::Type type) const {
-  auto iter = index_use_effect_type_map_.find(static_cast<int>(type));
+  auto iter = index_use_effect_type_map_.find(type);
   if (iter == index_use_effect_type_map_.end()) {
     return nullptr;
   }

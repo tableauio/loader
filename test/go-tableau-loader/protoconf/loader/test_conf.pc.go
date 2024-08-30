@@ -29,6 +29,13 @@ type ProtoconfActivityConfActivityChapterMap_OrderedMap = treemap.TreeMap[uint32
 type ProtoconfActivityConfActivityMap_OrderedMapValue = pair.Pair[*ProtoconfActivityConfActivityChapterMap_OrderedMap, *protoconf.ActivityConf_Activity]
 type ProtoconfActivityConfActivityMap_OrderedMap = treemap.TreeMap[uint64, *ProtoconfActivityConfActivityMap_OrderedMapValue]
 
+// Index types.
+// Index: ChapterID
+type ActivityConf_Index_ChapterMap = map[uint32][]*protoconf.ActivityConf_Activity_Chapter
+
+// Index: ChapterName@NamedChapter
+type ActivityConf_Index_NamedChapterMap = map[string][]*protoconf.ActivityConf_Activity_Chapter
+
 // ActivityConf is a wrapper around protobuf message: protoconf.ActivityConf.
 //
 // It is designed for three goals:
@@ -38,8 +45,10 @@ type ProtoconfActivityConfActivityMap_OrderedMap = treemap.TreeMap[uint64, *Prot
 //  3. Extensibility: Map, OrdererdMap, Index...
 type ActivityConf struct {
 	UnimplementedMessager
-	data       protoconf.ActivityConf
-	orderedMap *ProtoconfActivityConfActivityMap_OrderedMap
+	data                 protoconf.ActivityConf
+	orderedMap           *ProtoconfActivityConfActivityMap_OrderedMap
+	indexChapterMap      ActivityConf_Index_ChapterMap
+	indexNamedChapterMap ActivityConf_Index_NamedChapterMap
 }
 
 // Name returns the ActivityConf's message name.
@@ -64,7 +73,7 @@ func (x *ActivityConf) Load(dir string, format format.Format, options ...load.Op
 	if err != nil {
 		return err
 	}
-	return x.AfterLoad()
+	return x.processAfterLoad()
 }
 
 // Store writes ActivityConf's inner message to file in the specified directory and format.
@@ -78,8 +87,8 @@ func (x *ActivityConf) Messager() Messager {
 	return x
 }
 
-// AfterLoad runs after this messager is loaded.
-func (x *ActivityConf) AfterLoad() error {
+// processAfterLoad runs after this messager is loaded.
+func (x *ActivityConf) processAfterLoad() error {
 	// OrderedMap init.
 	x.orderedMap = treemap.New[uint64, *ProtoconfActivityConfActivityMap_OrderedMapValue]()
 	for k1, v1 := range x.Data().GetActivityMap() {
@@ -108,6 +117,19 @@ func (x *ActivityConf) AfterLoad() error {
 					map4.Put(k4, v4)
 				}
 			}
+		}
+	}
+	// Index init.
+	// Index: ChapterID
+	for _, item1 := range x.data.GetActivityMap() {
+		for _, item2 := range item1.GetChapterMap() {
+			x.indexChapterMap[item2.GetChapterId()] = append(x.indexChapterMap[item2.GetChapterId()], item2)
+		}
+	}
+	// Index: ChapterName@NamedChapter
+	for _, item1 := range x.data.GetActivityMap() {
+		for _, item2 := range item1.GetChapterMap() {
+			x.indexNamedChapterMap[item2.GetChapterName()] = append(x.indexNamedChapterMap[item2.GetChapterName()], item2)
 		}
 	}
 	return nil
@@ -228,6 +250,40 @@ func (x *ActivityConf) GetOrderedMap3(activityId uint64, chapterId uint32, secti
 	}
 }
 
+// Index: ChapterID
+func (x *ActivityConf) FindChapterMap() ActivityConf_Index_ChapterMap {
+	return x.indexChapterMap
+}
+
+func (x *ActivityConf) FindChapter(chapterId uint32) []*protoconf.ActivityConf_Activity_Chapter {
+	return x.indexChapterMap[chapterId]
+}
+
+func (x *ActivityConf) FindFirstChapter(chapterId uint32) *protoconf.ActivityConf_Activity_Chapter {
+	val := x.indexChapterMap[chapterId]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: ChapterName@NamedChapter
+func (x *ActivityConf) FindNamedChapterMap() ActivityConf_Index_NamedChapterMap {
+	return x.indexNamedChapterMap
+}
+
+func (x *ActivityConf) FindNamedChapter(chapterName string) []*protoconf.ActivityConf_Activity_Chapter {
+	return x.indexNamedChapterMap[chapterName]
+}
+
+func (x *ActivityConf) FindFirstNamedChapter(chapterName string) *protoconf.ActivityConf_Activity_Chapter {
+	val := x.indexNamedChapterMap[chapterName]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
 // ChapterConf is a wrapper around protobuf message: protoconf.ChapterConf.
 //
 // It is designed for three goals:
@@ -262,7 +318,7 @@ func (x *ChapterConf) Load(dir string, format format.Format, options ...load.Opt
 	if err != nil {
 		return err
 	}
-	return x.AfterLoad()
+	return x.processAfterLoad()
 }
 
 // Store writes ChapterConf's inner message to file in the specified directory and format.
@@ -274,11 +330,6 @@ func (x *ChapterConf) Store(dir string, format format.Format, options ...store.O
 // Messager is used to implement Checker interface.
 func (x *ChapterConf) Messager() Messager {
 	return x
-}
-
-// AfterLoad runs after this messager is loaded.
-func (x *ChapterConf) AfterLoad() error {
-	return nil
 }
 
 // Get1 finds value in the 1-level map. It will return nil if
@@ -329,7 +380,7 @@ func (x *ThemeConf) Load(dir string, format format.Format, options ...load.Optio
 	if err != nil {
 		return err
 	}
-	return x.AfterLoad()
+	return x.processAfterLoad()
 }
 
 // Store writes ThemeConf's inner message to file in the specified directory and format.
@@ -341,11 +392,6 @@ func (x *ThemeConf) Store(dir string, format format.Format, options ...store.Opt
 // Messager is used to implement Checker interface.
 func (x *ThemeConf) Messager() Messager {
 	return x
-}
-
-// AfterLoad runs after this messager is loaded.
-func (x *ThemeConf) AfterLoad() error {
-	return nil
 }
 
 // Get1 finds value in the 1-level map. It will return nil if

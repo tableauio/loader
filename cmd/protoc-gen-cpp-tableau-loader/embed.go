@@ -4,7 +4,7 @@ import (
 	"embed"
 	"path"
 
-	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
+	helper "github.com/tableauio/loader/internal/helper/cpp"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
