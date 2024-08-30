@@ -46,8 +46,31 @@ type LevelField struct {
 	Card       Card
 	Type       Type
 	TypeStr    string
-	Names      []string // protobuf field name
-	ScalarName string   // scalar name of incell-list element
+	ScalarName string // scalar name of incell-list element
+
+	// leveled field names
+	// For example, if you have a message described as below and created an index on "PathUserID"
+	// Names are ["path", "user", "id"]
+	//
+	// message ItemConf {
+	// 	option (tableau.worksheet) = {
+	// 	  name: "ItemConf"
+	// 	  index: "PathUserID"
+	// 	};
+	// 	map<uint32, Item> item_map = 1 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
+	// 	message Item {
+	// 	  uint32 id = 1 [(tableau.field) = { name: "ID" }];
+	// 	  Path path = 2 [(tableau.field) = { name: "Path" }];
+	// 	  message Path {
+	// 	    string dir = 1 [(tableau.field) = { name: "Dir" }];
+	// 	    User user = 2 [(tableau.field) = { name: "User" }];
+	// 	    message User {
+	// 	      uint32 id = 1 [(tableau.field) = { name: "ID" }];
+	// 	    }
+	// 	  }
+	// 	}
+	// }
+	Names []string
 }
 
 // namespaced level info
@@ -69,8 +92,8 @@ type LevelMessage struct {
 	Fields []*LevelField
 }
 
-// ParseIndexLevelInfo parses multi-column index related info.
-func ParseIndexLevelInfo(cols []string, prefix string, md protoreflect.MessageDescriptor) *LevelMessage {
+// ParseRecursively parses multi-column index related info.
+func ParseRecursively(cols []string, prefix string, md protoreflect.MessageDescriptor) *LevelMessage {
 	// fmt.Println("indexColumnName: ", indexColumnName)
 	levelInfo := &LevelMessage{
 		MD: md,
@@ -87,7 +110,7 @@ func ParseIndexLevelInfo(cols []string, prefix string, md protoreflect.MessageDe
 			levelInfo.FieldName = string(fd.Name())
 			levelInfo.FieldType = TypeMap
 			levelInfo.FieldCard = CardMap
-			levelInfo.NextLevel = ParseIndexLevelInfo(cols, prefix+fieldOptName, fd.MapValue().Message())
+			levelInfo.NextLevel = ParseRecursively(cols, prefix+fieldOptName, fd.MapValue().Message())
 			if levelInfo.NextLevel != nil {
 				return levelInfo
 			}
@@ -96,20 +119,20 @@ func ParseIndexLevelInfo(cols []string, prefix string, md protoreflect.MessageDe
 			levelInfo.FieldName = string(fd.Name())
 			levelInfo.FieldType = TypeList
 			levelInfo.FieldCard = CardList
-			levelInfo.NextLevel = ParseIndexLevelInfo(cols, prefix+fieldOptName, fd.Message())
+			levelInfo.NextLevel = ParseRecursively(cols, prefix+fieldOptName, fd.Message())
 			if levelInfo.NextLevel != nil {
 				return levelInfo
 			}
 		}
 	}
-	levelInfo.Fields = InternalParseIndexLevelInfo(cols, prefix, md, nil)
+	levelInfo.Fields = ParseInSameLevel(cols, prefix, md, nil)
 	if len(levelInfo.Fields) != 0 {
 		return levelInfo
 	}
 	return nil
 }
 
-func InternalParseIndexLevelInfo(cols []string, prefix string, md protoreflect.MessageDescriptor, names []string) []*LevelField {
+func ParseInSameLevel(cols []string, prefix string, md protoreflect.MessageDescriptor, names []string) []*LevelField {
 	levelFields := []*LevelField{}
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
@@ -143,7 +166,7 @@ func InternalParseIndexLevelInfo(cols []string, prefix string, md protoreflect.M
 				levelFields = append(levelFields, field)
 				break
 			} else if fd.Kind() == protoreflect.MessageKind && strings.HasPrefix(columnName, prefix+fieldOptName) {
-				levelFields = append(levelFields, InternalParseIndexLevelInfo(cols, prefix+fieldOptName, fd.Message(), append(names, string(fd.Name())))...)
+				levelFields = append(levelFields, ParseInSameLevel(cols, prefix+fieldOptName, fd.Message(), append(names, string(fd.Name())))...)
 			}
 		}
 	}
@@ -157,7 +180,7 @@ func ParseIndexDescriptor(md protoreflect.MessageDescriptor) []*IndexDescriptor 
 		if len(index.Cols) == 0 {
 			continue
 		}
-		levelInfo := ParseIndexLevelInfo(index.Cols, "", md)
+		levelInfo := ParseRecursively(index.Cols, "", md)
 		if levelInfo == nil {
 			continue
 		}
