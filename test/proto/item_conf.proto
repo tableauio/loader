@@ -21,6 +21,10 @@ message ItemConf {
     index: "ExtType@ItemExtInfo"
     index: "(ID,Name)@AwardItem"
     index: "(ID,Type,Param,ExtType)@SpecialItem"
+    index: "PathDir@ItemPathDir"
+    index: "PathName@ItemPathName"
+    index: "PathUserID@ItemPathUserID"
+    index: "UseEffectType@UseEffectType"
   };
   map<uint32, Item> item_map = 1 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
   message Item {
@@ -32,10 +36,39 @@ message ItemConf {
     FruitType type = 7 [(tableau.field) = { name: "Type" }];
     repeated int32 param_list = 8 [(tableau.field) = { name: "Param" }];
     repeated FruitType ext_type_list = 9 [(tableau.field) = { name: "ExtType" }];
+    UseEffect use_effect = 10 [(tableau.field) = { name: "UseEffect" }];
   }
 }
 
 message Path {
-  string dir = 1;
-  string name = 2;
+  string dir = 1 [(tableau.field) = { name: "Dir" }];
+  repeated string name = 2 [(tableau.field) = { name: "Name" }];
+  User user = 3 [(tableau.field) = { name: "User" }];
+  message User {
+    uint32 id = 1 [(tableau.field) = { name: "ID" }];
+    string name = 2 [(tableau.field) = { name: "Name" }];
+  }
+}
+
+message UseEffect {
+  option (tableau.union) = true;
+
+  Type type = 9999 [(tableau.field) = { name: "Type" }];
+  oneof value {
+    option (tableau.oneof) = {
+      field: "Field"
+    };
+
+    GainItem gain_item = 1;
+    AccountLevel account_level = 2;
+  }
+  enum Type {
+    TYPE_INVALID = 0;
+    TYPE_GAIN_ITEM = 1;
+    TYPE_ACCOUNT_LEVEL = 2;
+  }
+  message GainItem {
+    uint32 item_id = 1 [(tableau.field) = { name: "ItemId" }];
+  }
+  message AccountLevel {}
 }
