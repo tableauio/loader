@@ -147,6 +147,10 @@ func genIndexFinders(gen *protogen.Plugin, messagerName string, g *protogen.Gene
 		indexContainerName := "index" + strcase.ToCamel(descriptor.Name) + "Map"
 
 		g.P("// Index: ", descriptor.Index)
+		g.P()
+
+		g.P("// Find", descriptor.Name, "Map returns the index(", descriptor.Index, ") to value(", descriptor.GoIdent, ") map.")
+		g.P("// One key may correspond to multiple values, which are contained by a slice.")
 		g.P("func (x *", messagerName, ") Find", descriptor.Name, "Map() ", mapType, " {")
 		g.P("return x.", indexContainerName)
 		g.P("}")
@@ -170,11 +174,14 @@ func genIndexFinders(gen *protogen.Plugin, messagerName string, g *protogen.Gene
 			keyName = "key"
 		}
 
+		g.P("// Find", descriptor.Name, " returns a slice of all values of the given key.")
 		g.P("func (x *", messagerName, ") Find", descriptor.Name, "(", keyName, " ", keyType, ") []*", descriptor.GoIdent, " {")
 		g.P("return x.", indexContainerName, "[", keyName, "]")
 		g.P("}")
 		g.P()
 
+		g.P("// FindFirst", descriptor.Name, " returns the first value of the given key,")
+		g.P("// or nil if the key correspond to no value.")
 		g.P("func (x *", messagerName, ") FindFirst", descriptor.Name, "(", keyName, " ", keyType, ") *", descriptor.GoIdent, " {")
 		g.P("val := x.", indexContainerName, "[", keyName, "]")
 		g.P("if len(val) > 0 {")

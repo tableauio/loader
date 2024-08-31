@@ -196,7 +196,6 @@ func genMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey, messag
 				g.P("if err != nil {")
 				g.P(`return `, returnEmptyValue, `, err`)
 				g.P("}")
-				g.P()
 			}
 
 			g.P("d := ", container, ".Get", field.GoName, "()")

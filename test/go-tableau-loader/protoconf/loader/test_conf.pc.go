@@ -156,7 +156,6 @@ func (x *ActivityConf) Get2(activityId uint64, chapterId uint32) (*protoconf.Act
 	if err != nil {
 		return nil, err
 	}
-
 	d := conf.GetChapterMap()
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "ChapterMap is nil")
@@ -175,7 +174,6 @@ func (x *ActivityConf) Get3(activityId uint64, chapterId uint32, sectionId uint3
 	if err != nil {
 		return nil, err
 	}
-
 	d := conf.GetSectionMap()
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "SectionMap is nil")
@@ -194,7 +192,6 @@ func (x *ActivityConf) Get4(activityId uint64, chapterId uint32, sectionId uint3
 	if err != nil {
 		return 0, err
 	}
-
 	d := conf.GetSectionRankMap()
 	if d == nil {
 		return 0, xerrors.Errorf(code.Nil, "SectionRankMap is nil")
@@ -251,14 +248,20 @@ func (x *ActivityConf) GetOrderedMap3(activityId uint64, chapterId uint32, secti
 }
 
 // Index: ChapterID
+
+// FindChapterMap returns the index(ChapterID) to value(protoconf.ActivityConf_Activity_Chapter) map.
+// One key may correspond to multiple values, which are contained by a slice.
 func (x *ActivityConf) FindChapterMap() ActivityConf_Index_ChapterMap {
 	return x.indexChapterMap
 }
 
+// FindChapter returns a slice of all values of the given key.
 func (x *ActivityConf) FindChapter(chapterId uint32) []*protoconf.ActivityConf_Activity_Chapter {
 	return x.indexChapterMap[chapterId]
 }
 
+// FindFirstChapter returns the first value of the given key,
+// or nil if the key correspond to no value.
 func (x *ActivityConf) FindFirstChapter(chapterId uint32) *protoconf.ActivityConf_Activity_Chapter {
 	val := x.indexChapterMap[chapterId]
 	if len(val) > 0 {
@@ -268,14 +271,20 @@ func (x *ActivityConf) FindFirstChapter(chapterId uint32) *protoconf.ActivityCon
 }
 
 // Index: ChapterName@NamedChapter
+
+// FindNamedChapterMap returns the index(ChapterName@NamedChapter) to value(protoconf.ActivityConf_Activity_Chapter) map.
+// One key may correspond to multiple values, which are contained by a slice.
 func (x *ActivityConf) FindNamedChapterMap() ActivityConf_Index_NamedChapterMap {
 	return x.indexNamedChapterMap
 }
 
+// FindNamedChapter returns a slice of all values of the given key.
 func (x *ActivityConf) FindNamedChapter(chapterName string) []*protoconf.ActivityConf_Activity_Chapter {
 	return x.indexNamedChapterMap[chapterName]
 }
 
+// FindFirstNamedChapter returns the first value of the given key,
+// or nil if the key correspond to no value.
 func (x *ActivityConf) FindFirstNamedChapter(chapterName string) *protoconf.ActivityConf_Activity_Chapter {
 	val := x.indexNamedChapterMap[chapterName]
 	if len(val) > 0 {

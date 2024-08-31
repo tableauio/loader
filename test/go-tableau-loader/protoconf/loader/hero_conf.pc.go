@@ -125,7 +125,6 @@ func (x *HeroConf) Get2(name string, title string) (*protoconf.HeroConf_Hero_Att
 	if err != nil {
 		return nil, err
 	}
-
 	d := conf.GetAttrMap()
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "AttrMap is nil")
@@ -154,14 +153,20 @@ func (x *HeroConf) GetOrderedMap1(name string) (*ProtoconfHeroConfHeroAttrMap_Or
 }
 
 // Index: Title
+
+// FindAttrMap returns the index(Title) to value(protoconf.HeroConf_Hero_Attr) map.
+// One key may correspond to multiple values, which are contained by a slice.
 func (x *HeroConf) FindAttrMap() HeroConf_Index_AttrMap {
 	return x.indexAttrMap
 }
 
+// FindAttr returns a slice of all values of the given key.
 func (x *HeroConf) FindAttr(title string) []*protoconf.HeroConf_Hero_Attr {
 	return x.indexAttrMap[title]
 }
 
+// FindFirstAttr returns the first value of the given key,
+// or nil if the key correspond to no value.
 func (x *HeroConf) FindFirstAttr(title string) *protoconf.HeroConf_Hero_Attr {
 	val := x.indexAttrMap[title]
 	if len(val) > 0 {
@@ -265,7 +270,6 @@ func (x *HeroBaseConf) Get2(name string, id string) (*base.Item, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	d := conf.GetItemMap()
 	if d == nil {
 		return nil, xerrors.Errorf(code.Nil, "ItemMap is nil")
