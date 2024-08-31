@@ -183,13 +183,10 @@ func (x *ItemConf) processAfterLoad() error {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// Get1 finds value in the 1-level map. It will return error
+// if the key is not found.
 func (x *ItemConf) Get1(id uint32) (*protoconf.ItemConf_Item, error) {
 	d := x.Data().GetItemMap()
-	if d == nil {
-		return nil, xerrors.Errorf(code.Nil, "ItemMap is nil")
-	}
 	if val, ok := d[id]; !ok {
 		return nil, xerrors.Errorf(code.NotFound, "id(%v) not found", id)
 	} else {

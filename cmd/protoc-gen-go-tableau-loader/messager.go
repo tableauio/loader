@@ -174,9 +174,9 @@ func genMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey, messag
 		if field.Desc.IsMap() {
 			keys = helper.AddMapKey(gen, fd, keys)
 			getter := fmt.Sprintf("Get%v", depth)
-			g.P("// ", getter, " finds value in the ", depth, "-level map. It will return nil if")
-			g.P("// the deepest key is not found, otherwise return an error.")
-			g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") (", addPointerForMessageField(fd.MapValue()), helper.ParseGoType(gen, fd.MapValue()), ", error) {")
+			g.P("// ", getter, " finds value in the ", depth, "-level map. It will return error")
+			g.P("// if the key is not found.")
+			g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") (", parseMapValueType(gen, g, fd), ", error) {")
 
 			returnEmptyValue := helper.GetTypeEmptyValue(fd.MapValue())
 
@@ -194,9 +194,6 @@ func genMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey, messag
 			}
 
 			g.P("d := ", container, ".Get", field.GoName, "()")
-			g.P("if d == nil {")
-			g.P(`return `, returnEmptyValue, `, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("Nil"), `, "`, field.GoName, ` is nil")`)
-			g.P("}")
 			lastKeyName := keys[len(keys)-1].Name
 			g.P("if val, ok := d[", lastKeyName, "]; !ok {")
 			g.P(`return `, returnEmptyValue, `, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("NotFound"), `, "`, lastKeyName, `(%v) not found", `, lastKeyName, `)`)
@@ -230,9 +227,17 @@ func getNextLevelMapFD(fd protoreflect.FieldDescriptor) protoreflect.FieldDescri
 	return nil
 }
 
-func addPointerForMessageField(fd protoreflect.FieldDescriptor) string {
-	if fd.Kind() == protoreflect.MessageKind {
-		return "*"
+func parseMapValueType(gen *protogen.Plugin, g *protogen.GeneratedFile, fd protoreflect.FieldDescriptor) string {
+	valueType := helper.ParseGoType(gen, fd.MapValue())
+	var valueTypeStr string
+	switch valueType := valueType.(type) {
+	case string:
+		valueTypeStr = valueType
+	case protogen.GoIdent:
+		valueTypeStr = g.QualifiedGoIdent(valueType)
 	}
-	return ""
+	if fd.MapValue().Kind() == protoreflect.MessageKind {
+		return "*" + valueTypeStr
+	}
+	return valueTypeStr
 }

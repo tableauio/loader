@@ -53,7 +53,7 @@ func genOrderedMapTypeDef(gen *protogen.Plugin, depth int, keys []helper.MapKey,
 					g.P("type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", *", orderedMapValue, "]")
 					g.P()
 				} else {
-					g.P("type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", ", addPointerForMessageField(fd.MapValue()), helper.ParseGoType(gen, fd.MapValue()), "]")
+					g.P("type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", ", parseMapValueType(gen, g, fd), "]")
 					g.P()
 				}
 			}
@@ -105,7 +105,7 @@ func genOrderedMapLoader(gen *protogen.Plugin, depth int, keys []helper.MapKey, 
 			nextMapFD := getNextLevelMapFD(fd.MapValue())
 			if depth == 1 {
 				if nextMapFD == nil {
-					g.P("x.orderedMap = ", treeMapPackage.Ident("New"), "[", keyType, ", ", addPointerForMessageField(fd.MapValue()), helper.ParseGoType(gen, fd.MapValue()), "]()")
+					g.P("x.orderedMap = ", treeMapPackage.Ident("New"), "[", keyType, ", ", parseMapValueType(gen, g, fd), "]()")
 				} else {
 					g.P("x.orderedMap = ", treeMapPackage.Ident("New"), "[", keyType, ", *", orderedMapValue, "]()")
 				}
@@ -118,7 +118,7 @@ func genOrderedMapLoader(gen *protogen.Plugin, depth int, keys []helper.MapKey, 
 				}
 				g.P("k", depth-1, "v := &", lastOrderedMapValue, "{")
 				if nextMapFD == nil {
-					g.P("First: ", treeMapPackage.Ident("New"), "[", keyType, ", ", addPointerForMessageField(fd.MapValue()), helper.ParseGoType(gen, fd.MapValue()), "](),")
+					g.P("First: ", treeMapPackage.Ident("New"), "[", keyType, ", ", parseMapValueType(gen, g, fd), "](),")
 				} else {
 					g.P("First: ", treeMapPackage.Ident("New"), "[", keyType, ", *", orderedMapValue, "](),")
 				}

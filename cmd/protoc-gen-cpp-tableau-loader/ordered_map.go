@@ -36,7 +36,7 @@ func genHppOrderedMapGetters(depth int, keys []helper.MapKey, g *protogen.Genera
 
 			nextMapFD := getNextLevelMapFD(fd.MapValue())
 			if nextMapFD != nil {
-				_, currValueType := parseMapType(fd)
+				currValueType := helper.ParseCppType(fd.MapValue())
 				nextPrefix := parseOrderedMapPrefix(nextMapFD, messagerFullName)
 				nextOrderedMap := nextPrefix + orderedMapSuffix
 				// nextOrderedMapValue := nextPrefix + orderedMapValueSuffix
@@ -45,13 +45,7 @@ func genHppOrderedMapGetters(depth int, keys []helper.MapKey, g *protogen.Genera
 				g.P("  const ", orderedMap, "* GetOrderedMap(", helper.GenGetParams(keys), ") const;")
 				g.P()
 			} else {
-				orderedMapValue := helper.ParseCppType(fd.MapValue())
-				constStr := ""
-				if fd.MapValue().Kind() == protoreflect.MessageKind {
-					orderedMapValue += "*" // If value type is message, should use pointer.
-					constStr = "const "
-				}
-				g.P("  using ", orderedMap, " = std::map<", keyType, ", ", constStr, orderedMapValue, ">;")
+				g.P("  using ", orderedMap, " = std::map<", keyType, ", ", parseMapValueType(fd), ">;")
 				g.P("  const ", orderedMap, "* GetOrderedMap(", helper.GenGetParams(keys), ") const;")
 				g.P()
 			}

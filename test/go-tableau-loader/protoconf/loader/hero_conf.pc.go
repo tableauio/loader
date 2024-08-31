@@ -104,13 +104,10 @@ func (x *HeroConf) processAfterLoad() error {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// Get1 finds value in the 1-level map. It will return error
+// if the key is not found.
 func (x *HeroConf) Get1(name string) (*protoconf.HeroConf_Hero, error) {
 	d := x.Data().GetHeroMap()
-	if d == nil {
-		return nil, xerrors.Errorf(code.Nil, "HeroMap is nil")
-	}
 	if val, ok := d[name]; !ok {
 		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
 	} else {
@@ -118,17 +115,14 @@ func (x *HeroConf) Get1(name string) (*protoconf.HeroConf_Hero, error) {
 	}
 }
 
-// Get2 finds value in the 2-level map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// Get2 finds value in the 2-level map. It will return error
+// if the key is not found.
 func (x *HeroConf) Get2(name string, title string) (*protoconf.HeroConf_Hero_Attr, error) {
 	conf, err := x.Get1(name)
 	if err != nil {
 		return nil, err
 	}
 	d := conf.GetAttrMap()
-	if d == nil {
-		return nil, xerrors.Errorf(code.Nil, "AttrMap is nil")
-	}
 	if val, ok := d[title]; !ok {
 		return nil, xerrors.Errorf(code.NotFound, "title(%v) not found", title)
 	} else {
@@ -249,13 +243,10 @@ func (x *HeroBaseConf) processAfterLoad() error {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// Get1 finds value in the 1-level map. It will return error
+// if the key is not found.
 func (x *HeroBaseConf) Get1(name string) (*base.Hero, error) {
 	d := x.Data().GetHeroMap()
-	if d == nil {
-		return nil, xerrors.Errorf(code.Nil, "HeroMap is nil")
-	}
 	if val, ok := d[name]; !ok {
 		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
 	} else {
@@ -263,17 +254,14 @@ func (x *HeroBaseConf) Get1(name string) (*base.Hero, error) {
 	}
 }
 
-// Get2 finds value in the 2-level map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// Get2 finds value in the 2-level map. It will return error
+// if the key is not found.
 func (x *HeroBaseConf) Get2(name string, id string) (*base.Item, error) {
 	conf, err := x.Get1(name)
 	if err != nil {
 		return nil, err
 	}
 	d := conf.GetItemMap()
-	if d == nil {
-		return nil, xerrors.Errorf(code.Nil, "ItemMap is nil")
-	}
 	if val, ok := d[id]; !ok {
 		return nil, xerrors.Errorf(code.NotFound, "id(%v) not found", id)
 	} else {

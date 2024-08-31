@@ -135,13 +135,10 @@ func (x *ActivityConf) processAfterLoad() error {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// Get1 finds value in the 1-level map. It will return error
+// if the key is not found.
 func (x *ActivityConf) Get1(activityId uint64) (*protoconf.ActivityConf_Activity, error) {
 	d := x.Data().GetActivityMap()
-	if d == nil {
-		return nil, xerrors.Errorf(code.Nil, "ActivityMap is nil")
-	}
 	if val, ok := d[activityId]; !ok {
 		return nil, xerrors.Errorf(code.NotFound, "activityId(%v) not found", activityId)
 	} else {
@@ -149,17 +146,14 @@ func (x *ActivityConf) Get1(activityId uint64) (*protoconf.ActivityConf_Activity
 	}
 }
 
-// Get2 finds value in the 2-level map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// Get2 finds value in the 2-level map. It will return error
+// if the key is not found.
 func (x *ActivityConf) Get2(activityId uint64, chapterId uint32) (*protoconf.ActivityConf_Activity_Chapter, error) {
 	conf, err := x.Get1(activityId)
 	if err != nil {
 		return nil, err
 	}
 	d := conf.GetChapterMap()
-	if d == nil {
-		return nil, xerrors.Errorf(code.Nil, "ChapterMap is nil")
-	}
 	if val, ok := d[chapterId]; !ok {
 		return nil, xerrors.Errorf(code.NotFound, "chapterId(%v) not found", chapterId)
 	} else {
@@ -167,17 +161,14 @@ func (x *ActivityConf) Get2(activityId uint64, chapterId uint32) (*protoconf.Act
 	}
 }
 
-// Get3 finds value in the 3-level map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// Get3 finds value in the 3-level map. It will return error
+// if the key is not found.
 func (x *ActivityConf) Get3(activityId uint64, chapterId uint32, sectionId uint32) (*protoconf.Section, error) {
 	conf, err := x.Get2(activityId, chapterId)
 	if err != nil {
 		return nil, err
 	}
 	d := conf.GetSectionMap()
-	if d == nil {
-		return nil, xerrors.Errorf(code.Nil, "SectionMap is nil")
-	}
 	if val, ok := d[sectionId]; !ok {
 		return nil, xerrors.Errorf(code.NotFound, "sectionId(%v) not found", sectionId)
 	} else {
@@ -185,17 +176,14 @@ func (x *ActivityConf) Get3(activityId uint64, chapterId uint32, sectionId uint3
 	}
 }
 
-// Get4 finds value in the 4-level map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// Get4 finds value in the 4-level map. It will return error
+// if the key is not found.
 func (x *ActivityConf) Get4(activityId uint64, chapterId uint32, sectionId uint32, key4 uint32) (int32, error) {
 	conf, err := x.Get3(activityId, chapterId, sectionId)
 	if err != nil {
 		return 0, err
 	}
 	d := conf.GetSectionRankMap()
-	if d == nil {
-		return 0, xerrors.Errorf(code.Nil, "SectionRankMap is nil")
-	}
 	if val, ok := d[key4]; !ok {
 		return 0, xerrors.Errorf(code.NotFound, "key4(%v) not found", key4)
 	} else {
@@ -341,13 +329,10 @@ func (x *ChapterConf) Messager() Messager {
 	return x
 }
 
-// Get1 finds value in the 1-level map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// Get1 finds value in the 1-level map. It will return error
+// if the key is not found.
 func (x *ChapterConf) Get1(id uint64) (*protoconf.ChapterConf_Chapter, error) {
 	d := x.Data().GetChapterMap()
-	if d == nil {
-		return nil, xerrors.Errorf(code.Nil, "ChapterMap is nil")
-	}
 	if val, ok := d[id]; !ok {
 		return nil, xerrors.Errorf(code.NotFound, "id(%v) not found", id)
 	} else {
@@ -403,13 +388,10 @@ func (x *ThemeConf) Messager() Messager {
 	return x
 }
 
-// Get1 finds value in the 1-level map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// Get1 finds value in the 1-level map. It will return error
+// if the key is not found.
 func (x *ThemeConf) Get1(name string) (*protoconf.ThemeConf_Theme, error) {
 	d := x.Data().GetThemeMap()
-	if d == nil {
-		return nil, xerrors.Errorf(code.Nil, "ThemeMap is nil")
-	}
 	if val, ok := d[name]; !ok {
 		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
 	} else {

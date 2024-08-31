@@ -138,13 +138,6 @@ func getNextLevelMapFD(fd protoreflect.FieldDescriptor) protoreflect.FieldDescri
 	return nil
 }
 
-func parseMapType(fd protoreflect.FieldDescriptor) (keyType, valueType string) {
-	if fd.IsMap() {
-		return helper.ParseCppType(fd.MapKey()), helper.ParseCppType(fd.MapValue())
-	}
-	return "", ""
-}
-
 // generateCppFileContent generates type implementations.
 func generateCppFileContent(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile) {
 	g.P(`#include "`, file.GeneratedFilenamePrefix, ".", pcExt, `.h"`)
@@ -226,4 +219,12 @@ func genCppMapGetters(depth int, keys []helper.MapKey, messagerName string, g *p
 			break
 		}
 	}
+}
+
+func parseMapValueType(fd protoreflect.FieldDescriptor) string {
+	valueType := helper.ParseCppType(fd.MapValue())
+	if fd.MapValue().Kind() == protoreflect.MessageKind {
+		return "const " + valueType + "*"
+	}
+	return valueType
 }

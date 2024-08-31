@@ -111,13 +111,10 @@ func (x *PatchMergeConf) Messager() Messager {
 	return x
 }
 
-// Get1 finds value in the 1-level map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// Get1 finds value in the 1-level map. It will return error
+// if the key is not found.
 func (x *PatchMergeConf) Get1(id uint32) (*protoconf.Item, error) {
 	d := x.Data().GetItemMap()
-	if d == nil {
-		return nil, xerrors.Errorf(code.Nil, "ItemMap is nil")
-	}
 	if val, ok := d[id]; !ok {
 		return nil, xerrors.Errorf(code.NotFound, "id(%v) not found", id)
 	} else {
