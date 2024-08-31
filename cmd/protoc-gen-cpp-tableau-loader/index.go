@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/iancoleman/strcase"
-	helper "github.com/tableauio/loader/internal/helper/cpp"
+	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/index"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -22,12 +22,12 @@ func genHppIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, md prot
 			g.P(" public:")
 			vectorType := fmt.Sprintf("Index_%sVector", descriptor.Name)
 			mapType := fmt.Sprintf("Index_%sMap", descriptor.Name)
-			g.P("  using ", vectorType, " = std::vector<const ", descriptor.CppFullClassName, "*>;")
-			keyType := field.CppTypeStr
+			g.P("  using ", vectorType, " = std::vector<const ", helper.ParseCppClassType(descriptor.MD), "*>;")
+			keyType := helper.ParseCppType(field.FD)
 			g.P("  using ", mapType, " = std::unordered_map<", keyType, ", ", vectorType, ">;")
 			g.P("  const ", mapType, "& Find", descriptor.Name, "() const;")
-			g.P("  const ", vectorType, "* Find", descriptor.Name, "(", helper.ToConstRefType(field.CppTypeStr), " ", field.ScalarName.CppName, ") const;")
-			g.P("  const ", descriptor.CppFullClassName, "* FindFirst", descriptor.Name, "(", helper.ToConstRefType(field.CppTypeStr), " ", field.ScalarName.CppName, ") const;")
+			g.P("  const ", vectorType, "* Find", descriptor.Name, "(", helper.ToConstRefType(keyType), " ", helper.ParseIndexFieldNameAsFuncParam(field.FD), ") const;")
+			g.P("  const ", helper.ParseCppClassType(descriptor.MD), "* FindFirst", descriptor.Name, "(", helper.ToConstRefType(keyType), " ", helper.ParseIndexFieldNameAsFuncParam(field.FD), ") const;")
 			g.P()
 
 			g.P(" private:")
@@ -47,8 +47,8 @@ func genHppIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, md prot
 			g.P("  struct ", keyType, " {")
 			equality := ""
 			for i, field := range descriptor.Fields {
-				g.P("    ", field.CppTypeStr, " ", field.ScalarName.CppName, ";")
-				equality += field.ScalarName.CppName + " == other." + field.ScalarName.CppName
+				g.P("    ", helper.ParseCppType(field.FD), " ", helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD), ";")
+				equality += helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD) + " == other." + helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD)
 				if i != len(descriptor.Fields)-1 {
 					equality += " && "
 				}
@@ -62,7 +62,7 @@ func genHppIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, md prot
 			g.P("  struct ", keyHasherType, " {")
 			combinedKeys := ""
 			for i, field := range descriptor.Fields {
-				key := "key." + field.ScalarName.CppName
+				key := "key." + helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD)
 				combinedKeys += key
 				if i != len(descriptor.Fields)-1 {
 					combinedKeys += ", "
@@ -73,11 +73,11 @@ func genHppIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, md prot
 			g.P("    }")
 			g.P("  };")
 
-			g.P("  using ", vectorType, " = std::vector<const ", descriptor.CppFullClassName, "*>;")
+			g.P("  using ", vectorType, " = std::vector<const ", helper.ParseCppClassType(descriptor.MD), "*>;")
 			g.P("  using ", mapType, " = std::unordered_map<", keyType, ", ", vectorType, ", ", keyHasherType, ">;")
 			g.P("  const ", mapType, "& Find", descriptor.Name, "() const;")
 			g.P("  const ", vectorType, "* Find", descriptor.Name, "(const ", keyType, "& key) const;")
-			g.P("  const ", descriptor.CppFullClassName, "* FindFirst", descriptor.Name, "(const ", keyType, "& key) const;")
+			g.P("  const ", helper.ParseCppClassType(descriptor.MD), "* FindFirst", descriptor.Name, "(const ", keyType, "& key) const;")
 			g.P()
 
 			g.P(" private:")
@@ -105,7 +105,7 @@ func genOneCppIndexLoader(depth int, descriptor *index.IndexDescriptor, parentDa
 	indexContainerName := "index_" + strcase.ToSnake(descriptor.Name) + "_map_"
 	if levelMessage.NextLevel != nil {
 		itemName := fmt.Sprintf("item%d", depth)
-		g.P(strings.Repeat("  ", depth), "for (auto&& "+itemName+" : "+parentDataName+"."+levelMessage.FieldName.CppName+"()) {")
+		g.P(strings.Repeat("  ", depth), "for (auto&& "+itemName+" : "+parentDataName+"."+helper.ParseIndexFieldName(levelMessage.FD)+"()) {")
 
 		parentDataName = itemName
 		if levelMessage.FieldCard == index.CardMap {
@@ -120,20 +120,20 @@ func genOneCppIndexLoader(depth int, descriptor *index.IndexDescriptor, parentDa
 			if field.Card == index.CardList {
 				itemName := fmt.Sprintf("item%d", depth)
 				fieldName := ""
-				for _, name := range field.Names {
-					fieldName += "." + name.CppName + "()"
+				for _, leveledFd := range field.LeveledFDList {
+					fieldName += "." + helper.ParseIndexFieldName(leveledFd) + "()"
 				}
 				g.P(strings.Repeat("  ", depth), "for (auto&& "+itemName+" : "+parentDataName+fieldName+") {")
 				key := itemName
 				if field.FD.Enum() != nil {
-					key = "static_cast<" + field.CppTypeStr + ">(" + key + ")"
+					key = "static_cast<" + helper.ParseCppType(field.FD) + ">(" + key + ")"
 				}
 				g.P(strings.Repeat("  ", depth+1), indexContainerName, "["+key+"].push_back(&"+parentDataName+");")
 				g.P(strings.Repeat("  ", depth), "}")
 			} else {
 				fieldName := ""
-				for _, name := range field.Names {
-					fieldName += "." + name.CppName + "()"
+				for _, leveledFd := range field.LeveledFDList {
+					fieldName += "." + helper.ParseIndexFieldName(leveledFd) + "()"
 				}
 				key := parentDataName + fieldName
 				g.P(strings.Repeat("  ", depth), indexContainerName, "["+key+"].push_back(&"+parentDataName+");")
@@ -166,21 +166,21 @@ func generateOneCppMulticolumnIndex(depth int, parentDataName string, descriptor
 	if field.Card == index.CardList {
 		itemName := fmt.Sprintf("index_item%d", cursor)
 		fieldName := ""
-		for _, name := range field.Names {
-			fieldName += "." + name.CppName + "()"
+		for _, leveledFd := range field.LeveledFDList {
+			fieldName += "." + helper.ParseIndexFieldName(leveledFd) + "()"
 		}
 		g.P(strings.Repeat("  ", depth), "for (auto&& "+itemName+" : "+parentDataName+fieldName+") {")
 		key := itemName
 		if field.FD.Enum() != nil {
-			key = "static_cast<" + field.CppTypeStr + ">(" + key + ")"
+			key = "static_cast<" + helper.ParseCppType(field.FD) + ">(" + key + ")"
 		}
 		keys = append(keys, key)
 		keys = generateOneCppMulticolumnIndex(depth+1, parentDataName, descriptor, keys, g)
 		g.P(strings.Repeat("  ", depth), "}")
 	} else {
 		fieldName := ""
-		for _, name := range field.Names {
-			fieldName += "." + name.CppName + "()"
+		for _, leveledFd := range field.LeveledFDList {
+			fieldName += "." + helper.ParseIndexFieldName(leveledFd) + "()"
 		}
 		key := parentDataName + fieldName
 		keys = append(keys, key)
@@ -204,8 +204,8 @@ func genCppIndexFinders(gen *protogen.Plugin, messagerName string, g *protogen.G
 		if len(descriptor.Fields) == 1 {
 			// single-column index
 			field := descriptor.Fields[0] // just take first field
-			keyType = field.CppTypeStr
-			keyName = helper.EscapeIdentifier(field.ScalarName.CppName)
+			keyType = helper.ParseCppType(field.FD)
+			keyName = helper.ParseIndexFieldNameAsFuncParam(field.FD)
 		} else {
 			// multi-column index
 			keyType = fmt.Sprintf("const Index_%sKey&", descriptor.Name)
@@ -221,7 +221,7 @@ func genCppIndexFinders(gen *protogen.Plugin, messagerName string, g *protogen.G
 		g.P("}")
 		g.P()
 
-		g.P("const ", descriptor.CppFullClassName, "* "+messagerName+"::FindFirst", descriptor.Name, "(", helper.ToConstRefType(keyType), " ", keyName, ") const {")
+		g.P("const ", helper.ParseCppClassType(descriptor.MD), "* "+messagerName+"::FindFirst", descriptor.Name, "(", helper.ToConstRefType(keyType), " ", keyName, ") const {")
 		g.P("  auto conf = Find", descriptor.Name, "(", keyName, ");")
 		g.P("  if (conf == nullptr || conf->size() == 0) {")
 		g.P("    return nullptr;")

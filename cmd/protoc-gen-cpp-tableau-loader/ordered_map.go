@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	helper "github.com/tableauio/loader/internal/helper/cpp"
+	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )

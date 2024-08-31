@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/iancoleman/strcase"
-	helper "github.com/tableauio/loader/internal/helper/go"
+	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -53,12 +53,7 @@ func genOrderedMapTypeDef(gen *protogen.Plugin, depth int, keys []helper.MapKey,
 					g.P("type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", *", orderedMapValue, "]")
 					g.P()
 				} else {
-					orderedMapValue := helper.ParseGoType(gen, fd.MapValue())
-					if fd.MapValue().Kind() == protoreflect.MessageKind {
-						g.P("type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", *", helper.FindMessageGoIdent(gen, fd.MapValue().Message()), "]")
-					} else {
-						g.P("type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", ", orderedMapValue, "]")
-					}
+					g.P("type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", ", addPointerForMessageField(fd.MapValue()), helper.ParseGoType(gen, fd.MapValue()), "]")
 					g.P()
 				}
 			}
@@ -110,11 +105,7 @@ func genOrderedMapLoader(gen *protogen.Plugin, depth int, keys []helper.MapKey, 
 			nextMapFD := getNextLevelMapFD(fd.MapValue())
 			if depth == 1 {
 				if nextMapFD == nil {
-					if fd.MapValue().Kind() == protoreflect.MessageKind {
-						g.P("x.orderedMap = ", treeMapPackage.Ident("New"), "[", keyType, ", *", helper.FindMessageGoIdent(gen, fd.MapValue().Message()), "]()")
-					} else {
-						g.P("x.orderedMap = ", treeMapPackage.Ident("New"), "[", keyType, ", ", helper.ParseGoType(gen, fd.MapValue()), "]()")
-					}
+					g.P("x.orderedMap = ", treeMapPackage.Ident("New"), "[", keyType, ", ", addPointerForMessageField(fd.MapValue()), helper.ParseGoType(gen, fd.MapValue()), "]()")
 				} else {
 					g.P("x.orderedMap = ", treeMapPackage.Ident("New"), "[", keyType, ", *", orderedMapValue, "]()")
 				}
@@ -127,11 +118,7 @@ func genOrderedMapLoader(gen *protogen.Plugin, depth int, keys []helper.MapKey, 
 				}
 				g.P("k", depth-1, "v := &", lastOrderedMapValue, "{")
 				if nextMapFD == nil {
-					if fd.MapValue().Kind() == protoreflect.MessageKind {
-						g.P("First: ", treeMapPackage.Ident("New"), "[", keyType, ", *", helper.FindMessageGoIdent(gen, fd.MapValue().Message()), "](),")
-					} else {
-						g.P("First: ", treeMapPackage.Ident("New"), "[", keyType, ", ", helper.ParseGoType(gen, fd.MapValue()), "](),")
-					}
+					g.P("First: ", treeMapPackage.Ident("New"), "[", keyType, ", ", addPointerForMessageField(fd.MapValue()), helper.ParseGoType(gen, fd.MapValue()), "](),")
 				} else {
 					g.P("First: ", treeMapPackage.Ident("New"), "[", keyType, ", *", orderedMapValue, "](),")
 				}

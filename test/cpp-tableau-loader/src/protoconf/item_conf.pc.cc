@@ -30,6 +30,10 @@ bool ItemConf::ProcessAfterLoad() {
       index_item_info_map_[item2].push_back(&item1.second);
     }
   }
+  // Index: Default@ItemDefaultInfo
+  for (auto&& item1 : data_.item_map()) {
+    index_item_default_info_map_[item1.second.default_()].push_back(&item1.second);
+  }
   // Index: ExtType@ItemExtInfo
   for (auto&& item1 : data_.item_map()) {
     for (auto&& item2 : item1.second.ext_type_list()) {
@@ -60,9 +64,9 @@ bool ItemConf::ProcessAfterLoad() {
       index_item_path_name_map_[item2].push_back(&item1.second);
     }
   }
-  // Index: PathUserID@ItemPathUserID
+  // Index: PathFriendID@ItemPathFriendID
   for (auto&& item1 : data_.item_map()) {
-    index_item_path_user_id_map_[item1.second.path().user().id()].push_back(&item1.second);
+    index_item_path_friend_id_map_[item1.second.path().friend_().id()].push_back(&item1.second);
   }
   // Index: UseEffectType@UseEffectType
   for (auto&& item1 : data_.item_map()) {
@@ -115,6 +119,25 @@ const ItemConf::Index_ItemInfoVector* ItemConf::FindItemInfo(int32_t param) cons
 
 const protoconf::ItemConf::Item* ItemConf::FindFirstItemInfo(int32_t param) const {
   auto conf = FindItemInfo(param);
+  if (conf == nullptr || conf->size() == 0) {
+    return nullptr;
+  }
+  return (*conf)[0];
+}
+
+// Index: Default@ItemDefaultInfo
+const ItemConf::Index_ItemDefaultInfoMap& ItemConf::FindItemDefaultInfo() const { return index_item_default_info_map_ ;}
+
+const ItemConf::Index_ItemDefaultInfoVector* ItemConf::FindItemDefaultInfo(const std::string& default_) const {
+  auto iter = index_item_default_info_map_.find(default_);
+  if (iter == index_item_default_info_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::ItemConf::Item* ItemConf::FindFirstItemDefaultInfo(const std::string& default_) const {
+  auto conf = FindItemDefaultInfo(default_);
   if (conf == nullptr || conf->size() == 0) {
     return nullptr;
   }
@@ -216,19 +239,19 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItemPathName(const std::stri
   return (*conf)[0];
 }
 
-// Index: PathUserID@ItemPathUserID
-const ItemConf::Index_ItemPathUserIDMap& ItemConf::FindItemPathUserID() const { return index_item_path_user_id_map_ ;}
+// Index: PathFriendID@ItemPathFriendID
+const ItemConf::Index_ItemPathFriendIDMap& ItemConf::FindItemPathFriendID() const { return index_item_path_friend_id_map_ ;}
 
-const ItemConf::Index_ItemPathUserIDVector* ItemConf::FindItemPathUserID(uint32_t id) const {
-  auto iter = index_item_path_user_id_map_.find(id);
-  if (iter == index_item_path_user_id_map_.end()) {
+const ItemConf::Index_ItemPathFriendIDVector* ItemConf::FindItemPathFriendID(uint32_t id) const {
+  auto iter = index_item_path_friend_id_map_.find(id);
+  if (iter == index_item_path_friend_id_map_.end()) {
     return nullptr;
   }
   return &iter->second;
 }
 
-const protoconf::ItemConf::Item* ItemConf::FindFirstItemPathUserID(uint32_t id) const {
-  auto conf = FindItemPathUserID(id);
+const protoconf::ItemConf::Item* ItemConf::FindFirstItemPathFriendID(uint32_t id) const {
+  auto conf = FindItemPathFriendID(id);
   if (conf == nullptr || conf->size() == 0) {
     return nullptr;
   }

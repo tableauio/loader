@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	helper "github.com/tableauio/loader/internal/helper/go"
+	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -176,12 +176,7 @@ func genMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey, messag
 			getter := fmt.Sprintf("Get%v", depth)
 			g.P("// ", getter, " finds value in the ", depth, "-level map. It will return nil if")
 			g.P("// the deepest key is not found, otherwise return an error.")
-			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") (*", helper.FindMessageGoIdent(gen, fd.MapValue().Message()), ", error) {")
-			} else {
-				returnValType := helper.ParseGoType(gen, fd.MapValue())
-				g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") (", returnValType, ", error) {")
-			}
+			g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") (", addPointerForMessageField(fd.MapValue()), helper.ParseGoType(gen, fd.MapValue()), ", error) {")
 
 			returnEmptyValue := helper.GetTypeEmptyValue(fd.MapValue())
 
@@ -233,4 +228,11 @@ func getNextLevelMapFD(fd protoreflect.FieldDescriptor) protoreflect.FieldDescri
 		}
 	}
 	return nil
+}
+
+func addPointerForMessageField(fd protoreflect.FieldDescriptor) string {
+	if fd.Kind() == protoreflect.MessageKind {
+		return "*"
+	}
+	return ""
 }

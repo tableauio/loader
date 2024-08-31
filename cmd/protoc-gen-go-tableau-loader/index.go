@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/iancoleman/strcase"
-	helper "github.com/tableauio/loader/internal/helper/go"
+	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/index"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -20,8 +19,8 @@ func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md protore
 			field := descriptor.Fields[0] // just take first field
 			g.P("// Index: ", descriptor.Index)
 			mapType := fmt.Sprintf("%s_Index_%sMap", md.Name(), descriptor.Name)
-			keyType := field.GoType
-			g.P("type ", mapType, " = map[", keyType, "][]*", descriptor.GoIdent)
+			keyType := helper.ParseGoType(gen, field.FD)
+			g.P("type ", mapType, " = map[", keyType, "][]*", helper.FindMessageGoIdent(gen, descriptor.MD))
 		} else {
 			// multi-column index
 			g.P("// Index: ", descriptor.Index)
@@ -31,10 +30,10 @@ func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md protore
 			// generate key struct
 			g.P("type ", keyType, " struct {")
 			for _, field := range descriptor.Fields {
-				g.P(field.ScalarName.GoName, " ", field.GoType)
+				g.P(helper.ParseIndexFieldNameAsKeyStructFieldName(gen, field.FD), " ", helper.ParseGoType(gen, field.FD))
 			}
 			g.P("}")
-			g.P("type ", mapType, " = map[", keyType, "][]*", descriptor.GoIdent)
+			g.P("type ", mapType, " = map[", keyType, "][]*", helper.FindMessageGoIdent(gen, descriptor.MD))
 		}
 		g.P()
 	}
@@ -55,20 +54,20 @@ func genIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoref
 	for _, descriptor := range descriptors {
 		parentDataName := "x.data"
 		g.P("  // Index: ", descriptor.Index)
-		genOneIndexLoader(1, descriptor, parentDataName, descriptor.LevelMessage, g)
+		genOneIndexLoader(gen, 1, descriptor, parentDataName, descriptor.LevelMessage, g)
 	}
 }
 
-func genOneIndexLoader(depth int, descriptor *index.IndexDescriptor, parentDataName string, levelMessage *index.LevelMessage, g *protogen.GeneratedFile) {
+func genOneIndexLoader(gen *protogen.Plugin, depth int, descriptor *index.IndexDescriptor, parentDataName string, levelMessage *index.LevelMessage, g *protogen.GeneratedFile) {
 	if levelMessage == nil {
 		return
 	}
 	indexContainerName := "index" + strcase.ToCamel(descriptor.Name) + "Map"
 	if levelMessage.NextLevel != nil {
 		itemName := fmt.Sprintf("item%d", depth)
-		g.P("for _, ", itemName, " := range "+parentDataName+".Get"+levelMessage.FieldName.GoName+"() {")
+		g.P("for _, ", itemName, " := range "+parentDataName+".Get"+helper.ParseIndexFieldName(gen, levelMessage.FD)+"() {")
 		parentDataName = itemName
-		genOneIndexLoader(depth+1, descriptor, parentDataName, levelMessage.NextLevel, g)
+		genOneIndexLoader(gen, depth+1, descriptor, parentDataName, levelMessage.NextLevel, g)
 		g.P("}")
 	} else {
 		if len(levelMessage.Fields) == 1 {
@@ -77,8 +76,8 @@ func genOneIndexLoader(depth int, descriptor *index.IndexDescriptor, parentDataN
 			if field.Card == index.CardList {
 				itemName := fmt.Sprintf("item%d", depth)
 				fieldName := ""
-				for _, name := range field.Names {
-					fieldName += ".Get" + name.GoName + "()"
+				for _, leveledFd := range field.LeveledFDList {
+					fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
 				}
 				g.P("for _, ", itemName, " := range "+parentDataName+fieldName+" {")
 				key := itemName
@@ -86,8 +85,8 @@ func genOneIndexLoader(depth int, descriptor *index.IndexDescriptor, parentDataN
 				g.P("}")
 			} else {
 				fieldName := ""
-				for _, name := range field.Names {
-					fieldName += ".Get" + name.GoName + "()"
+				for _, leveledFd := range field.LeveledFDList {
+					fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
 				}
 				key := parentDataName + fieldName
 				g.P("x.", indexContainerName, "["+key+"] = append(x.", indexContainerName, "["+key+"], ", parentDataName, ")")
@@ -95,12 +94,12 @@ func genOneIndexLoader(depth int, descriptor *index.IndexDescriptor, parentDataN
 		} else {
 			// multi-column index
 			var keys []string
-			generateOneMulticolumnIndex(depth, parentDataName, descriptor, keys, g)
+			generateOneMulticolumnIndex(gen, depth, parentDataName, descriptor, keys, g)
 		}
 	}
 }
 
-func generateOneMulticolumnIndex(depth int, parentDataName string, descriptor *index.IndexDescriptor, keys []string, g *protogen.GeneratedFile) []string {
+func generateOneMulticolumnIndex(gen *protogen.Plugin, depth int, parentDataName string, descriptor *index.IndexDescriptor, keys []string, g *protogen.GeneratedFile) []string {
 	cursor := len(keys)
 	if cursor >= len(descriptor.Fields) {
 		var keyParams string
@@ -120,21 +119,21 @@ func generateOneMulticolumnIndex(depth int, parentDataName string, descriptor *i
 	if field.Card == index.CardList {
 		itemName := fmt.Sprintf("indexItem%d", cursor)
 		fieldName := ""
-		for _, name := range field.Names {
-			fieldName += ".Get" + name.GoName + "()"
+		for _, leveledFd := range field.LeveledFDList {
+			fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
 		}
 		g.P("for _, " + itemName + " := range " + parentDataName + fieldName + " {")
 		keys = append(keys, itemName)
-		keys = generateOneMulticolumnIndex(depth+1, parentDataName, descriptor, keys, g)
+		keys = generateOneMulticolumnIndex(gen, depth+1, parentDataName, descriptor, keys, g)
 		g.P("}")
 	} else {
 		fieldName := ""
-		for _, name := range field.Names {
-			fieldName += ".Get" + name.GoName + "()"
+		for _, leveledFd := range field.LeveledFDList {
+			fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
 		}
 		key := parentDataName + fieldName
 		keys = append(keys, key)
-		keys = generateOneMulticolumnIndex(depth, parentDataName, descriptor, keys, g)
+		keys = generateOneMulticolumnIndex(gen, depth, parentDataName, descriptor, keys, g)
 	}
 	return keys
 }
@@ -149,7 +148,7 @@ func genIndexFinders(gen *protogen.Plugin, messagerName string, g *protogen.Gene
 		g.P("// Index: ", descriptor.Index)
 		g.P()
 
-		g.P("// Find", descriptor.Name, "Map returns the index(", descriptor.Index, ") to value(", descriptor.GoIdent, ") map.")
+		g.P("// Find", descriptor.Name, "Map returns the index(", descriptor.Index, ") to value(", helper.FindMessageGoIdent(gen, descriptor.MD), ") map.")
 		g.P("// One key may correspond to multiple values, which are contained by a slice.")
 		g.P("func (x *", messagerName, ") Find", descriptor.Name, "Map() ", mapType, " {")
 		g.P("return x.", indexContainerName)
@@ -161,13 +160,8 @@ func genIndexFinders(gen *protogen.Plugin, messagerName string, g *protogen.Gene
 		if len(descriptor.Fields) == 1 {
 			// single-column index
 			field := descriptor.Fields[0] // just take first field
-			keyType = field.GoType
-			keyName = helper.EscapeIdentifier(func(s string) string {
-				if s == "" {
-					return s
-				}
-				return strings.ToLower(s[:1]) + s[1:]
-			}(field.ScalarName.GoName))
+			keyType = helper.ParseGoType(gen, field.FD)
+			keyName = helper.ParseIndexFieldNameAsFuncParam(gen, field.FD)
 		} else {
 			// multi-column index
 			keyType = fmt.Sprintf("%s_Index_%sKey", descriptor.LevelMessage.MD.Name(), descriptor.Name)
@@ -175,14 +169,14 @@ func genIndexFinders(gen *protogen.Plugin, messagerName string, g *protogen.Gene
 		}
 
 		g.P("// Find", descriptor.Name, " returns a slice of all values of the given key.")
-		g.P("func (x *", messagerName, ") Find", descriptor.Name, "(", keyName, " ", keyType, ") []*", descriptor.GoIdent, " {")
+		g.P("func (x *", messagerName, ") Find", descriptor.Name, "(", keyName, " ", keyType, ") []*", helper.FindMessageGoIdent(gen, descriptor.MD), " {")
 		g.P("return x.", indexContainerName, "[", keyName, "]")
 		g.P("}")
 		g.P()
 
 		g.P("// FindFirst", descriptor.Name, " returns the first value of the given key,")
 		g.P("// or nil if the key correspond to no value.")
-		g.P("func (x *", messagerName, ") FindFirst", descriptor.Name, "(", keyName, " ", keyType, ") *", descriptor.GoIdent, " {")
+		g.P("func (x *", messagerName, ") FindFirst", descriptor.Name, "(", keyName, " ", keyType, ") *", helper.FindMessageGoIdent(gen, descriptor.MD), " {")
 		g.P("val := x.", indexContainerName, "[", keyName, "]")
 		g.P("if len(val) > 0 {")
 		g.P("return val[0]")

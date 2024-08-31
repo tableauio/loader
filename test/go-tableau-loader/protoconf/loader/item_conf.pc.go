@@ -26,6 +26,9 @@ type ItemConf_Index_ItemMap = map[protoconf.FruitType][]*protoconf.ItemConf_Item
 // Index: Param@ItemInfo
 type ItemConf_Index_ItemInfoMap = map[int32][]*protoconf.ItemConf_Item
 
+// Index: Default@ItemDefaultInfo
+type ItemConf_Index_ItemDefaultInfoMap = map[string][]*protoconf.ItemConf_Item
+
 // Index: ExtType@ItemExtInfo
 type ItemConf_Index_ItemExtInfoMap = map[protoconf.FruitType][]*protoconf.ItemConf_Item
 
@@ -51,8 +54,8 @@ type ItemConf_Index_ItemPathDirMap = map[string][]*protoconf.ItemConf_Item
 // Index: PathName@ItemPathName
 type ItemConf_Index_ItemPathNameMap = map[string][]*protoconf.ItemConf_Item
 
-// Index: PathUserID@ItemPathUserID
-type ItemConf_Index_ItemPathUserIDMap = map[uint32][]*protoconf.ItemConf_Item
+// Index: PathFriendID@ItemPathFriendID
+type ItemConf_Index_ItemPathFriendIDMap = map[uint32][]*protoconf.ItemConf_Item
 
 // Index: UseEffectType@UseEffectType
 type ItemConf_Index_UseEffectTypeMap = map[protoconf.UseEffect_Type][]*protoconf.ItemConf_Item
@@ -66,17 +69,18 @@ type ItemConf_Index_UseEffectTypeMap = map[protoconf.UseEffect_Type][]*protoconf
 //  3. Extensibility: Map, OrdererdMap, Index...
 type ItemConf struct {
 	UnimplementedMessager
-	data                   protoconf.ItemConf
-	orderedMap             *ProtoconfItemConfItemMap_OrderedMap
-	indexItemMap           ItemConf_Index_ItemMap
-	indexItemInfoMap       ItemConf_Index_ItemInfoMap
-	indexItemExtInfoMap    ItemConf_Index_ItemExtInfoMap
-	indexAwardItemMap      ItemConf_Index_AwardItemMap
-	indexSpecialItemMap    ItemConf_Index_SpecialItemMap
-	indexItemPathDirMap    ItemConf_Index_ItemPathDirMap
-	indexItemPathNameMap   ItemConf_Index_ItemPathNameMap
-	indexItemPathUserIdMap ItemConf_Index_ItemPathUserIDMap
-	indexUseEffectTypeMap  ItemConf_Index_UseEffectTypeMap
+	data                     protoconf.ItemConf
+	orderedMap               *ProtoconfItemConfItemMap_OrderedMap
+	indexItemMap             ItemConf_Index_ItemMap
+	indexItemInfoMap         ItemConf_Index_ItemInfoMap
+	indexItemDefaultInfoMap  ItemConf_Index_ItemDefaultInfoMap
+	indexItemExtInfoMap      ItemConf_Index_ItemExtInfoMap
+	indexAwardItemMap        ItemConf_Index_AwardItemMap
+	indexSpecialItemMap      ItemConf_Index_SpecialItemMap
+	indexItemPathDirMap      ItemConf_Index_ItemPathDirMap
+	indexItemPathNameMap     ItemConf_Index_ItemPathNameMap
+	indexItemPathFriendIdMap ItemConf_Index_ItemPathFriendIDMap
+	indexUseEffectTypeMap    ItemConf_Index_UseEffectTypeMap
 }
 
 // Name returns the ItemConf's message name.
@@ -134,6 +138,10 @@ func (x *ItemConf) processAfterLoad() error {
 			x.indexItemInfoMap[item2] = append(x.indexItemInfoMap[item2], item1)
 		}
 	}
+	// Index: Default@ItemDefaultInfo
+	for _, item1 := range x.data.GetItemMap() {
+		x.indexItemDefaultInfoMap[item1.GetDefault()] = append(x.indexItemDefaultInfoMap[item1.GetDefault()], item1)
+	}
 	// Index: ExtType@ItemExtInfo
 	for _, item1 := range x.data.GetItemMap() {
 		for _, item2 := range item1.GetExtTypeList() {
@@ -164,9 +172,9 @@ func (x *ItemConf) processAfterLoad() error {
 			x.indexItemPathNameMap[item2] = append(x.indexItemPathNameMap[item2], item1)
 		}
 	}
-	// Index: PathUserID@ItemPathUserID
+	// Index: PathFriendID@ItemPathFriendID
 	for _, item1 := range x.data.GetItemMap() {
-		x.indexItemPathUserIdMap[item1.GetPath().GetUser().GetId()] = append(x.indexItemPathUserIdMap[item1.GetPath().GetUser().GetId()], item1)
+		x.indexItemPathFriendIdMap[item1.GetPath().GetFriend().GetId()] = append(x.indexItemPathFriendIdMap[item1.GetPath().GetFriend().GetId()], item1)
 	}
 	// Index: UseEffectType@UseEffectType
 	for _, item1 := range x.data.GetItemMap() {
@@ -234,6 +242,29 @@ func (x *ItemConf) FindItemInfo(param int32) []*protoconf.ItemConf_Item {
 // or nil if the key correspond to no value.
 func (x *ItemConf) FindFirstItemInfo(param int32) *protoconf.ItemConf_Item {
 	val := x.indexItemInfoMap[param]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: Default@ItemDefaultInfo
+
+// FindItemDefaultInfoMap returns the index(Default@ItemDefaultInfo) to value(protoconf.ItemConf_Item) map.
+// One key may correspond to multiple values, which are contained by a slice.
+func (x *ItemConf) FindItemDefaultInfoMap() ItemConf_Index_ItemDefaultInfoMap {
+	return x.indexItemDefaultInfoMap
+}
+
+// FindItemDefaultInfo returns a slice of all values of the given key.
+func (x *ItemConf) FindItemDefaultInfo(default_ string) []*protoconf.ItemConf_Item {
+	return x.indexItemDefaultInfoMap[default_]
+}
+
+// FindFirstItemDefaultInfo returns the first value of the given key,
+// or nil if the key correspond to no value.
+func (x *ItemConf) FindFirstItemDefaultInfo(default_ string) *protoconf.ItemConf_Item {
+	val := x.indexItemDefaultInfoMap[default_]
 	if len(val) > 0 {
 		return val[0]
 	}
@@ -355,23 +386,23 @@ func (x *ItemConf) FindFirstItemPathName(name string) *protoconf.ItemConf_Item {
 	return nil
 }
 
-// Index: PathUserID@ItemPathUserID
+// Index: PathFriendID@ItemPathFriendID
 
-// FindItemPathUserIDMap returns the index(PathUserID@ItemPathUserID) to value(protoconf.ItemConf_Item) map.
+// FindItemPathFriendIDMap returns the index(PathFriendID@ItemPathFriendID) to value(protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ItemConf) FindItemPathUserIDMap() ItemConf_Index_ItemPathUserIDMap {
-	return x.indexItemPathUserIdMap
+func (x *ItemConf) FindItemPathFriendIDMap() ItemConf_Index_ItemPathFriendIDMap {
+	return x.indexItemPathFriendIdMap
 }
 
-// FindItemPathUserID returns a slice of all values of the given key.
-func (x *ItemConf) FindItemPathUserID(id uint32) []*protoconf.ItemConf_Item {
-	return x.indexItemPathUserIdMap[id]
+// FindItemPathFriendID returns a slice of all values of the given key.
+func (x *ItemConf) FindItemPathFriendID(id uint32) []*protoconf.ItemConf_Item {
+	return x.indexItemPathFriendIdMap[id]
 }
 
-// FindFirstItemPathUserID returns the first value of the given key,
+// FindFirstItemPathFriendID returns the first value of the given key,
 // or nil if the key correspond to no value.
-func (x *ItemConf) FindFirstItemPathUserID(id uint32) *protoconf.ItemConf_Item {
-	val := x.indexItemPathUserIdMap[id]
+func (x *ItemConf) FindFirstItemPathFriendID(id uint32) *protoconf.ItemConf_Item {
+	val := x.indexItemPathFriendIdMap[id]
 	if len(val) > 0 {
 		return val[0]
 	}
