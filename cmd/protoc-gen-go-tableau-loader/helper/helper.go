@@ -47,7 +47,7 @@ func ParseIndexFieldNameAsFuncParam(gen *protogen.Plugin, fd protoreflect.FieldD
 	if fieldName == "" {
 		return fieldName
 	}
-	return EscapeIdentifier(strings.ToLower(fieldName[:1]) + fieldName[1:])
+	return escapeIdentifier(strings.ToLower(fieldName[:1]) + fieldName[1:])
 }
 
 // ParseGoType converts a FieldDescriptor to its Go type.
@@ -189,7 +189,7 @@ func AddMapKey(gen *protogen.Plugin, fd protoreflect.FieldDescriptor, keys []Map
 		valueFd := fd.MapValue().Message().Fields().Get(0)
 		name = string(valueFd.Name())
 	}
-	name = EscapeIdentifier(name)
+	name = escapeIdentifier(name)
 	if name == "" {
 		name = fmt.Sprintf("key%d", len(keys)+1)
 	} else {

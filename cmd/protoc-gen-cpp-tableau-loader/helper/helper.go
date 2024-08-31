@@ -51,14 +51,14 @@ func NeedGenOrderedMap(md protoreflect.MessageDescriptor) bool {
 }
 
 func ParseIndexFieldName(fd protoreflect.FieldDescriptor) string {
-	return EscapeIdentifier(string(fd.Name()))
+	return escapeIdentifier(string(fd.Name()))
 }
 
 func ParseIndexFieldNameAsKeyStructFieldName(fd protoreflect.FieldDescriptor) string {
 	if fd.IsList() {
 		opts := fd.Options().(*descriptorpb.FieldOptions)
 		fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
-		return EscapeIdentifier(strcase.ToSnake(fdOpts.GetName()))
+		return escapeIdentifier(strcase.ToSnake(fdOpts.GetName()))
 	}
 	return ParseIndexFieldName(fd)
 }
@@ -123,7 +123,7 @@ func AddMapKey(fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
 		valueFd := fd.MapValue().Message().Fields().Get(0)
 		name = string(valueFd.Name())
 	}
-	name = EscapeIdentifier(name)
+	name = escapeIdentifier(name)
 	if name == "" {
 		name = fmt.Sprintf("key%d", len(keys)+1)
 	} else {

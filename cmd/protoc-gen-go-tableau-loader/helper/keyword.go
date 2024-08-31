@@ -9,7 +9,7 @@ import (
 
 var golangKeywords map[string]bool
 
-func EscapeIdentifier(str string) string {
+func escapeIdentifier(str string) string {
 	// Filter invalid runes
 	var result strings.Builder
 	for _, r := range str {
