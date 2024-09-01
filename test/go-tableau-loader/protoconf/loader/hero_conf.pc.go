@@ -7,8 +7,8 @@
 package loader
 
 import (
+	treemap "github.com/emirpasic/gods/v2/maps/treemap"
 	pair "github.com/tableauio/loader/pkg/pair"
-	treemap "github.com/tableauio/loader/pkg/treemap"
 	protoconf "github.com/tableauio/loader/test/go-tableau-loader/protoconf"
 	base "github.com/tableauio/loader/test/go-tableau-loader/protoconf/base"
 	code "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
@@ -19,10 +19,10 @@ import (
 )
 
 // OrderedMap types.
-type ProtoconfHeroConfHeroAttrMap_OrderedMap = treemap.TreeMap[string, *protoconf.HeroConf_Hero_Attr]
+type ProtoconfHeroConfHeroAttrMap_OrderedMap = treemap.Map[string, *protoconf.HeroConf_Hero_Attr]
 
 type ProtoconfHeroConfHeroMap_OrderedMapValue = pair.Pair[*ProtoconfHeroConfHeroAttrMap_OrderedMap, *protoconf.HeroConf_Hero]
-type ProtoconfHeroConfHeroMap_OrderedMap = treemap.TreeMap[string, *ProtoconfHeroConfHeroMap_OrderedMapValue]
+type ProtoconfHeroConfHeroMap_OrderedMap = treemap.Map[string, *ProtoconfHeroConfHeroMap_OrderedMapValue]
 
 // HeroConf is a wrapper around protobuf message: protoconf.HeroConf.
 //
@@ -142,10 +142,10 @@ func (x *HeroConf) GetOrderedMap1(name string) (*ProtoconfHeroConfHeroAttrMap_Or
 }
 
 // OrderedMap types.
-type BaseHeroItemMap_OrderedMap = treemap.TreeMap[string, *base.Item]
+type BaseHeroItemMap_OrderedMap = treemap.Map[string, *base.Item]
 
 type ProtoconfHeroBaseConfHeroMap_OrderedMapValue = pair.Pair[*BaseHeroItemMap_OrderedMap, *base.Hero]
-type ProtoconfHeroBaseConfHeroMap_OrderedMap = treemap.TreeMap[string, *ProtoconfHeroBaseConfHeroMap_OrderedMapValue]
+type ProtoconfHeroBaseConfHeroMap_OrderedMap = treemap.Map[string, *ProtoconfHeroBaseConfHeroMap_OrderedMapValue]
 
 // HeroBaseConf is a wrapper around protobuf message: protoconf.HeroBaseConf.
 //

@@ -7,7 +7,7 @@
 package loader
 
 import (
-	treemap "github.com/tableauio/loader/pkg/treemap"
+	treemap "github.com/emirpasic/gods/v2/maps/treemap"
 	protoconf "github.com/tableauio/loader/test/go-tableau-loader/protoconf"
 	code "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
 	xerrors "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
@@ -17,7 +17,7 @@ import (
 )
 
 // OrderedMap types.
-type ProtoconfItemConfItemMap_OrderedMap = treemap.TreeMap[uint32, *protoconf.ItemConf_Item]
+type ProtoconfItemConfItemMap_OrderedMap = treemap.Map[uint32, *protoconf.ItemConf_Item]
 
 // ItemConf is a wrapper around protobuf message: protoconf.ItemConf.
 //

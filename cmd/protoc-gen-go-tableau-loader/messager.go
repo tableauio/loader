@@ -19,7 +19,7 @@ const (
 	loadPackage    = protogen.GoImportPath("github.com/tableauio/tableau/load")
 	storePackage   = protogen.GoImportPath("github.com/tableauio/tableau/store")
 	errors         = protogen.GoImportPath("github.com/pkg/errors")
-	treeMapPackage = protogen.GoImportPath("github.com/tableauio/loader/pkg/treemap")
+	treeMapPackage = protogen.GoImportPath("github.com/emirpasic/gods/v2/maps/treemap")
 	pairPackage    = protogen.GoImportPath("github.com/tableauio/loader/pkg/pair")
 )
 
@@ -356,14 +356,14 @@ func genOrderedMapTypeDef(gen *protogen.Plugin, depth int, keys []helper.MapKey,
 					nextPrefix := parseOrderedMapPrefix(nextMapFD)
 					nextOrderedMap := nextPrefix + orderedMapSuffix
 					g.P("  type ", orderedMapValue, "= ", pairPackage.Ident("Pair"), "[*", nextOrderedMap, ", *", currValueType, "];")
-					g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", *", orderedMapValue, "]")
+					g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("Map"), "[", keyType, ", *", orderedMapValue, "]")
 					g.P()
 				} else {
 					orderedMapValue := helper.ParseGoType(gen, fd.MapValue())
 					if fd.MapValue().Kind() == protoreflect.MessageKind {
-						g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", *", helper.FindMessageGoIdent(gen, fd.MapValue().Message()), "]")
+						g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("Map"), "[", keyType, ", *", helper.FindMessageGoIdent(gen, fd.MapValue().Message()), "]")
 					} else {
-						g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", ", orderedMapValue, "]")
+						g.P("  type ", orderedMap, "= ", treeMapPackage.Ident("Map"), "[", keyType, ", ", orderedMapValue, "]")
 					}
 					g.P()
 				}
@@ -413,8 +413,7 @@ func genOrderedMapLoader(gen *protogen.Plugin, depth int, keys []helper.MapKey, 
 				} else {
 					g.P("x.orderedMap = ", treeMapPackage.Ident("New"), "[", keyType, ", *", orderedMapValue, "]()")
 				}
-			}
-			if depth != 1 {
+			} else {
 				mapName = fmt.Sprintf("v%d.Get%s()", depth-1, field.GoName)
 				keyName := fmt.Sprintf("k%d", depth-1)
 				if needConvertBool {
