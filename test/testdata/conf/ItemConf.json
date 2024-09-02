@@ -8,7 +8,9 @@
             "name": "apple",
             "path": {
                 "dir": "/home/protoconf/",
-                "name": "icon.png"
+                "nameList": [
+                    "icon.png"
+                ]
             },
             "expiry": "2021-01-01T18:00:00Z",
             "type": "FRUIT_TYPE_APPLE",
@@ -22,7 +24,9 @@
             "name": "orange",
             "path": {
                 "dir": "/home/protoconf/",
-                "name": "icon.png"
+                "nameList": [
+                    "icon.png"
+                ]
             },
             "expiry": "2022-01-01T08:00:00Z",
             "type": "FRUIT_TYPE_ORANGE"
@@ -32,7 +36,9 @@
             "name": "coin3",
             "path": {
                 "dir": "/home/protoconf/",
-                "name": "icon.png"
+                "nameList": [
+                    "icon.png"
+                ]
             },
             "expiry": "2023-01-01T08:00:00Z"
         },
@@ -41,7 +47,9 @@
             "name": "coin2001",
             "path": {
                 "dir": "/home/protoconf/",
-                "name": "icon.png"
+                "nameList": [
+                    "icon.png"
+                ]
             },
             "expiry": "2024-01-01T08:00:00Z"
         },
@@ -50,7 +58,9 @@
             "name": "coin2002",
             "path": {
                 "dir": "/home/protoconf/",
-                "name": "icon.png"
+                "nameList": [
+                    "icon.png"
+                ]
             },
             "expiry": "2024-01-01T08:00:00Z"
         },
@@ -59,7 +69,9 @@
             "name": "coin2003",
             "path": {
                 "dir": "/home/protoconf/",
-                "name": "icon.png"
+                "nameList": [
+                    "icon.png"
+                ]
             },
             "expiry": "2024-01-01T08:00:00Z"
         }

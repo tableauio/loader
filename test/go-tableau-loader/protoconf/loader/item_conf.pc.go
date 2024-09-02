@@ -181,7 +181,7 @@ func (x *ItemConf) processAfterLoad() error {
 	// Index: PathName@ItemPathName
 	x.indexItemPathNameMap = make(ItemConf_Index_ItemPathNameMap)
 	for _, item1 := range x.data.GetItemMap() {
-		for _, item2 := range item1.GetPath().GetName() {
+		for _, item2 := range item1.GetPath().GetNameList() {
 			key := item2
 			x.indexItemPathNameMap[key] = append(x.indexItemPathNameMap[key], item1)
 		}

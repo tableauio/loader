@@ -236,17 +236,18 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
       break;
     }
     case tableau::PATCH_MERGE: {
-      // Create a new instance of the same type as the original message
-      google::protobuf::Message& patch_msg = *(msg.New());
+      // Create a new instance of the same type of the original message
+      google::protobuf::Message* patch_msg_ptr = msg.New();
+      std::unique_ptr<google::protobuf::Message> _auto_release(patch_msg_ptr);
       // load msg from the "main" file
       if (!LoadMessageByPath(msg, path, fmt, options)) {
         return false;
       }
       // load patch_msg from the "patch" file
-      if (!LoadMessageByPath(patch_msg, patch_path, patch_fmt, options)) {
+      if (!LoadMessageByPath(*patch_msg_ptr, patch_path, patch_fmt, options)) {
         return false;
       }
-      ok = MergeMessage(msg, patch_msg);
+      ok = MergeMessage(msg, *patch_msg_ptr);
       break;
     }
     default: {

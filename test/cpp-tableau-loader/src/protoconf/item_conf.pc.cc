@@ -60,7 +60,7 @@ bool ItemConf::ProcessAfterLoad() {
   }
   // Index: PathName@ItemPathName
   for (auto&& item1 : data_.item_map()) {
-    for (auto&& item2 : item1.second.path().name()) {
+    for (auto&& item2 : item1.second.path().name_list()) {
       index_item_path_name_map_[item2].push_back(&item1.second);
     }
   }
