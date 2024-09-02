@@ -18,7 +18,7 @@ message ItemConf {
     ordered_map: true
     index: "Type"
     index: "Param@ItemInfo"
-    index: "Default@ItemDefaultInfo"
+    index: "Default@ItemDefaultInfo"  // For testing programming language keyword conflicts
     index: "ExtType@ItemExtInfo"
     index: "(ID,Name)@AwardItem"
     index: "(ID,Type,Param,ExtType)@SpecialItem"

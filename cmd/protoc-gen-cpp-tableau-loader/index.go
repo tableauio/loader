@@ -108,7 +108,7 @@ func genOneCppIndexLoader(depth int, descriptor *index.IndexDescriptor, parentDa
 		g.P(strings.Repeat("  ", depth), "for (auto&& "+itemName+" : "+parentDataName+"."+helper.ParseIndexFieldName(levelMessage.FD)+"()) {")
 
 		parentDataName = itemName
-		if levelMessage.FieldCard == index.CardMap {
+		if levelMessage.FD.IsMap() {
 			parentDataName = itemName + ".second"
 		}
 		genOneCppIndexLoader(depth+1, descriptor, parentDataName, levelMessage.NextLevel, g)
@@ -117,7 +117,7 @@ func genOneCppIndexLoader(depth int, descriptor *index.IndexDescriptor, parentDa
 		if len(levelMessage.Fields) == 1 {
 			// single-column index
 			field := levelMessage.Fields[0] // just take the first field
-			if field.Card == index.CardList {
+			if field.FD.IsList() {
 				itemName := fmt.Sprintf("item%d", depth)
 				fieldName := ""
 				for _, leveledFd := range field.LeveledFDList {
@@ -163,7 +163,7 @@ func generateOneCppMulticolumnIndex(depth int, parentDataName string, descriptor
 		return keys
 	}
 	field := descriptor.Fields[cursor]
-	if field.Card == index.CardList {
+	if field.FD.IsList() {
 		itemName := fmt.Sprintf("index_item%d", cursor)
 		fieldName := ""
 		for _, leveledFd := range field.LeveledFDList {

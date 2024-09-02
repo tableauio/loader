@@ -28,6 +28,7 @@ func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md protore
 			mapType := fmt.Sprintf("%s_Index_%sMap", md.Name(), descriptor.Name)
 
 			// generate key struct
+			// KeyType must be comparable, refer https://go.dev/blog/maps
 			g.P("type ", keyType, " struct {")
 			for _, field := range descriptor.Fields {
 				g.P(helper.ParseIndexFieldNameAsKeyStructFieldName(gen, field.FD), " ", helper.ParseGoType(gen, field.FD))
@@ -73,23 +74,23 @@ func genOneIndexLoader(gen *protogen.Plugin, depth int, descriptor *index.IndexD
 		if len(levelMessage.Fields) == 1 {
 			// single-column index
 			field := levelMessage.Fields[0] // just take the first field
-			if field.Card == index.CardList {
+			if field.FD.IsList() {
 				itemName := fmt.Sprintf("item%d", depth)
 				fieldName := ""
 				for _, leveledFd := range field.LeveledFDList {
 					fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
 				}
 				g.P("for _, ", itemName, " := range "+parentDataName+fieldName+" {")
-				key := itemName
-				g.P("x.", indexContainerName, "["+key+"] = append(x.", indexContainerName, "["+key+"], ", parentDataName, ")")
+				g.P("key := ", itemName)
+				g.P("x.", indexContainerName, "[key] = append(x.", indexContainerName, "[key], ", parentDataName, ")")
 				g.P("}")
 			} else {
 				fieldName := ""
 				for _, leveledFd := range field.LeveledFDList {
 					fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
 				}
-				key := parentDataName + fieldName
-				g.P("x.", indexContainerName, "["+key+"] = append(x.", indexContainerName, "["+key+"], ", parentDataName, ")")
+				g.P("key := ", parentDataName+fieldName)
+				g.P("x.", indexContainerName, "[key] = append(x.", indexContainerName, "[key], ", parentDataName, ")")
 			}
 		} else {
 			// multi-column index
@@ -109,14 +110,14 @@ func generateOneMulticolumnIndex(gen *protogen.Plugin, depth int, parentDataName
 				keyParams += ", "
 			}
 		}
-		keyType := fmt.Sprintf("%s_Index_%sKey", descriptor.LevelMessage.MD.Name(), descriptor.Name)
+		keyType := fmt.Sprintf("%s_Index_%sKey", descriptor.LevelMessage.FD.ContainingMessage().Name(), descriptor.Name)
 		indexContainerName := "index" + strcase.ToCamel(descriptor.Name) + "Map"
 		g.P("key := ", keyType, " {", keyParams, "}")
 		g.P("x.", indexContainerName, "[key] = append(x.", indexContainerName, "[key], ", parentDataName, ")")
 		return keys
 	}
 	field := descriptor.Fields[cursor]
-	if field.Card == index.CardList {
+	if field.FD.IsList() {
 		itemName := fmt.Sprintf("indexItem%d", cursor)
 		fieldName := ""
 		for _, leveledFd := range field.LeveledFDList {
@@ -164,7 +165,7 @@ func genIndexFinders(gen *protogen.Plugin, messagerName string, g *protogen.Gene
 			keyName = helper.ParseIndexFieldNameAsFuncParam(gen, field.FD)
 		} else {
 			// multi-column index
-			keyType = fmt.Sprintf("%s_Index_%sKey", descriptor.LevelMessage.MD.Name(), descriptor.Name)
+			keyType = fmt.Sprintf("%s_Index_%sKey", descriptor.LevelMessage.FD.ContainingMessage().Name(), descriptor.Name)
 			keyName = "key"
 		}
 

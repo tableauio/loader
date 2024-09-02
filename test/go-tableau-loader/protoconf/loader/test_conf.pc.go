@@ -123,20 +123,22 @@ func (x *ActivityConf) processAfterLoad() error {
 	// Index: ChapterID
 	for _, item1 := range x.data.GetActivityMap() {
 		for _, item2 := range item1.GetChapterMap() {
-			x.indexChapterMap[item2.GetChapterId()] = append(x.indexChapterMap[item2.GetChapterId()], item2)
+			key := item2.GetChapterId()
+			x.indexChapterMap[key] = append(x.indexChapterMap[key], item2)
 		}
 	}
 	// Index: ChapterName@NamedChapter
 	for _, item1 := range x.data.GetActivityMap() {
 		for _, item2 := range item1.GetChapterMap() {
-			x.indexNamedChapterMap[item2.GetChapterName()] = append(x.indexNamedChapterMap[item2.GetChapterName()], item2)
+			key := item2.GetChapterName()
+			x.indexNamedChapterMap[key] = append(x.indexNamedChapterMap[key], item2)
 		}
 	}
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return error
-// if the key is not found.
+// Get1 finds value in the 1-level map. It will return
+// NotFound error if the key is not found.
 func (x *ActivityConf) Get1(activityId uint64) (*protoconf.ActivityConf_Activity, error) {
 	d := x.Data().GetActivityMap()
 	if val, ok := d[activityId]; !ok {
@@ -146,8 +148,8 @@ func (x *ActivityConf) Get1(activityId uint64) (*protoconf.ActivityConf_Activity
 	}
 }
 
-// Get2 finds value in the 2-level map. It will return error
-// if the key is not found.
+// Get2 finds value in the 2-level map. It will return
+// NotFound error if the key is not found.
 func (x *ActivityConf) Get2(activityId uint64, chapterId uint32) (*protoconf.ActivityConf_Activity_Chapter, error) {
 	conf, err := x.Get1(activityId)
 	if err != nil {
@@ -161,8 +163,8 @@ func (x *ActivityConf) Get2(activityId uint64, chapterId uint32) (*protoconf.Act
 	}
 }
 
-// Get3 finds value in the 3-level map. It will return error
-// if the key is not found.
+// Get3 finds value in the 3-level map. It will return
+// NotFound error if the key is not found.
 func (x *ActivityConf) Get3(activityId uint64, chapterId uint32, sectionId uint32) (*protoconf.Section, error) {
 	conf, err := x.Get2(activityId, chapterId)
 	if err != nil {
@@ -176,8 +178,8 @@ func (x *ActivityConf) Get3(activityId uint64, chapterId uint32, sectionId uint3
 	}
 }
 
-// Get4 finds value in the 4-level map. It will return error
-// if the key is not found.
+// Get4 finds value in the 4-level map. It will return
+// NotFound error if the key is not found.
 func (x *ActivityConf) Get4(activityId uint64, chapterId uint32, sectionId uint32, key4 uint32) (int32, error) {
 	conf, err := x.Get3(activityId, chapterId, sectionId)
 	if err != nil {
@@ -196,8 +198,8 @@ func (x *ActivityConf) GetOrderedMap() *ProtoconfActivityConfActivityMap_Ordered
 	return x.orderedMap
 }
 
-// GetOrderedMap1 finds value in the 1-level ordered map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// GetOrderedMap1 finds value in the 1-level ordered map. It will return
+// NotFound error if the key is not found.
 func (x *ActivityConf) GetOrderedMap1(activityId uint64) (*ProtoconfActivityConfActivityChapterMap_OrderedMap, error) {
 	conf := x.orderedMap
 	if val, ok := conf.Get(activityId); !ok {
@@ -207,8 +209,8 @@ func (x *ActivityConf) GetOrderedMap1(activityId uint64) (*ProtoconfActivityConf
 	}
 }
 
-// GetOrderedMap2 finds value in the 2-level ordered map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// GetOrderedMap2 finds value in the 2-level ordered map. It will return
+// NotFound error if the key is not found.
 func (x *ActivityConf) GetOrderedMap2(activityId uint64, chapterId uint32) (*ProtoconfActivityConfActivityChapterSectionMap_OrderedMap, error) {
 	conf, err := x.GetOrderedMap1(activityId)
 	if err != nil {
@@ -221,8 +223,8 @@ func (x *ActivityConf) GetOrderedMap2(activityId uint64, chapterId uint32) (*Pro
 	}
 }
 
-// GetOrderedMap3 finds value in the 3-level ordered map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// GetOrderedMap3 finds value in the 3-level ordered map. It will return
+// NotFound error if the key is not found.
 func (x *ActivityConf) GetOrderedMap3(activityId uint64, chapterId uint32, sectionId uint32) (*ProtoconfSectionSectionRankMap_OrderedMap, error) {
 	conf, err := x.GetOrderedMap2(activityId, chapterId)
 	if err != nil {
@@ -329,8 +331,8 @@ func (x *ChapterConf) Messager() Messager {
 	return x
 }
 
-// Get1 finds value in the 1-level map. It will return error
-// if the key is not found.
+// Get1 finds value in the 1-level map. It will return
+// NotFound error if the key is not found.
 func (x *ChapterConf) Get1(id uint64) (*protoconf.ChapterConf_Chapter, error) {
 	d := x.Data().GetChapterMap()
 	if val, ok := d[id]; !ok {
@@ -388,8 +390,8 @@ func (x *ThemeConf) Messager() Messager {
 	return x
 }
 
-// Get1 finds value in the 1-level map. It will return error
-// if the key is not found.
+// Get1 finds value in the 1-level map. It will return
+// NotFound error if the key is not found.
 func (x *ThemeConf) Get1(name string) (*protoconf.ThemeConf_Theme, error) {
 	d := x.Data().GetThemeMap()
 	if val, ok := d[name]; !ok {

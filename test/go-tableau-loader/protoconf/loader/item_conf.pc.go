@@ -130,22 +130,26 @@ func (x *ItemConf) processAfterLoad() error {
 	// Index init.
 	// Index: Type
 	for _, item1 := range x.data.GetItemMap() {
-		x.indexItemMap[item1.GetType()] = append(x.indexItemMap[item1.GetType()], item1)
+		key := item1.GetType()
+		x.indexItemMap[key] = append(x.indexItemMap[key], item1)
 	}
 	// Index: Param@ItemInfo
 	for _, item1 := range x.data.GetItemMap() {
 		for _, item2 := range item1.GetParamList() {
-			x.indexItemInfoMap[item2] = append(x.indexItemInfoMap[item2], item1)
+			key := item2
+			x.indexItemInfoMap[key] = append(x.indexItemInfoMap[key], item1)
 		}
 	}
 	// Index: Default@ItemDefaultInfo
 	for _, item1 := range x.data.GetItemMap() {
-		x.indexItemDefaultInfoMap[item1.GetDefault()] = append(x.indexItemDefaultInfoMap[item1.GetDefault()], item1)
+		key := item1.GetDefault()
+		x.indexItemDefaultInfoMap[key] = append(x.indexItemDefaultInfoMap[key], item1)
 	}
 	// Index: ExtType@ItemExtInfo
 	for _, item1 := range x.data.GetItemMap() {
 		for _, item2 := range item1.GetExtTypeList() {
-			x.indexItemExtInfoMap[item2] = append(x.indexItemExtInfoMap[item2], item1)
+			key := item2
+			x.indexItemExtInfoMap[key] = append(x.indexItemExtInfoMap[key], item1)
 		}
 	}
 	// Index: (ID,Name)@AwardItem
@@ -164,27 +168,31 @@ func (x *ItemConf) processAfterLoad() error {
 	}
 	// Index: PathDir@ItemPathDir
 	for _, item1 := range x.data.GetItemMap() {
-		x.indexItemPathDirMap[item1.GetPath().GetDir()] = append(x.indexItemPathDirMap[item1.GetPath().GetDir()], item1)
+		key := item1.GetPath().GetDir()
+		x.indexItemPathDirMap[key] = append(x.indexItemPathDirMap[key], item1)
 	}
 	// Index: PathName@ItemPathName
 	for _, item1 := range x.data.GetItemMap() {
 		for _, item2 := range item1.GetPath().GetName() {
-			x.indexItemPathNameMap[item2] = append(x.indexItemPathNameMap[item2], item1)
+			key := item2
+			x.indexItemPathNameMap[key] = append(x.indexItemPathNameMap[key], item1)
 		}
 	}
 	// Index: PathFriendID@ItemPathFriendID
 	for _, item1 := range x.data.GetItemMap() {
-		x.indexItemPathFriendIdMap[item1.GetPath().GetFriend().GetId()] = append(x.indexItemPathFriendIdMap[item1.GetPath().GetFriend().GetId()], item1)
+		key := item1.GetPath().GetFriend().GetId()
+		x.indexItemPathFriendIdMap[key] = append(x.indexItemPathFriendIdMap[key], item1)
 	}
 	// Index: UseEffectType@UseEffectType
 	for _, item1 := range x.data.GetItemMap() {
-		x.indexUseEffectTypeMap[item1.GetUseEffect().GetType()] = append(x.indexUseEffectTypeMap[item1.GetUseEffect().GetType()], item1)
+		key := item1.GetUseEffect().GetType()
+		x.indexUseEffectTypeMap[key] = append(x.indexUseEffectTypeMap[key], item1)
 	}
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return error
-// if the key is not found.
+// Get1 finds value in the 1-level map. It will return
+// NotFound error if the key is not found.
 func (x *ItemConf) Get1(id uint32) (*protoconf.ItemConf_Item, error) {
 	d := x.Data().GetItemMap()
 	if val, ok := d[id]; !ok {

@@ -98,14 +98,15 @@ func (x *HeroConf) processAfterLoad() error {
 	// Index: Title
 	for _, item1 := range x.data.GetHeroMap() {
 		for _, item2 := range item1.GetAttrMap() {
-			x.indexAttrMap[item2.GetTitle()] = append(x.indexAttrMap[item2.GetTitle()], item2)
+			key := item2.GetTitle()
+			x.indexAttrMap[key] = append(x.indexAttrMap[key], item2)
 		}
 	}
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return error
-// if the key is not found.
+// Get1 finds value in the 1-level map. It will return
+// NotFound error if the key is not found.
 func (x *HeroConf) Get1(name string) (*protoconf.HeroConf_Hero, error) {
 	d := x.Data().GetHeroMap()
 	if val, ok := d[name]; !ok {
@@ -115,8 +116,8 @@ func (x *HeroConf) Get1(name string) (*protoconf.HeroConf_Hero, error) {
 	}
 }
 
-// Get2 finds value in the 2-level map. It will return error
-// if the key is not found.
+// Get2 finds value in the 2-level map. It will return
+// NotFound error if the key is not found.
 func (x *HeroConf) Get2(name string, title string) (*protoconf.HeroConf_Hero_Attr, error) {
 	conf, err := x.Get1(name)
 	if err != nil {
@@ -135,8 +136,8 @@ func (x *HeroConf) GetOrderedMap() *ProtoconfHeroConfHeroMap_OrderedMap {
 	return x.orderedMap
 }
 
-// GetOrderedMap1 finds value in the 1-level ordered map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// GetOrderedMap1 finds value in the 1-level ordered map. It will return
+// NotFound error if the key is not found.
 func (x *HeroConf) GetOrderedMap1(name string) (*ProtoconfHeroConfHeroAttrMap_OrderedMap, error) {
 	conf := x.orderedMap
 	if val, ok := conf.Get(name); !ok {
@@ -243,8 +244,8 @@ func (x *HeroBaseConf) processAfterLoad() error {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return error
-// if the key is not found.
+// Get1 finds value in the 1-level map. It will return
+// NotFound error if the key is not found.
 func (x *HeroBaseConf) Get1(name string) (*base.Hero, error) {
 	d := x.Data().GetHeroMap()
 	if val, ok := d[name]; !ok {
@@ -254,8 +255,8 @@ func (x *HeroBaseConf) Get1(name string) (*base.Hero, error) {
 	}
 }
 
-// Get2 finds value in the 2-level map. It will return error
-// if the key is not found.
+// Get2 finds value in the 2-level map. It will return
+// NotFound error if the key is not found.
 func (x *HeroBaseConf) Get2(name string, id string) (*base.Item, error) {
 	conf, err := x.Get1(name)
 	if err != nil {
@@ -274,8 +275,8 @@ func (x *HeroBaseConf) GetOrderedMap() *ProtoconfHeroBaseConfHeroMap_OrderedMap 
 	return x.orderedMap
 }
 
-// GetOrderedMap1 finds value in the 1-level ordered map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// GetOrderedMap1 finds value in the 1-level ordered map. It will return
+// NotFound error if the key is not found.
 func (x *HeroBaseConf) GetOrderedMap1(name string) (*BaseHeroItemMap_OrderedMap, error) {
 	conf := x.orderedMap
 	if val, ok := conf.Get(name); !ok {

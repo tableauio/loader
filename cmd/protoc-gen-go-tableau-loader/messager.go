@@ -174,8 +174,8 @@ func genMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey, messag
 		if field.Desc.IsMap() {
 			keys = helper.AddMapKey(gen, fd, keys)
 			getter := fmt.Sprintf("Get%v", depth)
-			g.P("// ", getter, " finds value in the ", depth, "-level map. It will return error")
-			g.P("// if the key is not found.")
+			g.P("// ", getter, " finds value in the ", depth, "-level map. It will return")
+			g.P("// NotFound error if the key is not found.")
 			g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") (", parseMapValueType(gen, g, fd), ", error) {")
 
 			returnEmptyValue := helper.GetTypeEmptyValue(fd.MapValue())

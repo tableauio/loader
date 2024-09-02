@@ -175,8 +175,8 @@ func genOrderedMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey,
 				g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") *", orderedMap, "{")
 				g.P("  return x.orderedMap ")
 			} else {
-				g.P("// ", getter, " finds value in the ", depth-1, "-level ordered map. It will return nil if")
-				g.P("// the deepest key is not found, otherwise return an error.")
+				g.P("// ", getter, " finds value in the ", depth-1, "-level ordered map. It will return")
+				g.P("// NotFound error if the key is not found.")
 				g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") (*", orderedMap, ", error) {")
 				if depth == 2 {
 					g.P("conf := x.orderedMap")
