@@ -7,25 +7,23 @@ import (
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/index"
 	"google.golang.org/protobuf/compiler/protogen"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
+func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptors []*index.IndexDescriptor, messagerName string) {
 	g.P("// Index types.")
-	descriptors := index.ParseIndexDescriptor(gen, md)
 	for _, descriptor := range descriptors {
 		if len(descriptor.Fields) == 1 {
 			// single-column index
 			field := descriptor.Fields[0] // just take first field
 			g.P("// Index: ", descriptor.Index)
-			mapType := fmt.Sprintf("%s_Index_%sMap", md.Name(), descriptor.Name)
+			mapType := fmt.Sprintf("%s_Index_%sMap", messagerName, descriptor.Name)
 			keyType := helper.ParseGoType(gen, field.FD)
 			g.P("type ", mapType, " = map[", keyType, "][]*", helper.FindMessageGoIdent(gen, descriptor.MD))
 		} else {
 			// multi-column index
 			g.P("// Index: ", descriptor.Index)
-			keyType := fmt.Sprintf("%s_Index_%sKey", md.Name(), descriptor.Name)
-			mapType := fmt.Sprintf("%s_Index_%sMap", md.Name(), descriptor.Name)
+			keyType := fmt.Sprintf("%s_Index_%sKey", messagerName, descriptor.Name)
+			mapType := fmt.Sprintf("%s_Index_%sMap", messagerName, descriptor.Name)
 
 			// generate key struct
 			// KeyType must be comparable, refer https://go.dev/blog/maps
@@ -40,35 +38,37 @@ func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md protore
 	}
 }
 
-func genIndexField(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
-	descriptors := index.ParseIndexDescriptor(gen, md)
+func genIndexField(g *protogen.GeneratedFile, descriptors []*index.IndexDescriptor, messagerName string) {
 	for _, descriptor := range descriptors {
 		indexContainerName := "index" + strcase.ToCamel(descriptor.Name) + "Map"
-		mapType := fmt.Sprintf("%s_Index_%sMap", md.Name(), descriptor.Name)
+		mapType := fmt.Sprintf("%s_Index_%sMap", messagerName, descriptor.Name)
 		g.P(indexContainerName, " ", mapType)
 	}
 }
 
-func genIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
+func genIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptors []*index.IndexDescriptor, messagerName string) {
 	g.P("  // Index init.")
-	descriptors := index.ParseIndexDescriptor(gen, md)
 	for _, descriptor := range descriptors {
 		parentDataName := "x.data"
 		g.P("  // Index: ", descriptor.Index)
-		genOneIndexLoader(gen, 1, descriptor, parentDataName, descriptor.LevelMessage, g)
+		genOneIndexLoader(gen, g, 1, descriptor, parentDataName, descriptor.LevelMessage, messagerName)
 	}
 }
 
-func genOneIndexLoader(gen *protogen.Plugin, depth int, descriptor *index.IndexDescriptor, parentDataName string, levelMessage *index.LevelMessage, g *protogen.GeneratedFile) {
+func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth int, descriptor *index.IndexDescriptor,
+	parentDataName string, levelMessage *index.LevelMessage, messagerName string) {
 	if levelMessage == nil {
 		return
 	}
 	indexContainerName := "index" + strcase.ToCamel(descriptor.Name) + "Map"
+	if depth == 1 {
+		g.P("x.", indexContainerName, " = make(", fmt.Sprintf("%s_Index_%sMap", messagerName, descriptor.Name), ")")
+	}
 	if levelMessage.NextLevel != nil {
 		itemName := fmt.Sprintf("item%d", depth)
 		g.P("for _, ", itemName, " := range "+parentDataName+".Get"+helper.ParseIndexFieldName(gen, levelMessage.FD)+"() {")
 		parentDataName = itemName
-		genOneIndexLoader(gen, depth+1, descriptor, parentDataName, levelMessage.NextLevel, g)
+		genOneIndexLoader(gen, g, depth+1, descriptor, parentDataName, levelMessage.NextLevel, messagerName)
 		g.P("}")
 	} else {
 		if len(levelMessage.Fields) == 1 {
@@ -95,12 +95,13 @@ func genOneIndexLoader(gen *protogen.Plugin, depth int, descriptor *index.IndexD
 		} else {
 			// multi-column index
 			var keys []string
-			generateOneMulticolumnIndex(gen, depth, parentDataName, descriptor, keys, g)
+			generateOneMulticolumnIndex(gen, g, depth, descriptor, parentDataName, keys)
 		}
 	}
 }
 
-func generateOneMulticolumnIndex(gen *protogen.Plugin, depth int, parentDataName string, descriptor *index.IndexDescriptor, keys []string, g *protogen.GeneratedFile) []string {
+func generateOneMulticolumnIndex(gen *protogen.Plugin, g *protogen.GeneratedFile,
+	depth int, descriptor *index.IndexDescriptor, parentDataName string, keys []string) []string {
 	cursor := len(keys)
 	if cursor >= len(descriptor.Fields) {
 		var keyParams string
@@ -125,7 +126,7 @@ func generateOneMulticolumnIndex(gen *protogen.Plugin, depth int, parentDataName
 		}
 		g.P("for _, " + itemName + " := range " + parentDataName + fieldName + " {")
 		keys = append(keys, itemName)
-		keys = generateOneMulticolumnIndex(gen, depth+1, parentDataName, descriptor, keys, g)
+		keys = generateOneMulticolumnIndex(gen, g, depth+1, descriptor, parentDataName, keys)
 		g.P("}")
 	} else {
 		fieldName := ""
@@ -134,16 +135,15 @@ func generateOneMulticolumnIndex(gen *protogen.Plugin, depth int, parentDataName
 		}
 		key := parentDataName + fieldName
 		keys = append(keys, key)
-		keys = generateOneMulticolumnIndex(gen, depth, parentDataName, descriptor, keys, g)
+		keys = generateOneMulticolumnIndex(gen, g, depth, descriptor, parentDataName, keys)
 	}
 	return keys
 }
 
-func genIndexFinders(gen *protogen.Plugin, messagerName string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
-	descriptors := index.ParseIndexDescriptor(gen, md)
+func genIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptors []*index.IndexDescriptor, messagerName string) {
 	for _, descriptor := range descriptors {
 		// sliceType := "[]*" + descriptor.GoIdent
-		mapType := fmt.Sprintf("%s_Index_%sMap", md.Name(), descriptor.Name)
+		mapType := fmt.Sprintf("%s_Index_%sMap", messagerName, descriptor.Name)
 		indexContainerName := "index" + strcase.ToCamel(descriptor.Name) + "Map"
 
 		g.P("// Index: ", descriptor.Index)

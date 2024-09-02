@@ -49,7 +49,7 @@ func generateFileContent(gen *protogen.Plugin, file *protogen.File, g *protogen.
 		opts := message.Desc.Options().(*descriptorpb.MessageOptions)
 		worksheet := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
 		if worksheet != nil {
-			genMessage(gen, file, g, message)
+			genMessage(gen, g, message)
 
 			messagerName := string(message.Desc.Name())
 			fileMessagers = append(fileMessagers, messagerName)
@@ -71,18 +71,19 @@ func generateRegister(messagers []string, g *protogen.GeneratedFile) {
 }
 
 // genMessage generates a message definition.
-func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) {
+func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message) {
 	messagerName := string(message.Desc.Name())
+	indexDescriptors := index.ParseIndexDescriptor(gen, message.Desc)
 
 	// type definitions
 	if helper.NeedGenOrderedMap(message.Desc) {
-		genOrderedMapTypeDef(gen, 1, nil, messagerName, g, message)
+		genOrderedMapTypeDef(gen, g, message.Desc, 1, nil, messagerName)
 	}
 	if index.NeedGenIndex(message.Desc) {
-		genIndexTypeDef(gen, g, message.Desc)
+		genIndexTypeDef(gen, g, indexDescriptors, messagerName)
 	}
 
-	g.P("// ", messagerName, " is a wrapper around protobuf message: ", file.GoImportPath.Ident(messagerName), ".")
+	g.P("// ", messagerName, " is a wrapper around protobuf message: ", message.GoIdent, ".")
 	g.P("//")
 	g.P("// It is designed for three goals:")
 	g.P("//")
@@ -92,12 +93,12 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	// messager definition
 	g.P("type ", messagerName, " struct {")
 	g.P("UnimplementedMessager")
-	g.P("data ", file.GoImportPath.Ident(messagerName))
+	g.P("data ", message.GoIdent)
 	if helper.NeedGenOrderedMap(message.Desc) {
 		genOrderedMapField(g, message.Desc)
 	}
 	if index.NeedGenIndex(message.Desc) {
-		genIndexField(gen, g, message.Desc)
+		genIndexField(g, indexDescriptors, messagerName)
 	}
 	g.P("}")
 	g.P()
@@ -113,7 +114,7 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	g.P()
 
 	g.P("// Data returns the ", messagerName, "'s inner message data.")
-	g.P("func (x *", messagerName, ") Data() *", file.GoImportPath.Ident(messagerName), " {")
+	g.P("func (x *", messagerName, ") Data() *", message.GoIdent, " {")
 	g.P("if x != nil {")
 	g.P("return &x.data")
 	g.P("}")
@@ -148,10 +149,10 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 		g.P("// processAfterLoad runs after this messager is loaded.")
 		g.P("func (x *", messagerName, ") processAfterLoad() error {")
 		if helper.NeedGenOrderedMap(message.Desc) {
-			genOrderedMapLoader(gen, 1, nil, messagerName, g, message, "")
+			genOrderedMapLoader(gen, g, message.Desc, 1, nil, messagerName, "")
 		}
 		if index.NeedGenIndex(message.Desc) {
-			genIndexLoader(gen, g, message.Desc)
+			genIndexLoader(gen, g, indexDescriptors, messagerName)
 		}
 		g.P("return nil")
 		g.P("}")
@@ -159,16 +160,16 @@ func genMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	}
 
 	// syntactic sugar for accessing map items
-	genMapGetters(gen, 1, nil, messagerName, g, message)
+	genMapGetters(gen, g, message, 1, nil, messagerName)
 	if helper.NeedGenOrderedMap(message.Desc) {
-		genOrderedMapGetters(gen, 1, nil, messagerName, file, g, message)
+		genOrderedMapGetters(gen, g, message.Desc, 1, nil, messagerName)
 	}
 	if index.NeedGenIndex(message.Desc) {
-		genIndexFinders(gen, string(message.Desc.Name()), g, message.Desc)
+		genIndexFinders(gen, g, indexDescriptors, messagerName)
 	}
 }
 
-func genMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey, messagerName string, g *protogen.GeneratedFile, message *protogen.Message) {
+func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message, depth int, keys []helper.MapKey, messagerName string) {
 	for _, field := range message.Fields {
 		fd := field.Desc
 		if field.Desc.IsMap() {
@@ -206,7 +207,7 @@ func genMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey, messag
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
 				msg := helper.FindMessage(gen, fd.MapValue().Message())
 				if msg != nil {
-					genMapGetters(gen, depth+1, keys, messagerName, g, msg)
+					genMapGetters(gen, g, msg, depth+1, keys, messagerName)
 				}
 			}
 			break

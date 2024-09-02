@@ -96,6 +96,7 @@ func (x *HeroConf) processAfterLoad() error {
 	}
 	// Index init.
 	// Index: Title
+	x.indexAttrMap = make(HeroConf_Index_AttrMap)
 	for _, item1 := range x.data.GetHeroMap() {
 		for _, item2 := range item1.GetAttrMap() {
 			key := item2.GetTitle()

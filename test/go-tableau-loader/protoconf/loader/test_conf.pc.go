@@ -121,6 +121,7 @@ func (x *ActivityConf) processAfterLoad() error {
 	}
 	// Index init.
 	// Index: ChapterID
+	x.indexChapterMap = make(ActivityConf_Index_ChapterMap)
 	for _, item1 := range x.data.GetActivityMap() {
 		for _, item2 := range item1.GetChapterMap() {
 			key := item2.GetChapterId()
@@ -128,6 +129,7 @@ func (x *ActivityConf) processAfterLoad() error {
 		}
 	}
 	// Index: ChapterName@NamedChapter
+	x.indexNamedChapterMap = make(ActivityConf_Index_NamedChapterMap)
 	for _, item1 := range x.data.GetActivityMap() {
 		for _, item2 := range item1.GetChapterMap() {
 			key := item2.GetChapterName()

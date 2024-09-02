@@ -8,12 +8,10 @@ import (
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/index"
 	"google.golang.org/protobuf/compiler/protogen"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func genHppIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
+func genHppIndexFinders(g *protogen.GeneratedFile, descriptors []*index.IndexDescriptor) {
 	g.P("  // Index accessers.")
-	descriptors := index.ParseIndexDescriptor(gen, md)
 	for _, descriptor := range descriptors {
 		if len(descriptor.Fields) == 1 {
 			// single-column index
@@ -88,17 +86,16 @@ func genHppIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, md prot
 	}
 }
 
-func genCppIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
+func genCppIndexLoader(g *protogen.GeneratedFile, descriptors []*index.IndexDescriptor) {
 	g.P("  // Index init.")
-	descriptors := index.ParseIndexDescriptor(gen, md)
 	for _, descriptor := range descriptors {
 		parentDataName := "data_"
 		g.P("  // Index: ", descriptor.Index)
-		genOneCppIndexLoader(1, descriptor, parentDataName, descriptor.LevelMessage, g)
+		genOneCppIndexLoader(g, 1, descriptor, parentDataName, descriptor.LevelMessage)
 	}
 }
 
-func genOneCppIndexLoader(depth int, descriptor *index.IndexDescriptor, parentDataName string, levelMessage *index.LevelMessage, g *protogen.GeneratedFile) {
+func genOneCppIndexLoader(g *protogen.GeneratedFile, depth int, descriptor *index.IndexDescriptor, parentDataName string, levelMessage *index.LevelMessage) {
 	if levelMessage == nil {
 		return
 	}
@@ -111,7 +108,7 @@ func genOneCppIndexLoader(depth int, descriptor *index.IndexDescriptor, parentDa
 		if levelMessage.FD.IsMap() {
 			parentDataName = itemName + ".second"
 		}
-		genOneCppIndexLoader(depth+1, descriptor, parentDataName, levelMessage.NextLevel, g)
+		genOneCppIndexLoader(g, depth+1, descriptor, parentDataName, levelMessage.NextLevel)
 		g.P(strings.Repeat("  ", depth), "}")
 	} else {
 		if len(levelMessage.Fields) == 1 {
@@ -141,12 +138,12 @@ func genOneCppIndexLoader(depth int, descriptor *index.IndexDescriptor, parentDa
 		} else {
 			// multi-column index
 			var keys []string
-			generateOneCppMulticolumnIndex(depth, parentDataName, descriptor, keys, g)
+			generateOneCppMulticolumnIndex(g, depth, descriptor, parentDataName, keys)
 		}
 	}
 }
 
-func generateOneCppMulticolumnIndex(depth int, parentDataName string, descriptor *index.IndexDescriptor, keys []string, g *protogen.GeneratedFile) []string {
+func generateOneCppMulticolumnIndex(g *protogen.GeneratedFile, depth int, descriptor *index.IndexDescriptor, parentDataName string, keys []string) []string {
 	cursor := len(keys)
 	if cursor >= len(descriptor.Fields) {
 		var keyParams string
@@ -175,7 +172,7 @@ func generateOneCppMulticolumnIndex(depth int, parentDataName string, descriptor
 			key = "static_cast<" + helper.ParseCppType(field.FD) + ">(" + key + ")"
 		}
 		keys = append(keys, key)
-		keys = generateOneCppMulticolumnIndex(depth+1, parentDataName, descriptor, keys, g)
+		keys = generateOneCppMulticolumnIndex(g, depth+1, descriptor, parentDataName, keys)
 		g.P(strings.Repeat("  ", depth), "}")
 	} else {
 		fieldName := ""
@@ -184,13 +181,12 @@ func generateOneCppMulticolumnIndex(depth int, parentDataName string, descriptor
 		}
 		key := parentDataName + fieldName
 		keys = append(keys, key)
-		keys = generateOneCppMulticolumnIndex(depth, parentDataName, descriptor, keys, g)
+		keys = generateOneCppMulticolumnIndex(g, depth, descriptor, parentDataName, keys)
 	}
 	return keys
 }
 
-func genCppIndexFinders(gen *protogen.Plugin, messagerName string, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
-	descriptors := index.ParseIndexDescriptor(gen, md)
+func genCppIndexFinders(g *protogen.GeneratedFile, descriptors []*index.IndexDescriptor, messagerName string) {
 	for _, descriptor := range descriptors {
 		vectorType := "Index_" + descriptor.Name + "Vector"
 		mapType := "Index_" + descriptor.Name + "Map"

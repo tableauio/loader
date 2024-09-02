@@ -14,15 +14,15 @@ const orderedMapValueSuffix = "_OrderedMapValue"
 
 var orderedMapTypeDefMap map[string]bool = make(map[string]bool)
 
-func genOrderedMapTypeDef(gen *protogen.Plugin, depth int, keys []helper.MapKey, messagerName string, g *protogen.GeneratedFile, message *protogen.Message) {
+func genOrderedMapTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerName string) {
 	if *disableOrderedMap {
 		return
 	}
-	if depth == 1 && !helper.NeedGenOrderedMap(message.Desc) {
+	if depth == 1 && !helper.NeedGenOrderedMap(md) {
 		return
 	}
-	for _, field := range message.Fields {
-		fd := field.Desc
+	for i := 0; i < md.Fields().Len(); i++ {
+		fd := md.Fields().Get(i)
 		if fd.IsMap() {
 			if depth == 1 {
 				g.P("// OrderedMap types.")
@@ -33,10 +33,7 @@ func genOrderedMapTypeDef(gen *protogen.Plugin, depth int, keys []helper.MapKey,
 				keyType = "int"
 			}
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				msg := helper.FindMessage(gen, fd.MapValue().Message())
-				if msg != nil {
-					genOrderedMapTypeDef(gen, depth+1, nextKeys, messagerName, g, msg)
-				}
+				genOrderedMapTypeDef(gen, g, fd.MapValue().Message(), depth+1, nextKeys, messagerName)
 			}
 			prefix := parseOrderedMapPrefix(fd)
 			orderedMap := prefix + orderedMapSuffix
@@ -78,13 +75,14 @@ func genOrderedMapField(g *protogen.GeneratedFile, md protoreflect.MessageDescri
 	}
 }
 
-func genOrderedMapLoader(gen *protogen.Plugin, depth int, keys []helper.MapKey, messagerName string, g *protogen.GeneratedFile, message *protogen.Message, lastOrderedMapValue string) {
+func genOrderedMapLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerName string, lastOrderedMapValue string) {
 	if *disableOrderedMap {
 		return
 	}
 	if depth == 1 {
 		g.P("// OrderedMap init.")
 	}
+	message := helper.FindMessage(gen, md)
 	for _, field := range message.Fields {
 		fd := field.Desc
 		if fd.IsMap() {
@@ -133,10 +131,7 @@ func genOrderedMapLoader(gen *protogen.Plugin, depth int, keys []helper.MapKey, 
 				g.P("map", depth, " := k", depth-1, "v.First")
 			}
 			if nextMapFD != nil {
-				msg := helper.FindMessage(gen, fd.MapValue().Message())
-				if msg != nil {
-					genOrderedMapLoader(gen, depth+1, nextKeys, messagerName, g, msg, orderedMapValue)
-				}
+				genOrderedMapLoader(gen, g, fd.MapValue().Message(), depth+1, nextKeys, messagerName, orderedMapValue)
 			} else {
 				keyName := fmt.Sprintf("k%d", depth)
 				if needConvertBoolNext {
@@ -150,11 +145,11 @@ func genOrderedMapLoader(gen *protogen.Plugin, depth int, keys []helper.MapKey, 
 	}
 }
 
-func genOrderedMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey, messagerName string, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) {
+func genOrderedMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerName string) {
 	if *disableOrderedMap {
 		return
 	}
-	if depth == 1 && !helper.NeedGenOrderedMap(message.Desc) {
+	if depth == 1 && !helper.NeedGenOrderedMap(md) {
 		return
 	}
 	genGetterName := func(depth int) string {
@@ -164,8 +159,8 @@ func genOrderedMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey,
 		}
 		return getter
 	}
-	for _, field := range message.Fields {
-		fd := field.Desc
+	for i := 0; i < md.Fields().Len(); i++ {
+		fd := md.Fields().Get(i)
 		if fd.IsMap() {
 			getter := genGetterName(depth)
 			prefix := parseOrderedMapPrefix(fd)
@@ -206,10 +201,7 @@ func genOrderedMapGetters(gen *protogen.Plugin, depth int, keys []helper.MapKey,
 
 			nextKeys := helper.AddMapKey(gen, fd, keys)
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				msg := helper.FindMessage(gen, fd.MapValue().Message())
-				if msg != nil {
-					genOrderedMapGetters(gen, depth+1, nextKeys, messagerName, file, g, msg)
-				}
+				genOrderedMapGetters(gen, g, fd.MapValue().Message(), depth+1, nextKeys, messagerName)
 			}
 			break
 		}

@@ -129,11 +129,13 @@ func (x *ItemConf) processAfterLoad() error {
 	}
 	// Index init.
 	// Index: Type
+	x.indexItemMap = make(ItemConf_Index_ItemMap)
 	for _, item1 := range x.data.GetItemMap() {
 		key := item1.GetType()
 		x.indexItemMap[key] = append(x.indexItemMap[key], item1)
 	}
 	// Index: Param@ItemInfo
+	x.indexItemInfoMap = make(ItemConf_Index_ItemInfoMap)
 	for _, item1 := range x.data.GetItemMap() {
 		for _, item2 := range item1.GetParamList() {
 			key := item2
@@ -141,11 +143,13 @@ func (x *ItemConf) processAfterLoad() error {
 		}
 	}
 	// Index: Default@ItemDefaultInfo
+	x.indexItemDefaultInfoMap = make(ItemConf_Index_ItemDefaultInfoMap)
 	for _, item1 := range x.data.GetItemMap() {
 		key := item1.GetDefault()
 		x.indexItemDefaultInfoMap[key] = append(x.indexItemDefaultInfoMap[key], item1)
 	}
 	// Index: ExtType@ItemExtInfo
+	x.indexItemExtInfoMap = make(ItemConf_Index_ItemExtInfoMap)
 	for _, item1 := range x.data.GetItemMap() {
 		for _, item2 := range item1.GetExtTypeList() {
 			key := item2
@@ -153,11 +157,13 @@ func (x *ItemConf) processAfterLoad() error {
 		}
 	}
 	// Index: (ID,Name)@AwardItem
+	x.indexAwardItemMap = make(ItemConf_Index_AwardItemMap)
 	for _, item1 := range x.data.GetItemMap() {
 		key := ItemConf_Index_AwardItemKey{item1.GetId(), item1.GetName()}
 		x.indexAwardItemMap[key] = append(x.indexAwardItemMap[key], item1)
 	}
 	// Index: (ID,Type,Param,ExtType)@SpecialItem
+	x.indexSpecialItemMap = make(ItemConf_Index_SpecialItemMap)
 	for _, item1 := range x.data.GetItemMap() {
 		for _, indexItem2 := range item1.GetParamList() {
 			for _, indexItem3 := range item1.GetExtTypeList() {
@@ -167,11 +173,13 @@ func (x *ItemConf) processAfterLoad() error {
 		}
 	}
 	// Index: PathDir@ItemPathDir
+	x.indexItemPathDirMap = make(ItemConf_Index_ItemPathDirMap)
 	for _, item1 := range x.data.GetItemMap() {
 		key := item1.GetPath().GetDir()
 		x.indexItemPathDirMap[key] = append(x.indexItemPathDirMap[key], item1)
 	}
 	// Index: PathName@ItemPathName
+	x.indexItemPathNameMap = make(ItemConf_Index_ItemPathNameMap)
 	for _, item1 := range x.data.GetItemMap() {
 		for _, item2 := range item1.GetPath().GetName() {
 			key := item2
@@ -179,11 +187,13 @@ func (x *ItemConf) processAfterLoad() error {
 		}
 	}
 	// Index: PathFriendID@ItemPathFriendID
+	x.indexItemPathFriendIdMap = make(ItemConf_Index_ItemPathFriendIDMap)
 	for _, item1 := range x.data.GetItemMap() {
 		key := item1.GetPath().GetFriend().GetId()
 		x.indexItemPathFriendIdMap[key] = append(x.indexItemPathFriendIdMap[key], item1)
 	}
 	// Index: UseEffectType@UseEffectType
+	x.indexUseEffectTypeMap = make(ItemConf_Index_UseEffectTypeMap)
 	for _, item1 := range x.data.GetItemMap() {
 		key := item1.GetUseEffect().GetType()
 		x.indexUseEffectTypeMap[key] = append(x.indexUseEffectTypeMap[key], item1)
