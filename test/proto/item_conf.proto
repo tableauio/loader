@@ -44,7 +44,7 @@ message ItemConf {
 
 message Path {
   string dir = 1 [(tableau.field) = { name: "Dir" }];
-  repeated string name = 2 [(tableau.field) = { name: "Name" }];
+  repeated string name_list = 2 [(tableau.field) = { name: "Name" }];
   Friend friend = 3 [(tableau.field) = { name: "Friend" }];
   message Friend {
     uint32 id = 1 [(tableau.field) = { name: "ID" }];
