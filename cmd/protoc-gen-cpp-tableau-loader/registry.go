@@ -118,7 +118,7 @@ func generateShardedRegistry(gen *protogen.Plugin) {
 		g := gen.NewGeneratedFile(cppFilename, "")
 		helper.GenerateCommonHeader(gen, g, version)
 		g.P()
-		cursor := (i+1)*shardSize
+		cursor := (i + 1) * shardSize
 		if cursor > len(protofiles) {
 			cursor = len(protofiles)
 		}

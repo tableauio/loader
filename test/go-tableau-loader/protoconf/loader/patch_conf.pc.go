@@ -49,7 +49,7 @@ func (x *PatchReplaceConf) Load(dir string, format format.Format, options ...loa
 	if err != nil {
 		return err
 	}
-	return x.AfterLoad()
+	return x.processAfterLoad()
 }
 
 // Store writes PatchReplaceConf's inner message to file in the specified directory and format.
@@ -61,11 +61,6 @@ func (x *PatchReplaceConf) Store(dir string, format format.Format, options ...st
 // Messager is used to implement Checker interface.
 func (x *PatchReplaceConf) Messager() Messager {
 	return x
-}
-
-// AfterLoad runs after this messager is loaded.
-func (x *PatchReplaceConf) AfterLoad() error {
-	return nil
 }
 
 // PatchMergeConf is a wrapper around protobuf message: protoconf.PatchMergeConf.
@@ -102,7 +97,7 @@ func (x *PatchMergeConf) Load(dir string, format format.Format, options ...load.
 	if err != nil {
 		return err
 	}
-	return x.AfterLoad()
+	return x.processAfterLoad()
 }
 
 // Store writes PatchMergeConf's inner message to file in the specified directory and format.
@@ -116,18 +111,10 @@ func (x *PatchMergeConf) Messager() Messager {
 	return x
 }
 
-// AfterLoad runs after this messager is loaded.
-func (x *PatchMergeConf) AfterLoad() error {
-	return nil
-}
-
-// Get1 finds value in the 1-level map. It will return nil if
-// the deepest key is not found, otherwise return an error.
+// Get1 finds value in the 1-level map. It will return
+// NotFound error if the key is not found.
 func (x *PatchMergeConf) Get1(id uint32) (*protoconf.Item, error) {
 	d := x.Data().GetItemMap()
-	if d == nil {
-		return nil, xerrors.Errorf(code.Nil, "ItemMap is nil")
-	}
 	if val, ok := d[id]; !ok {
 		return nil, xerrors.Errorf(code.NotFound, "id(%v) not found", id)
 	} else {

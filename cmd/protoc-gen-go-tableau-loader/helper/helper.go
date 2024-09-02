@@ -2,7 +2,9 @@ package helper
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/iancoleman/strcase"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -20,14 +22,40 @@ func NeedGenOrderedMap(md protoreflect.MessageDescriptor) bool {
 	return true
 }
 
-// ParseGoType converts a FieldDescriptor to Go type string.
-func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
+func ParseIndexFieldName(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
+	md := fd.ContainingMessage()
+	msg := FindMessage(gen, md)
+	for _, field := range msg.Fields {
+		if field.Desc == fd {
+			return field.GoName
+		}
+	}
+	panic(fmt.Sprintf("unknown fd: %v", fd))
+}
+
+func ParseIndexFieldNameAsKeyStructFieldName(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
+	if fd.IsList() {
+		opts := fd.Options().(*descriptorpb.FieldOptions)
+		fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
+		return strcase.ToCamel(fdOpts.GetName())
+	}
+	return ParseIndexFieldName(gen, fd)
+}
+
+func ParseIndexFieldNameAsFuncParam(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
+	fieldName := ParseIndexFieldNameAsKeyStructFieldName(gen, fd)
+	if fieldName == "" {
+		return fieldName
+	}
+	return escapeIdentifier(strings.ToLower(fieldName[:1]) + fieldName[1:])
+}
+
+// ParseGoType converts a FieldDescriptor to its Go type.
+// returns string if fd is scalar type, and protogen.GoIdent if fd is enum or message type.
+func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) any {
 	switch fd.Kind() {
 	case protoreflect.BoolKind:
 		return "bool"
-	// case protoreflect.EnumKind:
-	// 	protoFullName := string(fd.Message().FullName())
-	// 	return strings.ReplaceAll(protoFullName, ".", "_")
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
 		return "int32"
 	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
@@ -44,8 +72,10 @@ func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
 		return "string"
 	case protoreflect.BytesKind:
 		return "[]byte"
+	case protoreflect.EnumKind:
+		return FindEnumGoIdent(gen, fd.Enum())
 	case protoreflect.MessageKind:
-		return FindMessageGoIdent(gen, fd.Message()).GoName
+		return FindMessageGoIdent(gen, fd.Message())
 	// case protoreflect.GroupKind:
 	// 	return "group"
 	default:
@@ -79,6 +109,46 @@ func FindMessageGoIdent(gen *protogen.Plugin, md protoreflect.MessageDescriptor)
 		panic(fmt.Sprintf("unknown message: %s", md.FullName()))
 	}
 	return msg.GoIdent
+}
+
+func FindEnum(gen *protogen.Plugin, ed protoreflect.EnumDescriptor) *protogen.Enum {
+	if file, ok := gen.FilesByPath[ed.ParentFile().Path()]; ok {
+		if enum := FindEnumByDescriptor(file.Enums, ed); enum != nil {
+			return enum
+		}
+		return FindEnumFromMessageByDescriptor(file.Messages, ed)
+	}
+	return nil
+}
+
+func FindEnumByDescriptor(enums []*protogen.Enum, ed protoreflect.EnumDescriptor) *protogen.Enum {
+	for _, enum := range enums {
+		if enum.Desc.FullName() == ed.FullName() {
+			return enum
+		}
+	}
+	return nil
+}
+
+func FindEnumFromMessageByDescriptor(messages []*protogen.Message, ed protoreflect.EnumDescriptor) *protogen.Enum {
+	for _, message := range messages {
+		if enum := FindEnumByDescriptor(message.Enums, ed); enum != nil {
+			return enum
+		}
+		// Recursively search nested messages
+		if nestedEnum := FindEnumFromMessageByDescriptor(message.Messages, ed); nestedEnum != nil {
+			return nestedEnum
+		}
+	}
+	return nil
+}
+
+func FindEnumGoIdent(gen *protogen.Plugin, ed protoreflect.EnumDescriptor) protogen.GoIdent {
+	enum := FindEnum(gen, ed)
+	if enum == nil {
+		panic(fmt.Sprintf("unknown enum: %s", ed.FullName()))
+	}
+	return enum.GoIdent
 }
 
 func GetTypeEmptyValue(fd protoreflect.FieldDescriptor) string {
@@ -131,7 +201,7 @@ func AddMapKey(gen *protogen.Plugin, fd protoreflect.FieldDescriptor, keys []Map
 			}
 		}
 	}
-	keys = append(keys, MapKey{ParseGoType(gen, fd.MapKey()), name})
+	keys = append(keys, MapKey{ParseGoType(gen, fd.MapKey()).(string), name})
 	return keys
 }
 

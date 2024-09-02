@@ -36,7 +36,7 @@ SET(COMMON_LIB
     )
 
 # inlcude
-include_directories(${PROJECT_SOURCE_DIR} ${COMMON_INCLUDE_DIR})
+include_directories(${PROJECT_SOURCE_DIR} ${COMMON_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/protoconf)
 
 # add the executable
 add_executable(${PROJECT_NAME} ${PROTO_SOURCE} ${SOURCE})

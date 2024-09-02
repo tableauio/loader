@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/iancoleman/strcase"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -47,6 +48,23 @@ func NeedGenOrderedMap(md protoreflect.MessageDescriptor) bool {
 		return false
 	}
 	return true
+}
+
+func ParseIndexFieldName(fd protoreflect.FieldDescriptor) string {
+	return escapeIdentifier(string(fd.Name()))
+}
+
+func ParseIndexFieldNameAsKeyStructFieldName(fd protoreflect.FieldDescriptor) string {
+	if fd.IsList() {
+		opts := fd.Options().(*descriptorpb.FieldOptions)
+		fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
+		return escapeIdentifier(strcase.ToSnake(fdOpts.GetName()))
+	}
+	return ParseIndexFieldName(fd)
+}
+
+func ParseIndexFieldNameAsFuncParam(fd protoreflect.FieldDescriptor) string {
+	return ParseIndexFieldNameAsKeyStructFieldName(fd)
 }
 
 // ParseCppType converts a FieldDescriptor to C++ type string.

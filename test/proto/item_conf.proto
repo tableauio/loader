@@ -18,18 +18,20 @@ message ItemConf {
     ordered_map: true
     index: "Type"
     index: "Param@ItemInfo"
+    index: "Default@ItemDefaultInfo"  // For testing programming language keyword conflicts
     index: "ExtType@ItemExtInfo"
     index: "(ID,Name)@AwardItem"
     index: "(ID,Type,Param,ExtType)@SpecialItem"
     index: "PathDir@ItemPathDir"
     index: "PathName@ItemPathName"
-    index: "PathUserID@ItemPathUserID"
+    index: "PathFriendID@ItemPathFriendID"
     index: "UseEffectType@UseEffectType"
   };
   map<uint32, Item> item_map = 1 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
   message Item {
     uint32 id = 1 [(tableau.field) = { name: "ID" }];
     string name = 2 [(tableau.field) = { name: "Name" }];
+    string default = 3 [(tableau.field) = { name: "Default" }];
     Path path = 4 [(tableau.field) = { name: "Path" }];
     google.protobuf.Timestamp expiry = 5 [(tableau.field) = { name: "Expiry" }];
     google.protobuf.Duration duration = 6 [(tableau.field) = { name: "Duration" }];
@@ -43,8 +45,8 @@ message ItemConf {
 message Path {
   string dir = 1 [(tableau.field) = { name: "Dir" }];
   repeated string name = 2 [(tableau.field) = { name: "Name" }];
-  User user = 3 [(tableau.field) = { name: "User" }];
-  message User {
+  Friend friend = 3 [(tableau.field) = { name: "Friend" }];
+  message Friend {
     uint32 id = 1 [(tableau.field) = { name: "ID" }];
     string name = 2 [(tableau.field) = { name: "Name" }];
   }

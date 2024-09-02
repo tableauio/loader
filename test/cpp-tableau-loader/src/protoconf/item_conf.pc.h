@@ -39,7 +39,7 @@ class ItemConf : public Messager {
   // Index: Type
  public:
   using Index_ItemVector = std::vector<const protoconf::ItemConf::Item*>;
-  using Index_ItemMap = std::unordered_map<int, Index_ItemVector>;
+  using Index_ItemMap = std::unordered_map<protoconf::FruitType, Index_ItemVector>;
   const Index_ItemMap& FindItem() const;
   const Index_ItemVector* FindItem(protoconf::FruitType type) const;
   const protoconf::ItemConf::Item* FindFirstItem(protoconf::FruitType type) const;
@@ -58,10 +58,21 @@ class ItemConf : public Messager {
  private:
   Index_ItemInfoMap index_item_info_map_;
 
+  // Index: Default@ItemDefaultInfo
+ public:
+  using Index_ItemDefaultInfoVector = std::vector<const protoconf::ItemConf::Item*>;
+  using Index_ItemDefaultInfoMap = std::unordered_map<std::string, Index_ItemDefaultInfoVector>;
+  const Index_ItemDefaultInfoMap& FindItemDefaultInfo() const;
+  const Index_ItemDefaultInfoVector* FindItemDefaultInfo(const std::string& default_) const;
+  const protoconf::ItemConf::Item* FindFirstItemDefaultInfo(const std::string& default_) const;
+
+ private:
+  Index_ItemDefaultInfoMap index_item_default_info_map_;
+
   // Index: ExtType@ItemExtInfo
  public:
   using Index_ItemExtInfoVector = std::vector<const protoconf::ItemConf::Item*>;
-  using Index_ItemExtInfoMap = std::unordered_map<int, Index_ItemExtInfoVector>;
+  using Index_ItemExtInfoMap = std::unordered_map<protoconf::FruitType, Index_ItemExtInfoVector>;
   const Index_ItemExtInfoMap& FindItemExtInfo() const;
   const Index_ItemExtInfoVector* FindItemExtInfo(protoconf::FruitType ext_type) const;
   const protoconf::ItemConf::Item* FindFirstItemExtInfo(protoconf::FruitType ext_type) const;
@@ -105,7 +116,7 @@ class ItemConf : public Messager {
   };
   struct Index_SpecialItemKeyHasher {
     std::size_t operator()(const Index_SpecialItemKey& key) const {
-      return util::SugaredHashCombine(key.id, static_cast<int>(key.type), key.param, static_cast<int>(key.ext_type));
+      return util::SugaredHashCombine(key.id, key.type, key.param, key.ext_type);
     }
   };
   using Index_SpecialItemVector = std::vector<const protoconf::ItemConf::Item*>;
@@ -139,21 +150,21 @@ class ItemConf : public Messager {
  private:
   Index_ItemPathNameMap index_item_path_name_map_;
 
-  // Index: PathUserID@ItemPathUserID
+  // Index: PathFriendID@ItemPathFriendID
  public:
-  using Index_ItemPathUserIDVector = std::vector<const protoconf::ItemConf::Item*>;
-  using Index_ItemPathUserIDMap = std::unordered_map<uint32_t, Index_ItemPathUserIDVector>;
-  const Index_ItemPathUserIDMap& FindItemPathUserID() const;
-  const Index_ItemPathUserIDVector* FindItemPathUserID(uint32_t id) const;
-  const protoconf::ItemConf::Item* FindFirstItemPathUserID(uint32_t id) const;
+  using Index_ItemPathFriendIDVector = std::vector<const protoconf::ItemConf::Item*>;
+  using Index_ItemPathFriendIDMap = std::unordered_map<uint32_t, Index_ItemPathFriendIDVector>;
+  const Index_ItemPathFriendIDMap& FindItemPathFriendID() const;
+  const Index_ItemPathFriendIDVector* FindItemPathFriendID(uint32_t id) const;
+  const protoconf::ItemConf::Item* FindFirstItemPathFriendID(uint32_t id) const;
 
  private:
-  Index_ItemPathUserIDMap index_item_path_user_id_map_;
+  Index_ItemPathFriendIDMap index_item_path_friend_id_map_;
 
   // Index: UseEffectType@UseEffectType
  public:
   using Index_UseEffectTypeVector = std::vector<const protoconf::ItemConf::Item*>;
-  using Index_UseEffectTypeMap = std::unordered_map<int, Index_UseEffectTypeVector>;
+  using Index_UseEffectTypeMap = std::unordered_map<protoconf::UseEffect::Type, Index_UseEffectTypeVector>;
   const Index_UseEffectTypeMap& FindUseEffectType() const;
   const Index_UseEffectTypeVector* FindUseEffectType(protoconf::UseEffect::Type type) const;
   const protoconf::ItemConf::Item* FindFirstUseEffectType(protoconf::UseEffect::Type type) const;
