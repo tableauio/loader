@@ -238,7 +238,7 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
     case tableau::PATCH_MERGE: {
       // Create a new instance of the same type of the original message
       google::protobuf::Message* patch_msg_ptr = msg.New();
-      std::unique_ptr<google::protobuf::Message> auto_release(patch_msg_ptr);
+      std::unique_ptr<google::protobuf::Message> _auto_release(patch_msg_ptr);
       // load msg from the "main" file
       if (!LoadMessageByPath(msg, path, fmt, options)) {
         return false;
