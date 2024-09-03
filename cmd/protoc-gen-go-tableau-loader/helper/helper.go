@@ -5,46 +5,12 @@ import (
 	"strings"
 
 	"github.com/iancoleman/strcase"
-	"github.com/tableauio/loader/internal/options"
 	"github.com/tableauio/tableau/proto/tableaupb"
-	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
-
-func NeedGenOrderedMap(md protoreflect.MessageDescriptor) bool {
-	opts := md.Options().(*descriptorpb.MessageOptions)
-	wsOpts := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
-	if !wsOpts.GetOrderedMap() {
-		// Not an ordered map.
-		return false
-	}
-	if languages, ok := wsOpts.GetLangOptions()[options.OptionOrderedMap]; ok {
-		if !slices.Contains(strings.Split(languages, " "), options.LangGO) {
-			// Do not generate go ordered map
-			return false
-		}
-	}
-	return true
-}
-
-func NeedGenIndex(md protoreflect.MessageDescriptor) bool {
-	opts := md.Options().(*descriptorpb.MessageOptions)
-	wsOpts := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
-	if len(wsOpts.GetIndex()) == 0 {
-		// No index.
-		return false
-	}
-	if languages, ok := wsOpts.GetLangOptions()[options.OptionIndex]; ok {
-		if !slices.Contains(strings.Split(languages, " "), options.LangGO) {
-			// Do not generate go index
-			return false
-		}
-	}
-	return true
-}
 
 func ParseIndexFieldName(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
 	md := fd.ContainingMessage()

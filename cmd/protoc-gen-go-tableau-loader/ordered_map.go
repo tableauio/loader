@@ -5,6 +5,7 @@ import (
 
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
+	"github.com/tableauio/loader/internal/options"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -15,7 +16,7 @@ const orderedMapValueSuffix = "_OrderedMapValue"
 var orderedMapTypeDefMap map[string]bool = make(map[string]bool)
 
 func genOrderedMapTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerName string) {
-	if depth == 1 && !helper.NeedGenOrderedMap(md) {
+	if depth == 1 && !options.NeedGenOrderedMap(md, options.LangGO) {
 		return
 	}
 	for i := 0; i < md.Fields().Len(); i++ {
@@ -57,7 +58,7 @@ func genOrderedMapTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md pr
 }
 
 func genOrderedMapField(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
-	if !helper.NeedGenOrderedMap(md) {
+	if !options.NeedGenOrderedMap(md, options.LangGO) {
 		return
 	}
 	for i := 0; i < md.Fields().Len(); i++ {
@@ -137,7 +138,7 @@ func genOrderedMapLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, md pro
 }
 
 func genOrderedMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerName string) {
-	if depth == 1 && !helper.NeedGenOrderedMap(md) {
+	if depth == 1 && !options.NeedGenOrderedMap(md, options.LangGO) {
 		return
 	}
 	genGetterName := func(depth int) string {
