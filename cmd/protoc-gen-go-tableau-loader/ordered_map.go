@@ -15,9 +15,6 @@ const orderedMapValueSuffix = "_OrderedMapValue"
 var orderedMapTypeDefMap map[string]bool = make(map[string]bool)
 
 func genOrderedMapTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerName string) {
-	if *disableOrderedMap {
-		return
-	}
 	if depth == 1 && !helper.NeedGenOrderedMap(md) {
 		return
 	}
@@ -60,9 +57,6 @@ func genOrderedMapTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md pr
 }
 
 func genOrderedMapField(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
-	if *disableOrderedMap {
-		return
-	}
 	if !helper.NeedGenOrderedMap(md) {
 		return
 	}
@@ -76,9 +70,6 @@ func genOrderedMapField(g *protogen.GeneratedFile, md protoreflect.MessageDescri
 }
 
 func genOrderedMapLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerName string, lastOrderedMapValue string) {
-	if *disableOrderedMap {
-		return
-	}
 	if depth == 1 {
 		g.P("// OrderedMap init.")
 	}
@@ -146,9 +137,6 @@ func genOrderedMapLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, md pro
 }
 
 func genOrderedMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerName string) {
-	if *disableOrderedMap {
-		return
-	}
 	if depth == 1 && !helper.NeedGenOrderedMap(md) {
 		return
 	}

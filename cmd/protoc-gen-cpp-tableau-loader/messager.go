@@ -87,7 +87,7 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	g.P("  const ", cppFullName, "& Data() const { return data_; };")
 	g.P()
 
-	if helper.NeedGenOrderedMap(message.Desc) || index.NeedGenIndex(message.Desc) {
+	if helper.NeedGenOrderedMap(message.Desc) || helper.NeedGenIndex(message.Desc) {
 		g.P(" private:")
 		g.P("  virtual bool ProcessAfterLoad() override final;")
 		g.P()
@@ -103,7 +103,7 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 		g.P()
 		genHppOrderedMapGetters(g, message.Desc, 1, nil, messagerFullName)
 	}
-	if index.NeedGenIndex(message.Desc) {
+	if helper.NeedGenIndex(message.Desc) {
 		g.P()
 		genHppIndexFinders(g, indexDescriptors)
 	}
@@ -158,12 +158,12 @@ func genCppMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 	g.P("}")
 	g.P()
 
-	if helper.NeedGenOrderedMap(message.Desc) || index.NeedGenIndex(message.Desc) {
+	if helper.NeedGenOrderedMap(message.Desc) || helper.NeedGenIndex(message.Desc) {
 		g.P("bool ", messagerName, "::ProcessAfterLoad() {")
 		if helper.NeedGenOrderedMap(message.Desc) {
 			genCppOrderedMapLoader(g, message.Desc, 1, messagerFullName)
 		}
-		if index.NeedGenIndex(message.Desc) {
+		if helper.NeedGenIndex(message.Desc) {
 			genCppIndexLoader(g, indexDescriptors)
 		}
 		g.P("  return true;")
@@ -174,7 +174,7 @@ func genCppMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 	// syntactic sugar for accessing map items
 	genCppMapGetters(g, message.Desc, 1, nil, messagerName)
 	genCppOrderedMapGetters(g, message.Desc, 1, nil, messagerName, messagerFullName)
-	if index.NeedGenIndex(message.Desc) {
+	if helper.NeedGenIndex(message.Desc) {
 		genCppIndexFinders(g, indexDescriptors, messagerName)
 		g.P()
 	}

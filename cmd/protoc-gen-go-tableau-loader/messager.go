@@ -79,7 +79,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	if helper.NeedGenOrderedMap(message.Desc) {
 		genOrderedMapTypeDef(gen, g, message.Desc, 1, nil, messagerName)
 	}
-	if index.NeedGenIndex(message.Desc) {
+	if helper.NeedGenIndex(message.Desc) {
 		genIndexTypeDef(gen, g, indexDescriptors, messagerName)
 	}
 
@@ -97,7 +97,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	if helper.NeedGenOrderedMap(message.Desc) {
 		genOrderedMapField(g, message.Desc)
 	}
-	if index.NeedGenIndex(message.Desc) {
+	if helper.NeedGenIndex(message.Desc) {
 		genIndexField(g, indexDescriptors, messagerName)
 	}
 	g.P("}")
@@ -145,13 +145,13 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("}")
 	g.P()
 
-	if helper.NeedGenOrderedMap(message.Desc) || index.NeedGenIndex(message.Desc) {
+	if helper.NeedGenOrderedMap(message.Desc) || helper.NeedGenIndex(message.Desc) {
 		g.P("// processAfterLoad runs after this messager is loaded.")
 		g.P("func (x *", messagerName, ") processAfterLoad() error {")
 		if helper.NeedGenOrderedMap(message.Desc) {
 			genOrderedMapLoader(gen, g, message.Desc, 1, nil, messagerName, "")
 		}
-		if index.NeedGenIndex(message.Desc) {
+		if helper.NeedGenIndex(message.Desc) {
 			genIndexLoader(gen, g, indexDescriptors, messagerName)
 		}
 		g.P("return nil")
@@ -164,7 +164,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	if helper.NeedGenOrderedMap(message.Desc) {
 		genOrderedMapGetters(gen, g, message.Desc, 1, nil, messagerName)
 	}
-	if index.NeedGenIndex(message.Desc) {
+	if helper.NeedGenIndex(message.Desc) {
 		genIndexFinders(gen, g, indexDescriptors, messagerName)
 	}
 }

@@ -18,12 +18,6 @@ import (
 	store "github.com/tableauio/tableau/store"
 )
 
-// OrderedMap types.
-type ProtoconfHeroConfHeroAttrMap_OrderedMap = treemap.TreeMap[string, *protoconf.HeroConf_Hero_Attr]
-
-type ProtoconfHeroConfHeroMap_OrderedMapValue = pair.Pair[*ProtoconfHeroConfHeroAttrMap_OrderedMap, *protoconf.HeroConf_Hero]
-type ProtoconfHeroConfHeroMap_OrderedMap = treemap.TreeMap[string, *ProtoconfHeroConfHeroMap_OrderedMapValue]
-
 // Index types.
 // Index: Title
 type HeroConf_Index_AttrMap = map[string][]*protoconf.HeroConf_Hero_Attr
@@ -38,7 +32,6 @@ type HeroConf_Index_AttrMap = map[string][]*protoconf.HeroConf_Hero_Attr
 type HeroConf struct {
 	UnimplementedMessager
 	data         protoconf.HeroConf
-	orderedMap   *ProtoconfHeroConfHeroMap_OrderedMap
 	indexAttrMap HeroConf_Index_AttrMap
 }
 
@@ -80,20 +73,6 @@ func (x *HeroConf) Messager() Messager {
 
 // processAfterLoad runs after this messager is loaded.
 func (x *HeroConf) processAfterLoad() error {
-	// OrderedMap init.
-	x.orderedMap = treemap.New[string, *ProtoconfHeroConfHeroMap_OrderedMapValue]()
-	for k1, v1 := range x.Data().GetHeroMap() {
-		map1 := x.orderedMap
-		k1v := &ProtoconfHeroConfHeroMap_OrderedMapValue{
-			First:  treemap.New[string, *protoconf.HeroConf_Hero_Attr](),
-			Second: v1,
-		}
-		map1.Put(k1, k1v)
-		for k2, v2 := range v1.GetAttrMap() {
-			map2 := k1v.First
-			map2.Put(k2, v2)
-		}
-	}
 	// Index init.
 	// Index: Title
 	x.indexAttrMap = make(HeroConf_Index_AttrMap)
@@ -129,22 +108,6 @@ func (x *HeroConf) Get2(name string, title string) (*protoconf.HeroConf_Hero_Att
 		return nil, xerrors.Errorf(code.NotFound, "title(%v) not found", title)
 	} else {
 		return val, nil
-	}
-}
-
-// GetOrderedMap returns the 1-level ordered map.
-func (x *HeroConf) GetOrderedMap() *ProtoconfHeroConfHeroMap_OrderedMap {
-	return x.orderedMap
-}
-
-// GetOrderedMap1 finds value in the 1-level ordered map. It will return
-// NotFound error if the key is not found.
-func (x *HeroConf) GetOrderedMap1(name string) (*ProtoconfHeroConfHeroAttrMap_OrderedMap, error) {
-	conf := x.orderedMap
-	if val, ok := conf.Get(name); !ok {
-		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
-	} else {
-		return val.First, nil
 	}
 }
 
