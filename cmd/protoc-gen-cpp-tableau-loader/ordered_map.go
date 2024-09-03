@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
+	"github.com/tableauio/loader/internal/options"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -13,7 +14,7 @@ const orderedMapSuffix = "_OrderedMap"
 const orderedMapValueSuffix = "_OrderedMapValue"
 
 func genHppOrderedMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerFullName string) {
-	if depth == 1 && !helper.NeedGenOrderedMap(md) {
+	if depth == 1 && !options.NeedGenOrderedMap(md, options.LangCPP) {
 		return
 	}
 	for i := 0; i < md.Fields().Len(); i++ {
@@ -104,7 +105,7 @@ func genCppOrderedMapLoader(g *protogen.GeneratedFile, md protoreflect.MessageDe
 }
 
 func genCppOrderedMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerName, messagerFullName string) {
-	if depth == 1 && !helper.NeedGenOrderedMap(md) {
+	if depth == 1 && !options.NeedGenOrderedMap(md, options.LangCPP) {
 		return
 	}
 	for i := 0; i < md.Fields().Len(); i++ {

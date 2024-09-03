@@ -5,6 +5,7 @@ import (
 
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/index"
+	"github.com/tableauio/loader/internal/options"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -87,7 +88,7 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	g.P("  const ", cppFullName, "& Data() const { return data_; };")
 	g.P()
 
-	if helper.NeedGenOrderedMap(message.Desc) || index.NeedGenIndex(message.Desc) {
+	if options.NeedGenOrderedMap(message.Desc, options.LangCPP) || options.NeedGenIndex(message.Desc, options.LangCPP) {
 		g.P(" private:")
 		g.P("  virtual bool ProcessAfterLoad() override final;")
 		g.P()
@@ -99,11 +100,11 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	g.P(" private:")
 	g.P("  static const std::string kProtoName;")
 	g.P("  ", cppFullName, " data_;")
-	if helper.NeedGenOrderedMap(message.Desc) {
+	if options.NeedGenOrderedMap(message.Desc, options.LangCPP) {
 		g.P()
 		genHppOrderedMapGetters(g, message.Desc, 1, nil, messagerFullName)
 	}
-	if index.NeedGenIndex(message.Desc) {
+	if options.NeedGenIndex(message.Desc, options.LangCPP) {
 		g.P()
 		genHppIndexFinders(g, indexDescriptors)
 	}
@@ -158,12 +159,12 @@ func genCppMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 	g.P("}")
 	g.P()
 
-	if helper.NeedGenOrderedMap(message.Desc) || index.NeedGenIndex(message.Desc) {
+	if options.NeedGenOrderedMap(message.Desc, options.LangCPP) || options.NeedGenIndex(message.Desc, options.LangCPP) {
 		g.P("bool ", messagerName, "::ProcessAfterLoad() {")
-		if helper.NeedGenOrderedMap(message.Desc) {
+		if options.NeedGenOrderedMap(message.Desc, options.LangCPP) {
 			genCppOrderedMapLoader(g, message.Desc, 1, messagerFullName)
 		}
-		if index.NeedGenIndex(message.Desc) {
+		if options.NeedGenIndex(message.Desc, options.LangCPP) {
 			genCppIndexLoader(g, indexDescriptors)
 		}
 		g.P("  return true;")
@@ -174,7 +175,7 @@ func genCppMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 	// syntactic sugar for accessing map items
 	genCppMapGetters(g, message.Desc, 1, nil, messagerName)
 	genCppOrderedMapGetters(g, message.Desc, 1, nil, messagerName, messagerFullName)
-	if index.NeedGenIndex(message.Desc) {
+	if options.NeedGenIndex(message.Desc, options.LangCPP) {
 		genCppIndexFinders(g, indexDescriptors, messagerName)
 		g.P()
 	}

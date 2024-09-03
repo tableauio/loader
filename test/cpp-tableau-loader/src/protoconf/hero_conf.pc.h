@@ -39,19 +39,6 @@ class HeroConf : public Messager {
 
  private:
   Hero_OrderedMap ordered_map_;
-
-  // Index accessers.
-  // Index: Title
- public:
-  using Index_AttrVector = std::vector<const protoconf::HeroConf::Hero::Attr*>;
-  using Index_AttrMap = std::unordered_map<std::string, Index_AttrVector>;
-  const Index_AttrMap& FindAttr() const;
-  const Index_AttrVector* FindAttr(const std::string& title) const;
-  const protoconf::HeroConf::Hero::Attr* FindFirstAttr(const std::string& title) const;
-
- private:
-  Index_AttrMap index_attr_map_;
-
 };
 
 class HeroBaseConf : public Messager {
@@ -60,9 +47,6 @@ class HeroBaseConf : public Messager {
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
   const protoconf::HeroBaseConf& Data() const { return data_; };
 
- private:
-  virtual bool ProcessAfterLoad() override final;
-
  public:
   const base::Hero* Get(const std::string& name) const;
   const base::Item* Get(const std::string& name, const std::string& id) const;
@@ -70,18 +54,6 @@ class HeroBaseConf : public Messager {
  private:
   static const std::string kProtoName;
   protoconf::HeroBaseConf data_;
-
-  // OrderedMap accessers.
- public:
-  using base_Item_OrderedMap = std::map<std::string, const base::Item*>;
-  const base_Item_OrderedMap* GetOrderedMap(const std::string& name) const;
-
-  using base_Hero_OrderedMapValue = std::pair<base_Item_OrderedMap, const base::Hero*>;
-  using base_Hero_OrderedMap = std::map<std::string, base_Hero_OrderedMapValue>;
-  const base_Hero_OrderedMap* GetOrderedMap() const;
-
- private:
-  base_Hero_OrderedMap ordered_map_;
 };
 
 }  // namespace tableau

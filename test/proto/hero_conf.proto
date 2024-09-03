@@ -15,6 +15,8 @@ message HeroConf {
     name: "HeroConf"
     ordered_map: true
     index: "Title"
+    lang_options: { key: "Index" value: "go" }
+    lang_options: { key: "OrderedMap" value: "cpp" }
   };
   map<string, Hero> hero_map = 1 [(tableau.field) = { key: "Name" layout: LAYOUT_VERTICAL }];
   message Hero {
@@ -31,6 +33,7 @@ message HeroBaseConf {
   option (tableau.worksheet) = {
     name: "HeroBaseConf"
     ordered_map: true
+    lang_options: { key: "OrderedMap" value: "go" }
   };
   map<string, base.Hero> hero_map = 1 [(tableau.field) = { key: "Name" layout: LAYOUT_VERTICAL }];
 }

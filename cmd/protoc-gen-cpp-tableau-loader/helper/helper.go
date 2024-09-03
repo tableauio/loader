@@ -40,16 +40,6 @@ func protocVersion(gen *protogen.Plugin) string {
 	return fmt.Sprintf("v%d.%d.%d%s", v.GetMajor(), v.GetMinor(), v.GetPatch(), suffix)
 }
 
-func NeedGenOrderedMap(md protoreflect.MessageDescriptor) bool {
-	opts := md.Options().(*descriptorpb.MessageOptions)
-	wsOpts := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
-	if wsOpts == nil || !wsOpts.OrderedMap {
-		// Not an ordered map.
-		return false
-	}
-	return true
-}
-
 func ParseIndexFieldName(fd protoreflect.FieldDescriptor) string {
 	return escapeIdentifier(string(fd.Name()))
 }

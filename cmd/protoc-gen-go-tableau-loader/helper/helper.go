@@ -12,16 +12,6 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-func NeedGenOrderedMap(md protoreflect.MessageDescriptor) bool {
-	opts := md.Options().(*descriptorpb.MessageOptions)
-	wsOpts := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
-	if wsOpts == nil || !wsOpts.OrderedMap {
-		// Not an ordered map.
-		return false
-	}
-	return true
-}
-
 func ParseIndexFieldName(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
 	md := fd.ContainingMessage()
 	msg := FindMessage(gen, md)

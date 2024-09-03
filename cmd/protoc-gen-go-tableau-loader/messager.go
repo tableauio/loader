@@ -6,6 +6,7 @@ import (
 
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/index"
+	"github.com/tableauio/loader/internal/options"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -76,10 +77,10 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	indexDescriptors := index.ParseIndexDescriptor(gen, message.Desc)
 
 	// type definitions
-	if helper.NeedGenOrderedMap(message.Desc) {
+	if options.NeedGenOrderedMap(message.Desc, options.LangGO) {
 		genOrderedMapTypeDef(gen, g, message.Desc, 1, nil, messagerName)
 	}
-	if index.NeedGenIndex(message.Desc) {
+	if options.NeedGenIndex(message.Desc, options.LangGO) {
 		genIndexTypeDef(gen, g, indexDescriptors, messagerName)
 	}
 
@@ -94,10 +95,10 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("type ", messagerName, " struct {")
 	g.P("UnimplementedMessager")
 	g.P("data ", message.GoIdent)
-	if helper.NeedGenOrderedMap(message.Desc) {
+	if options.NeedGenOrderedMap(message.Desc, options.LangGO) {
 		genOrderedMapField(g, message.Desc)
 	}
-	if index.NeedGenIndex(message.Desc) {
+	if options.NeedGenIndex(message.Desc, options.LangGO) {
 		genIndexField(g, indexDescriptors, messagerName)
 	}
 	g.P("}")
@@ -145,13 +146,13 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("}")
 	g.P()
 
-	if helper.NeedGenOrderedMap(message.Desc) || index.NeedGenIndex(message.Desc) {
+	if options.NeedGenOrderedMap(message.Desc, options.LangGO) || options.NeedGenIndex(message.Desc, options.LangGO) {
 		g.P("// processAfterLoad runs after this messager is loaded.")
 		g.P("func (x *", messagerName, ") processAfterLoad() error {")
-		if helper.NeedGenOrderedMap(message.Desc) {
+		if options.NeedGenOrderedMap(message.Desc, options.LangGO) {
 			genOrderedMapLoader(gen, g, message.Desc, 1, nil, messagerName, "")
 		}
-		if index.NeedGenIndex(message.Desc) {
+		if options.NeedGenIndex(message.Desc, options.LangGO) {
 			genIndexLoader(gen, g, indexDescriptors, messagerName)
 		}
 		g.P("return nil")
@@ -161,10 +162,10 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 
 	// syntactic sugar for accessing map items
 	genMapGetters(gen, g, message, 1, nil, messagerName)
-	if helper.NeedGenOrderedMap(message.Desc) {
+	if options.NeedGenOrderedMap(message.Desc, options.LangGO) {
 		genOrderedMapGetters(gen, g, message.Desc, 1, nil, messagerName)
 	}
-	if index.NeedGenIndex(message.Desc) {
+	if options.NeedGenIndex(message.Desc, options.LangGO) {
 		genIndexFinders(gen, g, indexDescriptors, messagerName)
 	}
 }

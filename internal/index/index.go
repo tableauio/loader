@@ -90,8 +90,3 @@ func parseIndexFrom(indexList []string) []*Index {
 	}
 	return indexes
 }
-
-func NeedGenIndex(md protoreflect.MessageDescriptor) bool {
-	indexes := parseWSOptionIndex(md)
-	return len(indexes) != 0
-}
