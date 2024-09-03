@@ -39,19 +39,6 @@ class HeroConf : public Messager {
 
  private:
   Hero_OrderedMap ordered_map_;
-
-  // Index accessers.
-  // Index: Title
- public:
-  using Index_AttrVector = std::vector<const protoconf::HeroConf::Hero::Attr*>;
-  using Index_AttrMap = std::unordered_map<std::string, Index_AttrVector>;
-  const Index_AttrMap& FindAttr() const;
-  const Index_AttrVector* FindAttr(const std::string& title) const;
-  const protoconf::HeroConf::Hero::Attr* FindFirstAttr(const std::string& title) const;
-
- private:
-  Index_AttrMap index_attr_map_;
-
 };
 
 class HeroBaseConf : public Messager {

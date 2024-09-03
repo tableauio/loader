@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/iancoleman/strcase"
+	"github.com/tableauio/loader/internal/options"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -20,8 +21,8 @@ func NeedGenOrderedMap(md protoreflect.MessageDescriptor) bool {
 		// Not an ordered map.
 		return false
 	}
-	if languages, ok := wsOpts.GetLangOptions()["OrderedMap"]; ok {
-		if !slices.Contains(strings.Split(languages, " "), "go") {
+	if languages, ok := wsOpts.GetLangOptions()[options.OptionOrderedMap]; ok {
+		if !slices.Contains(strings.Split(languages, " "), options.LangGO) {
 			// Do not generate go ordered map
 			return false
 		}
@@ -36,8 +37,8 @@ func NeedGenIndex(md protoreflect.MessageDescriptor) bool {
 		// No index.
 		return false
 	}
-	if languages, ok := wsOpts.GetLangOptions()["Index"]; ok {
-		if !slices.Contains(strings.Split(languages, " "), "go") {
+	if languages, ok := wsOpts.GetLangOptions()[options.OptionIndex]; ok {
+		if !slices.Contains(strings.Split(languages, " "), options.LangGO) {
 			// Do not generate go index
 			return false
 		}

@@ -23,13 +23,6 @@ bool HeroConf::ProcessAfterLoad() {
       ordered_map1[item2.first] = &item2.second;
     }
   }
-  // Index init.
-  // Index: Title
-  for (auto&& item1 : data_.hero_map()) {
-    for (auto&& item2 : item1.second.attr_map()) {
-      index_attr_map_[item2.second.title()].push_back(&item2.second);
-    }
-  }
   return true;
 }
 
@@ -68,26 +61,6 @@ const HeroConf::Hero_Attr_OrderedMap* HeroConf::GetOrderedMap(const std::string&
   }
   return &iter->second.first;
 }
-
-// Index: Title
-const HeroConf::Index_AttrMap& HeroConf::FindAttr() const { return index_attr_map_ ;}
-
-const HeroConf::Index_AttrVector* HeroConf::FindAttr(const std::string& title) const {
-  auto iter = index_attr_map_.find(title);
-  if (iter == index_attr_map_.end()) {
-    return nullptr;
-  }
-  return &iter->second;
-}
-
-const protoconf::HeroConf::Hero::Attr* HeroConf::FindFirstAttr(const std::string& title) const {
-  auto conf = FindAttr(title);
-  if (conf == nullptr || conf->size() == 0) {
-    return nullptr;
-  }
-  return (*conf)[0];
-}
-
 
 const std::string HeroBaseConf::kProtoName = "HeroBaseConf";
 
