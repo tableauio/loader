@@ -6,12 +6,17 @@
 
 #include "hero_conf.pc.h"
 
+#include "hub.pc.h"
+
 namespace tableau {
 const std::string HeroConf::kProtoName = "HeroConf";
 
 bool HeroConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
-  bool ok = LoadMessage(data_, dir, fmt, options);
-  return ok ? ProcessAfterLoad() : false;
+  tableau::util::TimeProfiler profiler;
+  bool loaded = LoadMessage(data_, dir, fmt, options);
+  bool ok = loaded ? ProcessAfterLoad() : false;
+  stats_.duration = profiler.Elapse();
+  return ok;
 }
 
 bool HeroConf::ProcessAfterLoad() {
@@ -65,8 +70,11 @@ const HeroConf::Hero_Attr_OrderedMap* HeroConf::GetOrderedMap(const std::string&
 const std::string HeroBaseConf::kProtoName = "HeroBaseConf";
 
 bool HeroBaseConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
-  bool ok = LoadMessage(data_, dir, fmt, options);
-  return ok ? ProcessAfterLoad() : false;
+  tableau::util::TimeProfiler profiler;
+  bool loaded = LoadMessage(data_, dir, fmt, options);
+  bool ok = loaded ? ProcessAfterLoad() : false;
+  stats_.duration = profiler.Elapse();
+  return ok;
 }
 
 const base::Hero* HeroBaseConf::Get(const std::string& name) const {

@@ -7,6 +7,7 @@
 #include <google/protobuf/util/json_util.h>
 #include <tableau/protobuf/tableau.pb.h>
 
+#include <chrono>
 #include <cstddef>
 #include <ctime>
 #include <functional>
@@ -59,7 +60,7 @@ struct LoadOptions {
   // Patch paths maps each messager name to a corresponding patch file path.
   // If specified, then main messager will patched.
   std::unordered_map<std::string, std::string> patch_paths;
-  // Specifies the patch directory for config patching.
+  // Specify the patch directory for config patching.
   std::string patch_dir;
 };
 
@@ -110,18 +111,26 @@ bool Postprocess(Postprocessor postprocessor, MessagerContainer container);
 
 class Messager {
  public:
+  struct Stats {
+    std::chrono::microseconds duration;  // total load time consuming.
+    // TODO: crc32 of config file to decide whether changed or not
+    // std::string crc32;
+    // int64_t last_modified_time = 0; // unix timestamp
+  };
+
+ public:
   virtual ~Messager() = default;
   static const std::string& Name() { return kEmpty; };
+  const Stats& GetStats() { return stats_; };
   // Load fills message from file in the specified directory and format.
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) = 0;
+  // callback after all messagers loaded.
+  virtual bool ProcessAfterLoadAll(const Hub& hub) { return true; };
 
  protected:
   // callback after this messager loaded.
   virtual bool ProcessAfterLoad() { return true; };
-
- public:
-  // callback after all messagers loaded.
-  virtual bool ProcessAfterLoadAll(const Hub& hub) { return true; };
+  Stats stats_;
 };
 
 class Hub {
@@ -232,6 +241,23 @@ std::string GetDir(const std::string& path);
 // in the final element of path; it is empty if there is
 // no dot.
 std::string GetExt(const std::string& path);
+
+class TimeProfiler {
+ protected:
+  std::chrono::time_point<std::chrono::steady_clock> last_;
+
+ public:
+  TimeProfiler() { Start(); }
+  void Start() { last_ = std::chrono::steady_clock::now(); }
+  // Calculate duration between the last time point and now,
+  // and update last time point to now.
+  std::chrono::microseconds Elapse() {
+    auto now = std::chrono::steady_clock::now();
+    auto duration = now - last_;  // This is of type std::chrono::duration
+    last_ = now;
+    return std::chrono::duration_cast<std::chrono::microseconds>(duration);
+  }
+};
 
 }  // namespace util
 

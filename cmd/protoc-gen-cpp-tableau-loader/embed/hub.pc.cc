@@ -361,14 +361,14 @@ MessagerContainer Hub::LoadNewMessagerContainer(const std::string& dir, Format f
     bool ok = iter.second->Load(dir, fmt, options);
     if (!ok) {
       ATOM_ERROR("load %s failed: %s", name.c_str(), GetErrMsg().c_str());
-      // restore to old protobuf log hanlder
+      // restore to old protobuf log handler
       google::protobuf::SetLogHandler(old_handler);
       return nullptr;
     }
     ATOM_DEBUG("loaded %s", name.c_str());
   }
 
-  // restore to old protobuf log hanlder
+  // restore to old protobuf log handler
   google::protobuf::SetLogHandler(old_handler);
   return msger_container;
 }
@@ -520,3 +520,4 @@ std::string GetExt(const std::string& path) {
 }  // namespace util
 
 }  // namespace tableau
+
