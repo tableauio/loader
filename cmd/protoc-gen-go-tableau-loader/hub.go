@@ -67,9 +67,10 @@ type Checker interface {
 type Stats struct {
 	Duration time.Duration // total load time consuming.
 	// TODO: crc32 of config file to decide whether changed or not
-    // CRC32 string
-    // LastModifiedTime time.Time
+	// CRC32 string
+	// LastModifiedTime time.Time
 }
+
 type UnimplementedMessager struct {
 	Stats Stats
 }

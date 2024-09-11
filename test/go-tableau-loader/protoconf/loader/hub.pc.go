@@ -44,6 +44,7 @@ type Stats struct {
 	// CRC32 string
 	// LastModifiedTime time.Time
 }
+
 type UnimplementedMessager struct {
 	Stats Stats
 }
