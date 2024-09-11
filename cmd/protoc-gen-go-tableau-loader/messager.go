@@ -21,6 +21,7 @@ const (
 	errors         = protogen.GoImportPath("github.com/pkg/errors")
 	treeMapPackage = protogen.GoImportPath("github.com/tableauio/loader/pkg/treemap")
 	pairPackage    = protogen.GoImportPath("github.com/tableauio/loader/pkg/pair")
+	timePackage    = protogen.GoImportPath("time")
 )
 
 // golbal container for record all proto filenames and messager names
@@ -125,6 +126,10 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 
 	g.P("// Load fills ", messagerName, "'s inner message from file in the specified directory and format.")
 	g.P("func (x *", messagerName, ") Load(dir string, format ", formatPackage.Ident("Format"), " , options ...", loadPackage.Ident("Option"), ") error {")
+	g.P("start := ", timePackage.Ident("Now"), "()")
+	g.P("defer func ()  {")
+	g.P("x.Stats.Duration = ", timePackage.Ident("Since"), "(start)")
+	g.P("}()")
 	g.P("err := ", loadPackage.Ident("Load"), "(x.Data(), dir, format, options...)")
 	g.P("if err != nil {")
 	g.P("return err")

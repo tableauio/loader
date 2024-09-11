@@ -15,6 +15,7 @@ import (
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
 	store "github.com/tableauio/tableau/store"
+	time "time"
 )
 
 // OrderedMap types.
@@ -69,6 +70,10 @@ func (x *ActivityConf) Data() *protoconf.ActivityConf {
 
 // Load fills ActivityConf's inner message from file in the specified directory and format.
 func (x *ActivityConf) Load(dir string, format format.Format, options ...load.Option) error {
+	start := time.Now()
+	defer func() {
+		x.Stats.Duration = time.Since(start)
+	}()
 	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
@@ -315,6 +320,10 @@ func (x *ChapterConf) Data() *protoconf.ChapterConf {
 
 // Load fills ChapterConf's inner message from file in the specified directory and format.
 func (x *ChapterConf) Load(dir string, format format.Format, options ...load.Option) error {
+	start := time.Now()
+	defer func() {
+		x.Stats.Duration = time.Since(start)
+	}()
 	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
@@ -374,6 +383,10 @@ func (x *ThemeConf) Data() *protoconf.ThemeConf {
 
 // Load fills ThemeConf's inner message from file in the specified directory and format.
 func (x *ThemeConf) Load(dir string, format format.Format, options ...load.Option) error {
+	start := time.Now()
+	defer func() {
+		x.Stats.Duration = time.Since(start)
+	}()
 	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err

@@ -14,6 +14,7 @@ import (
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
 	store "github.com/tableauio/tableau/store"
+	time "time"
 )
 
 // OrderedMap types.
@@ -101,6 +102,10 @@ func (x *ItemConf) Data() *protoconf.ItemConf {
 
 // Load fills ItemConf's inner message from file in the specified directory and format.
 func (x *ItemConf) Load(dir string, format format.Format, options ...load.Option) error {
+	start := time.Now()
+	defer func() {
+		x.Stats.Duration = time.Since(start)
+	}()
 	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err

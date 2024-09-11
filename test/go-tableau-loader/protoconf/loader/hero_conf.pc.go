@@ -16,6 +16,7 @@ import (
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
 	store "github.com/tableauio/tableau/store"
+	time "time"
 )
 
 // Index types.
@@ -53,6 +54,10 @@ func (x *HeroConf) Data() *protoconf.HeroConf {
 
 // Load fills HeroConf's inner message from file in the specified directory and format.
 func (x *HeroConf) Load(dir string, format format.Format, options ...load.Option) error {
+	start := time.Now()
+	defer func() {
+		x.Stats.Duration = time.Since(start)
+	}()
 	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
@@ -171,6 +176,10 @@ func (x *HeroBaseConf) Data() *protoconf.HeroBaseConf {
 
 // Load fills HeroBaseConf's inner message from file in the specified directory and format.
 func (x *HeroBaseConf) Load(dir string, format format.Format, options ...load.Option) error {
+	start := time.Now()
+	defer func() {
+		x.Stats.Duration = time.Since(start)
+	}()
 	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
