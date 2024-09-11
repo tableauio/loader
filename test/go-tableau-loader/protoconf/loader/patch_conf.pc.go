@@ -13,6 +13,7 @@ import (
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
 	store "github.com/tableauio/tableau/store"
+	time "time"
 )
 
 // PatchReplaceConf is a wrapper around protobuf message: protoconf.PatchReplaceConf.
@@ -45,6 +46,10 @@ func (x *PatchReplaceConf) Data() *protoconf.PatchReplaceConf {
 
 // Load fills PatchReplaceConf's inner message from file in the specified directory and format.
 func (x *PatchReplaceConf) Load(dir string, format format.Format, options ...load.Option) error {
+	start := time.Now()
+	defer func() {
+		x.Stats.Duration = time.Since(start)
+	}()
 	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err
@@ -93,6 +98,10 @@ func (x *PatchMergeConf) Data() *protoconf.PatchMergeConf {
 
 // Load fills PatchMergeConf's inner message from file in the specified directory and format.
 func (x *PatchMergeConf) Load(dir string, format format.Format, options ...load.Option) error {
+	start := time.Now()
+	defer func() {
+		x.Stats.Duration = time.Since(start)
+	}()
 	err := load.Load(x.Data(), dir, format, options...)
 	if err != nil {
 		return err

@@ -133,6 +133,8 @@ func genHppMapGetters(depth int, keys []helper.MapKey, g *protogen.GeneratedFile
 func generateCppFileContent(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile) {
 	g.P(`#include "`, file.GeneratedFilenamePrefix, ".", pcExt, `.h"`)
 	g.P()
+	g.P(`#include "hub.pc.h"`)
+	g.P()
 
 	g.P("namespace ", *namespace, " {")
 	for _, message := range file.Messages {
@@ -154,8 +156,11 @@ func genCppMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 	g.P("const std::string ", messagerName, "::kProtoName = ", `"`, messagerName, `";`)
 	g.P()
 	g.P("bool ", messagerName, "::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {")
-	g.P("  bool ok = LoadMessage(data_, dir, fmt, options);")
-	g.P("  return ok ? ProcessAfterLoad() : false;")
+	g.P("  tableau::util::TimeProfiler profiler;")
+	g.P("  bool loaded = LoadMessage(data_, dir, fmt, options);")
+	g.P("  bool ok = loaded ? ProcessAfterLoad() : false;")
+	g.P("  stats_.duration = profiler.Elapse();")
+	g.P("  return ok;")
 	g.P("}")
 	g.P()
 

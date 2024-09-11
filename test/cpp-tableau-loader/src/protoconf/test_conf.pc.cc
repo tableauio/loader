@@ -6,12 +6,17 @@
 
 #include "test_conf.pc.h"
 
+#include "hub.pc.h"
+
 namespace tableau {
 const std::string ActivityConf::kProtoName = "ActivityConf";
 
 bool ActivityConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
-  bool ok = LoadMessage(data_, dir, fmt, options);
-  return ok ? ProcessAfterLoad() : false;
+  tableau::util::TimeProfiler profiler;
+  bool loaded = LoadMessage(data_, dir, fmt, options);
+  bool ok = loaded ? ProcessAfterLoad() : false;
+  stats_.duration = profiler.Elapse();
+  return ok;
 }
 
 bool ActivityConf::ProcessAfterLoad() {
@@ -173,8 +178,11 @@ const protoconf::ActivityConf::Activity::Chapter* ActivityConf::FindFirstNamedCh
 const std::string ChapterConf::kProtoName = "ChapterConf";
 
 bool ChapterConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
-  bool ok = LoadMessage(data_, dir, fmt, options);
-  return ok ? ProcessAfterLoad() : false;
+  tableau::util::TimeProfiler profiler;
+  bool loaded = LoadMessage(data_, dir, fmt, options);
+  bool ok = loaded ? ProcessAfterLoad() : false;
+  stats_.duration = profiler.Elapse();
+  return ok;
 }
 
 const protoconf::ChapterConf::Chapter* ChapterConf::Get(uint64_t id) const {
@@ -188,8 +196,11 @@ const protoconf::ChapterConf::Chapter* ChapterConf::Get(uint64_t id) const {
 const std::string ThemeConf::kProtoName = "ThemeConf";
 
 bool ThemeConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
-  bool ok = LoadMessage(data_, dir, fmt, options);
-  return ok ? ProcessAfterLoad() : false;
+  tableau::util::TimeProfiler profiler;
+  bool loaded = LoadMessage(data_, dir, fmt, options);
+  bool ok = loaded ? ProcessAfterLoad() : false;
+  stats_.duration = profiler.Elapse();
+  return ok;
 }
 
 const protoconf::ThemeConf::Theme* ThemeConf::Get(const std::string& name) const {

@@ -39,7 +39,7 @@ using Writer = std::function<void(std::ostream* os, const SourceLocation& loc, c
 // Default write: write the log to output stream.
 void DefaultWrite(std::ostream* os, const SourceLocation& loc, const LevelInfo& level, const std::string& content);
 
-// A simple multi-threaded logger.
+// A simple thread-safe logger.
 class Logger {
  public:
   Logger() {
@@ -83,3 +83,4 @@ void SetDefaultLogger(Logger* logger);
 #define ATOM_WARN(...) ATOM_LOGGER_CALL(tableau::log::DefaultLogger(), tableau::log::kWarn, __VA_ARGS__)
 #define ATOM_ERROR(...) ATOM_LOGGER_CALL(tableau::log::DefaultLogger(), tableau::log::kError, __VA_ARGS__)
 #define ATOM_FATAL(...) ATOM_LOGGER_CALL(tableau::log::DefaultLogger(), tableau::log::kFatal, __VA_ARGS__)
+

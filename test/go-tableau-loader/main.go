@@ -24,6 +24,10 @@ func main() {
 		panic(err)
 	}
 
+	for name, msger := range hub.GetHub().GetMessagerMap() {
+		fmt.Printf("%s: duration: %v\n", name, msger.GetStats().Duration)
+	}
+
 	conf := hub.GetHub().GetActivityConf()
 	if conf == nil {
 		panic("ActivityConf is nil")

@@ -7,6 +7,7 @@
 #include "hub/hub.h"
 #include "protoconf/hub.pc.h"
 #include "protoconf/item_conf.pc.h"
+#include "protoconf/logger.pc.h"
 #include "protoconf/patch_conf.pc.h"
 #include "protoconf/test_conf.pc.h"
 
@@ -64,6 +65,12 @@ int main() {
     std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
     return 1;
   }
+  auto msger_container = Hub::Instance().GetMessagerContainer();
+  for (auto&& item : *msger_container) {
+    auto&& stats = item.second->GetStats();
+    ATOM_DEBUG("%s: duration: %dus", item.first.c_str(), stats.duration.count());
+  }
+
   auto item_mgr = Hub::Instance().Get<protoconf::ItemConfMgr>();
   if (!item_mgr) {
     std::cout << "protobuf hub get Item failed!" << std::endl;

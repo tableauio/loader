@@ -6,12 +6,17 @@
 
 #include "item_conf.pc.h"
 
+#include "hub.pc.h"
+
 namespace tableau {
 const std::string ItemConf::kProtoName = "ItemConf";
 
 bool ItemConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
-  bool ok = LoadMessage(data_, dir, fmt, options);
-  return ok ? ProcessAfterLoad() : false;
+  tableau::util::TimeProfiler profiler;
+  bool loaded = LoadMessage(data_, dir, fmt, options);
+  bool ok = loaded ? ProcessAfterLoad() : false;
+  stats_.duration = profiler.Elapse();
+  return ok;
 }
 
 bool ItemConf::ProcessAfterLoad() {

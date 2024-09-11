@@ -22,21 +22,6 @@ mkdir -p "$PROTOCONF_OUT"
 # build
 cd "${PLGUIN_DIR}" && go build && cd -
 
-# generate
-# for item in "$PROTOCONF_IN"/* ; do
-#     echo "$item"
-#     if [ -f "$item" ]; then
-#         ${PROTOC} \
-#         --cpp-tableau-loader_out="$PROTOCONF_OUT" \
-#         --cpp-tableau-loader_opt=paths=source_relative \
-#         --cpp_out="$PROTOCONF_OUT" \
-#         --proto_path="$PROTOBUF_PROTO" \
-#         --proto_path="$TABLEAU_PROTO" \
-#         --proto_path="$PROTOCONF_IN" \
-#         "$item"
-#     fi
-# done
-
 export PATH="${PATH}:${PLGUIN_DIR}"
 
 ${PROTOC} \
@@ -59,5 +44,6 @@ ${PROTOC} \
 --cpp_out="$TABLEAU_OUT" \
 --proto_path="$PROTOBUF_PROTO" \
 --proto_path="$TABLEAU_PROTO" \
-"${TABLEAU_PROTO}/tableau/protobuf/tableau.proto"
+"${TABLEAU_PROTO}/tableau/protobuf/tableau.proto" \
+"${TABLEAU_PROTO}/tableau/protobuf/wellknown.proto"
     

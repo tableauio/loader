@@ -20,6 +20,8 @@ type Messager interface {
 	Checker
 	// Name returns the unique message name.
 	Name() string
+	// GetStats returns stats info.
+	GetStats() *Stats
 	// Load fills message from file in the specified directory and format.
 	Load(dir string, fmt format.Format, options ...load.Option) error
 	// Store writes message to file in the specified directory and format.
@@ -36,11 +38,23 @@ type Checker interface {
 	CheckCompatibility(hub, newHub *Hub) error
 }
 
+type Stats struct {
+	Duration time.Duration // total load time consuming.
+	// TODO: crc32 of config file to decide whether changed or not
+	// CRC32 string
+	// LastModifiedTime time.Time
+}
+
 type UnimplementedMessager struct {
+	Stats Stats
 }
 
 func (x *UnimplementedMessager) Name() string {
 	return ""
+}
+
+func (x *UnimplementedMessager) GetStats() *Stats {
+	return &x.Stats
 }
 
 func (x *UnimplementedMessager) Load(dir string, format format.Format, options ...load.Option) error {
@@ -133,6 +147,11 @@ func (h *Hub) NewMessagerMap(filter load.FilterFunc) MessagerMap {
 		}
 	}
 	return messagerMap
+}
+
+// GetMessagerMap returns hub's inner field messagerMap.
+func (h *Hub) GetMessagerMap() MessagerMap {
+	return h.messagerMap
 }
 
 // SetMessagerMap sets hub's inner field messagerMap.
