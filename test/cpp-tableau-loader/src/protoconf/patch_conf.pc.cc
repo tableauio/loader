@@ -37,4 +37,58 @@ const protoconf::Item* PatchMergeConf::Get(uint32_t id) const {
   return &iter->second;
 }
 
+const std::string RecursivePatchConf::kProtoName = "RecursivePatchConf";
+
+bool RecursivePatchConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
+  tableau::util::TimeProfiler profiler;
+  bool loaded = LoadMessage(data_, dir, fmt, options);
+  bool ok = loaded ? ProcessAfterLoad() : false;
+  stats_.duration = profiler.Elapse();
+  return ok;
+}
+
+const protoconf::RecursivePatchConf::Shop* RecursivePatchConf::Get(uint32_t shop_id) const {
+  auto iter = data_.shop_map().find(shop_id);
+  if (iter == data_.shop_map().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::RecursivePatchConf::Shop::Goods* RecursivePatchConf::Get(uint32_t shop_id, uint32_t goods_id) const {
+  const auto* conf = Get(shop_id);
+  if (conf == nullptr) {
+    return nullptr;
+  }
+  auto iter = conf->goods_map().find(goods_id);
+  if (iter == conf->goods_map().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::RecursivePatchConf::Shop::Goods::Currency* RecursivePatchConf::Get(uint32_t shop_id, uint32_t goods_id, uint32_t type) const {
+  const auto* conf = Get(shop_id, goods_id);
+  if (conf == nullptr) {
+    return nullptr;
+  }
+  auto iter = conf->currency_map().find(type);
+  if (iter == conf->currency_map().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const int32_t* RecursivePatchConf::Get(uint32_t shop_id, uint32_t goods_id, uint32_t type, int32_t key4) const {
+  const auto* conf = Get(shop_id, goods_id, type);
+  if (conf == nullptr) {
+    return nullptr;
+  }
+  auto iter = conf->value_list().find(key4);
+  if (iter == conf->value_list().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
 }  // namespace tableau

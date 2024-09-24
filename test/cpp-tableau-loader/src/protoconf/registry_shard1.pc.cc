@@ -12,6 +12,7 @@ namespace tableau {
 void Registry::InitShard1() {
   Register<PatchMergeConf>();
   Register<PatchReplaceConf>();
+  Register<RecursivePatchConf>();
   Register<ActivityConf>();
   Register<ChapterConf>();
   Register<ThemeConf>();

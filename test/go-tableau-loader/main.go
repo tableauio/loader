@@ -17,9 +17,6 @@ func main() {
 		load.Paths(map[string]string{
 			"ItemConf": "../testdata/conf/ItemConf.json",
 		}))
-	load.Filter(func(name string) bool {
-		return true
-	})
 	if err != nil {
 		panic(err)
 	}
@@ -72,4 +69,15 @@ func main() {
 	}
 	fmt.Printf("specialItemName: %v\n", hub.GetHub().GetCustomItemConf().GetSpecialItemName())
 	fmt.Printf("HeroBaseConf: %v\n", hub.GetHub().GetHeroBaseConf().Data().GetHeroMap())
+
+	// patchconf
+	err = hub.GetHub().Load("../testdata/conf/", format.JSON,
+		load.IgnoreUnknownFields(),
+		load.PatchDir("../testdata/patchconf/"),
+	)
+	if err != nil {
+		panic(err)
+	}
+	// print recursive patch conf
+	fmt.Printf("RecursivePatchConf: %v\n", hub.GetHub().GetRecursivePatchConf().Data())
 }

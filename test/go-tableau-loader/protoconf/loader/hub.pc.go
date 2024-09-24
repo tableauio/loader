@@ -258,6 +258,16 @@ func (h *Hub) GetPatchMergeConf() *PatchMergeConf {
 	return nil
 }
 
+func (h *Hub) GetRecursivePatchConf() *RecursivePatchConf {
+	msger := h.GetMessager("RecursivePatchConf")
+	if msger != nil {
+		if conf, ok := msger.(*RecursivePatchConf); ok {
+			return conf
+		}
+	}
+	return nil
+}
+
 func (h *Hub) GetActivityConf() *ActivityConf {
 	msger := h.GetMessager("ActivityConf")
 	if msger != nil {

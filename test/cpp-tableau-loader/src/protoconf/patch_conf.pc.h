@@ -37,10 +37,28 @@ class PatchMergeConf : public Messager {
   protoconf::PatchMergeConf data_;
 };
 
+class RecursivePatchConf : public Messager {
+ public:
+  static const std::string& Name() { return kProtoName; };
+  virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
+  const protoconf::RecursivePatchConf& Data() const { return data_; };
+
+ public:
+  const protoconf::RecursivePatchConf::Shop* Get(uint32_t shop_id) const;
+  const protoconf::RecursivePatchConf::Shop::Goods* Get(uint32_t shop_id, uint32_t goods_id) const;
+  const protoconf::RecursivePatchConf::Shop::Goods::Currency* Get(uint32_t shop_id, uint32_t goods_id, uint32_t type) const;
+  const int32_t* Get(uint32_t shop_id, uint32_t goods_id, uint32_t type, int32_t key4) const;
+
+ private:
+  static const std::string kProtoName;
+  protoconf::RecursivePatchConf data_;
+};
+
 }  // namespace tableau
 
 namespace protoconf {
 // Here are some type aliases for easy use.
 using PatchReplaceConfMgr = tableau::PatchReplaceConf;
 using PatchMergeConfMgr = tableau::PatchMergeConf;
+using RecursivePatchConfMgr = tableau::RecursivePatchConf;
 }  // namespace protoconf

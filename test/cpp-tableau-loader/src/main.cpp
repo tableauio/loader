@@ -27,6 +27,14 @@ bool TestPatch() {
     return false;
   }
 
+  // print recursive patch conf
+  auto mgr = Hub::Instance().Get<protoconf::RecursivePatchConfMgr>();
+  if (!mgr) {
+    std::cout << "protobuf hub get RecursivePatchConf failed!" << std::endl;
+    return false;
+  }
+  std::cout << "RecursivePatchConf: " << mgr->Data().ShortDebugString() << std::endl;
+
   // patchconf2
   std::cout << "-----TestPatch patchconf2" << std::endl;
   options.patch_dir = "../../testdata/patchconf2/";
