@@ -131,11 +131,122 @@ func (x *PatchMergeConf) Get1(id uint32) (*protoconf.Item, error) {
 	}
 }
 
+// RecursivePatchConf is a wrapper around protobuf message: protoconf.RecursivePatchConf.
+//
+// It is designed for three goals:
+//
+//  1. Easy use: simple yet powerful accessers.
+//  2. Elegant API: concise and clean functions.
+//  3. Extensibility: Map, OrdererdMap, Index...
+type RecursivePatchConf struct {
+	UnimplementedMessager
+	data protoconf.RecursivePatchConf
+}
+
+// Name returns the RecursivePatchConf's message name.
+func (x *RecursivePatchConf) Name() string {
+	if x != nil {
+		return string((&x.data).ProtoReflect().Descriptor().Name())
+	}
+	return ""
+}
+
+// Data returns the RecursivePatchConf's inner message data.
+func (x *RecursivePatchConf) Data() *protoconf.RecursivePatchConf {
+	if x != nil {
+		return &x.data
+	}
+	return nil
+}
+
+// Load fills RecursivePatchConf's inner message from file in the specified directory and format.
+func (x *RecursivePatchConf) Load(dir string, format format.Format, options ...load.Option) error {
+	start := time.Now()
+	defer func() {
+		x.Stats.Duration = time.Since(start)
+	}()
+	err := load.Load(x.Data(), dir, format, options...)
+	if err != nil {
+		return err
+	}
+	return x.processAfterLoad()
+}
+
+// Store writes RecursivePatchConf's inner message to file in the specified directory and format.
+// Available formats: JSON, Bin, and Text.
+func (x *RecursivePatchConf) Store(dir string, format format.Format, options ...store.Option) error {
+	return store.Store(x.Data(), dir, format, options...)
+}
+
+// Messager is used to implement Checker interface.
+func (x *RecursivePatchConf) Messager() Messager {
+	return x
+}
+
+// Get1 finds value in the 1-level map. It will return
+// NotFound error if the key is not found.
+func (x *RecursivePatchConf) Get1(shopId uint32) (*protoconf.RecursivePatchConf_Shop, error) {
+	d := x.Data().GetShopMap()
+	if val, ok := d[shopId]; !ok {
+		return nil, xerrors.Errorf(code.NotFound, "shopId(%v) not found", shopId)
+	} else {
+		return val, nil
+	}
+}
+
+// Get2 finds value in the 2-level map. It will return
+// NotFound error if the key is not found.
+func (x *RecursivePatchConf) Get2(shopId uint32, goodsId uint32) (*protoconf.RecursivePatchConf_Shop_Goods, error) {
+	conf, err := x.Get1(shopId)
+	if err != nil {
+		return nil, err
+	}
+	d := conf.GetGoodsMap()
+	if val, ok := d[goodsId]; !ok {
+		return nil, xerrors.Errorf(code.NotFound, "goodsId(%v) not found", goodsId)
+	} else {
+		return val, nil
+	}
+}
+
+// Get3 finds value in the 3-level map. It will return
+// NotFound error if the key is not found.
+func (x *RecursivePatchConf) Get3(shopId uint32, goodsId uint32, type_ uint32) (*protoconf.RecursivePatchConf_Shop_Goods_Currency, error) {
+	conf, err := x.Get2(shopId, goodsId)
+	if err != nil {
+		return nil, err
+	}
+	d := conf.GetCurrencyMap()
+	if val, ok := d[type_]; !ok {
+		return nil, xerrors.Errorf(code.NotFound, "type_(%v) not found", type_)
+	} else {
+		return val, nil
+	}
+}
+
+// Get4 finds value in the 4-level map. It will return
+// NotFound error if the key is not found.
+func (x *RecursivePatchConf) Get4(shopId uint32, goodsId uint32, type_ uint32, key4 int32) (int32, error) {
+	conf, err := x.Get3(shopId, goodsId, type_)
+	if err != nil {
+		return 0, err
+	}
+	d := conf.GetValueList()
+	if val, ok := d[key4]; !ok {
+		return 0, xerrors.Errorf(code.NotFound, "key4(%v) not found", key4)
+	} else {
+		return val, nil
+	}
+}
+
 func init() {
 	Register(func() Messager {
 		return new(PatchReplaceConf)
 	})
 	Register(func() Messager {
 		return new(PatchMergeConf)
+	})
+	Register(func() Messager {
+		return new(RecursivePatchConf)
 	})
 }
