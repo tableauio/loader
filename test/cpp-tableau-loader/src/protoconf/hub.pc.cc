@@ -186,6 +186,7 @@ bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Messag
       dst_reflection->ClearField(&dst, fd);
     }
     if (fd->is_map()) {
+      // Reference: https://github.com/protocolbuffers/protobuf/blob/95ef4134d3f65237b7adfb66e5e7aa10fcfa1fa3/src/google/protobuf/map_field.cc#L500
       auto key_fd = fd->message_type()->map_key();
       auto value_fd = fd->message_type()->map_value();
       int src_count = src_reflection->FieldSize(src, fd);
@@ -222,11 +223,13 @@ bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Messag
         HANDLE_TYPE(STRING, String, std::string);
         default: {
           // other types are impossible to be protobuf map key
+          ATOM_FATAL("invalid map key type: %d", key_fd->cpp_type());
           break;
         }
 #undef HANDLE_TYPE
       }
     } else if (fd->is_repeated()) {
+      // Reference: https://github.com/protocolbuffers/protobuf/blob/95ef4134d3f65237b7adfb66e5e7aa10fcfa1fa3/src/google/protobuf/reflection_ops.cc#L68
       int count = src_reflection->FieldSize(src, fd);
       for (int j = 0; j < count; j++) {
         switch (fd->cpp_type()) {

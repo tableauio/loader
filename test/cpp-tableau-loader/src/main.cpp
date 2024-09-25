@@ -3,6 +3,8 @@
 #include <string>
 #include <unordered_map>
 
+#include <google/protobuf/util/message_differencer.h>
+
 #include "hub/custom/item/custom_item_conf.h"
 #include "hub/hub.h"
 #include "protoconf/hub.pc.h"
@@ -33,7 +35,18 @@ bool TestPatch() {
     std::cout << "protobuf hub get RecursivePatchConf failed!" << std::endl;
     return false;
   }
-  std::cout << "RecursivePatchConf: " << mgr->Data().ShortDebugString() << std::endl;
+  std::cout << "RecursivePatchConf: " << std::endl << mgr->Data().ShortDebugString() << std::endl;
+  tableau::RecursivePatchConf result;
+  ok = result.Load("../../testdata/patchresult/", tableau::Format::kJSON);
+  if (!ok) {
+    std::cout << "failed to load with patch result" << std::endl;
+    return false;
+  }
+  std::cout << "Expected patch result: " << std::endl << result.Data().ShortDebugString() << std::endl;
+  if (!google::protobuf::util::MessageDifferencer::Equals(mgr->Data(), result.Data())) {
+    std::cout << "patch result not correct" << std::endl;
+    return false;
+  }
 
   // patchconf2
   std::cout << "-----TestPatch patchconf2" << std::endl;
