@@ -6,6 +6,8 @@
 #include <functional>
 #include <iostream>
 #include <mutex>
+#include <sstream>
+#include <string>
 
 namespace tableau {
 namespace log {
@@ -47,9 +49,7 @@ class Logger {
     os_ = &std::cout;
     writer_ = DefaultWrite;
   }
-  ~Logger() {
-    ofs_.close();
-  }
+  ~Logger() { ofs_.close(); }
   // Init the logger with the specified path.
   // NOTE: no guarantee of thread-safety.
   int Init(const std::string& path, Level level);
@@ -70,6 +70,23 @@ const char* NowStr();
 Logger* DefaultLogger();
 void SetDefaultLogger(Logger* logger);
 
+template <typename DataStructure>
+std::string DebugString(
+    const DataStructure& a,
+    std::function<void(std::stringstream& ss, typename DataStructure::const_iterator it)> print_func) {
+  std::stringstream ss;
+  ss << "[";
+  for (auto it = a.begin(); it != a.end(); ++it) {
+    print_func(ss, it);
+    auto tmp_it = it;
+    if (++tmp_it != a.end()) {
+      ss << ", ";
+    }
+  }
+  ss << "]";
+  return ss.str();
+}
+
 }  // namespace log
 }  // namespace tableau
 
@@ -84,3 +101,9 @@ void SetDefaultLogger(Logger* logger);
 #define ATOM_ERROR(...) ATOM_LOGGER_CALL(tableau::log::DefaultLogger(), tableau::log::kError, __VA_ARGS__)
 #define ATOM_FATAL(...) ATOM_LOGGER_CALL(tableau::log::DefaultLogger(), tableau::log::kFatal, __VA_ARGS__)
 
+#define ATOM_PRINT_VECTOR(v) \
+  tableau::log::DebugString(v, [](std::stringstream& ss, decltype(v)::const_iterator it) { ss << *it; })
+#define ATOM_PRINT_MAP(m)                                                                  \
+  tableau::log::DebugString(m, [](std::stringstream& ss, decltype(m)::const_iterator it) { \
+    ss << "{" << it->first << ", " << it->second << "}";                                   \
+  })

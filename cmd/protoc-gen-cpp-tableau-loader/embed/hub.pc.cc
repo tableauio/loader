@@ -14,7 +14,9 @@
 
 namespace tableau {
 static thread_local std::string g_err_msg;
-const std::string& GetErrMsg() { return g_err_msg; }
+const std::string& GetErrMsg() {
+  return g_err_msg;
+}
 
 const std::string kUnknownExt = ".unknown";
 const std::string kJSONExt = ".json";
@@ -284,47 +286,56 @@ bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Messag
 
 bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& path, Format fmt, tableau::Patch patch,
                           const LoadOptions* options /* = nullptr*/) {
+  if (options == nullptr) {
+    return LoadMessageByPath(msg, path, fmt, nullptr);
+  }
   std::string name = GetProtoName(msg);
-  std::string patch_path;
-  Format patch_fmt = fmt;
-  if (options) {
-    auto iter = options->patch_paths.find(name);
-    if (iter != options->patch_paths.end()) {
-      // patch_path specified in PatchPaths, then use it instead of PatchDir.
-      patch_path = iter->second;
-      patch_fmt = Ext2Format(util::GetExt(iter->second));
+  std::vector<std::string> patch_paths;
+  auto iter = options->patch_paths.find(name);
+  if (iter != options->patch_paths.end()) {
+    // patch path specified in PatchPaths, then use it instead of PatchDirs.
+    patch_paths = iter->second;
+  } else {
+    for (auto&& patch_dir : options->patch_dirs) { patch_paths.emplace_back(patch_dir + name + Format2Ext(fmt)); }
+  }
+
+  std::vector<std::string> existed_patch_paths;
+  for (auto&& patch_path : patch_paths) {
+    if (ExistsFile(patch_path)) {
+      existed_patch_paths.emplace_back(patch_path);
     }
   }
-  if (patch_path.empty()) {
-    if (!options || options->patch_dir.empty()) {
-      // patch_dir not provided, then just load from file in the "main" dir.
-      return LoadMessageByPath(msg, path, fmt, options);
-    }
-    patch_path = options->patch_dir + name + Format2Ext(fmt);
-  }
-  if (!ExistsFile(patch_path)) {
-    // If patch file not exists, then just load from the "main" file.
+  if (existed_patch_paths.empty()) {
+    // no valid patch path provided, then just load from the "main" file.
     return LoadMessageByPath(msg, path, fmt, options);
   }
-  bool ok = false;
+
   switch (patch) {
     case tableau::PATCH_REPLACE: {
-      ok = LoadMessageByPath(msg, patch_path, patch_fmt, options);
+      // just use the last "patch" file
+      std::string& patch_path = existed_patch_paths.back();
+      if (!LoadMessageByPath(msg, patch_path, Ext2Format(util::GetExt(patch_path)), options)) {
+        return false;
+      }
       break;
     }
     case tableau::PATCH_MERGE: {
-      // Create a new instance of the same type of the original message
-      google::protobuf::Message* patch_msg_ptr = msg.New();
-      std::unique_ptr<google::protobuf::Message> _auto_release(patch_msg_ptr);
       // load msg from the "main" file
       if (!LoadMessageByPath(msg, path, fmt, options)) {
         return false;
       }
-      // load patch_msg from the "patch" file
-      if (!LoadMessageByPath(*patch_msg_ptr, patch_path, patch_fmt, options)) {
-        return false;
+      // Create a new instance of the same type of the original message
+      google::protobuf::Message* patch_msg_ptr = msg.New();
+      std::unique_ptr<google::protobuf::Message> _auto_release(msg.New());
+      // load patch_msg from each "patch" file
+      for (auto&& patch_path : existed_patch_paths) {
+        if (!LoadMessageByPath(*patch_msg_ptr, patch_path, Ext2Format(util::GetExt(patch_path)), options)) {
+          return false;
+        }
+        if (!PatchMessage(msg, *patch_msg_ptr)) {
+          return false;
+        }
       }
-      ok = PatchMessage(msg, *patch_msg_ptr);
       break;
     }
     default: {
@@ -332,11 +343,9 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
       return false;
     }
   }
-  if (ok) {
-    ATOM_DEBUG("patched(%s) %s by %s: %s", GetPatchName(patch).c_str(), name.c_str(), patch_path.c_str(),
-               msg.ShortDebugString().c_str());
-  }
-  return ok;
+  ATOM_DEBUG("patched(%s) %s by %s: %s", GetPatchName(patch).c_str(), name.c_str(),
+             ATOM_PRINT_VECTOR(existed_patch_paths).c_str(), msg.ShortDebugString().c_str());
+  return true;
 }
 
 bool LoadMessageByPath(google::protobuf::Message& msg, const std::string& path, Format fmt,
@@ -425,7 +434,9 @@ bool Hub::AsyncLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
   return true;
 }
 
-int Hub::LoopOnce() { return sched_->LoopOnce(); }
+int Hub::LoopOnce() {
+  return sched_->LoopOnce();
+}
 void Hub::InitScheduler() {
   sched_ = new internal::Scheduler();
   sched_->Current();
@@ -494,7 +505,9 @@ namespace internal {
 // Thread-local storage (TLS)
 thread_local Scheduler* tls_sched = nullptr;
 Scheduler& Scheduler::Current() {
-  if (tls_sched == nullptr) tls_sched = new Scheduler;
+  if (tls_sched == nullptr) {
+    tls_sched = new Scheduler;
+  }
   return *tls_sched;
 }
 
@@ -509,9 +522,7 @@ int Scheduler::LoopOnce() {
     std::unique_lock<std::mutex> lock(mutex_);
     jobs.swap(jobs_);
   }
-  for (auto&& job : jobs) {
-    job();
-  }
+  for (auto&& job : jobs) { job(); }
   count += jobs.size();
   return count;
 }
@@ -529,7 +540,9 @@ void Scheduler::Dispatch(const Job& job) {
   }
 }
 
-bool Scheduler::IsLoopThread() const { return thread_id_ == std::this_thread::get_id(); }
+bool Scheduler::IsLoopThread() const {
+  return thread_id_ == std::this_thread::get_id();
+}
 void Scheduler::AssertInLoopThread() const {
   if (!IsLoopThread()) {
     abort();
@@ -602,4 +615,3 @@ std::string GetExt(const std::string& path) {
 }  // namespace util
 
 }  // namespace tableau
-

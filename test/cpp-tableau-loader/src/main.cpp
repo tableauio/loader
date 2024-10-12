@@ -22,7 +22,7 @@ bool TestPatch() {
 
   // patchconf
   std::cout << "-----TestPatch patchconf" << std::endl;
-  options.patch_dir = "../../testdata/patchconf/";
+  options.patch_dirs = {"../../testdata/patchconf/"};
   bool ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
   if (!ok) {
     std::cout << "failed to load with patchconf" << std::endl;
@@ -50,7 +50,7 @@ bool TestPatch() {
 
   // patchconf2
   std::cout << "-----TestPatch patchconf2" << std::endl;
-  options.patch_dir = "../../testdata/patchconf2/";
+  options.patch_dirs = {"../../testdata/patchconf2/"};
   ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
   if (!ok) {
     std::cout << "failed to load with patchconf2" << std::endl;
@@ -59,11 +59,20 @@ bool TestPatch() {
 
   // patchconf2 different format
   std::cout << "-----TestPatch patchconf2 different format" << std::endl;
-  options.patch_dir = "../../testdata/patchconf2/";
-  options.patch_paths["PatchMergeConf"] = "../../testdata/patchconf2/PatchMergeConf.txt";
+  options.patch_dirs = {"../../testdata/patchconf2/"};
+  options.patch_paths["PatchMergeConf"] = {"../../testdata/patchconf2/PatchMergeConf.txt"};
   ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
   if (!ok) {
     std::cout << "failed to load with patchconf2" << std::endl;
+    return false;
+  }
+
+  // multiple patch files
+  std::cout << "-----TestPatch multiple patch files" << std::endl;
+  options.patch_paths["PatchMergeConf"] = {"../../testdata/patchconf/PatchMergeConf.json", "../../testdata/patchconf2/PatchMergeConf.json"};
+  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
+  if (!ok) {
+    std::cout << "failed to load with multiple patch files" << std::endl;
     return false;
   }
   return true;
@@ -74,7 +83,7 @@ int main() {
   tableau::LoadOptions options;
   options.filter = [](const std::string& name) { return true; };
   options.ignore_unknown_fields = true;
-  options.patch_dir = "../../testdata/patchconf/";
+  options.patch_dirs = {"../../testdata/patchconf/"};
   options.postprocessor = [](const tableau::Hub& hub) {
     std::cout << "post process done!" << std::endl;
     return 1;
