@@ -349,7 +349,7 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
     }
   }
   ATOM_DEBUG("patched(%s) %s by %s: %s", GetPatchName(patch).c_str(), name.c_str(),
-             ATOM_PRINT_VECTOR(existed_patch_paths).c_str(), msg.ShortDebugString().c_str());
+             ATOM_VECTOR_STR(existed_patch_paths).c_str(), msg.ShortDebugString().c_str());
   return true;
 }
 

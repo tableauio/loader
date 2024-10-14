@@ -52,10 +52,10 @@ struct LoadOptions {
   // If specified, then the main messager will be parsed from the file
   // directly, other than the specified load dir.
   std::unordered_map<std::string, std::string> paths;
-  // PatchPaths maps each messager name to one or multiple corresponding patch file paths.
+  // Patch paths maps each messager name to one or multiple corresponding patch file paths.
   // If specified, then main messager will be patched.
   std::unordered_map<std::string, std::vector<std::string>> patch_paths;
-  // PatchDirs specifies the directory paths for config patching.
+  // Patch dirs specifies the directory paths for config patching.
   std::vector<std::string> patch_dirs;
 };
 

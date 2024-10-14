@@ -101,9 +101,9 @@ std::string DebugString(
 #define ATOM_ERROR(...) ATOM_LOGGER_CALL(tableau::log::DefaultLogger(), tableau::log::kError, __VA_ARGS__)
 #define ATOM_FATAL(...) ATOM_LOGGER_CALL(tableau::log::DefaultLogger(), tableau::log::kFatal, __VA_ARGS__)
 
-#define ATOM_PRINT_VECTOR(v) \
+#define ATOM_VECTOR_STR(v) \
   tableau::log::DebugString(v, [](std::stringstream& ss, decltype(v)::const_iterator it) { ss << *it; })
-#define ATOM_PRINT_MAP(m)                                                                  \
+#define ATOM_MAP_STR(m)                                                                    \
   tableau::log::DebugString(m, [](std::stringstream& ss, decltype(m)::const_iterator it) { \
     ss << "{" << it->first << ", " << it->second << "}";                                   \
   })
