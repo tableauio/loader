@@ -75,10 +75,9 @@ const char* NowStr();
 Logger* DefaultLogger();
 void SetDefaultLogger(Logger* logger);
 
-template <typename DataStructure>
-std::string DebugString(
-    const DataStructure& a,
-    std::function<void(std::stringstream& ss, typename DataStructure::const_iterator it)> print_func) {
+template <typename T>
+std::string DebugString(const T& a,
+                        std::function<void(std::stringstream& ss, typename T::const_iterator it)> print_func) {
   std::stringstream ss;
   ss << "[";
   for (auto it = a.begin(); it != a.end(); ++it) {
@@ -110,6 +109,6 @@ std::string DebugString(
   tableau::log::DebugString(v, [](std::stringstream& ss, decltype(v)::const_iterator it) { ss << *it; })
 #define ATOM_MAP_STR(m)                                                                    \
   tableau::log::DebugString(m, [](std::stringstream& ss, decltype(m)::const_iterator it) { \
-    ss << "{" << it->first << ", " << it->second << "}";                                   \
+    ss << "{" << it->first << ": " << it->second << "}";                                   \
   })
 
