@@ -8,6 +8,7 @@ class CustomItemConf : public tableau::Messager {
                     const tableau::LoadOptions* options = nullptr) override {
     return true;
   }
+  const google::protobuf::Message& Message() const override { return special_item_conf_; }
   virtual bool ProcessAfterLoadAll(const tableau::Hub& hub) override;
 
  public:

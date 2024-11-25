@@ -22,6 +22,7 @@ const (
 	treeMapPackage = protogen.GoImportPath("github.com/tableauio/loader/pkg/treemap")
 	pairPackage    = protogen.GoImportPath("github.com/tableauio/loader/pkg/pair")
 	timePackage    = protogen.GoImportPath("time")
+	protoPackage   = protogen.GoImportPath("google.golang.org/protobuf/proto")
 )
 
 // golbal container for record all proto filenames and messager names
@@ -148,6 +149,15 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("// Messager is used to implement Checker interface.")
 	g.P("func (x *", messagerName, ") Messager() Messager {")
 	g.P("return x")
+	g.P("}")
+	g.P()
+
+	g.P("// Message returns the ", messagerName, "'s inner message data.")
+	g.P("func (x *", messagerName, ") Message() ", protoPackage.Ident("Message"), " {")
+	g.P("if x != nil {")
+	g.P("return &x.data")
+	g.P("}")
+	g.P(`return nil`)
 	g.P("}")
 	g.P()
 

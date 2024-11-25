@@ -83,9 +83,10 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 
 	g.P("class ", message.Desc.Name(), " : public Messager {")
 	g.P(" public:")
-	g.P("  static const std::string& Name() { return kProtoName; };")
+	g.P("  static const std::string& Name() { return kProtoName; }")
 	g.P("  virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;")
-	g.P("  const ", cppFullName, "& Data() const { return data_; };")
+	g.P("  const ", cppFullName, "& Data() const { return data_; }")
+	g.P("  const google::protobuf::Message& Message() const override { return data_; }")
 	g.P()
 
 	if options.NeedGenOrderedMap(message.Desc, options.LangCPP) || options.NeedGenIndex(message.Desc, options.LangCPP) {

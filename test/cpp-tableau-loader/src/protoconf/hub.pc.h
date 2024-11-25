@@ -4,6 +4,7 @@
 // - protoc                        v3.19.3
 
 #pragma once
+#include <google/protobuf/message.h>
 #include <google/protobuf/util/json_util.h>
 #include <tableau/protobuf/tableau.pb.h>
 
@@ -124,6 +125,8 @@ class Messager {
   const Stats& GetStats() { return stats_; };
   // Load fills message from file in the specified directory and format.
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) = 0;
+  // Message returns the inner message data.
+  virtual const google::protobuf::Message& Message() const = 0;  
   // callback after all messagers loaded.
   virtual bool ProcessAfterLoadAll(const Hub& hub) { return true; };
 
