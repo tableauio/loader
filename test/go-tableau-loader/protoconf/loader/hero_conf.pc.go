@@ -16,6 +16,7 @@ import (
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
 	store "github.com/tableauio/tableau/store"
+	proto "google.golang.org/protobuf/proto"
 	time "time"
 )
 
@@ -74,6 +75,14 @@ func (x *HeroConf) Store(dir string, format format.Format, options ...store.Opti
 // Messager is used to implement Checker interface.
 func (x *HeroConf) Messager() Messager {
 	return x
+}
+
+// Message returns the HeroConf's inner message data.
+func (x *HeroConf) Message() proto.Message {
+	if x != nil {
+		return &x.data
+	}
+	return nil
 }
 
 // processAfterLoad runs after this messager is loaded.
@@ -196,6 +205,14 @@ func (x *HeroBaseConf) Store(dir string, format format.Format, options ...store.
 // Messager is used to implement Checker interface.
 func (x *HeroBaseConf) Messager() Messager {
 	return x
+}
+
+// Message returns the HeroBaseConf's inner message data.
+func (x *HeroBaseConf) Message() proto.Message {
+	if x != nil {
+		return &x.data
+	}
+	return nil
 }
 
 // processAfterLoad runs after this messager is loaded.

@@ -1,4 +1,5 @@
 #pragma once
+#include <google/protobuf/message.h>
 #include <google/protobuf/util/json_util.h>
 #include <tableau/protobuf/tableau.pb.h>
 
@@ -115,12 +116,14 @@ class Messager {
 
  public:
   virtual ~Messager() = default;
-  static const std::string& Name() { return kEmpty; };
-  const Stats& GetStats() { return stats_; };
+  static const std::string& Name() { return kEmpty; }
+  const Stats& GetStats() { return stats_; }
   // Load fills message from file in the specified directory and format.
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) = 0;
+  // Message returns the inner message data.
+  virtual const google::protobuf::Message* Message() const { return nullptr; }
   // callback after all messagers loaded.
-  virtual bool ProcessAfterLoadAll(const Hub& hub) { return true; };
+  virtual bool ProcessAfterLoadAll(const Hub& hub) { return true; }
 
  protected:
   // callback after this messager loaded.

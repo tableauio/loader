@@ -40,6 +40,7 @@ const staticHubContent = `import (
 	"github.com/tableauio/tableau/format"
 	"github.com/tableauio/tableau/load"
 	"github.com/tableauio/tableau/store"
+	"google.golang.org/protobuf/proto"	
 )
 
 type Messager interface {
@@ -56,6 +57,8 @@ type Messager interface {
 	processAfterLoad() error
 	// ProcessAfterLoadAll is invoked after all messagers loaded.
 	ProcessAfterLoadAll(hub *Hub) error
+	// Message returns the inner message data.
+	Message() proto.Message	
 }
 
 type Checker interface {
@@ -96,6 +99,10 @@ func (x *UnimplementedMessager) processAfterLoad() error {
 }
 
 func (x *UnimplementedMessager) ProcessAfterLoadAll(hub *Hub) error {
+	return nil
+}
+
+func (x *UnimplementedMessager) Message() proto.Message {
 	return nil
 }
 

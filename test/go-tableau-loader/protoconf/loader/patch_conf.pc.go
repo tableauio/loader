@@ -13,6 +13,7 @@ import (
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
 	store "github.com/tableauio/tableau/store"
+	proto "google.golang.org/protobuf/proto"
 	time "time"
 )
 
@@ -68,6 +69,14 @@ func (x *PatchReplaceConf) Messager() Messager {
 	return x
 }
 
+// Message returns the PatchReplaceConf's inner message data.
+func (x *PatchReplaceConf) Message() proto.Message {
+	if x != nil {
+		return &x.data
+	}
+	return nil
+}
+
 // PatchMergeConf is a wrapper around protobuf message: protoconf.PatchMergeConf.
 //
 // It is designed for three goals:
@@ -118,6 +127,14 @@ func (x *PatchMergeConf) Store(dir string, format format.Format, options ...stor
 // Messager is used to implement Checker interface.
 func (x *PatchMergeConf) Messager() Messager {
 	return x
+}
+
+// Message returns the PatchMergeConf's inner message data.
+func (x *PatchMergeConf) Message() proto.Message {
+	if x != nil {
+		return &x.data
+	}
+	return nil
 }
 
 // Get1 finds value in the 1-level map. It will return
@@ -181,6 +198,14 @@ func (x *RecursivePatchConf) Store(dir string, format format.Format, options ...
 // Messager is used to implement Checker interface.
 func (x *RecursivePatchConf) Messager() Messager {
 	return x
+}
+
+// Message returns the RecursivePatchConf's inner message data.
+func (x *RecursivePatchConf) Message() proto.Message {
+	if x != nil {
+		return &x.data
+	}
+	return nil
 }
 
 // Get1 finds value in the 1-level map. It will return

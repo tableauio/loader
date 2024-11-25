@@ -15,6 +15,7 @@ import (
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
 	store "github.com/tableauio/tableau/store"
+	proto "google.golang.org/protobuf/proto"
 	time "time"
 )
 
@@ -90,6 +91,14 @@ func (x *ActivityConf) Store(dir string, format format.Format, options ...store.
 // Messager is used to implement Checker interface.
 func (x *ActivityConf) Messager() Messager {
 	return x
+}
+
+// Message returns the ActivityConf's inner message data.
+func (x *ActivityConf) Message() proto.Message {
+	if x != nil {
+		return &x.data
+	}
+	return nil
 }
 
 // processAfterLoad runs after this messager is loaded.
@@ -342,6 +351,14 @@ func (x *ChapterConf) Messager() Messager {
 	return x
 }
 
+// Message returns the ChapterConf's inner message data.
+func (x *ChapterConf) Message() proto.Message {
+	if x != nil {
+		return &x.data
+	}
+	return nil
+}
+
 // Get1 finds value in the 1-level map. It will return
 // NotFound error if the key is not found.
 func (x *ChapterConf) Get1(id uint64) (*protoconf.ChapterConf_Chapter, error) {
@@ -403,6 +420,14 @@ func (x *ThemeConf) Store(dir string, format format.Format, options ...store.Opt
 // Messager is used to implement Checker interface.
 func (x *ThemeConf) Messager() Messager {
 	return x
+}
+
+// Message returns the ThemeConf's inner message data.
+func (x *ThemeConf) Message() proto.Message {
+	if x != nil {
+		return &x.data
+	}
+	return nil
 }
 
 // Get1 finds value in the 1-level map. It will return

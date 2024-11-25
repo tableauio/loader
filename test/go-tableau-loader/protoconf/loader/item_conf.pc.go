@@ -14,6 +14,7 @@ import (
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
 	store "github.com/tableauio/tableau/store"
+	proto "google.golang.org/protobuf/proto"
 	time "time"
 )
 
@@ -122,6 +123,14 @@ func (x *ItemConf) Store(dir string, format format.Format, options ...store.Opti
 // Messager is used to implement Checker interface.
 func (x *ItemConf) Messager() Messager {
 	return x
+}
+
+// Message returns the ItemConf's inner message data.
+func (x *ItemConf) Message() proto.Message {
+	if x != nil {
+		return &x.data
+	}
+	return nil
 }
 
 // processAfterLoad runs after this messager is loaded.

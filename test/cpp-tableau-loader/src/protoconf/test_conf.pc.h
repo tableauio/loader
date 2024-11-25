@@ -13,9 +13,10 @@
 namespace tableau {
 class ActivityConf : public Messager {
  public:
-  static const std::string& Name() { return kProtoName; };
+  static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
-  const protoconf::ActivityConf& Data() const { return data_; };
+  const protoconf::ActivityConf& Data() const { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
 
  private:
   virtual bool ProcessAfterLoad() override final;
@@ -77,9 +78,10 @@ class ActivityConf : public Messager {
 
 class ChapterConf : public Messager {
  public:
-  static const std::string& Name() { return kProtoName; };
+  static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
-  const protoconf::ChapterConf& Data() const { return data_; };
+  const protoconf::ChapterConf& Data() const { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
 
  public:
   const protoconf::ChapterConf::Chapter* Get(uint64_t id) const;
@@ -91,9 +93,10 @@ class ChapterConf : public Messager {
 
 class ThemeConf : public Messager {
  public:
-  static const std::string& Name() { return kProtoName; };
+  static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
-  const protoconf::ThemeConf& Data() const { return data_; };
+  const protoconf::ThemeConf& Data() const { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
 
  public:
   const protoconf::ThemeConf::Theme* Get(const std::string& name) const;

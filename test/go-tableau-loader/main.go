@@ -73,7 +73,7 @@ func main() {
 	// patchconf
 	err = hub.GetHub().Load("../testdata/conf/", format.JSON,
 		load.IgnoreUnknownFields(),
-		load.PatchDir("../testdata/patchconf/"),
+		load.PatchDirs("../testdata/patchconf/"),
 	)
 	if err != nil {
 		panic(err)
