@@ -16,7 +16,7 @@ class ItemConf : public Messager {
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
   const protoconf::ItemConf& Data() const { return data_; }
-  const google::protobuf::Message& Message() const override { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
 
  private:
   virtual bool ProcessAfterLoad() override final;

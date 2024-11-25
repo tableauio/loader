@@ -16,7 +16,7 @@ class PatchReplaceConf : public Messager {
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
   const protoconf::PatchReplaceConf& Data() const { return data_; }
-  const google::protobuf::Message& Message() const override { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
 
 
  private:
@@ -29,7 +29,7 @@ class PatchMergeConf : public Messager {
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
   const protoconf::PatchMergeConf& Data() const { return data_; }
-  const google::protobuf::Message& Message() const override { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
 
  public:
   const protoconf::Item* Get(uint32_t id) const;
@@ -44,7 +44,7 @@ class RecursivePatchConf : public Messager {
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
   const protoconf::RecursivePatchConf& Data() const { return data_; }
-  const google::protobuf::Message& Message() const override { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
 
  public:
   const protoconf::RecursivePatchConf::Shop* Get(uint32_t shop_id) const;

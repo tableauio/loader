@@ -16,7 +16,7 @@ class ActivityConf : public Messager {
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
   const protoconf::ActivityConf& Data() const { return data_; }
-  const google::protobuf::Message& Message() const override { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
 
  private:
   virtual bool ProcessAfterLoad() override final;
@@ -81,7 +81,7 @@ class ChapterConf : public Messager {
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
   const protoconf::ChapterConf& Data() const { return data_; }
-  const google::protobuf::Message& Message() const override { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
 
  public:
   const protoconf::ChapterConf::Chapter* Get(uint64_t id) const;
@@ -96,7 +96,7 @@ class ThemeConf : public Messager {
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
   const protoconf::ThemeConf& Data() const { return data_; }
-  const google::protobuf::Message& Message() const override { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
 
  public:
   const protoconf::ThemeConf::Theme* Get(const std::string& name) const;
