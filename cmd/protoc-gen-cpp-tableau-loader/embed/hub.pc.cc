@@ -14,9 +14,7 @@
 
 namespace tableau {
 static thread_local std::string g_err_msg;
-const std::string& GetErrMsg() {
-  return g_err_msg;
-}
+const std::string& GetErrMsg() { return g_err_msg; }
 
 const std::string kUnknownExt = ".unknown";
 const std::string kJSONExt = ".json";
@@ -183,7 +181,8 @@ bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Messag
       dst_reflection->ClearField(&dst, fd);
     }
     if (fd->is_map()) {
-      // Reference: https://github.com/protocolbuffers/protobuf/blob/95ef4134d3f65237b7adfb66e5e7aa10fcfa1fa3/src/google/protobuf/map_field.cc#L500
+      // Reference:
+      // https://github.com/protocolbuffers/protobuf/blob/95ef4134d3f65237b7adfb66e5e7aa10fcfa1fa3/src/google/protobuf/map_field.cc#L500
       auto key_fd = fd->message_type()->map_key();
       auto value_fd = fd->message_type()->map_value();
       int src_count = src_reflection->FieldSize(src, fd);
@@ -226,7 +225,8 @@ bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Messag
 #undef HANDLE_TYPE
       }
     } else if (fd->is_repeated()) {
-      // Reference: https://github.com/protocolbuffers/protobuf/blob/95ef4134d3f65237b7adfb66e5e7aa10fcfa1fa3/src/google/protobuf/reflection_ops.cc#L68
+      // Reference:
+      // https://github.com/protocolbuffers/protobuf/blob/95ef4134d3f65237b7adfb66e5e7aa10fcfa1fa3/src/google/protobuf/reflection_ops.cc#L68
       int count = src_reflection->FieldSize(src, fd);
       for (int j = 0; j < count; j++) {
         switch (fd->cpp_type()) {
@@ -292,7 +292,7 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
   if (options->mode == LoadMode::kModeOnlyMain) {
     // ignore patch files when LoadMode::kModeOnlyMain specified
     return LoadMessageByPath(msg, path, fmt, nullptr);
-  }  
+  }
   std::string name = GetProtoName(msg);
   std::vector<std::string> patch_paths;
   auto iter = options->patch_paths.find(name);
@@ -300,7 +300,9 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
     // patch path specified in PatchPaths, then use it instead of PatchDirs.
     patch_paths = iter->second;
   } else {
-    for (auto&& patch_dir : options->patch_dirs) { patch_paths.emplace_back(patch_dir + name + Format2Ext(fmt)); }
+    for (auto&& patch_dir : options->patch_dirs) {
+      patch_paths.emplace_back(patch_dir + name + Format2Ext(fmt));
+    }
   }
 
   std::vector<std::string> existed_patch_paths;
@@ -313,7 +315,7 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
     if (options->mode == LoadMode::kModeOnlyPatch) {
       // just returns empty message when LoadMode::kModeOnlyPatch specified but no valid patch file provided.
       return true;
-    }    
+    }
     // no valid patch path provided, then just load from the "main" file.
     return LoadMessageByPath(msg, path, fmt, options);
   }
@@ -333,7 +335,7 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
         if (!LoadMessageByPath(msg, path, fmt, options)) {
           return false;
         }
-      }       
+      }
       // Create a new instance of the same type of the original message
       google::protobuf::Message* patch_msg_ptr = msg.New();
       std::unique_ptr<google::protobuf::Message> _auto_release(msg.New());
@@ -444,9 +446,7 @@ bool Hub::AsyncLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
   return true;
 }
 
-int Hub::LoopOnce() {
-  return sched_->LoopOnce();
-}
+int Hub::LoopOnce() { return sched_->LoopOnce(); }
 void Hub::InitScheduler() {
   sched_ = new internal::Scheduler();
   sched_->Current();
@@ -532,7 +532,9 @@ int Scheduler::LoopOnce() {
     std::unique_lock<std::mutex> lock(mutex_);
     jobs.swap(jobs_);
   }
-  for (auto&& job : jobs) { job(); }
+  for (auto&& job : jobs) {
+    job();
+  }
   count += jobs.size();
   return count;
 }
@@ -550,9 +552,7 @@ void Scheduler::Dispatch(const Job& job) {
   }
 }
 
-bool Scheduler::IsLoopThread() const {
-  return thread_id_ == std::this_thread::get_id();
-}
+bool Scheduler::IsLoopThread() const { return thread_id_ == std::this_thread::get_id(); }
 void Scheduler::AssertInLoopThread() const {
   if (!IsLoopThread()) {
     abort();
