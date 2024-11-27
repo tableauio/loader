@@ -294,6 +294,10 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
   if (options == nullptr) {
     return LoadMessageByPath(msg, path, fmt, nullptr);
   }
+  if (options->mode == LoadMode::kModeOnlyMain) {
+    // ignore patch files when LoadMode::kModeOnlyMain specified
+    return LoadMessageByPath(msg, path, fmt, nullptr);
+  }  
   std::string name = GetProtoName(msg);
   std::vector<std::string> patch_paths;
   auto iter = options->patch_paths.find(name);
@@ -311,10 +315,10 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
     }
   }
   if (existed_patch_paths.empty()) {
-      if (options && options->load_mode == LoadMode::kModeOnlyPatch) {
-        // just returns empty message when main file ingored and no valid patch file provided.
-        return true;
-      }    
+    if (options->mode == LoadMode::kModeOnlyPatch) {
+      // just returns empty message when LoadMode::kModeOnlyPatch specified but no valid patch file provided.
+      return true;
+    }    
     // no valid patch path provided, then just load from the "main" file.
     return LoadMessageByPath(msg, path, fmt, options);
   }
@@ -329,7 +333,7 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
       break;
     }
     case tableau::PATCH_MERGE: {
-      if (!options || options->load_mode != LoadMode::kModeOnlyPatch) {
+      if (options->mode != LoadMode::kModeOnlyPatch) {
         // load msg from the "main" file
         if (!LoadMessageByPath(msg, path, fmt, options)) {
           return false;
@@ -407,9 +411,7 @@ bool LoadMessage(google::protobuf::Message& msg, const std::string& dir, Format 
   // access the extension directly using the generated identifier
   const tableau::WorksheetOptions worksheet_options = descriptor->options().GetExtension(tableau::worksheet);
   if (worksheet_options.patch() != tableau::PATCH_NONE) {
-    if (options && options->load_mode != LoadMode::kModeOnlyMain) {
-      return LoadMessageWithPatch(msg, path, fmt, worksheet_options.patch(), options);
-    }
+    return LoadMessageWithPatch(msg, path, fmt, worksheet_options.patch(), options);
   }
 
   return LoadMessageByPath(msg, path, fmt, options);

@@ -79,7 +79,7 @@ bool TestPatch() {
   // mode only main
   std::cout << "-----TestPatch ModeOnlyMain" << std::endl;
   options.patch_paths["PatchMergeConf"] = {"../../testdata/patchconf/PatchMergeConf.json", "../../testdata/patchconf2/PatchMergeConf.json"};
-  options.load_mode = tableau::LoadMode::kModeOnlyMain;
+  options.mode = tableau::LoadMode::kModeOnlyMain;
   ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
   if (!ok) {
     std::cout << "failed to load with mode only main" << std::endl;
@@ -95,7 +95,7 @@ bool TestPatch() {
   // mode only patch
   std::cout << "-----TestPatch ModeOnlyPatch" << std::endl;
   options.patch_paths["PatchMergeConf"] = {"../../testdata/patchconf/PatchMergeConf.json", "../../testdata/patchconf2/PatchMergeConf.json"};
-  options.load_mode = tableau::LoadMode::kModeOnlyPatch;
+  options.mode = tableau::LoadMode::kModeOnlyPatch;
   ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
   if (!ok) {
     std::cout << "failed to load with mode only patch" << std::endl;

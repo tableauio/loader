@@ -71,7 +71,7 @@ struct LoadOptions {
   // Patch dirs specifies the directory paths for config patching.
   std::vector<std::string> patch_dirs;
   // Mode specifies the loading mode for config patching.
-	LoadMode load_mode = LoadMode::kModeDefault;
+	LoadMode mode = LoadMode::kModeDefault;
 };
 
 // Convert file extension to Format type.
