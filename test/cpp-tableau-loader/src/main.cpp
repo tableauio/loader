@@ -75,6 +75,32 @@ bool TestPatch() {
     std::cout << "failed to load with multiple patch files" << std::endl;
     return false;
   }
+
+  // mode only main
+  std::cout << "-----TestPatch ModeOnlyMain" << std::endl;
+  options.patch_paths["PatchMergeConf"] = {"../../testdata/patchconf/PatchMergeConf.json", "../../testdata/patchconf2/PatchMergeConf.json"};
+  options.mode = tableau::LoadMode::kModeOnlyMain;
+  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
+  if (!ok) {
+    std::cout << "failed to load with mode only main" << std::endl;
+    return false;
+  }
+  auto patch_mgr = Hub::Instance().Get<protoconf::PatchMergeConfMgr>();
+  if (!patch_mgr) {
+    std::cout << "protobuf hub get PatchMergeConf failed!" << std::endl;
+    return 1;
+  }
+  std::cout << "PatchMergeConf: " << patch_mgr->Data().ShortDebugString() << std::endl;  
+
+  // mode only patch
+  std::cout << "-----TestPatch ModeOnlyPatch" << std::endl;
+  options.patch_paths["PatchMergeConf"] = {"../../testdata/patchconf/PatchMergeConf.json", "../../testdata/patchconf2/PatchMergeConf.json"};
+  options.mode = tableau::LoadMode::kModeOnlyPatch;
+  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
+  if (!ok) {
+    std::cout << "failed to load with mode only patch" << std::endl;
+    return false;
+  }    
   return true;
 }
 
