@@ -306,6 +306,10 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
     }
   }
   if (existed_patch_paths.empty()) {
+      if (options && options->load_mode == LoadMode::kModeOnlyPatch) {
+        // just returns empty message when main file ingored and no valid patch file provided.
+        return true;
+      }    
     // no valid patch path provided, then just load from the "main" file.
     return LoadMessageByPath(msg, path, fmt, options);
   }
@@ -320,10 +324,12 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
       break;
     }
     case tableau::PATCH_MERGE: {
-      // load msg from the "main" file
-      if (!LoadMessageByPath(msg, path, fmt, options)) {
-        return false;
-      }
+      if (!options || options->load_mode != LoadMode::kModeOnlyPatch) {
+        // load msg from the "main" file
+        if (!LoadMessageByPath(msg, path, fmt, options)) {
+          return false;
+        }
+      }       
       // Create a new instance of the same type of the original message
       google::protobuf::Message* patch_msg_ptr = msg.New();
       std::unique_ptr<google::protobuf::Message> _auto_release(msg.New());
@@ -396,7 +402,9 @@ bool LoadMessage(google::protobuf::Message& msg, const std::string& dir, Format 
   // access the extension directly using the generated identifier
   const tableau::WorksheetOptions worksheet_options = descriptor->options().GetExtension(tableau::worksheet);
   if (worksheet_options.patch() != tableau::PATCH_NONE) {
-    return LoadMessageWithPatch(msg, path, fmt, worksheet_options.patch(), options);
+    if (options && options->load_mode != LoadMode::kModeOnlyMain) {
+      return LoadMessageWithPatch(msg, path, fmt, worksheet_options.patch(), options);
+    }
   }
 
   return LoadMessageByPath(msg, path, fmt, options);

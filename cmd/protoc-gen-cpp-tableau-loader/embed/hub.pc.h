@@ -11,6 +11,7 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <vector>
 
 namespace tableau {
 enum class Format {
@@ -18,6 +19,12 @@ enum class Format {
   kJSON,
   kText,
   kBin,
+};
+
+enum class LoadMode {
+  kModeDefault,
+  kModeOnlyMain,
+  kModeOnlyPatch,
 };
 
 extern const std::string kUnknownExt;
@@ -58,6 +65,8 @@ struct LoadOptions {
   std::unordered_map<std::string, std::vector<std::string>> patch_paths;
   // Patch dirs specifies the directory paths for config patching.
   std::vector<std::string> patch_dirs;
+  // Mode specifies the loading mode for config patching.
+	LoadMode load_mode = LoadMode::kModeDefault;
 };
 
 // Convert file extension to Format type.
