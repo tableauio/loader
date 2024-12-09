@@ -142,8 +142,7 @@ type Hub struct {
 func NewHub() *Hub {
 	hub := &Hub{}
 	hub.messagerMap.Store(&MessagerMap{})
-	zero := time.Unix(0, 0)
-	hub.lastLoadedTime.Store(&zero)
+	hub.lastLoadedTime.Store(&time.Time{})
 	return hub
 }
 
@@ -172,8 +171,7 @@ func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
 
 // GetMessager finds and returns the specified Messenger in hub.
 func (h *Hub) GetMessager(name string) Messager {
-	messagerMap := *h.messagerMap.Load()
-	return messagerMap[name]
+	return h.GetMessagerMap()[name]
 }
 
 // Load fills messages from files in the specified directory and format.
@@ -188,7 +186,7 @@ func (h *Hub) Load(dir string, format format.Format, options ...load.Option) err
 	}
 	// create a temporary hub with messager container for post process
 	tmpHub := &Hub{}
-	tmpHub.messagerMap.Store(&messagerMap)
+	tmpHub.SetMessagerMap(messagerMap)
 	for name, msger := range messagerMap {
 		if err := msger.ProcessAfterLoadAll(tmpHub); err != nil {
 			return errors.WithMessagef(err, "failed to process messager %s after load all", name)
