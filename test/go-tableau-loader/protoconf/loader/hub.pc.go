@@ -8,6 +8,7 @@ package loader
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
@@ -134,15 +135,15 @@ func BoolToInt(ok bool) int {
 
 // Hub is the messager manager.
 type Hub struct {
-	messagerMap    MessagerMap
-	lastLoadedTime time.Time
+	messagerMap    atomic.Pointer[MessagerMap]
+	lastLoadedTime atomic.Pointer[time.Time]
 }
 
 func NewHub() *Hub {
-	return &Hub{
-		messagerMap:    MessagerMap{},
-		lastLoadedTime: time.Unix(0, 0),
-	}
+	hub := &Hub{}
+	hub.messagerMap.Store(&MessagerMap{})
+	hub.lastLoadedTime.Store(&time.Time{})
+	return hub
 }
 
 // NewMessagerMap creates a new MessagerMap.
@@ -158,18 +159,19 @@ func (h *Hub) NewMessagerMap(filter load.FilterFunc) MessagerMap {
 
 // GetMessagerMap returns hub's inner field messagerMap.
 func (h *Hub) GetMessagerMap() MessagerMap {
-	return h.messagerMap
+	return *h.messagerMap.Load()
 }
 
 // SetMessagerMap sets hub's inner field messagerMap.
 func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
-	h.messagerMap = messagerMap
-	h.lastLoadedTime = time.Now()
+	h.messagerMap.Store(&messagerMap)
+	now := time.Now()
+	h.lastLoadedTime.Store(&now)
 }
 
 // GetMessager finds and returns the specified Messenger in hub.
 func (h *Hub) GetMessager(name string) Messager {
-	return h.messagerMap[name]
+	return h.GetMessagerMap()[name]
 }
 
 // Load fills messages from files in the specified directory and format.
@@ -183,7 +185,8 @@ func (h *Hub) Load(dir string, format format.Format, options ...load.Option) err
 		fmt.Println("Loaded: " + msger.Name())
 	}
 	// create a temporary hub with messager container for post process
-	tmpHub := &Hub{messagerMap: messagerMap}
+	tmpHub := &Hub{}
+	tmpHub.SetMessagerMap(messagerMap)
 	for name, msger := range messagerMap {
 		if err := msger.ProcessAfterLoadAll(tmpHub); err != nil {
 			return errors.WithMessagef(err, "failed to process messager %s after load all", name)
@@ -197,7 +200,7 @@ func (h *Hub) Load(dir string, format format.Format, options ...load.Option) err
 // Available formats: JSON, Bin, and Text.
 func (h *Hub) Store(dir string, format format.Format, options ...store.Option) error {
 	opts := store.ParseOptions(options...)
-	for name, msger := range h.messagerMap {
+	for name, msger := range h.GetMessagerMap() {
 		if opts.Filter == nil || opts.Filter(name) {
 			if err := msger.Store(dir, format, options...); err != nil {
 				return errors.WithMessagef(err, "failed to store: %v", name)
@@ -210,7 +213,7 @@ func (h *Hub) Store(dir string, format format.Format, options ...store.Option) e
 
 // GetLastLoadedTime returns the time when hub's messagerMap was last set.
 func (h *Hub) GetLastLoadedTime() time.Time {
-	return h.lastLoadedTime
+	return *h.lastLoadedTime.Load()
 }
 
 // Auto-generated getters below
