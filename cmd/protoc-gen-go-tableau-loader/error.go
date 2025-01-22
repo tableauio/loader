@@ -7,9 +7,10 @@ import (
 )
 
 const errPkg = "xerrors"
+
 // generateError generates related error files.
 func generateError(gen *protogen.Plugin) {
-	filename := filepath.Join(errPkg, "xerrors." + pcExt + ".go")
+	filename := filepath.Join(errPkg, "xerrors."+pcExt+".go")
 	g := gen.NewGeneratedFile(filename, "")
 	generateCommonHeader(gen, g)
 	g.P()
@@ -42,6 +43,9 @@ func Errorf(code code.Code, format string, args ...interface{}) error {
 }
 
 func Code(err error) code.Code {
+	if err == nil {
+		return code.Success
+	}
 	if ferr, ok := err.(*Error); ok {
 		return ferr.code
 	}
