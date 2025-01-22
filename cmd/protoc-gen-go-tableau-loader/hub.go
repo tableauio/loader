@@ -32,7 +32,6 @@ func generateHub(gen *protogen.Plugin) {
 }
 
 const staticHubContent = `import (
-	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -208,7 +207,6 @@ func (h *Hub) Load(dir string, format format.Format, options ...load.Option) err
 		if err := msger.Load(dir, format, options...); err != nil {
 			return errors.WithMessagef(err, "failed to load: %v", name)
 		}
-		fmt.Println("Loaded: " + msger.Name())
 	}
 	// create a temporary hub with messager container for post process
 	tmpHub := &Hub{}
@@ -231,7 +229,6 @@ func (h *Hub) Store(dir string, format format.Format, options ...store.Option) e
 			if err := msger.Store(dir, format, options...); err != nil {
 				return errors.WithMessagef(err, "failed to store: %v", name)
 			}
-			fmt.Println("Stored: " + msger.Name())
 		}
 	}
 	return nil

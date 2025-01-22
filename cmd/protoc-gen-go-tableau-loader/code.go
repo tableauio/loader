@@ -7,9 +7,10 @@ import (
 )
 
 const codePkg = "code"
+
 // generateCode generates related code files.
 func generateCode(gen *protogen.Plugin) {
-	filename := filepath.Join(codePkg, "code." + pcExt + ".go")
+	filename := filepath.Join(codePkg, "code."+pcExt+".go")
 	g := gen.NewGeneratedFile(filename, "")
 	generateCommonHeader(gen, g)
 	g.P()
@@ -24,6 +25,5 @@ const staticCodeContent = `type Code int
 const (
 	Success Code = iota
 	NotFound
-	Nil
 	Unknown
 )`

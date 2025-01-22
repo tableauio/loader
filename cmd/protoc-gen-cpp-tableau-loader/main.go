@@ -3,10 +3,8 @@ package main
 import (
 	"flag"
 
-	"github.com/tableauio/tableau/proto/tableaupb"
+	"github.com/tableauio/loader/internal/options"
 	"google.golang.org/protobuf/compiler/protogen"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
@@ -49,13 +47,7 @@ func main() {
 	}.Run(func(gen *protogen.Plugin) error {
 		gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
 		for _, f := range gen.Files {
-			if !f.Generate {
-				continue
-			}
-
-			opts := f.Desc.Options().(*descriptorpb.FileOptions)
-			workbook := proto.GetExtension(opts, tableaupb.E_Workbook).(*tableaupb.WorkbookOptions)
-			if workbook == nil {
+			if !options.NeedGenFile(f) {
 				continue
 			}
 
