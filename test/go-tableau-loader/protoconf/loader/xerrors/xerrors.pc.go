@@ -27,6 +27,9 @@ func Errorf(code code.Code, format string, args ...interface{}) error {
 }
 
 func Code(err error) code.Code {
+	if err == nil {
+		return code.Success
+	}
 	if ferr, ok := err.(*Error); ok {
 		return ferr.code
 	}
