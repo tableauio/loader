@@ -5,6 +5,7 @@ import (
 
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"golang.org/x/exp/slices"
+	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -52,4 +53,25 @@ func NeedGenIndex(md protoreflect.MessageDescriptor, lang Language) bool {
 		}
 	}
 	return true
+}
+
+func NeedGenFile(f *protogen.File) bool {
+	if !f.Generate {
+		return false
+	}
+
+	opts := f.Desc.Options().(*descriptorpb.FileOptions)
+	workbook := proto.GetExtension(opts, tableaupb.E_Workbook).(*tableaupb.WorkbookOptions)
+	if workbook == nil {
+		return false
+	}
+
+	for _, message := range f.Messages {
+		opts := message.Desc.Options().(*descriptorpb.MessageOptions)
+		worksheet := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
+		if worksheet != nil {
+			return true
+		}
+	}
+	return false
 }
