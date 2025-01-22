@@ -59,6 +59,19 @@ func main() {
 				continue
 			}
 
+			containsWorksheet := false
+			for _, message := range f.Messages {
+				opts := message.Desc.Options().(*descriptorpb.MessageOptions)
+				worksheet := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
+				if worksheet != nil {
+					containsWorksheet = true
+					break
+				}
+			}
+			if !containsWorksheet {
+				continue
+			}
+
 			switch *mode {
 			case ModeMessager:
 				generateMessager(gen, f)
