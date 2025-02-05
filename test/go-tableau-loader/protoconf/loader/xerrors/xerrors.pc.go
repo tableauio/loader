@@ -30,7 +30,7 @@ func Code(err error) code.Code {
 	if err == nil {
 		return code.Success
 	}
-	if ferr, ok := err.(*Error); ok {
+	if ferr, ok := err.(*Error); ok && ferr != nil {
 		return ferr.code
 	}
 	return code.Unknown
