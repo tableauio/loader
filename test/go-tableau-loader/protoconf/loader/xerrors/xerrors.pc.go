@@ -15,7 +15,17 @@ type Error struct {
 	cause error
 }
 
+func (e *Error) Code() code.Code {
+	if e == nil {
+		return code.Success
+	}
+	return e.code
+}
+
 func (e *Error) Error() string {
+	if e == nil {
+		return "<nil>"
+	}
 	return fmt.Sprintf("code: %d, cause: %+v", e.code, e.cause)
 }
 
@@ -31,7 +41,7 @@ func Code(err error) code.Code {
 		return code.Success
 	}
 	if ferr, ok := err.(*Error); ok {
-		return ferr.code
+		return ferr.Code()
 	}
 	return code.Unknown
 }
