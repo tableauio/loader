@@ -53,7 +53,7 @@ message Path {
 }
 
 message UseEffect {
-  option (tableau.union) = true;
+  option (tableau.union) = {name: "UseEffect"};
 
   Type type = 9999 [(tableau.field) = { name: "Type" }];
   oneof value {
