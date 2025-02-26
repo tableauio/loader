@@ -3,7 +3,6 @@ module github.com/tableauio/loader
 go 1.20
 
 require (
-	github.com/iancoleman/strcase v0.3.0
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/tableauio/tableau v0.12.0
