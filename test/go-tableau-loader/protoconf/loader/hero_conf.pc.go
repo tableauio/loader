@@ -63,6 +63,10 @@ func (x *HeroConf) Load(dir string, format format.Format, options ...load.Option
 	if err != nil {
 		return err
 	}
+	x.Stats.md5, err = x.calcMd5()
+	if err != nil {
+		return err
+	}
 	return x.processAfterLoad()
 }
 
@@ -190,6 +194,10 @@ func (x *HeroBaseConf) Load(dir string, format format.Format, options ...load.Op
 		x.Stats.Duration = time.Since(start)
 	}()
 	err := load.Load(x.Data(), dir, format, options...)
+	if err != nil {
+		return err
+	}
+	x.Stats.md5, err = x.calcMd5()
 	if err != nil {
 		return err
 	}

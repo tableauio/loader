@@ -55,6 +55,10 @@ func (x *PatchReplaceConf) Load(dir string, format format.Format, options ...loa
 	if err != nil {
 		return err
 	}
+	x.Stats.md5, err = x.calcMd5()
+	if err != nil {
+		return err
+	}
 	return x.processAfterLoad()
 }
 
@@ -112,6 +116,10 @@ func (x *PatchMergeConf) Load(dir string, format format.Format, options ...load.
 		x.Stats.Duration = time.Since(start)
 	}()
 	err := load.Load(x.Data(), dir, format, options...)
+	if err != nil {
+		return err
+	}
+	x.Stats.md5, err = x.calcMd5()
 	if err != nil {
 		return err
 	}
@@ -183,6 +191,10 @@ func (x *RecursivePatchConf) Load(dir string, format format.Format, options ...l
 		x.Stats.Duration = time.Since(start)
 	}()
 	err := load.Load(x.Data(), dir, format, options...)
+	if err != nil {
+		return err
+	}
+	x.Stats.md5, err = x.calcMd5()
 	if err != nil {
 		return err
 	}

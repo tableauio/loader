@@ -111,6 +111,10 @@ func (x *ItemConf) Load(dir string, format format.Format, options ...load.Option
 	if err != nil {
 		return err
 	}
+	x.Stats.md5, err = x.calcMd5()
+	if err != nil {
+		return err
+	}
 	return x.processAfterLoad()
 }
 

@@ -79,6 +79,10 @@ func (x *ActivityConf) Load(dir string, format format.Format, options ...load.Op
 	if err != nil {
 		return err
 	}
+	x.Stats.md5, err = x.calcMd5()
+	if err != nil {
+		return err
+	}
 	return x.processAfterLoad()
 }
 
@@ -337,6 +341,10 @@ func (x *ChapterConf) Load(dir string, format format.Format, options ...load.Opt
 	if err != nil {
 		return err
 	}
+	x.Stats.md5, err = x.calcMd5()
+	if err != nil {
+		return err
+	}
 	return x.processAfterLoad()
 }
 
@@ -405,6 +413,10 @@ func (x *ThemeConf) Load(dir string, format format.Format, options ...load.Optio
 		x.Stats.Duration = time.Since(start)
 	}()
 	err := load.Load(x.Data(), dir, format, options...)
+	if err != nil {
+		return err
+	}
+	x.Stats.md5, err = x.calcMd5()
 	if err != nil {
 		return err
 	}
