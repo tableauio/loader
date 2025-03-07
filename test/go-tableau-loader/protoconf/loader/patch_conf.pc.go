@@ -26,13 +26,13 @@ import (
 //  3. Extensibility: Map, OrdererdMap, Index...
 type PatchReplaceConf struct {
 	UnimplementedMessager
-	data protoconf.PatchReplaceConf
+	data, originalData *protoconf.PatchReplaceConf
 }
 
 // Name returns the PatchReplaceConf's message name.
 func (x *PatchReplaceConf) Name() string {
 	if x != nil {
-		return string((&x.data).ProtoReflect().Descriptor().Name())
+		return string(x.data.ProtoReflect().Descriptor().Name())
 	}
 	return ""
 }
@@ -40,7 +40,7 @@ func (x *PatchReplaceConf) Name() string {
 // Data returns the PatchReplaceConf's inner message data.
 func (x *PatchReplaceConf) Data() *protoconf.PatchReplaceConf {
 	if x != nil {
-		return &x.data
+		return x.data
 	}
 	return nil
 }
@@ -51,14 +51,12 @@ func (x *PatchReplaceConf) Load(dir string, format format.Format, options ...loa
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
-	err := load.Load(x.Data(), dir, format, options...)
+	x.data = &protoconf.PatchReplaceConf{}
+	err := load.Load(x.data, dir, format, options...)
 	if err != nil {
 		return err
 	}
-	x.Stats.md5, err = x.calcMd5()
-	if err != nil {
-		return err
-	}
+	x.originalData = proto.Clone(x.data).(*protoconf.PatchReplaceConf)
 	return x.processAfterLoad()
 }
 
@@ -75,10 +73,17 @@ func (x *PatchReplaceConf) Messager() Messager {
 
 // Message returns the PatchReplaceConf's inner message data.
 func (x *PatchReplaceConf) Message() proto.Message {
-	if x != nil {
-		return &x.data
-	}
-	return nil
+	return x.Data()
+}
+
+// originalMessage returns the PatchReplaceConf's original inner message.
+func (x *PatchReplaceConf) originalMessage() proto.Message {
+	return x.originalData
+}
+
+// mutable returns true if the PatchReplaceConf's inner message is modified.
+func (x *PatchReplaceConf) mutable() bool {
+	return !proto.Equal(x.originalData, x.data)
 }
 
 // PatchMergeConf is a wrapper around protobuf message: protoconf.PatchMergeConf.
@@ -90,13 +95,13 @@ func (x *PatchReplaceConf) Message() proto.Message {
 //  3. Extensibility: Map, OrdererdMap, Index...
 type PatchMergeConf struct {
 	UnimplementedMessager
-	data protoconf.PatchMergeConf
+	data, originalData *protoconf.PatchMergeConf
 }
 
 // Name returns the PatchMergeConf's message name.
 func (x *PatchMergeConf) Name() string {
 	if x != nil {
-		return string((&x.data).ProtoReflect().Descriptor().Name())
+		return string(x.data.ProtoReflect().Descriptor().Name())
 	}
 	return ""
 }
@@ -104,7 +109,7 @@ func (x *PatchMergeConf) Name() string {
 // Data returns the PatchMergeConf's inner message data.
 func (x *PatchMergeConf) Data() *protoconf.PatchMergeConf {
 	if x != nil {
-		return &x.data
+		return x.data
 	}
 	return nil
 }
@@ -115,14 +120,12 @@ func (x *PatchMergeConf) Load(dir string, format format.Format, options ...load.
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
-	err := load.Load(x.Data(), dir, format, options...)
+	x.data = &protoconf.PatchMergeConf{}
+	err := load.Load(x.data, dir, format, options...)
 	if err != nil {
 		return err
 	}
-	x.Stats.md5, err = x.calcMd5()
-	if err != nil {
-		return err
-	}
+	x.originalData = proto.Clone(x.data).(*protoconf.PatchMergeConf)
 	return x.processAfterLoad()
 }
 
@@ -139,10 +142,17 @@ func (x *PatchMergeConf) Messager() Messager {
 
 // Message returns the PatchMergeConf's inner message data.
 func (x *PatchMergeConf) Message() proto.Message {
-	if x != nil {
-		return &x.data
-	}
-	return nil
+	return x.Data()
+}
+
+// originalMessage returns the PatchMergeConf's original inner message.
+func (x *PatchMergeConf) originalMessage() proto.Message {
+	return x.originalData
+}
+
+// mutable returns true if the PatchMergeConf's inner message is modified.
+func (x *PatchMergeConf) mutable() bool {
+	return !proto.Equal(x.originalData, x.data)
 }
 
 // Get1 finds value in the 1-level map. It will return
@@ -165,13 +175,13 @@ func (x *PatchMergeConf) Get1(id uint32) (*protoconf.Item, error) {
 //  3. Extensibility: Map, OrdererdMap, Index...
 type RecursivePatchConf struct {
 	UnimplementedMessager
-	data protoconf.RecursivePatchConf
+	data, originalData *protoconf.RecursivePatchConf
 }
 
 // Name returns the RecursivePatchConf's message name.
 func (x *RecursivePatchConf) Name() string {
 	if x != nil {
-		return string((&x.data).ProtoReflect().Descriptor().Name())
+		return string(x.data.ProtoReflect().Descriptor().Name())
 	}
 	return ""
 }
@@ -179,7 +189,7 @@ func (x *RecursivePatchConf) Name() string {
 // Data returns the RecursivePatchConf's inner message data.
 func (x *RecursivePatchConf) Data() *protoconf.RecursivePatchConf {
 	if x != nil {
-		return &x.data
+		return x.data
 	}
 	return nil
 }
@@ -190,14 +200,12 @@ func (x *RecursivePatchConf) Load(dir string, format format.Format, options ...l
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
-	err := load.Load(x.Data(), dir, format, options...)
+	x.data = &protoconf.RecursivePatchConf{}
+	err := load.Load(x.data, dir, format, options...)
 	if err != nil {
 		return err
 	}
-	x.Stats.md5, err = x.calcMd5()
-	if err != nil {
-		return err
-	}
+	x.originalData = proto.Clone(x.data).(*protoconf.RecursivePatchConf)
 	return x.processAfterLoad()
 }
 
@@ -214,10 +222,17 @@ func (x *RecursivePatchConf) Messager() Messager {
 
 // Message returns the RecursivePatchConf's inner message data.
 func (x *RecursivePatchConf) Message() proto.Message {
-	if x != nil {
-		return &x.data
-	}
-	return nil
+	return x.Data()
+}
+
+// originalMessage returns the RecursivePatchConf's original inner message.
+func (x *RecursivePatchConf) originalMessage() proto.Message {
+	return x.originalData
+}
+
+// mutable returns true if the RecursivePatchConf's inner message is modified.
+func (x *RecursivePatchConf) mutable() bool {
+	return !proto.Equal(x.originalData, x.data)
 }
 
 // Get1 finds value in the 1-level map. It will return

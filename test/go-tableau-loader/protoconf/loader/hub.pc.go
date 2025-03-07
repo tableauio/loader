@@ -6,25 +6,23 @@
 package loader
 
 import (
-	"context"
-	"crypto/md5"
 	"fmt"
+	"os"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/pmezard/go-difflib/difflib"
 	"github.com/tableauio/tableau/format"
 	"github.com/tableauio/tableau/load"
 	"github.com/tableauio/tableau/store"
 	"google.golang.org/protobuf/proto"
 )
 
-var marshalOpts = proto.MarshalOptions{Deterministic: true}
-
 type Messager interface {
 	Checker
-	immutabilityChecker
+	immutableChecker
 	// Name returns the unique message name.
 	Name() string
 	// GetStats returns stats info.
@@ -47,8 +45,9 @@ type Checker interface {
 	CheckCompatibility(hub, newHub *Hub) error
 }
 
-type immutabilityChecker interface {
-	modified() bool
+type immutableChecker interface {
+	originalMessage() proto.Message
+	mutable() bool
 }
 
 type Options struct {
@@ -58,11 +57,11 @@ type Options struct {
 	// Default: nil.
 	Filter FilterFunc
 
-	// ImmutabilityCheck enables the immutability check of the loaded config,
-	// and specifies its interval and error handler.
+	// ImmutableCheck enables the immutable check of the loaded config,
+	// and specifies its interval, max jitter and error handler.
 	//
 	// Default: nil.
-	ImmutabilityCheck *ImmutabilityCheck
+	ImmutableCheck *ImmutableCheck
 }
 
 // FilterFunc filter in messagers if returned value is true.
@@ -70,9 +69,13 @@ type Options struct {
 // NOTE: name is the protobuf message name, e.g.: "message ItemConf{...}".
 type FilterFunc func(name string) bool
 
-type ImmutabilityCheck struct {
-	Interval     time.Duration
-	ErrorHandler func(error)
+type ImmutableCheck struct {
+	// Interval is the gap duration between two checks.
+	// Default: 60s.
+	Interval time.Duration
+	// MutableHandler is called when encouters modifications, with messager's name,
+	// original message and current message.
+	MutableHandler func(name string, original, current proto.Message)
 }
 
 // Option is the functional option type.
@@ -103,22 +106,15 @@ func Filter(filter FilterFunc) Option {
 	}
 }
 
-// CheckImmutability specifies the interval and error handler of
-// immutability check.
-func CheckImmutability(interval time.Duration, handler func(error)) Option {
+// WithImmutableCheck enables the immutable check with given params.
+func WithImmutableCheck(check *ImmutableCheck) Option {
 	return func(opts *Options) {
-		if interval != 0 && handler != nil {
-			opts.ImmutabilityCheck = &ImmutabilityCheck{
-				Interval:     interval,
-				ErrorHandler: handler,
-			}
-		}
+		opts.ImmutableCheck = check
 	}
 }
 
 type Stats struct {
 	Duration time.Duration // total load time consuming.
-	md5      string
 }
 
 type UnimplementedMessager struct {
@@ -165,21 +161,11 @@ func (x *UnimplementedMessager) CheckCompatibility(hub, newHub *Hub) error {
 	return nil
 }
 
-// calcMd5 calculates the md5 of the messager's inner message.
-func (x *UnimplementedMessager) calcMd5() (string, error) {
-	bytes, err := marshalOpts.Marshal(x.Message())
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%x", md5.Sum(bytes)), nil
+func (x *UnimplementedMessager) originalMessage() proto.Message {
+	return nil
 }
 
-// modified returns true if the messager's inner message is modified.
-func (x *UnimplementedMessager) modified() bool {
-	md5, err := x.calcMd5()
-	if err != nil || md5 != x.Stats.md5 {
-		return true
-	}
+func (x *UnimplementedMessager) mutable() bool {
 	return false
 }
 
@@ -228,7 +214,6 @@ type Hub struct {
 	messagerMap    atomic.Pointer[MessagerMap]
 	lastLoadedTime atomic.Pointer[time.Time]
 	opts           *Options
-	cancel         context.CancelFunc
 }
 
 func NewHub(options ...Option) *Hub {
@@ -236,6 +221,7 @@ func NewHub(options ...Option) *Hub {
 	hub.messagerMap.Store(&MessagerMap{})
 	hub.lastLoadedTime.Store(&time.Time{})
 	hub.opts = ParseOptions(options...)
+	go hub.immutableCheck()
 	return hub
 }
 
@@ -269,9 +255,6 @@ func (h *Hub) GetMessager(name string) Messager {
 
 // Load fills messages from files in the specified directory and format.
 func (h *Hub) Load(dir string, format format.Format, options ...load.Option) error {
-	if h.cancel != nil {
-		h.cancel()
-	}
 	messagerMap := h.NewMessagerMap(h.opts.Filter)
 	for name, msger := range messagerMap {
 		if err := msger.Load(dir, format, options...); err != nil {
@@ -287,11 +270,6 @@ func (h *Hub) Load(dir string, format format.Format, options ...load.Option) err
 		}
 	}
 	h.SetMessagerMap(messagerMap)
-	if h.opts.ImmutabilityCheck != nil {
-		ctx, cancel := context.WithCancel(context.Background())
-		h.cancel = cancel
-		go h.checkImmutability(ctx, messagerMap)
-	}
 	return nil
 }
 
@@ -309,21 +287,45 @@ func (h *Hub) Store(dir string, format format.Format, options ...store.Option) e
 	return nil
 }
 
-// checkImmutability checks if the messagers are modified or not.
-func (h *Hub) checkImmutability(ctx context.Context, messagerMap MessagerMap) {
+// immutableCheck checks if the messagers are mutable or not.
+func (h *Hub) immutableCheck() {
+	if h.opts.ImmutableCheck == nil {
+		return
+	}
+	interval := h.opts.ImmutableCheck.Interval
+	if interval == 0 {
+		interval = time.Minute
+	}
+	handler := h.opts.ImmutableCheck.MutableHandler
+	if handler == nil {
+		handler = h.defaultMutableHandler
+	}
 	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			time.Sleep(h.opts.ImmutabilityCheck.Interval)
-			for name, msger := range messagerMap {
-				if msger.modified() {
-					h.opts.ImmutabilityCheck.ErrorHandler(errors.Errorf("msger modified: %v", name))
-				}
+		time.Sleep(interval)
+		messagerMap := h.GetMessagerMap()
+		for name, msger := range messagerMap {
+			time.Sleep(time.Second)
+			if msger.mutable() {
+				handler(name, msger.originalMessage(), msger.Message())
 			}
 		}
 	}
+}
+
+func (h *Hub) defaultMutableHandler(name string, original, current proto.Message) {
+	originalText, _ := store.MarshalToText(original, true)
+	currentText, _ := store.MarshalToText(current, true)
+	diff := difflib.UnifiedDiff{
+		A:        difflib.SplitLines(string(originalText)),
+		B:        difflib.SplitLines(string(currentText)),
+		FromFile: "Original",
+		ToFile:   "Current",
+		Context:  3,
+	}
+	text, _ := difflib.GetUnifiedDiffString(diff)
+	fmt.Fprintf(os.Stderr,
+		"==== %s DIFF BEGIN ====\n%s==== %s DIFF END ====\n",
+		name, text, name)
 }
 
 // GetLastLoadedTime returns the time when hub's messagerMap was last set.

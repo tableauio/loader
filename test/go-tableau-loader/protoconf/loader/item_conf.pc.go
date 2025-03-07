@@ -71,7 +71,7 @@ type ItemConf_Index_UseEffectTypeMap = map[protoconf.UseEffect_Type][]*protoconf
 //  3. Extensibility: Map, OrdererdMap, Index...
 type ItemConf struct {
 	UnimplementedMessager
-	data                     protoconf.ItemConf
+	data, originalData       *protoconf.ItemConf
 	orderedMap               *ProtoconfItemConfItemMap_OrderedMap
 	indexItemMap             ItemConf_Index_ItemMap
 	indexItemInfoMap         ItemConf_Index_ItemInfoMap
@@ -88,7 +88,7 @@ type ItemConf struct {
 // Name returns the ItemConf's message name.
 func (x *ItemConf) Name() string {
 	if x != nil {
-		return string((&x.data).ProtoReflect().Descriptor().Name())
+		return string(x.data.ProtoReflect().Descriptor().Name())
 	}
 	return ""
 }
@@ -96,7 +96,7 @@ func (x *ItemConf) Name() string {
 // Data returns the ItemConf's inner message data.
 func (x *ItemConf) Data() *protoconf.ItemConf {
 	if x != nil {
-		return &x.data
+		return x.data
 	}
 	return nil
 }
@@ -107,14 +107,12 @@ func (x *ItemConf) Load(dir string, format format.Format, options ...load.Option
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
-	err := load.Load(x.Data(), dir, format, options...)
+	x.data = &protoconf.ItemConf{}
+	err := load.Load(x.data, dir, format, options...)
 	if err != nil {
 		return err
 	}
-	x.Stats.md5, err = x.calcMd5()
-	if err != nil {
-		return err
-	}
+	x.originalData = proto.Clone(x.data).(*protoconf.ItemConf)
 	return x.processAfterLoad()
 }
 
@@ -131,10 +129,17 @@ func (x *ItemConf) Messager() Messager {
 
 // Message returns the ItemConf's inner message data.
 func (x *ItemConf) Message() proto.Message {
-	if x != nil {
-		return &x.data
-	}
-	return nil
+	return x.Data()
+}
+
+// originalMessage returns the ItemConf's original inner message.
+func (x *ItemConf) originalMessage() proto.Message {
+	return x.originalData
+}
+
+// mutable returns true if the ItemConf's inner message is modified.
+func (x *ItemConf) mutable() bool {
+	return !proto.Equal(x.originalData, x.data)
 }
 
 // processAfterLoad runs after this messager is loaded.

@@ -51,7 +51,7 @@ using Filter = std::function<bool(const std::string& name)>;
 using MessagerContainerProvider = std::function<MessagerContainer()>;
 using Postprocessor = std::function<bool(const Hub& hub)>;
 // ReadFunc reads the config file and returns its content.
-using ReadFunc = std::function<bool(const std::string&, std::string&)>;
+using ReadFunc = std::function<bool(const std::string& filename, std::string& content)>;
 
 struct HubOptions {
   // Filter can only filter in certain specific messagers based on the
@@ -154,7 +154,7 @@ class Messager {
 
 class Hub {
  public:
-  Hub(HubOptions options = {}) : options_(options) {}
+  Hub(const HubOptions&& options = {}) : options_(options) {}
   Hub(MessagerContainer container) { SetMessagerContainer(container); }
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
@@ -188,7 +188,7 @@ class Hub {
  private:
   MessagerContainer LoadNewMessagerContainer(const std::string& dir, Format fmt = Format::kJSON,
                                              const LoadOptions* options = nullptr);
-  MessagerContainer NewMessagerContainer(Filter filter = nullptr);
+  MessagerContainer NewMessagerContainer();
   void SetMessagerContainer(MessagerContainer msger_container);
   MessagerContainer GetMessagerContainerWithProvider() const;
   const std::shared_ptr<Messager> GetMessager(const std::string& name) const;
