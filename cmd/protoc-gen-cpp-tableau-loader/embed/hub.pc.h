@@ -45,13 +45,20 @@ using MessagerContainer = std::shared_ptr<MessagerMap>;
 using Filter = std::function<bool(const std::string& name)>;
 using MessagerContainerProvider = std::function<MessagerContainer()>;
 using Postprocessor = std::function<bool(const Hub& hub)>;
+// ReadFunc reads the config file and returns its content.
+using ReadFunc = std::function<bool(const std::string&, std::string&)>;
 
-struct LoadOptions {
+struct HubOptions {
   // Filter can only filter in certain specific messagers based on the
   // condition that you provide.
-  Filter filter = nullptr;
+  Filter filter;
+};
+
+struct LoadOptions {
   // postprocessor is called after loading all configurations.
   Postprocessor postprocessor;
+  // read_func reads the config file and returns its content.
+  ReadFunc read_func;
   // Whether to ignore unknown JSON fields during parsing.
   //
   // Refer https://protobuf.dev/reference/cpp/api-docs/google.protobuf.util.json_util/#JsonParseOptions.
@@ -142,7 +149,7 @@ class Messager {
 
 class Hub {
  public:
-  Hub() = default;
+  Hub(HubOptions options = {}) : options_(options) {}
   Hub(MessagerContainer container) { SetMessagerContainer(container); }
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
@@ -193,6 +200,8 @@ class Hub {
   internal::Scheduler* sched_ = nullptr;
   // Last loaded time
   std::time_t last_loaded_time_ = 0;
+  // Hub options
+  const HubOptions options_;
 };
 
 template <typename T>

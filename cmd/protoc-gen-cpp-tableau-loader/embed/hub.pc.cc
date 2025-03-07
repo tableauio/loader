@@ -378,7 +378,11 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
 bool LoadMessageByPath(google::protobuf::Message& msg, const std::string& path, Format fmt,
                        const LoadOptions* options /* = nullptr*/) {
   std::string content;
-  bool ok = ReadFile(path, content);
+  ReadFunc read_func = ReadFile;
+  if (options != nullptr && options->read_func) {
+    read_func = options->read_func;
+  }
+  bool ok = read_func(path, content);
   if (!ok) {
     return false;
   }
@@ -471,7 +475,7 @@ MessagerContainer Hub::LoadNewMessagerContainer(const std::string& dir, Format f
                                                 const LoadOptions* options /* = nullptr */) {
   // intercept protobuf error logs
   auto old_handler = google::protobuf::SetLogHandler(ProtobufLogHandler);
-  Filter filter = options != nullptr ? options->filter : nullptr;
+  Filter filter = options_.filter;
   auto msger_container = NewMessagerContainer(filter);
   for (auto iter : *msger_container) {
     auto&& name = iter.first;
@@ -494,7 +498,7 @@ MessagerContainer Hub::LoadNewMessagerContainer(const std::string& dir, Format f
 MessagerContainer Hub::NewMessagerContainer(Filter filter) {
   MessagerContainer msger_container = std::make_shared<MessagerMap>();
   for (auto&& it : Registry::registrar) {
-    if (filter == nullptr || filter(it.first)) {
+    if (!filter || filter(it.first)) {
       (*msger_container)[it.first] = it.second();
     }
   }
