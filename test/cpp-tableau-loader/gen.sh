@@ -25,14 +25,13 @@ cd "${PLGUIN_DIR}" && go build && cd -
 export PATH="${PATH}:${PLGUIN_DIR}"
 
 ${PROTOC} \
---plugin "$PLUGIN" \
---cpp-tableau-loader_out="$PROTOCONF_OUT" \
---cpp-tableau-loader_opt=paths=source_relative,registry-shards=2 \
---cpp_out="$PROTOCONF_OUT" \
---proto_path="$PROTOBUF_PROTO" \
---proto_path="$TABLEAU_PROTO" \
---proto_path="$PROTOCONF_IN" \
-"$PROTOCONF_IN"/**/*.proto
+    --cpp-tableau-loader_out="$PROTOCONF_OUT" \
+    --cpp-tableau-loader_opt=paths=source_relative,registry-shards=2 \
+    --cpp_out="$PROTOCONF_OUT" \
+    --proto_path="$PROTOBUF_PROTO" \
+    --proto_path="$TABLEAU_PROTO" \
+    --proto_path="$PROTOCONF_IN" \
+    "$PROTOCONF_IN"/**/*.proto
 
 TABLEAU_IN="./third_party/_submodules/tableau/proto/tableau/protobuf"
 TABLEAU_OUT="${ROOTDIR}/src"
@@ -41,9 +40,8 @@ rm -rfv "$TABLEAU_OUT/tableau"
 mkdir -p "$TABLEAU_OUT/tableau"
 
 ${PROTOC} \
---cpp_out="$TABLEAU_OUT" \
---proto_path="$PROTOBUF_PROTO" \
---proto_path="$TABLEAU_PROTO" \
-"${TABLEAU_PROTO}/tableau/protobuf/tableau.proto" \
-"${TABLEAU_PROTO}/tableau/protobuf/wellknown.proto"
-    
+    --cpp_out="$TABLEAU_OUT" \
+    --proto_path="$PROTOBUF_PROTO" \
+    --proto_path="$TABLEAU_PROTO" \
+    "${TABLEAU_PROTO}/tableau/protobuf/tableau.proto" \
+    "${TABLEAU_PROTO}/tableau/protobuf/wellknown.proto"
