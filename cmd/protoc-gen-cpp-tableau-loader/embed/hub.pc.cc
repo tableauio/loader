@@ -4,6 +4,13 @@
 #include <google/protobuf/stubs/status.h>
 #include <google/protobuf/text_format.h>
 
+#ifdef _WIN32
+#include <direct.h>
+#include <windows.h>
+#else
+#include <sys/stat.h>
+#endif
+
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -11,6 +18,13 @@
 
 #include "logger.pc.h"
 #include "registry.pc.h"
+
+#ifdef _WIN32
+#define mkdir(path, mode) _mkdir(path)
+#define PATH_SEPARATOR '\\'
+#else
+#define PATH_SEPARATOR '/'
+#endif
 
 namespace tableau {
 static thread_local std::string g_err_msg;
@@ -589,9 +603,9 @@ bool Postprocess(Postprocessor postprocessor, MessagerContainer container) {
 
 namespace util {
 int Mkdir(const std::string& path) {
-  std::string path_ = path + "/";
+  std::string path_ = path + PATH_SEPARATOR;
   struct stat info;
-  for (size_t pos = path_.find('/', 0); pos != std::string::npos; pos = path_.find('/', pos)) {
+  for (size_t pos = path_.find(PATH_SEPARATOR, 0); pos != std::string::npos; pos = path_.find(PATH_SEPARATOR, pos)) {
     ++pos;
     auto sub_dir = path_.substr(0, pos);
     if (stat(sub_dir.c_str(), &info) == 0 && info.st_mode & S_IFDIR) {
@@ -607,7 +621,7 @@ int Mkdir(const std::string& path) {
 }
 
 std::string GetDir(const std::string& path) {
-  std::size_t pos = path.find_last_of("/\\");
+  size_t pos = path.find_last_of(PATH_SEPARATOR);
   if (pos != std::string::npos) {
     return path.substr(0, pos);
   }

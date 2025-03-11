@@ -3,16 +3,25 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef _WIN32
+#include <direct.h>
+#include <windows.h>
+#else
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <unistd.h>
+#endif
 
 #include <thread>
 #include <unordered_map>
 
 #include "hub.pc.h"
 
+#ifdef _WIN32
+#define gettid() GetCurrentThreadId()
+#else
 #define gettid() syscall(SYS_gettid)
+#endif
 
 namespace tableau {
 namespace log {
@@ -45,11 +54,13 @@ void SetDefaultLogger(Logger* logger) {
 }
 
 int Logger::Init(const std::string& path, Level level) {
-  std::string dir = path.substr(0, path.find_last_of('/'));
-  // prepare the specified directory
-  int status = util::Mkdir(dir);
-  if (status == -1) {
-    return status;
+  std::string dir = util::GetDir(path);
+  if (!dir.empty()) {
+    // prepare the specified directory
+    int status = util::Mkdir(dir);
+    if (status == -1) {
+      return status;
+    }
   }
   ofs_.open(path, std::ofstream::out | std::ofstream::app);
   os_ = &ofs_;  // use file stream as output stream
@@ -88,15 +99,27 @@ void DefaultWrite(std::ostream* os, const SourceLocation& loc, const LevelInfo& 
 
 const char* NowStr() {
   static char fmt[64], buf[64];
-  struct timeval tv;
-  struct tm* tm;
+  struct tm tm;
 
+#ifdef _WIN32
+  SYSTEMTIME wtm;
+  GetLocalTime(&wtm);
+  tm.tm_year = wtm.wYear - 1900;
+  tm.tm_mon = wtm.wMonth - 1;
+  tm.tm_mday = wtm.wDay;
+  tm.tm_hour = wtm.wHour;
+  tm.tm_min = wtm.wMinute;
+  tm.tm_sec = wtm.wSecond;
+  unsigned int usec = wtm.wMilliseconds * 1000;
+#else
+  struct timeval tv;
   gettimeofday(&tv, NULL);
-  if ((tm = localtime(&tv.tv_sec)) != NULL) {
-    // strftime(fmt, sizeof fmt, "%Y-%m-%d %H:%M:%S.%%06u %z", tm);
-    strftime(fmt, sizeof fmt, "%Y-%m-%d %H:%M:%S.%%06u", tm);
-    snprintf(buf, sizeof buf, fmt, tv.tv_usec);
-  }
+  localtime_r(&tv.tv_sec, &tm);
+  unsigned int usec = tv.tv_usec;
+#endif
+
+  strftime(fmt, sizeof fmt, "%Y-%m-%d %H:%M:%S.%%06u", &tm);
+  snprintf(buf, sizeof buf, fmt, usec);
   return buf;
 }
 
