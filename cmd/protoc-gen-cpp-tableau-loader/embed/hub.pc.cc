@@ -21,6 +21,7 @@
 
 namespace tableau {
 #ifdef _WIN32
+#undef GetMessage
 #define mkdir(path, mode) _mkdir(path)
 static constexpr char kPathSeperator = '\\';
 #else
