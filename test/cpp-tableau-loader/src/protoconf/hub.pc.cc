@@ -24,14 +24,14 @@
 #include "logger.pc.h"
 #include "registry.pc.h"
 
+namespace tableau {
 #ifdef _WIN32
 #define mkdir(path, mode) _mkdir(path)
-#define PATH_SEPARATOR '\\'
+static constexpr char kPathSeperator = '\\';
 #else
-#define PATH_SEPARATOR '/'
+static constexpr char kPathSeperator = '/';
 #endif
 
-namespace tableau {
 static thread_local std::string g_err_msg;
 const std::string& GetErrMsg() { return g_err_msg; }
 
@@ -608,9 +608,9 @@ bool Postprocess(Postprocessor postprocessor, MessagerContainer container) {
 
 namespace util {
 int Mkdir(const std::string& path) {
-  std::string path_ = path + PATH_SEPARATOR;
+  std::string path_ = path + kPathSeperator;
   struct stat info;
-  for (size_t pos = path_.find(PATH_SEPARATOR, 0); pos != std::string::npos; pos = path_.find(PATH_SEPARATOR, pos)) {
+  for (size_t pos = path_.find(kPathSeperator, 0); pos != std::string::npos; pos = path_.find(kPathSeperator, pos)) {
     ++pos;
     auto sub_dir = path_.substr(0, pos);
     if (stat(sub_dir.c_str(), &info) == 0 && info.st_mode & S_IFDIR) {
@@ -626,7 +626,7 @@ int Mkdir(const std::string& path) {
 }
 
 std::string GetDir(const std::string& path) {
-  size_t pos = path.find_last_of(PATH_SEPARATOR);
+  size_t pos = path.find_last_of(kPathSeperator);
   if (pos != std::string::npos) {
     return path.substr(0, pos);
   }
