@@ -149,7 +149,7 @@ class Messager {
 
 class Hub {
  public:
-  Hub(const HubOptions&& options = {}) : options_(options) {}
+  Hub(const HubOptions* options = nullptr) : options_(options ? *options : HubOptions{}) {}
   Hub(MessagerContainer container) { SetMessagerContainer(container); }
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.

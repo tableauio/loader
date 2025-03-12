@@ -29,10 +29,16 @@ class Singleton {
 
 class Hub : public tableau::Hub, public Singleton<Hub> {
  public:
-  Hub() : tableau::Hub({std::bind(&Hub::Filter, this, std::placeholders::_1)}) {}
+  Hub() : tableau::Hub(GetOptions()) {}
   void Init();
 
  private:
   void InitCustomMessager();
   bool Filter(const std::string& name) { return true; }
+
+ private:
+  const tableau::HubOptions* GetOptions() {
+    static const tableau::HubOptions options{std::bind(&Hub::Filter, this, std::placeholders::_1)};
+    return &options;
+  }
 };

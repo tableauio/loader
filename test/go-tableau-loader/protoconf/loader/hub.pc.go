@@ -58,7 +58,7 @@ type Options struct {
 	Filter FilterFunc
 
 	// ImmutableCheck enables the immutable check of the loaded config,
-	// and specifies its interval, max jitter and error handler.
+	// and specifies its interval and mutable handler.
 	//
 	// Default: nil.
 	ImmutableCheck *ImmutableCheck
@@ -98,8 +98,6 @@ func ParseOptions(setters ...Option) *Options {
 
 // Filter can only filter in certain specific messagers based on the
 // condition that you provide.
-//
-// NOTE: only used in https://github.com/tableauio/loader.
 func Filter(filter FilterFunc) Option {
 	return func(opts *Options) {
 		opts.Filter = filter
