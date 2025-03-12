@@ -8,7 +8,11 @@ file(GLOB_RECURSE SOURCE *.cpp)
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -fPIC -std=c++11 -Wno-deprecated -Wno-unused-variable -Wno-sign-compare -Wno-strict-aliasing -fno-strict-aliasing -DNDEBUG")
+if (MSVC)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /DNDEBUG")
+else()
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -fPIC -std=c++11 -Wno-deprecated -Wno-unused-variable -Wno-sign-compare -Wno-strict-aliasing -fno-strict-aliasing -DNDEBUG")
+endif()
 
 # root dir define
 SET(CMAKE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -30,12 +34,19 @@ SET(COMMON_INCLUDE_DIR
     )
 
 # common lib
-SET(COMMON_LIB
-    ${PROTOBUF_LIB}/libprotobuf.a
-    pthread
-    )
+if(MSVC)
+    SET(COMMON_LIB
+        ${PROTOBUF_ROOT_DIR}/cmake/Debug/libprotobufd.lib
+        )
+    SET(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
+else()
+    SET(COMMON_LIB
+        ${PROTOBUF_LIB}/libprotobuf.a
+        pthread
+        )
+endif()
 
-# inlcude
+# include
 include_directories(${PROJECT_SOURCE_DIR} ${COMMON_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/protoconf)
 
 # add the executable
