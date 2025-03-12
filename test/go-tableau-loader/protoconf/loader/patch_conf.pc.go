@@ -56,7 +56,9 @@ func (x *PatchReplaceConf) Load(dir string, format format.Format, options ...loa
 	if err != nil {
 		return err
 	}
-	x.originalData = proto.Clone(x.data).(*protoconf.PatchReplaceConf)
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.PatchReplaceConf)
+	}
 	return x.processAfterLoad()
 }
 
@@ -125,7 +127,9 @@ func (x *PatchMergeConf) Load(dir string, format format.Format, options ...load.
 	if err != nil {
 		return err
 	}
-	x.originalData = proto.Clone(x.data).(*protoconf.PatchMergeConf)
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.PatchMergeConf)
+	}
 	return x.processAfterLoad()
 }
 
@@ -205,7 +209,9 @@ func (x *RecursivePatchConf) Load(dir string, format format.Format, options ...l
 	if err != nil {
 		return err
 	}
-	x.originalData = proto.Clone(x.data).(*protoconf.RecursivePatchConf)
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.RecursivePatchConf)
+	}
 	return x.processAfterLoad()
 }
 

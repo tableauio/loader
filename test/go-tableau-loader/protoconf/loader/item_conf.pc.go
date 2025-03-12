@@ -112,7 +112,9 @@ func (x *ItemConf) Load(dir string, format format.Format, options ...load.Option
 	if err != nil {
 		return err
 	}
-	x.originalData = proto.Clone(x.data).(*protoconf.ItemConf)
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.ItemConf)
+	}
 	return x.processAfterLoad()
 }
 

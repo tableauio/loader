@@ -46,6 +46,7 @@ type Checker interface {
 }
 
 type immutableChecker interface {
+	enableBackup()
 	originalMessage() proto.Message
 	mutable() bool
 }
@@ -116,7 +117,8 @@ type Stats struct {
 }
 
 type UnimplementedMessager struct {
-	Stats Stats
+	Stats  Stats
+	backup bool
 }
 
 func (x *UnimplementedMessager) Name() string {
@@ -157,6 +159,10 @@ func (x *UnimplementedMessager) Check(hub *Hub) error {
 
 func (x *UnimplementedMessager) CheckCompatibility(hub, newHub *Hub) error {
 	return nil
+}
+
+func (x *UnimplementedMessager) enableBackup() {
+	x.backup = true
 }
 
 func (x *UnimplementedMessager) originalMessage() proto.Message {
@@ -224,11 +230,15 @@ func NewHub(options ...Option) *Hub {
 }
 
 // NewMessagerMap creates a new MessagerMap.
-func (h *Hub) NewMessagerMap(filter FilterFunc) MessagerMap {
+func (h *Hub) NewMessagerMap() MessagerMap {
 	messagerMap := MessagerMap{}
 	for name, gen := range getRegistrar().Generators {
-		if filter == nil || filter(name) {
-			messagerMap[name] = gen()
+		if h.opts.Filter == nil || h.opts.Filter(name) {
+			messager := gen()
+			if h.opts.ImmutableCheck != nil {
+				messager.enableBackup()
+			}
+			messagerMap[name] = messager
 		}
 	}
 	return messagerMap
@@ -253,7 +263,7 @@ func (h *Hub) GetMessager(name string) Messager {
 
 // Load fills messages from files in the specified directory and format.
 func (h *Hub) Load(dir string, format format.Format, options ...load.Option) error {
-	messagerMap := h.NewMessagerMap(h.opts.Filter)
+	messagerMap := h.NewMessagerMap()
 	for name, msger := range messagerMap {
 		if err := msger.Load(dir, format, options...); err != nil {
 			return errors.WithMessagef(err, "failed to load: %v", name)

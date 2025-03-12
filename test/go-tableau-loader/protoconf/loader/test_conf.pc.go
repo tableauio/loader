@@ -80,7 +80,9 @@ func (x *ActivityConf) Load(dir string, format format.Format, options ...load.Op
 	if err != nil {
 		return err
 	}
-	x.originalData = proto.Clone(x.data).(*protoconf.ActivityConf)
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.ActivityConf)
+	}
 	return x.processAfterLoad()
 }
 
@@ -347,7 +349,9 @@ func (x *ChapterConf) Load(dir string, format format.Format, options ...load.Opt
 	if err != nil {
 		return err
 	}
-	x.originalData = proto.Clone(x.data).(*protoconf.ChapterConf)
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.ChapterConf)
+	}
 	return x.processAfterLoad()
 }
 
@@ -427,7 +431,9 @@ func (x *ThemeConf) Load(dir string, format format.Format, options ...load.Optio
 	if err != nil {
 		return err
 	}
-	x.originalData = proto.Clone(x.data).(*protoconf.ThemeConf)
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.ThemeConf)
+	}
 	return x.processAfterLoad()
 }
 

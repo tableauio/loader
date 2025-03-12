@@ -64,7 +64,9 @@ func (x *HeroConf) Load(dir string, format format.Format, options ...load.Option
 	if err != nil {
 		return err
 	}
-	x.originalData = proto.Clone(x.data).(*protoconf.HeroConf)
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.HeroConf)
+	}
 	return x.processAfterLoad()
 }
 
@@ -203,7 +205,9 @@ func (x *HeroBaseConf) Load(dir string, format format.Format, options ...load.Op
 	if err != nil {
 		return err
 	}
-	x.originalData = proto.Clone(x.data).(*protoconf.HeroBaseConf)
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.HeroBaseConf)
+	}
 	return x.processAfterLoad()
 }
 
