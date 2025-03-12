@@ -104,12 +104,10 @@ func (x *ActivityConf) Message() proto.Message {
 
 // originalMessage returns the ActivityConf's original inner message.
 func (x *ActivityConf) originalMessage() proto.Message {
-	return x.originalData
-}
-
-// mutable returns true if the ActivityConf's inner message is modified.
-func (x *ActivityConf) mutable() bool {
-	return !proto.Equal(x.originalData, x.data)
+	if x != nil {
+		return x.originalData
+	}
+	return nil
 }
 
 // processAfterLoad runs after this messager is loaded.
@@ -373,12 +371,10 @@ func (x *ChapterConf) Message() proto.Message {
 
 // originalMessage returns the ChapterConf's original inner message.
 func (x *ChapterConf) originalMessage() proto.Message {
-	return x.originalData
-}
-
-// mutable returns true if the ChapterConf's inner message is modified.
-func (x *ChapterConf) mutable() bool {
-	return !proto.Equal(x.originalData, x.data)
+	if x != nil {
+		return x.originalData
+	}
+	return nil
 }
 
 // Get1 finds value in the 1-level map. It will return
@@ -455,12 +451,10 @@ func (x *ThemeConf) Message() proto.Message {
 
 // originalMessage returns the ThemeConf's original inner message.
 func (x *ThemeConf) originalMessage() proto.Message {
-	return x.originalData
-}
-
-// mutable returns true if the ThemeConf's inner message is modified.
-func (x *ThemeConf) mutable() bool {
-	return !proto.Equal(x.originalData, x.data)
+	if x != nil {
+		return x.originalData
+	}
+	return nil
 }
 
 // Get1 finds value in the 1-level map. It will return

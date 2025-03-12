@@ -21,7 +21,7 @@ func GetHub() *MyHub {
 		// new instance
 		hubSingleton = &MyHub{
 			Hub: tableau.NewHub(
-				tableau.WithImmutableCheck(&tableau.ImmutableCheck{
+				tableau.WithMutableCheck(&tableau.MutableCheck{
 					Interval: 1 * time.Second,
 				}),
 			),

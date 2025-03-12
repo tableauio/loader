@@ -164,13 +164,10 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 
 	g.P("// originalMessage returns the ", messagerName, "'s original inner message.")
 	g.P("func (x *", messagerName, ") originalMessage() proto.Message {")
+	g.P("if x != nil {")
 	g.P(`return x.originalData`)
 	g.P("}")
-	g.P()
-
-	g.P("// mutable returns true if the ", messagerName, "'s inner message is modified.")
-	g.P("func (x *", messagerName, ") mutable() bool {")
-	g.P(`return !proto.Equal(x.originalData, x.data)`)
+	g.P(`return nil`)
 	g.P("}")
 	g.P()
 

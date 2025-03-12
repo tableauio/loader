@@ -80,12 +80,10 @@ func (x *PatchReplaceConf) Message() proto.Message {
 
 // originalMessage returns the PatchReplaceConf's original inner message.
 func (x *PatchReplaceConf) originalMessage() proto.Message {
-	return x.originalData
-}
-
-// mutable returns true if the PatchReplaceConf's inner message is modified.
-func (x *PatchReplaceConf) mutable() bool {
-	return !proto.Equal(x.originalData, x.data)
+	if x != nil {
+		return x.originalData
+	}
+	return nil
 }
 
 // PatchMergeConf is a wrapper around protobuf message: protoconf.PatchMergeConf.
@@ -151,12 +149,10 @@ func (x *PatchMergeConf) Message() proto.Message {
 
 // originalMessage returns the PatchMergeConf's original inner message.
 func (x *PatchMergeConf) originalMessage() proto.Message {
-	return x.originalData
-}
-
-// mutable returns true if the PatchMergeConf's inner message is modified.
-func (x *PatchMergeConf) mutable() bool {
-	return !proto.Equal(x.originalData, x.data)
+	if x != nil {
+		return x.originalData
+	}
+	return nil
 }
 
 // Get1 finds value in the 1-level map. It will return
@@ -233,12 +229,10 @@ func (x *RecursivePatchConf) Message() proto.Message {
 
 // originalMessage returns the RecursivePatchConf's original inner message.
 func (x *RecursivePatchConf) originalMessage() proto.Message {
-	return x.originalData
-}
-
-// mutable returns true if the RecursivePatchConf's inner message is modified.
-func (x *RecursivePatchConf) mutable() bool {
-	return !proto.Equal(x.originalData, x.data)
+	if x != nil {
+		return x.originalData
+	}
+	return nil
 }
 
 // Get1 finds value in the 1-level map. It will return

@@ -136,12 +136,10 @@ func (x *ItemConf) Message() proto.Message {
 
 // originalMessage returns the ItemConf's original inner message.
 func (x *ItemConf) originalMessage() proto.Message {
-	return x.originalData
-}
-
-// mutable returns true if the ItemConf's inner message is modified.
-func (x *ItemConf) mutable() bool {
-	return !proto.Equal(x.originalData, x.data)
+	if x != nil {
+		return x.originalData
+	}
+	return nil
 }
 
 // processAfterLoad runs after this messager is loaded.

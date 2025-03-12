@@ -88,12 +88,10 @@ func (x *HeroConf) Message() proto.Message {
 
 // originalMessage returns the HeroConf's original inner message.
 func (x *HeroConf) originalMessage() proto.Message {
-	return x.originalData
-}
-
-// mutable returns true if the HeroConf's inner message is modified.
-func (x *HeroConf) mutable() bool {
-	return !proto.Equal(x.originalData, x.data)
+	if x != nil {
+		return x.originalData
+	}
+	return nil
 }
 
 // processAfterLoad runs after this messager is loaded.
@@ -229,12 +227,10 @@ func (x *HeroBaseConf) Message() proto.Message {
 
 // originalMessage returns the HeroBaseConf's original inner message.
 func (x *HeroBaseConf) originalMessage() proto.Message {
-	return x.originalData
-}
-
-// mutable returns true if the HeroBaseConf's inner message is modified.
-func (x *HeroBaseConf) mutable() bool {
-	return !proto.Equal(x.originalData, x.data)
+	if x != nil {
+		return x.originalData
+	}
+	return nil
 }
 
 // processAfterLoad runs after this messager is loaded.

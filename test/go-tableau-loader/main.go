@@ -82,7 +82,7 @@ func main() {
 	// print recursive patch conf
 	fmt.Printf("RecursivePatchConf: %v\n", hub.GetHub().GetRecursivePatchConf().Data())
 
-	// test immutable check
+	// test mutable check
 	delete(hub.GetHub().GetActivityConf().Data().ActivityMap, 100001)
 	hub.GetHub().GetActivityConf().Data().ThemeName = "theme2"
 	time.Sleep(time.Minute)

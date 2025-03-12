@@ -48,7 +48,7 @@ const staticHubContent = `import (
 
 type Messager interface {
 	Checker
-	immutableChecker
+	mutableChecker
 	// Name returns the unique message name.
 	Name() string
 	// GetStats returns stats info.
@@ -71,10 +71,9 @@ type Checker interface {
 	CheckCompatibility(hub, newHub *Hub) error
 }
 
-type immutableChecker interface {
+type mutableChecker interface {
 	enableBackup()
 	originalMessage() proto.Message
-	mutable() bool
 }
 
 type Options struct {
@@ -84,11 +83,11 @@ type Options struct {
 	// Default: nil.
 	Filter FilterFunc
 
-	// ImmutableCheck enables the immutable check of the loaded config,
+	// MutableCheck enables the mutable check of the loaded config,
 	// and specifies its interval and mutable handler.
 	//
 	// Default: nil.
-	ImmutableCheck *ImmutableCheck
+	MutableCheck *MutableCheck
 }
 
 // FilterFunc filter in messagers if returned value is true.
@@ -96,13 +95,13 @@ type Options struct {
 // NOTE: name is the protobuf message name, e.g.: "message ItemConf{...}".
 type FilterFunc func(name string) bool
 
-type ImmutableCheck struct {
+type MutableCheck struct {
 	// Interval is the gap duration between two checks.
 	// Default: 60s.
 	Interval time.Duration
-	// MutableHandler is called when encouters modifications, with messager's name,
+	// OnMutate is called when encouters mutations, with messager's name,
 	// original message and current message.
-	MutableHandler func(name string, original, current proto.Message)
+	OnMutate func(name string, original, current proto.Message)
 }
 
 // Option is the functional option type.
@@ -131,10 +130,10 @@ func Filter(filter FilterFunc) Option {
 	}
 }
 
-// WithImmutableCheck enables the immutable check with given params.
-func WithImmutableCheck(check *ImmutableCheck) Option {
+// WithMutableCheck enables the mutable check with given params.
+func WithMutableCheck(check *MutableCheck) Option {
 	return func(opts *Options) {
-		opts.ImmutableCheck = check
+		opts.MutableCheck = check
 	}
 }
 
@@ -195,10 +194,6 @@ func (x *UnimplementedMessager) originalMessage() proto.Message {
 	return nil
 }
 
-func (x *UnimplementedMessager) mutable() bool {
-	return false
-}
-
 type MessagerMap = map[string]Messager
 type MessagerGenerator = func() Messager
 type Registrar struct {
@@ -251,7 +246,7 @@ func NewHub(options ...Option) *Hub {
 	hub.messagerMap.Store(&MessagerMap{})
 	hub.lastLoadedTime.Store(&time.Time{})
 	hub.opts = ParseOptions(options...)
-	go hub.immutableCheck()
+	go hub.mutableCheck()
 	return hub
 }
 
@@ -261,7 +256,7 @@ func (h *Hub) NewMessagerMap() MessagerMap {
 	for name, gen := range getRegistrar().Generators {
 		if h.opts.Filter == nil || h.opts.Filter(name) {
 			messager := gen()
-			if h.opts.ImmutableCheck != nil {
+			if h.opts.MutableCheck != nil {
 				messager.enableBackup()
 			}
 			messagerMap[name] = messager
@@ -321,32 +316,32 @@ func (h *Hub) Store(dir string, format format.Format, options ...store.Option) e
 	return nil
 }
 
-// immutableCheck checks if the messagers are mutable or not.
-func (h *Hub) immutableCheck() {
-	if h.opts.ImmutableCheck == nil {
+// mutableCheck checks if the messagers are mutable or not.
+func (h *Hub) mutableCheck() {
+	if h.opts.MutableCheck == nil {
 		return
 	}
-	interval := h.opts.ImmutableCheck.Interval
+	interval := h.opts.MutableCheck.Interval
 	if interval == 0 {
 		interval = time.Minute
 	}
-	handler := h.opts.ImmutableCheck.MutableHandler
+	handler := h.opts.MutableCheck.OnMutate
 	if handler == nil {
-		handler = h.defaultMutableHandler
+		handler = h.onMutateDefault
 	}
 	for {
 		time.Sleep(interval)
 		messagerMap := h.GetMessagerMap()
 		for name, msger := range messagerMap {
 			time.Sleep(time.Second)
-			if msger.mutable() {
+			if !proto.Equal(msger.originalMessage(), msger.Message()) {
 				handler(name, msger.originalMessage(), msger.Message())
 			}
 		}
 	}
 }
 
-func (h *Hub) defaultMutableHandler(name string, original, current proto.Message) {
+func (h *Hub) onMutateDefault(name string, original, current proto.Message) {
 	originalText, _ := store.MarshalToText(original, true)
 	currentText, _ := store.MarshalToText(current, true)
 	diff := difflib.UnifiedDiff{
