@@ -95,52 +95,45 @@ func generateRegistryCppFileContent(gen *protogen.Plugin, g *protogen.GeneratedF
 // generateShardedRegistry generates related registry files.
 func generateShardedRegistry(gen *protogen.Plugin) {
 	protofiles, fileMessagers := getAllOrderedFilesAndMessagers(gen)
-
 	hppFilename := "registry." + pcExt + ".h"
 	g1 := gen.NewGeneratedFile(hppFilename, "")
 	helper.GenerateCommonHeader(gen, g1, version)
 	g1.P()
 	g1.P(registryHppTop)
-	for i := 0; i < *registryShards; i++ {
-		g1.P("  static void InitShard", i, "();")
-	}
-	g1.P(registryHppBottom)
 
 	cppFilename := "registry." + pcExt + ".cc"
 	g2 := gen.NewGeneratedFile(cppFilename, "")
 	helper.GenerateCommonHeader(gen, g2, version)
 	g2.P()
-	generateMainShardedRegistryCppFileContent(gen, g2)
+	g2.P(`#include "`, "registry.", pcExt, `.h"`)
+	g2.P()
+
+	g2.P("namespace ", *namespace, " {")
+	g2.P("Registrar Registry::registrar = Registrar();")
+	g2.P("void Registry::Init() {")
 
 	shardSize := int(math.Ceil(float64(len(protofiles)) / float64((*registryShards))))
 	for i := 0; i < *registryShards; i++ {
-		cppFilename := "registry_shard" + strconv.Itoa(i) + "." + pcExt + ".cc"
-		g := gen.NewGeneratedFile(cppFilename, "")
-		helper.GenerateCommonHeader(gen, g, version)
-		g.P()
 		cursor := (i + 1) * shardSize
 		if cursor > len(protofiles) {
 			cursor = len(protofiles)
 		}
+		if i*shardSize >= cursor {
+			break
+		}
+		g1.P("  static void InitShard", i, "();")
+		g2.P("  InitShard", i, "();")
+		cppFilename := "registry_shard" + strconv.Itoa(i) + "." + pcExt + ".cc"
+		g := gen.NewGeneratedFile(cppFilename, "")
+		helper.GenerateCommonHeader(gen, g, version)
+		g.P()
 		shardedProtofiles := protofiles[i*shardSize : cursor]
 		generateShardedRegistryCppFileContent(gen, g, i, shardedProtofiles, fileMessagers)
 	}
-}
 
-// generateShardedRegistryCppFileContent generates the registry logic.
-func generateMainShardedRegistryCppFileContent(gen *protogen.Plugin, g *protogen.GeneratedFile) {
-	g.P(`#include "`, "registry.", pcExt, `.h"`)
-	g.P()
-
-	g.P("namespace ", *namespace, " {")
-	g.P("Registrar Registry::registrar = Registrar();")
-	g.P("void Registry::Init() {")
-
-	for i := 0; i < *registryShards; i++ {
-		g.P("  InitShard", i, "();")
-	}
-	g.P("}")
-	g.P("}  // namespace ", *namespace)
+	g1.P(registryHppBottom)
+	g2.P("}")
+	g2.P("}  // namespace ", *namespace)
 }
 
 // generateShardedRegistryCppFileContent generates one registry shard logic.
