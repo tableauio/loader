@@ -211,4 +211,16 @@ const protoconf::ThemeConf::Theme* ThemeConf::Get(const std::string& name) const
   return &iter->second;
 }
 
+const std::string* ThemeConf::Get(const std::string& name, const std::string& param) const {
+  const auto* conf = Get(name);
+  if (conf == nullptr) {
+    return nullptr;
+  }
+  auto iter = conf->param_map().find(param);
+  if (iter == conf->param_map().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
 }  // namespace tableau

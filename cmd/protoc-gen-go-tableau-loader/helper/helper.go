@@ -156,7 +156,7 @@ func GetTypeEmptyValue(fd protoreflect.FieldDescriptor) string {
 	case protoreflect.FloatKind, protoreflect.DoubleKind:
 		return "0.0"
 	case protoreflect.StringKind:
-		return ""
+		return `""`
 	case protoreflect.BytesKind, protoreflect.MessageKind:
 		return "nil"
 	// case protoreflect.GroupKind:

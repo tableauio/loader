@@ -441,6 +441,21 @@ func (x *ThemeConf) Get1(name string) (*protoconf.ThemeConf_Theme, error) {
 	}
 }
 
+// Get2 finds value in the 2-level map. It will return
+// NotFound error if the key is not found.
+func (x *ThemeConf) Get2(name string, param string) (string, error) {
+	conf, err := x.Get1(name)
+	if err != nil {
+		return "", err
+	}
+	d := conf.GetParamMap()
+	if val, ok := d[param]; !ok {
+		return "", xerrors.Errorf(code.NotFound, "param(%v) not found", param)
+	} else {
+		return val, nil
+	}
+}
+
 func init() {
 	Register(func() Messager {
 		return new(ActivityConf)
