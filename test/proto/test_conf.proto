@@ -83,5 +83,6 @@ message ThemeConf {
   message Theme {
     string name = 2 [(tableau.field) = { name: "Name" }];
     uint64 value = 1 [(tableau.field) = { name: "Value" }];
+    map<string, string> param_map = 3 [(tableau.field) = { key: "Param" layout: LAYOUT_INCELL }];
   }
 }

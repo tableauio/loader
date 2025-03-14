@@ -100,6 +100,7 @@ class ThemeConf : public Messager {
 
  public:
   const protoconf::ThemeConf::Theme* Get(const std::string& name) const;
+  const std::string* Get(const std::string& name, const std::string& param) const;
 
  private:
   static const std::string kProtoName;
