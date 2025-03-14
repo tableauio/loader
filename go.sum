@@ -93,8 +93,8 @@ github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/subchen/go-xmldom v1.1.2 h1:7evI2YqfYYOnuj+PBwyaOZZYjl3iWq35P6KfBUw9jeU=
 github.com/subchen/go-xmldom v1.1.2/go.mod h1:6Pg/HuX5/T4Jlj0IPJF1sRxKVoI/rrKP6LIMge9d5/8=
-github.com/tableauio/tableau v0.12.0 h1:0CvVNOJqSyZyREOECj5KlTxgzrzRtQLBLRd8qqiSIKM=
-github.com/tableauio/tableau v0.12.0/go.mod h1:k5w2nmhLYefmwWJPb7ztLh51PnoSzjMiJUcI6I+7LB4=
+github.com/tableauio/tableau v0.12.2 h1:1pTcMbR1a1fNRh8LIpnsRTcz2QzmmXR/JJJhry8pJ8E=
+github.com/tableauio/tableau v0.12.2/go.mod h1:qc3iHJkkEdpRyAe7K0WxZ6Kosa50Al3kxZoJobwvT2w=
 github.com/xuri/efp v0.0.0-20220603152613-6918739fd470 h1:6932x8ltq1w4utjmfMPVj09jdMlkY0aiA6+Skbtl3/c=
 github.com/xuri/efp v0.0.0-20220603152613-6918739fd470/go.mod h1:ybY/Jr0T0GTCnYjKqmdwxyxn2BQf2RcQIIvex5QldPI=
 github.com/xuri/excelize/v2 v2.6.1 h1:ICBdtw803rmhLN3zfvyEGH3cwSmZv+kde7LhTDT659k=

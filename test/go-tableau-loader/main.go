@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/tableauio/loader/test/go-tableau-loader/hub"
 	"github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
@@ -80,4 +81,9 @@ func main() {
 	}
 	// print recursive patch conf
 	fmt.Printf("RecursivePatchConf: %v\n", hub.GetHub().GetRecursivePatchConf().Data())
+
+	// test mutable check
+	delete(hub.GetHub().GetActivityConf().Data().ActivityMap, 100001)
+	hub.GetHub().GetActivityConf().Data().ThemeName = "theme2"
+	time.Sleep(time.Minute)
 }

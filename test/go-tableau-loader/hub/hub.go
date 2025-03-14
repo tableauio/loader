@@ -2,6 +2,7 @@ package hub
 
 import (
 	"sync"
+	"time"
 
 	"github.com/tableauio/loader/test/go-tableau-loader/customconf"
 	tableau "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader"
@@ -19,7 +20,11 @@ func GetHub() *MyHub {
 	once.Do(func() {
 		// new instance
 		hubSingleton = &MyHub{
-			Hub: tableau.NewHub(),
+			Hub: tableau.NewHub(
+				tableau.WithMutableCheck(&tableau.MutableCheck{
+					Interval: 1 * time.Second,
+				}),
+			),
 		}
 	})
 	return hubSingleton
