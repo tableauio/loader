@@ -22,7 +22,6 @@ import (
 
 type Messager interface {
 	Checker
-	mutableChecker
 	// Name returns the unique message name.
 	Name() string
 	// GetStats returns stats info.
@@ -37,17 +36,16 @@ type Messager interface {
 	ProcessAfterLoadAll(hub *Hub) error
 	// Message returns the inner message data.
 	Message() proto.Message
+	// originalMessage returns the original inner message data.
+	originalMessage() proto.Message
+	// enableBackup tells each messager to backup original inner message data.
+	enableBackup()
 }
 
 type Checker interface {
 	Messager() Messager
 	Check(hub *Hub) error
 	CheckCompatibility(hub, newHub *Hub) error
-}
-
-type mutableChecker interface {
-	enableBackup()
-	originalMessage() proto.Message
 }
 
 type Options struct {
@@ -220,7 +218,9 @@ func NewHub(options ...Option) *Hub {
 	hub.messagerMap.Store(&MessagerMap{})
 	hub.lastLoadedTime.Store(&time.Time{})
 	hub.opts = ParseOptions(options...)
-	go hub.mutableCheck()
+	if hub.opts.MutableCheck != nil {
+		go hub.mutableCheck()
+	}
 	return hub
 }
 
@@ -292,9 +292,6 @@ func (h *Hub) Store(dir string, format format.Format, options ...store.Option) e
 
 // mutableCheck checks if the messagers are mutable or not.
 func (h *Hub) mutableCheck() {
-	if h.opts.MutableCheck == nil {
-		return
-	}
 	interval := h.opts.MutableCheck.Interval
 	if interval == 0 {
 		interval = time.Minute

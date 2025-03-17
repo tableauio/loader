@@ -150,7 +150,9 @@ class Messager {
 class Hub {
  public:
   Hub(const HubOptions* options = nullptr) : options_(options ? *options : HubOptions{}) {}
-  Hub(MessagerContainer container) { SetMessagerContainer(container); }
+  Hub(MessagerContainer container, const HubOptions* options = nullptr) : options_(options ? *options : HubOptions{}) {
+    SetMessagerContainer(container);
+  }
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
   bool Load(const std::string& dir, Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
