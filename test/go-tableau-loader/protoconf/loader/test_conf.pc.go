@@ -47,7 +47,7 @@ type ActivityConf_Index_NamedChapterMap = map[string][]*protoconf.ActivityConf_A
 //  3. Extensibility: Map, OrdererdMap, Index...
 type ActivityConf struct {
 	UnimplementedMessager
-	data                 protoconf.ActivityConf
+	data, originalData   *protoconf.ActivityConf
 	orderedMap           *ProtoconfActivityConfActivityMap_OrderedMap
 	indexChapterMap      ActivityConf_Index_ChapterMap
 	indexNamedChapterMap ActivityConf_Index_NamedChapterMap
@@ -56,7 +56,7 @@ type ActivityConf struct {
 // Name returns the ActivityConf's message name.
 func (x *ActivityConf) Name() string {
 	if x != nil {
-		return string((&x.data).ProtoReflect().Descriptor().Name())
+		return string(x.data.ProtoReflect().Descriptor().Name())
 	}
 	return ""
 }
@@ -64,7 +64,7 @@ func (x *ActivityConf) Name() string {
 // Data returns the ActivityConf's inner message data.
 func (x *ActivityConf) Data() *protoconf.ActivityConf {
 	if x != nil {
-		return &x.data
+		return x.data
 	}
 	return nil
 }
@@ -75,9 +75,13 @@ func (x *ActivityConf) Load(dir string, format format.Format, options ...load.Op
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
-	err := load.Load(x.Data(), dir, format, options...)
+	x.data = &protoconf.ActivityConf{}
+	err := load.Load(x.data, dir, format, options...)
 	if err != nil {
 		return err
+	}
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.ActivityConf)
 	}
 	return x.processAfterLoad()
 }
@@ -95,8 +99,13 @@ func (x *ActivityConf) Messager() Messager {
 
 // Message returns the ActivityConf's inner message data.
 func (x *ActivityConf) Message() proto.Message {
+	return x.Data()
+}
+
+// originalMessage returns the ActivityConf's original inner message.
+func (x *ActivityConf) originalMessage() proto.Message {
 	if x != nil {
-		return &x.data
+		return x.originalData
 	}
 	return nil
 }
@@ -308,13 +317,13 @@ func (x *ActivityConf) FindFirstNamedChapter(chapterName string) *protoconf.Acti
 //  3. Extensibility: Map, OrdererdMap, Index...
 type ChapterConf struct {
 	UnimplementedMessager
-	data protoconf.ChapterConf
+	data, originalData *protoconf.ChapterConf
 }
 
 // Name returns the ChapterConf's message name.
 func (x *ChapterConf) Name() string {
 	if x != nil {
-		return string((&x.data).ProtoReflect().Descriptor().Name())
+		return string(x.data.ProtoReflect().Descriptor().Name())
 	}
 	return ""
 }
@@ -322,7 +331,7 @@ func (x *ChapterConf) Name() string {
 // Data returns the ChapterConf's inner message data.
 func (x *ChapterConf) Data() *protoconf.ChapterConf {
 	if x != nil {
-		return &x.data
+		return x.data
 	}
 	return nil
 }
@@ -333,9 +342,13 @@ func (x *ChapterConf) Load(dir string, format format.Format, options ...load.Opt
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
-	err := load.Load(x.Data(), dir, format, options...)
+	x.data = &protoconf.ChapterConf{}
+	err := load.Load(x.data, dir, format, options...)
 	if err != nil {
 		return err
+	}
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.ChapterConf)
 	}
 	return x.processAfterLoad()
 }
@@ -353,8 +366,13 @@ func (x *ChapterConf) Messager() Messager {
 
 // Message returns the ChapterConf's inner message data.
 func (x *ChapterConf) Message() proto.Message {
+	return x.Data()
+}
+
+// originalMessage returns the ChapterConf's original inner message.
+func (x *ChapterConf) originalMessage() proto.Message {
 	if x != nil {
-		return &x.data
+		return x.originalData
 	}
 	return nil
 }
@@ -379,13 +397,13 @@ func (x *ChapterConf) Get1(id uint64) (*protoconf.ChapterConf_Chapter, error) {
 //  3. Extensibility: Map, OrdererdMap, Index...
 type ThemeConf struct {
 	UnimplementedMessager
-	data protoconf.ThemeConf
+	data, originalData *protoconf.ThemeConf
 }
 
 // Name returns the ThemeConf's message name.
 func (x *ThemeConf) Name() string {
 	if x != nil {
-		return string((&x.data).ProtoReflect().Descriptor().Name())
+		return string(x.data.ProtoReflect().Descriptor().Name())
 	}
 	return ""
 }
@@ -393,7 +411,7 @@ func (x *ThemeConf) Name() string {
 // Data returns the ThemeConf's inner message data.
 func (x *ThemeConf) Data() *protoconf.ThemeConf {
 	if x != nil {
-		return &x.data
+		return x.data
 	}
 	return nil
 }
@@ -404,9 +422,13 @@ func (x *ThemeConf) Load(dir string, format format.Format, options ...load.Optio
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
-	err := load.Load(x.Data(), dir, format, options...)
+	x.data = &protoconf.ThemeConf{}
+	err := load.Load(x.data, dir, format, options...)
 	if err != nil {
 		return err
+	}
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.ThemeConf)
 	}
 	return x.processAfterLoad()
 }
@@ -424,8 +446,13 @@ func (x *ThemeConf) Messager() Messager {
 
 // Message returns the ThemeConf's inner message data.
 func (x *ThemeConf) Message() proto.Message {
+	return x.Data()
+}
+
+// originalMessage returns the ThemeConf's original inner message.
+func (x *ThemeConf) originalMessage() proto.Message {
 	if x != nil {
-		return &x.data
+		return x.originalData
 	}
 	return nil
 }

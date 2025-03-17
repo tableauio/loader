@@ -33,14 +33,14 @@ type HeroConf_Index_AttrMap = map[string][]*protoconf.HeroConf_Hero_Attr
 //  3. Extensibility: Map, OrdererdMap, Index...
 type HeroConf struct {
 	UnimplementedMessager
-	data         protoconf.HeroConf
-	indexAttrMap HeroConf_Index_AttrMap
+	data, originalData *protoconf.HeroConf
+	indexAttrMap       HeroConf_Index_AttrMap
 }
 
 // Name returns the HeroConf's message name.
 func (x *HeroConf) Name() string {
 	if x != nil {
-		return string((&x.data).ProtoReflect().Descriptor().Name())
+		return string(x.data.ProtoReflect().Descriptor().Name())
 	}
 	return ""
 }
@@ -48,7 +48,7 @@ func (x *HeroConf) Name() string {
 // Data returns the HeroConf's inner message data.
 func (x *HeroConf) Data() *protoconf.HeroConf {
 	if x != nil {
-		return &x.data
+		return x.data
 	}
 	return nil
 }
@@ -59,9 +59,13 @@ func (x *HeroConf) Load(dir string, format format.Format, options ...load.Option
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
-	err := load.Load(x.Data(), dir, format, options...)
+	x.data = &protoconf.HeroConf{}
+	err := load.Load(x.data, dir, format, options...)
 	if err != nil {
 		return err
+	}
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.HeroConf)
 	}
 	return x.processAfterLoad()
 }
@@ -79,8 +83,13 @@ func (x *HeroConf) Messager() Messager {
 
 // Message returns the HeroConf's inner message data.
 func (x *HeroConf) Message() proto.Message {
+	return x.Data()
+}
+
+// originalMessage returns the HeroConf's original inner message.
+func (x *HeroConf) originalMessage() proto.Message {
 	if x != nil {
-		return &x.data
+		return x.originalData
 	}
 	return nil
 }
@@ -163,14 +172,14 @@ type ProtoconfHeroBaseConfHeroMap_OrderedMap = treemap.TreeMap[string, *Protocon
 //  3. Extensibility: Map, OrdererdMap, Index...
 type HeroBaseConf struct {
 	UnimplementedMessager
-	data       protoconf.HeroBaseConf
-	orderedMap *ProtoconfHeroBaseConfHeroMap_OrderedMap
+	data, originalData *protoconf.HeroBaseConf
+	orderedMap         *ProtoconfHeroBaseConfHeroMap_OrderedMap
 }
 
 // Name returns the HeroBaseConf's message name.
 func (x *HeroBaseConf) Name() string {
 	if x != nil {
-		return string((&x.data).ProtoReflect().Descriptor().Name())
+		return string(x.data.ProtoReflect().Descriptor().Name())
 	}
 	return ""
 }
@@ -178,7 +187,7 @@ func (x *HeroBaseConf) Name() string {
 // Data returns the HeroBaseConf's inner message data.
 func (x *HeroBaseConf) Data() *protoconf.HeroBaseConf {
 	if x != nil {
-		return &x.data
+		return x.data
 	}
 	return nil
 }
@@ -189,9 +198,13 @@ func (x *HeroBaseConf) Load(dir string, format format.Format, options ...load.Op
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
-	err := load.Load(x.Data(), dir, format, options...)
+	x.data = &protoconf.HeroBaseConf{}
+	err := load.Load(x.data, dir, format, options...)
 	if err != nil {
 		return err
+	}
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.HeroBaseConf)
 	}
 	return x.processAfterLoad()
 }
@@ -209,8 +222,13 @@ func (x *HeroBaseConf) Messager() Messager {
 
 // Message returns the HeroBaseConf's inner message data.
 func (x *HeroBaseConf) Message() proto.Message {
+	return x.Data()
+}
+
+// originalMessage returns the HeroBaseConf's original inner message.
+func (x *HeroBaseConf) originalMessage() proto.Message {
 	if x != nil {
-		return &x.data
+		return x.originalData
 	}
 	return nil
 }

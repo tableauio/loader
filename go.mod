@@ -6,7 +6,8 @@ require (
 	github.com/iancoleman/strcase v0.3.0
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/tableauio/tableau v0.12.0
+	github.com/pmezard/go-difflib v1.0.0
+	github.com/tableauio/tableau v0.12.2
 	go.uber.org/zap v1.24.0
 	golang.org/x/exp v0.0.0-20230418202329-0354be287a23
 	google.golang.org/protobuf v1.34.2
