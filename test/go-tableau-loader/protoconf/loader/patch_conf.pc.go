@@ -73,6 +73,11 @@ func (x *PatchReplaceConf) Message() proto.Message {
 	return x.Data()
 }
 
+// Messager returns the current messager.
+func (x *PatchReplaceConf) Messager() Messager {
+	return x
+}
+
 // originalMessage returns the PatchReplaceConf's original inner message.
 func (x *PatchReplaceConf) originalMessage() proto.Message {
 	if x != nil {
@@ -135,6 +140,11 @@ func (x *PatchMergeConf) Store(dir string, format format.Format, options ...stor
 // Message returns the PatchMergeConf's inner message data.
 func (x *PatchMergeConf) Message() proto.Message {
 	return x.Data()
+}
+
+// Messager returns the current messager.
+func (x *PatchMergeConf) Messager() Messager {
+	return x
 }
 
 // originalMessage returns the PatchMergeConf's original inner message.
@@ -210,6 +220,11 @@ func (x *RecursivePatchConf) Store(dir string, format format.Format, options ...
 // Message returns the RecursivePatchConf's inner message data.
 func (x *RecursivePatchConf) Message() proto.Message {
 	return x.Data()
+}
+
+// Messager returns the current messager.
+func (x *RecursivePatchConf) Messager() Messager {
+	return x
 }
 
 // originalMessage returns the RecursivePatchConf's original inner message.

@@ -97,6 +97,11 @@ func (x *ActivityConf) Message() proto.Message {
 	return x.Data()
 }
 
+// Messager returns the current messager.
+func (x *ActivityConf) Messager() Messager {
+	return x
+}
+
 // originalMessage returns the ActivityConf's original inner message.
 func (x *ActivityConf) originalMessage() proto.Message {
 	if x != nil {
@@ -359,6 +364,11 @@ func (x *ChapterConf) Message() proto.Message {
 	return x.Data()
 }
 
+// Messager returns the current messager.
+func (x *ChapterConf) Messager() Messager {
+	return x
+}
+
 // originalMessage returns the ChapterConf's original inner message.
 func (x *ChapterConf) originalMessage() proto.Message {
 	if x != nil {
@@ -432,6 +442,11 @@ func (x *ThemeConf) Store(dir string, format format.Format, options ...store.Opt
 // Message returns the ThemeConf's inner message data.
 func (x *ThemeConf) Message() proto.Message {
 	return x.Data()
+}
+
+// Messager returns the current messager.
+func (x *ThemeConf) Messager() Messager {
+	return x
 }
 
 // originalMessage returns the ThemeConf's original inner message.
