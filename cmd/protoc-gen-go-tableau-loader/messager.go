@@ -156,6 +156,12 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("}")
 	g.P()
 
+	g.P("// Messager returns the current messager.")
+	g.P("func (x *", messagerName, ") Messager() Messager {")
+	g.P("return x")
+	g.P("}")
+	g.P()
+
 	g.P("// originalMessage returns the ", messagerName, "'s original inner message.")
 	g.P("func (x *", messagerName, ") originalMessage() proto.Message {")
 	g.P("if x != nil {")

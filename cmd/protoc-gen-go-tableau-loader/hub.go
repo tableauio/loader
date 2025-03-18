@@ -61,6 +61,8 @@ type Messager interface {
 	ProcessAfterLoadAll(hub *Hub) error
 	// Message returns the inner message data.
 	Message() proto.Message
+	// Messager returns the current messager.
+	Messager() Messager
 	// originalMessage returns the original inner message data.
 	originalMessage() proto.Message
 	// enableBackup tells each messager to backup original inner message data.
@@ -162,6 +164,10 @@ func (x *UnimplementedMessager) ProcessAfterLoadAll(hub *Hub) error {
 }
 
 func (x *UnimplementedMessager) Message() proto.Message {
+	return nil
+}
+
+func (x *UnimplementedMessager) Messager() Messager {
 	return nil
 }
 

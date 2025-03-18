@@ -129,6 +129,11 @@ func (x *ItemConf) Message() proto.Message {
 	return x.Data()
 }
 
+// Messager returns the current messager.
+func (x *ItemConf) Messager() Messager {
+	return x
+}
+
 // originalMessage returns the ItemConf's original inner message.
 func (x *ItemConf) originalMessage() proto.Message {
 	if x != nil {

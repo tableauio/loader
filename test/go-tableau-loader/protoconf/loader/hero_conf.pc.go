@@ -81,6 +81,11 @@ func (x *HeroConf) Message() proto.Message {
 	return x.Data()
 }
 
+// Messager returns the current messager.
+func (x *HeroConf) Messager() Messager {
+	return x
+}
+
 // originalMessage returns the HeroConf's original inner message.
 func (x *HeroConf) originalMessage() proto.Message {
 	if x != nil {
@@ -213,6 +218,11 @@ func (x *HeroBaseConf) Store(dir string, format format.Format, options ...store.
 // Message returns the HeroBaseConf's inner message data.
 func (x *HeroBaseConf) Message() proto.Message {
 	return x.Data()
+}
+
+// Messager returns the current messager.
+func (x *HeroBaseConf) Messager() Messager {
+	return x
 }
 
 // originalMessage returns the HeroBaseConf's original inner message.
