@@ -92,11 +92,6 @@ func (x *ActivityConf) Store(dir string, format format.Format, options ...store.
 	return store.Store(x.Data(), dir, format, options...)
 }
 
-// Messager is used to implement Checker interface.
-func (x *ActivityConf) Messager() Messager {
-	return x
-}
-
 // Message returns the ActivityConf's inner message data.
 func (x *ActivityConf) Message() proto.Message {
 	return x.Data()
@@ -359,11 +354,6 @@ func (x *ChapterConf) Store(dir string, format format.Format, options ...store.O
 	return store.Store(x.Data(), dir, format, options...)
 }
 
-// Messager is used to implement Checker interface.
-func (x *ChapterConf) Messager() Messager {
-	return x
-}
-
 // Message returns the ChapterConf's inner message data.
 func (x *ChapterConf) Message() proto.Message {
 	return x.Data()
@@ -437,11 +427,6 @@ func (x *ThemeConf) Load(dir string, format format.Format, options ...load.Optio
 // Available formats: JSON, Bin, and Text.
 func (x *ThemeConf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
-}
-
-// Messager is used to implement Checker interface.
-func (x *ThemeConf) Messager() Messager {
-	return x
 }
 
 // Message returns the ThemeConf's inner message data.

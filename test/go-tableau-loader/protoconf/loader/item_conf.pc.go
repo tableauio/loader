@@ -124,11 +124,6 @@ func (x *ItemConf) Store(dir string, format format.Format, options ...store.Opti
 	return store.Store(x.Data(), dir, format, options...)
 }
 
-// Messager is used to implement Checker interface.
-func (x *ItemConf) Messager() Messager {
-	return x
-}
-
 // Message returns the ItemConf's inner message data.
 func (x *ItemConf) Message() proto.Message {
 	return x.Data()

@@ -76,11 +76,6 @@ func (x *HeroConf) Store(dir string, format format.Format, options ...store.Opti
 	return store.Store(x.Data(), dir, format, options...)
 }
 
-// Messager is used to implement Checker interface.
-func (x *HeroConf) Messager() Messager {
-	return x
-}
-
 // Message returns the HeroConf's inner message data.
 func (x *HeroConf) Message() proto.Message {
 	return x.Data()
@@ -213,11 +208,6 @@ func (x *HeroBaseConf) Load(dir string, format format.Format, options ...load.Op
 // Available formats: JSON, Bin, and Text.
 func (x *HeroBaseConf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
-}
-
-// Messager is used to implement Checker interface.
-func (x *HeroBaseConf) Messager() Messager {
-	return x
 }
 
 // Message returns the HeroBaseConf's inner message data.

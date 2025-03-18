@@ -25,11 +25,11 @@ cd "${PLGUIN_DIR}" && go build && cd -
 export PATH="${PLGUIN_DIR}:${PATH}"
 
 ${PROTOC} \
---go-tableau-loader_out="$LOADER_OUT" \
---go-tableau-loader_opt=paths=source_relative,pkg=loader \
---go_out="$PROTOCONF_OUT" \
---go_opt=paths=source_relative \
---proto_path="$PROTOBUF_PROTO" \
---proto_path="$TABLEAU_PROTO" \
---proto_path="$PROTOCONF_IN" \
-"$PROTOCONF_IN"/**/*.proto
+    --go-tableau-loader_out="$LOADER_OUT" \
+    --go-tableau-loader_opt=paths=source_relative,pkg=loader \
+    --go_out="$PROTOCONF_OUT" \
+    --go_opt=paths=source_relative \
+    --proto_path="$PROTOBUF_PROTO" \
+    --proto_path="$TABLEAU_PROTO" \
+    --proto_path="$PROTOCONF_IN" \
+    "$PROTOCONF_IN"/**/*.proto

@@ -21,7 +21,6 @@ import (
 )
 
 type Messager interface {
-	Checker
 	// Name returns the unique message name.
 	Name() string
 	// GetStats returns stats info.
@@ -40,12 +39,6 @@ type Messager interface {
 	originalMessage() proto.Message
 	// enableBackup tells each messager to backup original inner message data.
 	enableBackup()
-}
-
-type Checker interface {
-	Messager() Messager
-	Check(hub *Hub) error
-	CheckCompatibility(hub, newHub *Hub) error
 }
 
 type Options struct {
@@ -143,18 +136,6 @@ func (x *UnimplementedMessager) ProcessAfterLoadAll(hub *Hub) error {
 }
 
 func (x *UnimplementedMessager) Message() proto.Message {
-	return nil
-}
-
-func (x *UnimplementedMessager) Messager() Messager {
-	return nil
-}
-
-func (x *UnimplementedMessager) Check(hub *Hub) error {
-	return nil
-}
-
-func (x *UnimplementedMessager) CheckCompatibility(hub, newHub *Hub) error {
 	return nil
 }
 
