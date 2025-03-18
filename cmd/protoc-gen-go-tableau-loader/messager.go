@@ -150,12 +150,6 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("}")
 	g.P()
 
-	g.P("// Messager is used to implement Checker interface.")
-	g.P("func (x *", messagerName, ") Messager() Messager {")
-	g.P("return x")
-	g.P("}")
-	g.P()
-
 	g.P("// Message returns the ", messagerName, "'s inner message data.")
 	g.P("func (x *", messagerName, ") Message() ", protoPackage.Ident("Message"), " {")
 	g.P(`return x.Data()`)

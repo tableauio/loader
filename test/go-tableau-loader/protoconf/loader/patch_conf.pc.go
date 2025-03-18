@@ -68,11 +68,6 @@ func (x *PatchReplaceConf) Store(dir string, format format.Format, options ...st
 	return store.Store(x.Data(), dir, format, options...)
 }
 
-// Messager is used to implement Checker interface.
-func (x *PatchReplaceConf) Messager() Messager {
-	return x
-}
-
 // Message returns the PatchReplaceConf's inner message data.
 func (x *PatchReplaceConf) Message() proto.Message {
 	return x.Data()
@@ -135,11 +130,6 @@ func (x *PatchMergeConf) Load(dir string, format format.Format, options ...load.
 // Available formats: JSON, Bin, and Text.
 func (x *PatchMergeConf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
-}
-
-// Messager is used to implement Checker interface.
-func (x *PatchMergeConf) Messager() Messager {
-	return x
 }
 
 // Message returns the PatchMergeConf's inner message data.
@@ -215,11 +205,6 @@ func (x *RecursivePatchConf) Load(dir string, format format.Format, options ...l
 // Available formats: JSON, Bin, and Text.
 func (x *RecursivePatchConf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
-}
-
-// Messager is used to implement Checker interface.
-func (x *RecursivePatchConf) Messager() Messager {
-	return x
 }
 
 // Message returns the RecursivePatchConf's inner message data.
