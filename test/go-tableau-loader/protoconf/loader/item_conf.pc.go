@@ -15,6 +15,7 @@ import (
 	load "github.com/tableauio/tableau/load"
 	store "github.com/tableauio/tableau/store"
 	proto "google.golang.org/protobuf/proto"
+	sort "sort"
 	time "time"
 )
 
@@ -25,7 +26,7 @@ type ProtoconfItemConfItemMap_OrderedMap = treemap.TreeMap[uint32, *protoconf.It
 // Index: Type
 type ItemConf_Index_ItemMap = map[protoconf.FruitType][]*protoconf.ItemConf_Item
 
-// Index: Param@ItemInfo
+// Index: Param<ID>@ItemInfo
 type ItemConf_Index_ItemInfoMap = map[int32][]*protoconf.ItemConf_Item
 
 // Index: Default@ItemDefaultInfo
@@ -34,7 +35,7 @@ type ItemConf_Index_ItemDefaultInfoMap = map[string][]*protoconf.ItemConf_Item
 // Index: ExtType@ItemExtInfo
 type ItemConf_Index_ItemExtInfoMap = map[protoconf.FruitType][]*protoconf.ItemConf_Item
 
-// Index: (ID,Name)@AwardItem
+// Index: (ID,Name)<Type,UseEffectType>@AwardItem
 type ItemConf_Index_AwardItemKey struct {
 	Id   uint32
 	Name string
@@ -157,13 +158,18 @@ func (x *ItemConf) processAfterLoad() error {
 		key := item1.GetType()
 		x.indexItemMap[key] = append(x.indexItemMap[key], item1)
 	}
-	// Index: Param@ItemInfo
+	// Index: Param<ID>@ItemInfo
 	x.indexItemInfoMap = make(ItemConf_Index_ItemInfoMap)
 	for _, item1 := range x.data.GetItemMap() {
 		for _, item2 := range item1.GetParamList() {
 			key := item2
 			x.indexItemInfoMap[key] = append(x.indexItemInfoMap[key], item1)
 		}
+	}
+	for _, item := range x.indexItemInfoMap {
+		sort.Slice(item, func(i, j int) bool {
+			return item[i].GetId() < item[j].GetId()
+		})
 	}
 	// Index: Default@ItemDefaultInfo
 	x.indexItemDefaultInfoMap = make(ItemConf_Index_ItemDefaultInfoMap)
@@ -179,11 +185,19 @@ func (x *ItemConf) processAfterLoad() error {
 			x.indexItemExtInfoMap[key] = append(x.indexItemExtInfoMap[key], item1)
 		}
 	}
-	// Index: (ID,Name)@AwardItem
+	// Index: (ID,Name)<Type,UseEffectType>@AwardItem
 	x.indexAwardItemMap = make(ItemConf_Index_AwardItemMap)
 	for _, item1 := range x.data.GetItemMap() {
 		key := ItemConf_Index_AwardItemKey{item1.GetId(), item1.GetName()}
 		x.indexAwardItemMap[key] = append(x.indexAwardItemMap[key], item1)
+	}
+	for _, item := range x.indexAwardItemMap {
+		sort.Slice(item, func(i, j int) bool {
+			if item[i].GetType() != item[j].GetType() {
+				return item[i].GetType() < item[j].GetType()
+			}
+			return item[i].GetUseEffect().GetType() < item[j].GetUseEffect().GetType()
+		})
 	}
 	// Index: (ID,Type,Param,ExtType)@SpecialItem
 	x.indexSpecialItemMap = make(ItemConf_Index_SpecialItemMap)
@@ -263,9 +277,9 @@ func (x *ItemConf) FindFirstItem(type_ protoconf.FruitType) *protoconf.ItemConf_
 	return nil
 }
 
-// Index: Param@ItemInfo
+// Index: Param<ID>@ItemInfo
 
-// FindItemInfoMap returns the index(Param@ItemInfo) to value(protoconf.ItemConf_Item) map.
+// FindItemInfoMap returns the index(Param<ID>@ItemInfo) to value(protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ItemConf) FindItemInfoMap() ItemConf_Index_ItemInfoMap {
 	return x.indexItemInfoMap
@@ -332,9 +346,9 @@ func (x *ItemConf) FindFirstItemExtInfo(extType protoconf.FruitType) *protoconf.
 	return nil
 }
 
-// Index: (ID,Name)@AwardItem
+// Index: (ID,Name)<Type,UseEffectType>@AwardItem
 
-// FindAwardItemMap returns the index((ID,Name)@AwardItem) to value(protoconf.ItemConf_Item) map.
+// FindAwardItemMap returns the index((ID,Name)<Type,UseEffectType>@AwardItem) to value(protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ItemConf) FindAwardItemMap() ItemConf_Index_AwardItemMap {
 	return x.indexAwardItemMap

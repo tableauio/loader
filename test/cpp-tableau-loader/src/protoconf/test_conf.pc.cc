@@ -43,11 +43,17 @@ bool ActivityConf::ProcessAfterLoad() {
       index_chapter_map_[item2.second.chapter_id()].push_back(&item2.second);
     }
   }
-  // Index: ChapterName@NamedChapter
+  // Index: ChapterName<AwardID>@NamedChapter
   for (auto&& item1 : data_.activity_map()) {
     for (auto&& item2 : item1.second.chapter_map()) {
       index_named_chapter_map_[item2.second.chapter_name()].push_back(&item2.second);
     }
+  }
+  for (auto&& item : index_named_chapter_map_) {
+    std::sort(item.second.begin(), item.second.end(),
+              [](const protoconf::ActivityConf::Activity::Chapter* a, const protoconf::ActivityConf::Activity::Chapter* b) {
+                return a->award_id() < b->award_id();
+              });
   }
   return true;
 }
@@ -155,7 +161,7 @@ const protoconf::ActivityConf::Activity::Chapter* ActivityConf::FindFirstChapter
   return (*conf)[0];
 }
 
-// Index: ChapterName@NamedChapter
+// Index: ChapterName<AwardID>@NamedChapter
 const ActivityConf::Index_NamedChapterMap& ActivityConf::FindNamedChapter() const { return index_named_chapter_map_ ;}
 
 const ActivityConf::Index_NamedChapterVector* ActivityConf::FindNamedChapter(const std::string& chapter_name) const {

@@ -98,6 +98,25 @@ func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth in
 			generateOneMulticolumnIndex(gen, g, depth, descriptor, parentDataName, keys)
 		}
 	}
+	if depth == 1 && len(descriptor.KeyFields) != 0 {
+		g.P("for _, item := range x.", indexContainerName, " {")
+		g.P(sortPackage.Ident("Slice"), "(item, func(i, j int) bool {")
+		for i, field := range descriptor.KeyFields {
+			fieldName := ""
+			for _, leveledFd := range field.LeveledFDList {
+				fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
+			}
+			if i == len(descriptor.KeyFields)-1 {
+				g.P("return item[i]", fieldName, " < item[j]", fieldName)
+			} else {
+				g.P("if item[i]", fieldName, " != item[j]", fieldName, " {")
+				g.P("return item[i]", fieldName, " < item[j]", fieldName)
+				g.P("}")
+			}
+		}
+		g.P("})")
+		g.P("}")
+	}
 }
 
 func generateOneMulticolumnIndex(gen *protogen.Plugin, g *protogen.GeneratedFile,

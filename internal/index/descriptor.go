@@ -13,9 +13,11 @@ import (
 type IndexDescriptor struct {
 	*Index
 
-	MD     protoreflect.MessageDescriptor // deepest level message descriptor
-	Name   string                         // index name, e.g.: name of (ID, Name)@ItemInfo is "ItemInfo"
-	Fields []*LevelField                  // index fields in the same struct (protobuf message), refer to the deepest level message's Fields.
+	MD   protoreflect.MessageDescriptor // deepest level message descriptor
+	Name string                         // index name, e.g.: name of (ID, Name)@ItemInfo is "ItemInfo"
+
+	Fields    []*LevelField // index fields in the same struct (protobuf message), refer to the deepest level message's Fields.
+	KeyFields []*LevelField // key fields in the same struct (protobuf message), refer to the deepest level message's Fields.
 
 	LevelMessage *LevelMessage // message hierarchy to the deepest level message which contains all index fields.
 }
@@ -59,10 +61,14 @@ type LevelMessage struct {
 	// Deepest level message fields corresponding to index fields
 	// NOTE: Fields is valid only when this level is the deepest level.
 	Fields []*LevelField
+
+	// Deepest level message fields corresponding to key fields
+	// NOTE: Fields is valid only when this level is the deepest level.
+	KeyFields []*LevelField
 }
 
-// ParseRecursively parses multi-column index related info.
-func ParseRecursively(gen *protogen.Plugin, cols []string, prefix string, md protoreflect.MessageDescriptor) *LevelMessage {
+// parseRecursively parses multi-column index related info.
+func parseRecursively(gen *protogen.Plugin, cols, keys []string, prefix string, md protoreflect.MessageDescriptor) *LevelMessage {
 	levelInfo := &LevelMessage{}
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
@@ -71,27 +77,28 @@ func ParseRecursively(gen *protogen.Plugin, cols []string, prefix string, md pro
 		fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
 		fieldOptName := fdOpts.GetName()
 		if fd.IsMap() && fd.MapValue().Kind() == protoreflect.MessageKind {
-			levelInfo.NextLevel = ParseRecursively(gen, cols, prefix+fieldOptName, fd.MapValue().Message())
+			levelInfo.NextLevel = parseRecursively(gen, cols, keys, prefix+fieldOptName, fd.MapValue().Message())
 			if levelInfo.NextLevel != nil {
 				levelInfo.FD = fd
 				return levelInfo
 			}
 		} else if fd.IsList() && fd.Kind() == protoreflect.MessageKind {
-			levelInfo.NextLevel = ParseRecursively(gen, cols, prefix+fieldOptName, fd.Message())
+			levelInfo.NextLevel = parseRecursively(gen, cols, keys, prefix+fieldOptName, fd.Message())
 			if levelInfo.NextLevel != nil {
 				levelInfo.FD = fd
 				return levelInfo
 			}
 		}
 	}
-	levelInfo.Fields = ParseInSameLevel(gen, cols, prefix, md, nil)
+	levelInfo.Fields = parseInSameLevel(gen, cols, prefix, md, nil)
+	levelInfo.KeyFields = parseInSameLevel(gen, keys, prefix, md, nil)
 	if len(levelInfo.Fields) != 0 {
 		return levelInfo
 	}
 	return nil
 }
 
-func ParseInSameLevel(gen *protogen.Plugin, cols []string, prefix string, md protoreflect.MessageDescriptor, leveledFDList []protoreflect.FieldDescriptor) []*LevelField {
+func parseInSameLevel(gen *protogen.Plugin, cols []string, prefix string, md protoreflect.MessageDescriptor, leveledFDList []protoreflect.FieldDescriptor) []*LevelField {
 	levelFields := []*LevelField{}
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
@@ -110,7 +117,7 @@ func ParseInSameLevel(gen *protogen.Plugin, cols []string, prefix string, md pro
 				break
 			} else if fd.Kind() == protoreflect.MessageKind && strings.HasPrefix(columnName, prefix+fieldOptName) {
 				levelFields = append(levelFields,
-					ParseInSameLevel(
+					parseInSameLevel(
 						gen, cols, prefix+fieldOptName, fd.Message(),
 						append(leveledFDList, fd),
 					)...,
@@ -128,7 +135,7 @@ func ParseIndexDescriptor(gen *protogen.Plugin, md protoreflect.MessageDescripto
 		if len(index.Cols) == 0 {
 			continue
 		}
-		levelInfo := ParseRecursively(gen, index.Cols, "", md)
+		levelInfo := parseRecursively(gen, index.Cols, index.Keys, "", md)
 		if levelInfo == nil {
 			continue
 		}
@@ -146,6 +153,7 @@ func ParseIndexDescriptor(gen *protogen.Plugin, md protoreflect.MessageDescripto
 			deepestLevelMessage = deepestLevelMessage.NextLevel
 		}
 		descriptor.Fields = deepestLevelMessage.Fields
+		descriptor.KeyFields = deepestLevelMessage.KeyFields
 		descriptor.Name = index.Name
 		if descriptor.Name == "" {
 			// use index field's parent message name if not set.

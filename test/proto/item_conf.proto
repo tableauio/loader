@@ -17,10 +17,10 @@ message ItemConf {
     name: "ItemConf"
     ordered_map: true
     index: "Type"
-    index: "Param@ItemInfo"
+    index: "Param<ID>@ItemInfo"
     index: "Default@ItemDefaultInfo"  // For testing programming language keyword conflicts
     index: "ExtType@ItemExtInfo"
-    index: "(ID,Name)@AwardItem"
+    index: "(ID,Name)<Type,UseEffectType>@AwardItem"
     index: "(ID,Type,Param,ExtType)@SpecialItem"
     index: "PathDir@ItemPathDir"
     index: "PathName@ItemPathName"

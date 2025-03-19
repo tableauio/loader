@@ -48,7 +48,7 @@ class ItemConf : public Messager {
  private:
   Index_ItemMap index_item_map_;
 
-  // Index: Param@ItemInfo
+  // Index: Param<ID>@ItemInfo
  public:
   using Index_ItemInfoVector = std::vector<const protoconf::ItemConf::Item*>;
   using Index_ItemInfoMap = std::unordered_map<int32_t, Index_ItemInfoVector>;
@@ -81,7 +81,7 @@ class ItemConf : public Messager {
  private:
   Index_ItemExtInfoMap index_item_ext_info_map_;
 
-  // Index: (ID,Name)@AwardItem
+  // Index: (ID,Name)<Type,UseEffectType>@AwardItem
  public:
   struct Index_AwardItemKey {
     uint32_t id;

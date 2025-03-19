@@ -29,11 +29,17 @@ bool ItemConf::ProcessAfterLoad() {
   for (auto&& item1 : data_.item_map()) {
     index_item_map_[item1.second.type()].push_back(&item1.second);
   }
-  // Index: Param@ItemInfo
+  // Index: Param<ID>@ItemInfo
   for (auto&& item1 : data_.item_map()) {
     for (auto&& item2 : item1.second.param_list()) {
       index_item_info_map_[item2].push_back(&item1.second);
     }
+  }
+  for (auto&& item : index_item_info_map_) {
+    std::sort(item.second.begin(), item.second.end(),
+              [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
+                return a->id() < b->id();
+              });
   }
   // Index: Default@ItemDefaultInfo
   for (auto&& item1 : data_.item_map()) {
@@ -45,10 +51,19 @@ bool ItemConf::ProcessAfterLoad() {
       index_item_ext_info_map_[static_cast<protoconf::FruitType>(item2)].push_back(&item1.second);
     }
   }
-  // Index: (ID,Name)@AwardItem
+  // Index: (ID,Name)<Type,UseEffectType>@AwardItem
   for (auto&& item1 : data_.item_map()) {
     Index_AwardItemKey key{item1.second.id(), item1.second.name()};
     index_award_item_map_[key].push_back(&item1.second);
+  }
+  for (auto&& item : index_award_item_map_) {
+    std::sort(item.second.begin(), item.second.end(),
+              [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
+                if (a->type() != b->type()) {
+                  return a->type() < b->type();
+                }
+                return a->use_effect().type() < b->use_effect().type();
+              });
   }
   // Index: (ID,Type,Param,ExtType)@SpecialItem
   for (auto&& item1 : data_.item_map()) {
@@ -111,7 +126,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItem(protoconf::FruitType ty
   return (*conf)[0];
 }
 
-// Index: Param@ItemInfo
+// Index: Param<ID>@ItemInfo
 const ItemConf::Index_ItemInfoMap& ItemConf::FindItemInfo() const { return index_item_info_map_ ;}
 
 const ItemConf::Index_ItemInfoVector* ItemConf::FindItemInfo(int32_t param) const {
@@ -168,7 +183,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItemExtInfo(protoconf::Fruit
   return (*conf)[0];
 }
 
-// Index: (ID,Name)@AwardItem
+// Index: (ID,Name)<Type,UseEffectType>@AwardItem
 const ItemConf::Index_AwardItemMap& ItemConf::FindAwardItem() const { return index_award_item_map_ ;}
 
 const ItemConf::Index_AwardItemVector* ItemConf::FindAwardItem(const Index_AwardItemKey& key) const {

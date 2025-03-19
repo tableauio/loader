@@ -22,6 +22,7 @@ const (
 	treeMapPackage = protogen.GoImportPath("github.com/tableauio/loader/pkg/treemap")
 	pairPackage    = protogen.GoImportPath("github.com/tableauio/loader/pkg/pair")
 	timePackage    = protogen.GoImportPath("time")
+	sortPackage    = protogen.GoImportPath("sort")
 	protoPackage   = protogen.GoImportPath("google.golang.org/protobuf/proto")
 )
 
