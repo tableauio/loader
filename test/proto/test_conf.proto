@@ -15,7 +15,7 @@ message ActivityConf {
     name: "Activity"
     ordered_map: true
     index: "ChapterID"
-    index: "ChapterName@NamedChapter"
+    index: "ChapterName<AwardID>@NamedChapter"
     index: "SectionItemId@Award"
   };
 

@@ -16,6 +16,7 @@ import (
 	load "github.com/tableauio/tableau/load"
 	store "github.com/tableauio/tableau/store"
 	proto "google.golang.org/protobuf/proto"
+	sort "sort"
 	time "time"
 )
 
@@ -35,7 +36,7 @@ type ProtoconfActivityConfActivityMap_OrderedMap = treemap.TreeMap[uint64, *Prot
 // Index: ChapterID
 type ActivityConf_Index_ChapterMap = map[uint32][]*protoconf.ActivityConf_Activity_Chapter
 
-// Index: ChapterName@NamedChapter
+// Index: ChapterName<AwardID>@NamedChapter
 type ActivityConf_Index_NamedChapterMap = map[string][]*protoconf.ActivityConf_Activity_Chapter
 
 // ActivityConf is a wrapper around protobuf message: protoconf.ActivityConf.
@@ -151,13 +152,18 @@ func (x *ActivityConf) processAfterLoad() error {
 			x.indexChapterMap[key] = append(x.indexChapterMap[key], item2)
 		}
 	}
-	// Index: ChapterName@NamedChapter
+	// Index: ChapterName<AwardID>@NamedChapter
 	x.indexNamedChapterMap = make(ActivityConf_Index_NamedChapterMap)
 	for _, item1 := range x.data.GetActivityMap() {
 		for _, item2 := range item1.GetChapterMap() {
 			key := item2.GetChapterName()
 			x.indexNamedChapterMap[key] = append(x.indexNamedChapterMap[key], item2)
 		}
+	}
+	for _, item := range x.indexNamedChapterMap {
+		sort.Slice(item, func(i, j int) bool {
+			return item[i].GetAwardId() < item[j].GetAwardId()
+		})
 	}
 	return nil
 }
@@ -285,9 +291,9 @@ func (x *ActivityConf) FindFirstChapter(chapterId uint32) *protoconf.ActivityCon
 	return nil
 }
 
-// Index: ChapterName@NamedChapter
+// Index: ChapterName<AwardID>@NamedChapter
 
-// FindNamedChapterMap returns the index(ChapterName@NamedChapter) to value(protoconf.ActivityConf_Activity_Chapter) map.
+// FindNamedChapterMap returns the index(ChapterName<AwardID>@NamedChapter) to value(protoconf.ActivityConf_Activity_Chapter) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ActivityConf) FindNamedChapterMap() ActivityConf_Index_NamedChapterMap {
 	return x.indexNamedChapterMap

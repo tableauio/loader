@@ -63,7 +63,7 @@ class ActivityConf : public Messager {
  private:
   Index_ChapterMap index_chapter_map_;
 
-  // Index: ChapterName@NamedChapter
+  // Index: ChapterName<AwardID>@NamedChapter
  public:
   using Index_NamedChapterVector = std::vector<const protoconf::ActivityConf::Activity::Chapter*>;
   using Index_NamedChapterMap = std::unordered_map<std::string, Index_NamedChapterVector>;

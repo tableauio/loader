@@ -8,10 +8,12 @@
 #include <google/protobuf/util/json_util.h>
 #include <tableau/protobuf/tableau.pb.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <ctime>
 #include <functional>
+#include <map>
 #include <mutex>
 #include <string>
 #include <thread>

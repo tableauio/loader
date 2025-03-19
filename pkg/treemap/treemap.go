@@ -16,25 +16,22 @@ func New[K constraints.Ordered, V any]() *TreeMap[K, V] {
 }
 
 // Put inserts key-value pair into the map.
-// Key should adhere to the comparator's type assertion, otherwise method panics.
 func (m *TreeMap[K, V]) Put(key K, value V) {
 	m.tree.Put(key, value)
 }
 
-// Get searches the element in the map by key and returns its value or nil if key is not found in tree.
+// Get searches the element in the map by key and returns its value or empty value if key is not found in tree.
 // Second return parameter is true if key was found, otherwise false.
-// Key should adhere to the comparator's type assertion, otherwise method panics.
 func (m *TreeMap[K, V]) Get(key K) (value V, found bool) {
 	return m.tree.Get(key)
 }
 
 // Remove removes the element from the map by key.
-// Key should adhere to the comparator's type assertion, otherwise method panics.
 func (m *TreeMap[K, V]) Remove(key K) {
 	m.tree.Remove(key)
 }
 
-// Empty returns true if map does not contain any elements
+// Empty returns true if map does not contain any elements.
 func (m *TreeMap[K, V]) Empty() bool {
 	return m.tree.Empty()
 }
@@ -44,7 +41,7 @@ func (m *TreeMap[K, V]) Size() int {
 	return m.tree.Size()
 }
 
-// Keys returns all keys in-order
+// Keys returns all keys in-order.
 func (m *TreeMap[K, V]) Keys() []K {
 	return m.tree.Keys()
 }
@@ -77,20 +74,37 @@ func (m *TreeMap[K, V]) Max() (key K, value V, ok bool) {
 	return key, value, false
 }
 
-// LowerBound returns an iterator pointing to the first element that is not less than key.
-// If no such element is found, a past-the-end iterator is returned.
-func (m *TreeMap[K, V]) LowerBound(key K) TreeMapIterator[K, V] {
-	iter := m.tree.Iterator()
-	iter.End()
+// Floor finds the floor key-value pair for the input key.
+// In case that no floor is found, then both returned values will be corresponding type's empty value.
+//
+// Floor key is defined as the greatest key that is less than or equal to the given key.
+// A floor key may not be found, either because the map is empty, or because
+// all keys in the map are greater than the given key.
+func (m *TreeMap[K, V]) Floor(key K) (foundKey K, foundValue V, ok bool) {
+	node, found := m.tree.Floor(key)
+	if found {
+		return node.Key, node.Value, true
+	}
+	return foundKey, foundValue, false
+}
+
+// Ceiling finds the ceiling key-value pair for the input key.
+// In case that no ceiling is found, then both returned values will be corresponding type's empty value.
+//
+// Ceiling key is defined as the least key that is greater than or equal to the given key.
+// A ceiling key may not be found, either because the map is empty, or because
+// all keys in the map are less than the given key.
+func (m *TreeMap[K, V]) Ceiling(key K) (foundKey K, foundValue V, ok bool) {
 	node, found := m.tree.Ceiling(key)
 	if found {
-		iter = m.tree.IteratorAt(node)
+		return node.Key, node.Value, true
 	}
-	return TreeMapIterator[K, V]{iter}
+	return foundKey, foundValue, false
 }
 
 // UpperBound returns an iterator pointing to the first element that is greater than key.
 // If no such element is found, a past-the-end iterator is returned.
+// See: https://en.cppreference.com/w/cpp/container/map/upper_bound
 func (m *TreeMap[K, V]) UpperBound(key K) TreeMapIterator[K, V] {
 	iter := m.tree.Iterator()
 	iter.Begin()
@@ -99,6 +113,19 @@ func (m *TreeMap[K, V]) UpperBound(key K) TreeMapIterator[K, V] {
 		iter = m.tree.IteratorAt(node)
 	}
 	iter.Next()
+	return TreeMapIterator[K, V]{iter}
+}
+
+// LowerBound returns an iterator pointing to the first element that is not less than key.
+// If no such element is found, a past-the-end iterator is returned.
+// See: https://en.cppreference.com/w/cpp/container/map/lower_bound
+func (m *TreeMap[K, V]) LowerBound(key K) TreeMapIterator[K, V] {
+	iter := m.tree.Iterator()
+	iter.End()
+	node, found := m.tree.Ceiling(key)
+	if found {
+		iter = m.tree.IteratorAt(node)
+	}
 	return TreeMapIterator[K, V]{iter}
 }
 
