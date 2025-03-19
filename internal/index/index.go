@@ -14,10 +14,10 @@ var indexRegexp *regexp.Regexp
 
 func init() {
 	// Single-column index:
-	//	- ID
-	//	- ID@Item
-	//	- ID<Key>@Item
-	//	- ID<Key, Key2>@Item
+	//  - ID
+	//  - ID@Item
+	//  - ID<Key>@Item
+	//  - ID<Key, Key2>@Item
 	//
 	// Multi-column index (composite index):
 	//  - (ID, Name)
@@ -68,15 +68,29 @@ func parseIndex(indexStr string) *Index {
 		if strings.HasPrefix(cols, "(") && strings.HasSuffix(cols, ")") {
 			// Multi-column index
 			cols = cols[1 : len(cols)-1]
-			// Split by commas and trim spaces
-			index.Cols = strings.Split(cols, ",")
-			for i, col := range index.Cols {
-				index.Cols[i] = strings.TrimSpace(col)
+			splitCols := strings.Split(cols, ",")
+			if len(splitCols) <= 1 {
+				return nil
+			}
+			for _, col := range splitCols {
+				col = strings.TrimSpace(col)
+				if col != "" {
+					index.Cols = append(index.Cols, col)
+				}
 			}
 		} else {
 			// Single-column index
-			index.Cols = []string{strings.TrimSpace(cols)}
+			if len(strings.Split(cols, ",")) > 1 {
+				return nil
+			}
+			col := strings.TrimSpace(cols)
+			if col != "" {
+				index.Cols = append(index.Cols, col)
+			}
 		}
+	}
+	if len(index.Cols) == 0 {
+		return nil
 	}
 	// Extract keys
 	if keys := matches[indexRegexp.SubexpIndex("keys")]; keys != "" {

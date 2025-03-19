@@ -62,13 +62,19 @@ func Test_parseColsFrom(t *testing.T) {
 			},
 		},
 		{
-			name:  "Multi-column without parentheses",
+			name:  "Invalid format (multi-column without parentheses)",
 			input: "Column10, Column11<Key10, Key11>@IndexName",
-			want: &Index{
-				Cols: []string{"Column10, Column11"},
-				Keys: []string{"Key10", "Key11"},
-				Name: "IndexName",
-			},
+			want:  nil,
+		},
+		{
+			name:  "Invalid format (single column with parentheses)",
+			input: "(Column12)<Key12>@IndexName",
+			want:  nil,
+		},
+		{
+			name:  "Invalid format (empty columns)",
+			input: "<Key13>@IndexName",
+			want:  nil,
 		},
 	}
 	for _, tt := range tests {
