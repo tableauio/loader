@@ -16,25 +16,22 @@ func New[K constraints.Ordered, V any]() *TreeMap[K, V] {
 }
 
 // Put inserts key-value pair into the map.
-// Key should adhere to the comparator's type assertion, otherwise method panics.
 func (m *TreeMap[K, V]) Put(key K, value V) {
 	m.tree.Put(key, value)
 }
 
-// Get searches the element in the map by key and returns its value or nil if key is not found in tree.
+// Get searches the element in the map by key and returns its value or empty value if key is not found in tree.
 // Second return parameter is true if key was found, otherwise false.
-// Key should adhere to the comparator's type assertion, otherwise method panics.
 func (m *TreeMap[K, V]) Get(key K) (value V, found bool) {
 	return m.tree.Get(key)
 }
 
 // Remove removes the element from the map by key.
-// Key should adhere to the comparator's type assertion, otherwise method panics.
 func (m *TreeMap[K, V]) Remove(key K) {
 	m.tree.Remove(key)
 }
 
-// Empty returns true if map does not contain any elements
+// Empty returns true if map does not contain any elements.
 func (m *TreeMap[K, V]) Empty() bool {
 	return m.tree.Empty()
 }
@@ -44,7 +41,7 @@ func (m *TreeMap[K, V]) Size() int {
 	return m.tree.Size()
 }
 
-// Keys returns all keys in-order
+// Keys returns all keys in-order.
 func (m *TreeMap[K, V]) Keys() []K {
 	return m.tree.Keys()
 }
