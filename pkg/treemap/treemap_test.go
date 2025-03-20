@@ -204,45 +204,11 @@ type boundTestCase[T any, U any] struct {
 	Exist    bool
 }
 
-func TestMapLowerBound(t *testing.T) {
-	m := New[int, string]()
-	m.Put(7, "g")
-	m.Put(3, "c")
-	m.Put(1, "a")
-
-	// key,expectedKey,expectedValue,expectedFound
-	tests1 := []boundTestCase[int, string]{
-		{-1, 1, "a", true},
-		{0, 1, "a", true},
-		{1, 1, "a", true},
-		{2, 3, "c", true},
-		{3, 3, "c", true},
-		{4, 7, "g", true},
-		{7, 7, "g", true},
-		{8, 0, "", false},
-	}
-
-	for _, test := range tests1 {
-		// retrievals
-		iter := m.LowerBound(test.boundKey)
-		if !test.Exist {
-			if !iter.IsEnd() {
-				t.Errorf("Got %v, %v, expected end", iter.Key(), iter.Value())
-			}
-		} else {
-			actualKey, actualValue := iter.Key(), iter.Value()
-			if actualKey != test.Key || actualValue != test.Value {
-				t.Errorf("Got %v, %v, expected %v, %v", actualKey, actualValue, test.Value, test.Exist)
-			}
-		}
-	}
-}
-
 func TestMapUpperBound(t *testing.T) {
 	m := New[int, string]()
-	m.Put(7, "g")
-	m.Put(3, "c")
 	m.Put(1, "a")
+	m.Put(3, "c")
+	m.Put(7, "g")
 
 	// key,expectedKey,expectedValue,expectedFound
 	tests1 := []boundTestCase[int, string]{
@@ -266,8 +232,96 @@ func TestMapUpperBound(t *testing.T) {
 		} else {
 			actualKey, actualValue := iter.Key(), iter.Value()
 			if actualKey != test.Key || actualValue != test.Value {
-				t.Errorf("Got %v, %v, expected %v, %v", actualKey, actualValue, test.Value, test.Exist)
+				t.Errorf("Got %v, %v, expected %v, %v", actualKey, actualValue, test.Key, test.Value)
 			}
+		}
+	}
+}
+
+func TestMapLowerBound(t *testing.T) {
+	m := New[int, string]()
+	m.Put(1, "a")
+	m.Put(3, "c")
+	m.Put(7, "g")
+
+	// key,expectedKey,expectedValue,expectedFound
+	tests1 := []boundTestCase[int, string]{
+		{-1, 1, "a", true},
+		{0, 1, "a", true},
+		{1, 1, "a", true},
+		{2, 3, "c", true},
+		{3, 3, "c", true},
+		{4, 7, "g", true},
+		{7, 7, "g", true},
+		{8, 0, "", false},
+	}
+
+	for _, test := range tests1 {
+		// retrievals
+		iter := m.LowerBound(test.boundKey)
+		if !test.Exist {
+			if !iter.IsEnd() {
+				t.Errorf("Got %v, %v, expected end", iter.Key(), iter.Value())
+			}
+		} else {
+			actualKey, actualValue := iter.Key(), iter.Value()
+			if actualKey != test.Key || actualValue != test.Value {
+				t.Errorf("Got %v, %v, expected %v, %v", actualKey, actualValue, test.Key, test.Value)
+			}
+		}
+	}
+}
+
+func TestMapFoorOrMin(t *testing.T) {
+	m := New[int, string]()
+	m.Put(1, "a")
+	m.Put(3, "c")
+	m.Put(7, "g")
+
+	// key,expectedKey,expectedValue,expectedFound
+	tests1 := []boundTestCase[int, string]{
+		{-1, 1, "a", true},
+		{0, 1, "a", true},
+		{1, 1, "a", true},
+		{2, 1, "a", true},
+		{3, 3, "c", true},
+		{4, 3, "c", true},
+		{7, 7, "g", true},
+		{8, 7, "g", true},
+	}
+
+	for _, test := range tests1 {
+		// retrievals
+		actualKey, actualValue, ok := m.FoorOrMin(test.boundKey)
+		if actualKey != test.Key || actualValue != test.Value || ok != test.Exist {
+			t.Errorf("Got %v, %v, %v, expected %v, %v, %v", actualKey, actualValue, ok, test.Key, test.Value, test.Exist)
+		}
+	}
+}
+
+func TestMapCeilingOrMax(t *testing.T) {
+	m := New[int, string]()
+	m.Put(1, "a")
+	m.Put(3, "c")
+	m.Put(7, "g")
+
+	// key,expectedKey,expectedValue,expectedFound
+	tests1 := []boundTestCase[int, string]{
+		{-1, 1, "a", true},
+		{0, 1, "a", true},
+		{1, 1, "a", true},
+		{2, 3, "c", true},
+		{3, 3, "c", true},
+		{4, 7, "g", true},
+		{7, 7, "g", true},
+		{8, 7, "g", true},
+	}
+
+	for _, test := range tests1 {
+		// retrievals
+		actualKey, actualValue, ok := m.CeilingOrMax(test.boundKey)
+		if actualKey != test.Key || actualValue != test.Value || ok != test.Exist {
+			t.Errorf("Got %v, %v, %v, expected %v, %v, %v", actualKey, actualValue, ok, test.Key, test.Value, test.Exist)
 		}
 	}
 }
@@ -446,7 +500,6 @@ func TestMapChaining(t *testing.T) {
 func TestMapIteratorNextOnEmpty(t *testing.T) {
 	m := New[string, int]()
 	it := m.Iterator()
-	it = m.Iterator()
 	for it.Next() {
 		t.Errorf("Shouldn't iterate on empty map")
 	}
@@ -455,7 +508,6 @@ func TestMapIteratorNextOnEmpty(t *testing.T) {
 func TestMapIteratorPrevOnEmpty(t *testing.T) {
 	m := New[string, int]()
 	it := m.Iterator()
-	it = m.Iterator()
 	for it.Prev() {
 		t.Errorf("Shouldn't iterate on empty map")
 	}
