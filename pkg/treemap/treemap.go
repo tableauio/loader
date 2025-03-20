@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"strings"
 
+	rbt "github.com/tableauio/loader/pkg/treemap/redblacktree"
 	"golang.org/x/exp/constraints"
 )
 
 type TreeMap[K constraints.Ordered, V any] struct {
-	tree *Tree[K, V]
+	tree *rbt.Tree[K, V]
 }
 
 func New[K constraints.Ordered, V any]() *TreeMap[K, V] {
-	return &TreeMap[K, V]{tree: &Tree[K, V]{}}
+	return &TreeMap[K, V]{tree: rbt.New[K, V]()}
 }
 
 // Put inserts key-value pair into the map.
@@ -102,33 +103,6 @@ func (m *TreeMap[K, V]) Ceiling(key K) (foundKey K, foundValue V, ok bool) {
 	return foundKey, foundValue, false
 }
 
-// UpperBound returns an iterator pointing to the first element that is greater than key.
-// If no such element is found, a past-the-end iterator is returned.
-// See: https://en.cppreference.com/w/cpp/container/map/upper_bound
-func (m *TreeMap[K, V]) UpperBound(key K) TreeMapIterator[K, V] {
-	iter := m.tree.Iterator()
-	iter.Begin()
-	node, found := m.tree.Floor(key)
-	if found {
-		iter = m.tree.IteratorAt(node)
-	}
-	iter.Next()
-	return TreeMapIterator[K, V]{iter}
-}
-
-// LowerBound returns an iterator pointing to the first element that is not less than key.
-// If no such element is found, a past-the-end iterator is returned.
-// See: https://en.cppreference.com/w/cpp/container/map/lower_bound
-func (m *TreeMap[K, V]) LowerBound(key K) TreeMapIterator[K, V] {
-	iter := m.tree.Iterator()
-	iter.End()
-	node, found := m.tree.Ceiling(key)
-	if found {
-		iter = m.tree.IteratorAt(node)
-	}
-	return TreeMapIterator[K, V]{iter}
-}
-
 // String returns a string representation of container
 func (m *TreeMap[K, V]) String() string {
 	str := "TreeMap\nmap["
@@ -137,195 +111,4 @@ func (m *TreeMap[K, V]) String() string {
 		str += fmt.Sprintf("%v:%v ", it.Key(), it.Value())
 	}
 	return strings.TrimRight(str, " ") + "]"
-}
-
-// Iterator returns a stateful iterator whose elements are key/value pairs.
-func (m *TreeMap[K, V]) Iterator() TreeMapIterator[K, V] {
-	return TreeMapIterator[K, V]{iterator: m.tree.Iterator()}
-}
-
-// Each calls the given function once for each element, passing that element's key and value.
-func (m *TreeMap[K, V]) Each(f func(key K, value V)) {
-	iterator := m.Iterator()
-	for iterator.Next() {
-		f(iterator.Key(), iterator.Value())
-	}
-}
-
-// Map invokes the given function once for each element and returns a container
-// containing the values returned by the given function as key/value pairs.
-func (m *TreeMap[K, V]) Map(f func(key1 K, value1 V) (K, V)) *TreeMap[K, V] {
-	newMap := New[K, V]()
-	iterator := m.Iterator()
-	for iterator.Next() {
-		key2, value2 := f(iterator.Key(), iterator.Value())
-		newMap.Put(key2, value2)
-	}
-	return newMap
-}
-
-// Select returns a new container containing all elements for which the given function returns a true value.
-func (m *TreeMap[K, V]) Select(f func(key K, value V) bool) *TreeMap[K, V] {
-	newMap := New[K, V]()
-	iterator := m.Iterator()
-	for iterator.Next() {
-		if f(iterator.Key(), iterator.Value()) {
-			newMap.Put(iterator.Key(), iterator.Value())
-		}
-	}
-	return newMap
-}
-
-// Any passes each element of the container to the given function and
-// returns true if the function ever returns true for any element.
-func (m *TreeMap[K, V]) Any(f func(key K, value V) bool) bool {
-	iterator := m.Iterator()
-	for iterator.Next() {
-		if f(iterator.Key(), iterator.Value()) {
-			return true
-		}
-	}
-	return false
-}
-
-// All passes each element of the container to the given function and
-// returns true if the function returns true for all elements.
-func (m *TreeMap[K, V]) All(f func(key K, value V) bool) bool {
-	iterator := m.Iterator()
-	for iterator.Next() {
-		if !f(iterator.Key(), iterator.Value()) {
-			return false
-		}
-	}
-	return true
-}
-
-// Find passes each element of the container to the given function and returns
-// iterator to the first element for which the function is true.
-// If no element matches the criteria, this returns the iterator past the last element (one-past-the-end).
-func (m *TreeMap[K, V]) Find(f func(key K, value V) bool) TreeMapIterator[K, V] {
-	iterator := m.Iterator()
-	for iterator.Next() {
-		if f(iterator.Key(), iterator.Value()) {
-			return iterator
-		}
-	}
-	iter := m.tree.Iterator()
-	iter.End()
-	return TreeMapIterator[K, V]{iter}
-}
-
-// ToJSON outputs the JSON representation of the map.
-func (m *TreeMap[K, V]) ToJSON() ([]byte, error) {
-	return m.tree.ToJSON()
-}
-
-// FromJSON populates the map from the input JSON representation.
-func (m *TreeMap[K, V]) FromJSON(data []byte) error {
-	return m.tree.FromJSON(data)
-}
-
-// UnmarshalJSON @implements json.Unmarshaler
-func (m *TreeMap[K, V]) UnmarshalJSON(bytes []byte) error {
-	return m.FromJSON(bytes)
-}
-
-// MarshalJSON @implements json.Marshaler
-func (m *TreeMap[K, V]) MarshalJSON() ([]byte, error) {
-	return m.ToJSON()
-}
-
-type TreeMapIterator[K constraints.Ordered, V any] struct {
-	iterator Iterator[K, V]
-}
-
-// Next moves the iterator to the next element and returns true if there was a next element in the container.
-// If Next() returns true, then next element's key and value can be retrieved by Key() and Value().
-// If Next() was called for the first time, then it will point the iterator to the first element if it exists.
-// Modifies the state of the iterator.
-func (iterator *TreeMapIterator[K, V]) Next() bool {
-	return iterator.iterator.Next()
-}
-
-// Prev moves the iterator to the previous element and returns true if there was a previous element in the container.
-// If Prev() returns true, then previous element's key and value can be retrieved by Key() and Value().
-// Modifies the state of the iterator.
-func (iterator *TreeMapIterator[K, V]) Prev() bool {
-	return iterator.iterator.Prev()
-}
-
-// IsBegin returns true if the iterator is in initial state (one-before-first)
-func (iterator *TreeMapIterator[K, V]) IsBegin() bool {
-	return iterator.iterator.position == begin
-}
-
-// IsEnd returns true if the iterator is past the last element (one-past-the-end).
-func (iterator *TreeMapIterator[K, V]) IsEnd() bool {
-	return iterator.iterator.position == end
-}
-
-// Value returns the current element's value.
-// Does not modify the state of the iterator.
-func (iterator *TreeMapIterator[K, V]) Value() V {
-	return iterator.iterator.Value()
-}
-
-// Key returns the current element's key.
-// Does not modify the state of the iterator.
-func (iterator *TreeMapIterator[K, V]) Key() K {
-	return iterator.iterator.Key()
-}
-
-// Begin resets the iterator to its initial state (one-before-first)
-// Call Next() to fetch the first element if any.
-func (iterator *TreeMapIterator[K, V]) Begin() {
-	iterator.iterator.Begin()
-}
-
-// End moves the iterator past the last element (one-past-the-end).
-// Call Prev() to fetch the last element if any.
-func (iterator *TreeMapIterator[K, V]) End() {
-	iterator.iterator.End()
-}
-
-// First moves the iterator to the first element and returns true if there was a first element in the container.
-// If First() returns true, then first element's key and value can be retrieved by Key() and Value().
-// Modifies the state of the iterator
-func (iterator *TreeMapIterator[K, V]) First() bool {
-	return iterator.iterator.First()
-}
-
-// Last moves the iterator to the last element and returns true if there was a last element in the container.
-// If Last() returns true, then last element's key and value can be retrieved by Key() and Value().
-// Modifies the state of the iterator.
-func (iterator *TreeMapIterator[K, V]) Last() bool {
-	return iterator.iterator.Last()
-}
-
-// NextTo moves the iterator to the next element from current position that satisfies the condition given by the
-// passed function, and returns true if there was a next element in the container.
-// If NextTo() returns true, then next element's key and value can be retrieved by Key() and Value().
-// Modifies the state of the iterator.
-func (iterator *TreeMapIterator[K, V]) NextTo(f func(key K, value V) bool) bool {
-	for iterator.Next() {
-		key, value := iterator.Key(), iterator.Value()
-		if f(key, value) {
-			return true
-		}
-	}
-	return false
-}
-
-// PrevTo moves the iterator to the previous element from current position that satisfies the condition given by the
-// passed function, and returns true if there was a next element in the container.
-// If PrevTo() returns true, then next element's key and value can be retrieved by Key() and Value().
-// Modifies the state of the iterator.
-func (iterator *TreeMapIterator[K, V]) PrevTo(f func(key K, value V) bool) bool {
-	for iterator.Prev() {
-		key, value := iterator.Key(), iterator.Value()
-		if f(key, value) {
-			return true
-		}
-	}
-	return false
 }
