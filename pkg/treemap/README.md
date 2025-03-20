@@ -30,6 +30,12 @@ func main() {
 	// Other:
 	m.Min() // Returns the minimum key and its value from map.
 	m.Max() // Returns the maximum key and its value from map.
+	m.Range(func(key int, value string) bool{
+		if key == 2 {
+			return false
+		}
+		return true
+	})
 }
 ```
 
