@@ -493,17 +493,17 @@ func TestMapFind(t *testing.T) {
 	m.Put("c", 3)
 	m.Put("a", 1)
 	m.Put("b", 2)
-	iter := m.Find(func(key string, value int) bool {
+	k, v := m.Find(func(key string, value int) bool {
 		return key == "c"
 	})
-	if iter.IsEnd() || iter.Key() != "c" || iter.Value() != 3 {
-		t.Errorf("Got %v -> %v expected %v -> %v", iter.Key(), iter.Value(), "c", 3)
+	if k != "c" || v != 3 {
+		t.Errorf("Got %v -> %v expected %v -> %v", k, v, "c", 3)
 	}
-	iter = m.Find(func(key string, value int) bool {
+	k, v = m.Find(func(key string, value int) bool {
 		return key == "x"
 	})
-	if !iter.IsEnd() {
-		t.Errorf("Got %v at %v expected end", iter.Key(), iter.Value())
+	if k != "" || v != 0 {
+		t.Errorf("Got %v -> %v expected %v -> %v", k, v, "", 0)
 	}
 }
 
