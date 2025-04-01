@@ -10,12 +10,24 @@ func (iterator *TreeMapIterator[K, V]) IsEnd() bool {
 	return iterator.iterator.IsEnd()
 }
 
+// FindIter returns an iterator pointing to the element with specified key.
+// If no such element is found, a past-the-end iterator is returned.
+// See: https://en.cppreference.com/w/cpp/container/map/find
+func (m *TreeMap[K, V]) FindIter(key K) *TreeMapIterator[K, V] {
+	iter := m.tree.Iterator()
+	iter.End()
+	node := m.tree.GetNode(key)
+	if node != nil {
+		iter = m.tree.IteratorAt(node)
+	}
+	return &TreeMapIterator[K, V]{iter}
+}
+
 // UpperBound returns an iterator pointing to the first element that is greater than key.
 // If no such element is found, a past-the-end iterator is returned.
 // See: https://en.cppreference.com/w/cpp/container/map/upper_bound
 func (m *TreeMap[K, V]) UpperBound(key K) *TreeMapIterator[K, V] {
 	iter := m.tree.Iterator()
-	iter.Begin()
 	node, found := m.tree.Floor(key)
 	if found {
 		iter = m.tree.IteratorAt(node)

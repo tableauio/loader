@@ -204,6 +204,40 @@ type boundTestCase[T any, U any] struct {
 	Exist    bool
 }
 
+func TestMapFindIter(t *testing.T) {
+	m := New[int, string]()
+	m.Put(1, "a")
+	m.Put(3, "c")
+	m.Put(7, "g")
+
+	// key,expectedKey,expectedValue,expectedFound
+	tests1 := []testCase[int, string]{
+		{-1, "", false},
+		{0, "", false},
+		{1, "a", true},
+		{2, "", false},
+		{3, "c", true},
+		{4, "", false},
+		{7, "g", true},
+		{8, "", false},
+	}
+
+	for _, test := range tests1 {
+		// retrievals
+		iter := m.FindIter(test.Key)
+		if !test.Exist {
+			if !iter.IsEnd() {
+				t.Errorf("Got %v, %v, expected end", iter.Key(), iter.Value())
+			}
+		} else {
+			actualKey, actualValue := iter.Key(), iter.Value()
+			if actualKey != test.Key || actualValue != test.Value {
+				t.Errorf("Got %v, %v, expected %v, %v", actualKey, actualValue, test.Key, test.Value)
+			}
+		}
+	}
+}
+
 func TestMapUpperBound(t *testing.T) {
 	m := New[int, string]()
 	m.Put(1, "a")
@@ -459,17 +493,17 @@ func TestMapFind(t *testing.T) {
 	m.Put("c", 3)
 	m.Put("a", 1)
 	m.Put("b", 2)
-	iter := m.Find(func(key string, value int) bool {
+	k, v := m.Find(func(key string, value int) bool {
 		return key == "c"
 	})
-	if iter.IsEnd() || iter.Key() != "c" || iter.Value() != 3 {
-		t.Errorf("Got %v -> %v expected %v -> %v", iter.Key(), iter.Value(), "c", 3)
+	if k != "c" || v != 3 {
+		t.Errorf("Got %v -> %v expected %v -> %v", k, v, "c", 3)
 	}
-	iter = m.Find(func(key string, value int) bool {
+	k, v = m.Find(func(key string, value int) bool {
 		return key == "x"
 	})
-	if !iter.IsEnd() {
-		t.Errorf("Got %v at %v expected end", iter.Key(), iter.Value())
+	if k != "" || v != 0 {
+		t.Errorf("Got %v -> %v expected %v -> %v", k, v, "", 0)
 	}
 }
 
