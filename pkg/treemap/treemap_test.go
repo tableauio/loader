@@ -204,7 +204,7 @@ type boundTestCase[T any, U any] struct {
 	Exist    bool
 }
 
-func TestMapFindIt(t *testing.T) {
+func TestMapFindIter(t *testing.T) {
 	m := New[int, string]()
 	m.Put(1, "a")
 	m.Put(3, "c")
@@ -224,7 +224,7 @@ func TestMapFindIt(t *testing.T) {
 
 	for _, test := range tests1 {
 		// retrievals
-		iter := m.FindIt(test.Key)
+		iter := m.FindIter(test.Key)
 		if !test.Exist {
 			if !iter.IsEnd() {
 				t.Errorf("Got %v, %v, expected end", iter.Key(), iter.Value())

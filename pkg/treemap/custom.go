@@ -10,10 +10,10 @@ func (iterator *TreeMapIterator[K, V]) IsEnd() bool {
 	return iterator.iterator.IsEnd()
 }
 
-// FindIt returns an iterator pointing to the element with specified key.
+// FindIter returns an iterator pointing to the element with specified key.
 // If no such element is found, a past-the-end iterator is returned.
 // See: https://en.cppreference.com/w/cpp/container/map/find
-func (m *TreeMap[K, V]) FindIt(key K) *TreeMapIterator[K, V] {
+func (m *TreeMap[K, V]) FindIter(key K) *TreeMapIterator[K, V] {
 	iter := m.tree.Iterator()
 	iter.End()
 	node := m.tree.GetNode(key)
