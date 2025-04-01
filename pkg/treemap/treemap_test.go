@@ -204,6 +204,40 @@ type boundTestCase[T any, U any] struct {
 	Exist    bool
 }
 
+func TestMapFindIt(t *testing.T) {
+	m := New[int, string]()
+	m.Put(1, "a")
+	m.Put(3, "c")
+	m.Put(7, "g")
+
+	// key,expectedKey,expectedValue,expectedFound
+	tests1 := []testCase[int, string]{
+		{-1, "", false},
+		{0, "", false},
+		{1, "a", true},
+		{2, "", false},
+		{3, "c", true},
+		{4, "", false},
+		{7, "g", true},
+		{8, "", false},
+	}
+
+	for _, test := range tests1 {
+		// retrievals
+		iter := m.FindIt(test.Key)
+		if !test.Exist {
+			if !iter.IsEnd() {
+				t.Errorf("Got %v, %v, expected end", iter.Key(), iter.Value())
+			}
+		} else {
+			actualKey, actualValue := iter.Key(), iter.Value()
+			if actualKey != test.Key || actualValue != test.Value {
+				t.Errorf("Got %v, %v, expected %v, %v", actualKey, actualValue, test.Key, test.Value)
+			}
+		}
+	}
+}
+
 func TestMapUpperBound(t *testing.T) {
 	m := New[int, string]()
 	m.Put(1, "a")
