@@ -8,7 +8,7 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
-const version = "0.6.0"
+const version = "0.8.0"
 
 var pkg *string
 
