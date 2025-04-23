@@ -195,13 +195,13 @@ func BoolToInt(ok bool) int {
 
 // Hub is the messager manager.
 type Hub struct {
-	messagerKeeper atomic.Pointer[MessagerKeeper]
-	opts           *Options
+	messagerContainer atomic.Pointer[MessagerContainer]
+	opts              *Options
 }
 
 func NewHub(options ...Option) *Hub {
 	hub := &Hub{}
-	hub.messagerKeeper.Store(&MessagerKeeper{})
+	hub.messagerContainer.Store(&MessagerContainer{})
 	hub.opts = ParseOptions(options...)
 	if hub.opts.MutableCheck != nil {
 		go hub.mutableCheck()
@@ -226,12 +226,12 @@ func (h *Hub) NewMessagerMap() MessagerMap {
 
 // GetMessagerMap returns hub's inner field messagerMap.
 func (h *Hub) GetMessagerMap() MessagerMap {
-	return h.messagerKeeper.Load().MessagerMap
+	return h.messagerContainer.Load().MessagerMap
 }
 
 // SetMessagerMap sets hub's inner field messagerMap.
 func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
-	h.messagerKeeper.Store(newMessagerKeeper(messagerMap))
+	h.messagerContainer.Store(newMessagerContainer(messagerMap))
 }
 
 // GetMessager finds and returns the specified Messenger in hub.
@@ -313,10 +313,10 @@ func (h *Hub) onMutateDefault(name string, original, current proto.Message) {
 
 // GetLastLoadedTime returns the time when hub's messagerMap was last set.
 func (h *Hub) GetLastLoadedTime() time.Time {
-	return h.messagerKeeper.Load().LoadedTime
+	return h.messagerContainer.Load().LoadedTime
 }
 
-type MessagerKeeper struct {
+type MessagerContainer struct {
 	MessagerMap MessagerMap
 	LoadedTime  time.Time
 	// Auto-generated fields below
@@ -331,57 +331,57 @@ type MessagerKeeper struct {
 	ThemeConf          *ThemeConf
 }
 
-func newMessagerKeeper(messagerMap MessagerMap) *MessagerKeeper {
-	messagerKeeper := &MessagerKeeper{
+func newMessagerContainer(messagerMap MessagerMap) *MessagerContainer {
+	messagerContainer := &MessagerContainer{
 		MessagerMap: messagerMap,
 		LoadedTime:  time.Now(),
 	}
-	messagerKeeper.HeroConf, _ = messagerMap["HeroConf"].(*HeroConf)
-	messagerKeeper.HeroBaseConf, _ = messagerMap["HeroBaseConf"].(*HeroBaseConf)
-	messagerKeeper.ItemConf, _ = messagerMap["ItemConf"].(*ItemConf)
-	messagerKeeper.PatchReplaceConf, _ = messagerMap["PatchReplaceConf"].(*PatchReplaceConf)
-	messagerKeeper.PatchMergeConf, _ = messagerMap["PatchMergeConf"].(*PatchMergeConf)
-	messagerKeeper.RecursivePatchConf, _ = messagerMap["RecursivePatchConf"].(*RecursivePatchConf)
-	messagerKeeper.ActivityConf, _ = messagerMap["ActivityConf"].(*ActivityConf)
-	messagerKeeper.ChapterConf, _ = messagerMap["ChapterConf"].(*ChapterConf)
-	messagerKeeper.ThemeConf, _ = messagerMap["ThemeConf"].(*ThemeConf)
-	return messagerKeeper
+	messagerContainer.HeroConf, _ = messagerMap["HeroConf"].(*HeroConf)
+	messagerContainer.HeroBaseConf, _ = messagerMap["HeroBaseConf"].(*HeroBaseConf)
+	messagerContainer.ItemConf, _ = messagerMap["ItemConf"].(*ItemConf)
+	messagerContainer.PatchReplaceConf, _ = messagerMap["PatchReplaceConf"].(*PatchReplaceConf)
+	messagerContainer.PatchMergeConf, _ = messagerMap["PatchMergeConf"].(*PatchMergeConf)
+	messagerContainer.RecursivePatchConf, _ = messagerMap["RecursivePatchConf"].(*RecursivePatchConf)
+	messagerContainer.ActivityConf, _ = messagerMap["ActivityConf"].(*ActivityConf)
+	messagerContainer.ChapterConf, _ = messagerMap["ChapterConf"].(*ChapterConf)
+	messagerContainer.ThemeConf, _ = messagerMap["ThemeConf"].(*ThemeConf)
+	return messagerContainer
 }
 
 // Auto-generated getters below
 
 func (h *Hub) GetHeroConf() *HeroConf {
-	return h.messagerKeeper.Load().HeroConf
+	return h.messagerContainer.Load().HeroConf
 }
 
 func (h *Hub) GetHeroBaseConf() *HeroBaseConf {
-	return h.messagerKeeper.Load().HeroBaseConf
+	return h.messagerContainer.Load().HeroBaseConf
 }
 
 func (h *Hub) GetItemConf() *ItemConf {
-	return h.messagerKeeper.Load().ItemConf
+	return h.messagerContainer.Load().ItemConf
 }
 
 func (h *Hub) GetPatchReplaceConf() *PatchReplaceConf {
-	return h.messagerKeeper.Load().PatchReplaceConf
+	return h.messagerContainer.Load().PatchReplaceConf
 }
 
 func (h *Hub) GetPatchMergeConf() *PatchMergeConf {
-	return h.messagerKeeper.Load().PatchMergeConf
+	return h.messagerContainer.Load().PatchMergeConf
 }
 
 func (h *Hub) GetRecursivePatchConf() *RecursivePatchConf {
-	return h.messagerKeeper.Load().RecursivePatchConf
+	return h.messagerContainer.Load().RecursivePatchConf
 }
 
 func (h *Hub) GetActivityConf() *ActivityConf {
-	return h.messagerKeeper.Load().ActivityConf
+	return h.messagerContainer.Load().ActivityConf
 }
 
 func (h *Hub) GetChapterConf() *ChapterConf {
-	return h.messagerKeeper.Load().ChapterConf
+	return h.messagerContainer.Load().ChapterConf
 }
 
 func (h *Hub) GetThemeConf() *ThemeConf {
-	return h.messagerKeeper.Load().ThemeConf
+	return h.messagerContainer.Load().ThemeConf
 }
