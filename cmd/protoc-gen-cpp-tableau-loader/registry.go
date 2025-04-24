@@ -159,7 +159,7 @@ func generateShardedRegistryCppFileContent(gen *protogen.Plugin, g *protogen.Gen
 }
 
 const registryHppTop = `#pragma once
-#include "hub.pc.h"
+#include "messager.pc.h"
 namespace tableau {
 using MessagerGenerator = std::function<std::shared_ptr<Messager>()>;
 // messager name -> messager generator

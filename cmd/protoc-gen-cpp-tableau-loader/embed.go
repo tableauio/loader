@@ -45,8 +45,8 @@ func generateEmbed(gen *protogen.Plugin) {
 		case "hub.pc.cc":
 			// Auto-generated specializations below
 			impl := ""
-			for _, messagers := range fileMessagers {
-				for _, messager := range messagers {
+			for _, proto := range protofiles {
+				for _, messager := range fileMessagers[proto] {
 					impl += "template <>\n"
 					impl += "const std::shared_ptr<" + messager + "> Hub::Get<" + messager + ">() const {\n"
 					impl += "  return GetMessagerContainer()->" + strcase.ToSnake(messager) + "_;\n"
@@ -64,8 +64,8 @@ func generateEmbed(gen *protogen.Plugin) {
 			file = strings.ReplaceAll(file, includeNotes, includeNotes+impl)
 			// Auto-generated specializations below
 			impl = ""
-			for _, messagers := range fileMessagers {
-				for _, messager := range messagers {
+			for _, proto := range protofiles {
+				for _, messager := range fileMessagers[proto] {
 					impl += "template <>\n"
 					impl += "const std::shared_ptr<" + messager + "> Hub::Get<" + messager + ">() const;\n"
 					impl += "\n"
@@ -74,16 +74,16 @@ func generateEmbed(gen *protogen.Plugin) {
 			file = strings.ReplaceAll(file, specializationNotes, specializationNotes+impl)
 			// Auto-generated initializations below
 			impl = ""
-			for _, messagers := range fileMessagers {
-				for _, messager := range messagers {
+			for _, proto := range protofiles {
+				for _, messager := range fileMessagers[proto] {
 					impl += "    " + strcase.ToSnake(messager) + "_ = std::dynamic_pointer_cast<" + messager + `>((*msger_map_)["` + messager + `"]);` + "\n"
 				}
 			}
 			file = strings.ReplaceAll(file, initializationNotes, initializationNotes+impl)
 			// Auto-generated fields below
 			impl = ""
-			for _, messagers := range fileMessagers {
-				for _, messager := range messagers {
+			for _, proto := range protofiles {
+				for _, messager := range fileMessagers[proto] {
 					impl += "  std::shared_ptr<" + messager + "> " + strcase.ToSnake(messager) + "_;\n"
 				}
 			}

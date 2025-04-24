@@ -4,7 +4,7 @@
 // - protoc                        v3.19.3
 
 #pragma once
-#include "hub.pc.h"
+#include "messager.pc.h"
 namespace tableau {
 using MessagerGenerator = std::function<std::shared_ptr<Messager>()>;
 // messager name -> messager generator

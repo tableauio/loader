@@ -211,30 +211,30 @@ class MessagerContainer {
       : msger_map_(msger_map != nullptr ? msger_map : std::make_shared<MessagerMap>()),
         last_loaded_time_(std::time(nullptr)) {
     // Auto-generated initializations below
-    activity_conf_ = std::dynamic_pointer_cast<ActivityConf>((*msger_map_)["ActivityConf"]);
-    chapter_conf_ = std::dynamic_pointer_cast<ChapterConf>((*msger_map_)["ChapterConf"]);
-    theme_conf_ = std::dynamic_pointer_cast<ThemeConf>((*msger_map_)["ThemeConf"]);
     hero_base_conf_ = std::dynamic_pointer_cast<HeroBaseConf>((*msger_map_)["HeroBaseConf"]);
     hero_conf_ = std::dynamic_pointer_cast<HeroConf>((*msger_map_)["HeroConf"]);
     item_conf_ = std::dynamic_pointer_cast<ItemConf>((*msger_map_)["ItemConf"]);
     patch_merge_conf_ = std::dynamic_pointer_cast<PatchMergeConf>((*msger_map_)["PatchMergeConf"]);
     patch_replace_conf_ = std::dynamic_pointer_cast<PatchReplaceConf>((*msger_map_)["PatchReplaceConf"]);
     recursive_patch_conf_ = std::dynamic_pointer_cast<RecursivePatchConf>((*msger_map_)["RecursivePatchConf"]);
+    activity_conf_ = std::dynamic_pointer_cast<ActivityConf>((*msger_map_)["ActivityConf"]);
+    chapter_conf_ = std::dynamic_pointer_cast<ChapterConf>((*msger_map_)["ChapterConf"]);
+    theme_conf_ = std::dynamic_pointer_cast<ThemeConf>((*msger_map_)["ThemeConf"]);
   }
 
  public:
   std::shared_ptr<MessagerMap> msger_map_;
   std::time_t last_loaded_time_;
   // Auto-generated fields below
-  std::shared_ptr<ActivityConf> activity_conf_;
-  std::shared_ptr<ChapterConf> chapter_conf_;
-  std::shared_ptr<ThemeConf> theme_conf_;
   std::shared_ptr<HeroBaseConf> hero_base_conf_;
   std::shared_ptr<HeroConf> hero_conf_;
   std::shared_ptr<ItemConf> item_conf_;
   std::shared_ptr<PatchMergeConf> patch_merge_conf_;
   std::shared_ptr<PatchReplaceConf> patch_replace_conf_;
   std::shared_ptr<RecursivePatchConf> recursive_patch_conf_;
+  std::shared_ptr<ActivityConf> activity_conf_;
+  std::shared_ptr<ChapterConf> chapter_conf_;
+  std::shared_ptr<ThemeConf> theme_conf_;
 };
 
 }  // namespace tableau
