@@ -4,18 +4,15 @@
 #include <tableau/protobuf/tableau.pb.h>
 
 #include <algorithm>
-#include <chrono>
 #include <cstddef>
 #include <ctime>
 #include <functional>
-#include <map>
 #include <mutex>
 #include <string>
-#include <thread>
 #include <unordered_map>
-#include <vector>
 
 #include "messager.pc.h"
+#include "scheduler.pc.h"
 
 namespace tableau {
 extern const std::string kUnknownExt;
@@ -64,29 +61,6 @@ bool LoadMessageByPath(google::protobuf::Message& msg, const std::string& path, 
                        const LoadOptions* options = nullptr);
 bool LoadMessage(google::protobuf::Message& msg, const std::string& dir, Format fmt = Format::kJSON,
                  const LoadOptions* options = nullptr);
-
-namespace internal {
-class Scheduler {
- public:
-  typedef std::function<void()> Job;
-
- public:
-  Scheduler() : thread_id_(std::this_thread::get_id()) {}
-  static Scheduler& Current();
-  // thread-safety
-  void Post(const Job& job);
-  void Dispatch(const Job& job);
-  int LoopOnce();
-  bool IsLoopThread() const;
-  void AssertInLoopThread() const;
-
- private:
-  std::thread::id thread_id_;
-  std::mutex mutex_;
-  std::vector<Job> jobs_;
-};
-
-}  // namespace internal
 
 class Hub {
  public:

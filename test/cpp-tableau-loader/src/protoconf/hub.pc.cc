@@ -468,6 +468,7 @@ bool Hub::AsyncLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
 }
 
 int Hub::LoopOnce() { return sched_->LoopOnce(); }
+
 void Hub::InitScheduler() {
   sched_ = new internal::Scheduler();
   sched_->Current();
@@ -604,55 +605,4 @@ MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* =
   chapter_conf_ = std::dynamic_pointer_cast<ChapterConf>((*msger_map_)["ChapterConf"]);
   theme_conf_ = std::dynamic_pointer_cast<ThemeConf>((*msger_map_)["ThemeConf"]);
 }
-
-namespace internal {
-// Thread-local storage (TLS)
-thread_local Scheduler* tls_sched = nullptr;
-Scheduler& Scheduler::Current() {
-  if (tls_sched == nullptr) {
-    tls_sched = new Scheduler;
-  }
-  return *tls_sched;
-}
-
-int Scheduler::LoopOnce() {
-  AssertInLoopThread();
-
-  int count = 0;
-  std::vector<Job> jobs;
-  {
-    // scoped for auto-release lock.
-    // wake up immediately when there are pending tasks.
-    std::unique_lock<std::mutex> lock(mutex_);
-    jobs.swap(jobs_);
-  }
-  for (auto&& job : jobs) {
-    job();
-  }
-  count += jobs.size();
-  return count;
-}
-
-void Scheduler::Post(const Job& job) {
-  std::unique_lock<std::mutex> lock(mutex_);
-  jobs_.push_back(job);
-}
-
-void Scheduler::Dispatch(const Job& job) {
-  if (IsLoopThread()) {
-    job();  // run it immediately
-  } else {
-    Post(job);  // post and run it at next loop
-  }
-}
-
-bool Scheduler::IsLoopThread() const { return thread_id_ == std::this_thread::get_id(); }
-void Scheduler::AssertInLoopThread() const {
-  if (!IsLoopThread()) {
-    abort();
-  }
-}
-
-}  // namespace internal
-
 }  // namespace tableau
