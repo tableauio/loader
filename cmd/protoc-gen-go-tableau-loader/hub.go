@@ -3,6 +3,7 @@ package main
 import (
 	"path/filepath"
 
+	"github.com/iancoleman/strcase"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
@@ -17,25 +18,25 @@ func generateHub(gen *protogen.Plugin) {
 	g.P(staticHubContent)
 	g.P()
 
-	// generate messager keeper typedef
-	g.P("type MessagerContainer struct {")
-	g.P("MessagerMap MessagerMap")
-	g.P("LoadedTime time.Time")
-	g.P("// Auto-generated fields below")
+	// generate messager container type
+	g.P("type messagerContainer struct {")
+	g.P("messagerMap MessagerMap")
+	g.P("loadedTime time.Time")
+	g.P("// all messagers as fields for fast access")
 	for _, messager := range messagers {
-		g.P(messager, " *", messager)
+		g.P(strcase.ToLowerCamel(messager), " *", messager)
 	}
 	g.P("}")
 	g.P()
 
-	// generate messager keeper constructor
-	g.P("func newMessagerContainer(messagerMap MessagerMap) *MessagerContainer {")
-	g.P("messagerContainer := &MessagerContainer{")
-	g.P("MessagerMap: messagerMap,")
-	g.P("LoadedTime: time.Now(),")
+	// generate messager container constructor
+	g.P("func newMessagerContainer(messagerMap MessagerMap) *messagerContainer {")
+	g.P("messagerContainer := &messagerContainer{")
+	g.P("messagerMap: messagerMap,")
+	g.P("loadedTime: time.Now(),")
 	g.P("}")
 	for _, messager := range messagers {
-		g.P("messagerContainer.", messager, `, _ = messagerMap["`, messager, `"].(*`, messager, ")")
+		g.P("messagerContainer.", strcase.ToLowerCamel(messager), `, _ = messagerMap["`, messager, `"].(*`, messager, ")")
 	}
 	g.P("return messagerContainer")
 	g.P("}")
@@ -46,7 +47,7 @@ func generateHub(gen *protogen.Plugin) {
 	g.P()
 	for _, messager := range messagers {
 		g.P("func (h *Hub) Get", messager, "() *", messager, " {")
-		g.P("return h.messagerContainer.Load().", messager)
+		g.P("return h.messagerContainer.Load().", strcase.ToLowerCamel(messager))
 		g.P("}")
 		g.P()
 	}
@@ -242,13 +243,13 @@ func BoolToInt(ok bool) int {
 
 // Hub is the messager manager.
 type Hub struct {
-	messagerContainer atomic.Pointer[MessagerContainer]
+	messagerContainer atomic.Pointer[messagerContainer]
 	opts           *Options
 }
 
 func NewHub(options ...Option) *Hub {
 	hub := &Hub{}
-	hub.messagerContainer.Store(&MessagerContainer{})
+	hub.messagerContainer.Store(&messagerContainer{})
 	hub.opts = ParseOptions(options...)
 	if hub.opts.MutableCheck != nil {
 		go hub.mutableCheck()
@@ -273,7 +274,7 @@ func (h *Hub) NewMessagerMap() MessagerMap {
 
 // GetMessagerMap returns hub's inner field messagerMap.
 func (h *Hub) GetMessagerMap() MessagerMap {
-	return h.messagerContainer.Load().MessagerMap
+	return h.messagerContainer.Load().messagerMap
 }
 
 // SetMessagerMap sets hub's inner field messagerMap.
@@ -360,6 +361,6 @@ func (h *Hub) onMutateDefault(name string, original, current proto.Message) {
 
 // GetLastLoadedTime returns the time when hub's messagerMap was last set.
 func (h *Hub) GetLastLoadedTime() time.Time {
-	return h.messagerContainer.Load().LoadedTime
+	return h.messagerContainer.Load().loadedTime
 }
 `
