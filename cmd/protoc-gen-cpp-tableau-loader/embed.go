@@ -14,11 +14,11 @@ import (
 var efs embed.FS
 
 const (
-	includeNotes        = "// Auto-generated includes below\n"
-	declarationNotes    = "// Auto-generated declarations below\n"
-	specializationNotes = "// Auto-generated specializations below\n"
-	initializationNotes = "// Auto-generated initializations below\n"
-	fieldNotes          = "// Auto-generated fields below\n"
+	includeNotes                = "// Auto-generated includes below\n"
+	declarationNotes            = "// Auto-generated declarations below\n"
+	templateSpecializationNotes = "// Auto-generated template specializations below\n"
+	initializationNotes         = "// Auto-generated initializations below\n"
+	fieldNotes                  = "// Auto-generated all messagers as fields for fast access below\n"
 )
 
 // generateEmbed generates related registry files.
@@ -50,7 +50,7 @@ func generateEmbed(gen *protogen.Plugin) {
 				impl += `#include "` + proto + "." + pcExt + `.h"` + "\n"
 			}
 			file = strings.ReplaceAll(file, includeNotes, includeNotes+impl)
-			// Auto-generated specializations below
+			// Auto-generated template specializations below
 			impl = ""
 			for _, proto := range protofiles {
 				for _, messager := range fileMessagers[proto] {
@@ -61,7 +61,7 @@ func generateEmbed(gen *protogen.Plugin) {
 					impl += "\n"
 				}
 			}
-			file = strings.ReplaceAll(file, specializationNotes, specializationNotes+impl)
+			file = strings.ReplaceAll(file, templateSpecializationNotes, templateSpecializationNotes+impl)
 			// Auto-generated initializations below
 			impl = ""
 			for _, proto := range protofiles {
@@ -79,7 +79,7 @@ func generateEmbed(gen *protogen.Plugin) {
 				}
 			}
 			file = strings.ReplaceAll(file, declarationNotes, declarationNotes+impl)
-			// Auto-generated specializations below
+			// Auto-generated template specializations below
 			impl = ""
 			for _, proto := range protofiles {
 				for _, messager := range fileMessagers[proto] {
@@ -88,8 +88,8 @@ func generateEmbed(gen *protogen.Plugin) {
 					impl += "\n"
 				}
 			}
-			file = strings.ReplaceAll(file, specializationNotes, specializationNotes+impl)
-			// Auto-generated fields below
+			file = strings.ReplaceAll(file, templateSpecializationNotes, templateSpecializationNotes+impl)
+			// Auto-generated all messagers as fields for fast access below
 			impl = ""
 			for _, proto := range protofiles {
 				for _, messager := range fileMessagers[proto] {

@@ -544,7 +544,7 @@ bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {
 
 std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainer()->last_loaded_time_; }
 
-// Auto-generated specializations below
+// Auto-generated template specializations below
 template <>
 const std::shared_ptr<HeroBaseConf> Hub::Get<HeroBaseConf>() const {
   return GetMessagerContainer()->hero_base_conf_;

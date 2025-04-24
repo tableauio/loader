@@ -181,7 +181,7 @@ const U* Hub::GetOrderedMap(Args... args) const {
   return msger ? msger->GetOrderedMap(args...) : nullptr;
 }
 
-// Auto-generated specializations below
+// Auto-generated template specializations below
 template <>
 const std::shared_ptr<HeroBaseConf> Hub::Get<HeroBaseConf>() const;
 
@@ -216,7 +216,7 @@ class MessagerContainer {
  public:
   std::shared_ptr<MessagerMap> msger_map_;
   std::time_t last_loaded_time_;
-  // Auto-generated fields below
+  // Auto-generated all messagers as fields for fast access below
   std::shared_ptr<HeroBaseConf> hero_base_conf_;
   std::shared_ptr<HeroConf> hero_conf_;
   std::shared_ptr<ItemConf> item_conf_;

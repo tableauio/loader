@@ -167,7 +167,7 @@ const U* Hub::GetOrderedMap(Args... args) const {
   return msger ? msger->GetOrderedMap(args...) : nullptr;
 }
 
-// Auto-generated specializations below
+// Auto-generated template specializations below
 class MessagerContainer {
  public:
   MessagerContainer(std::shared_ptr<MessagerMap> msger_map = nullptr);
@@ -175,7 +175,7 @@ class MessagerContainer {
  public:
   std::shared_ptr<MessagerMap> msger_map_;
   std::time_t last_loaded_time_;
-  // Auto-generated fields below
+  // Auto-generated all messagers as fields for fast access below
 };
 
 }  // namespace tableau

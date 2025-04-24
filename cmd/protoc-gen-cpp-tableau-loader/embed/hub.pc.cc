@@ -535,7 +535,7 @@ bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {
 
 std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainer()->last_loaded_time_; }
 
-// Auto-generated specializations below
+// Auto-generated template specializations below
 MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* = nullptr*/)
     : msger_map_(msger_map != nullptr ? msger_map : std::make_shared<MessagerMap>()),
       last_loaded_time_(std::time(nullptr)) {
