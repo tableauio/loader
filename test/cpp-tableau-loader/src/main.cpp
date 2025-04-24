@@ -136,8 +136,8 @@ int main() {
     std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
     return 1;
   }
-  auto msger_container = Hub::Instance().GetMessagerContainer();
-  for (auto&& item : *msger_container) {
+  auto msger_map = Hub::Instance().GetMessagerMap();
+  for (auto&& item : *msger_map) {
     auto&& stats = item.second->GetStats();
     ATOM_DEBUG("%s: duration: %dus", item.first.c_str(), stats.duration.count());
   }

@@ -526,6 +526,8 @@ const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const 
 
 std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainer()->last_loaded_time_; }
 
+// Auto-generated specializations below
+
 namespace internal {
 // Thread-local storage (TLS)
 thread_local Scheduler* tls_sched = nullptr;
