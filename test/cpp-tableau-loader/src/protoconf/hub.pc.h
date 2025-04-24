@@ -100,8 +100,6 @@ class Scheduler {
   std::vector<Job> jobs_;
 };
 
-bool Postprocess(Postprocessor postprocessor, std::shared_ptr<MessagerMap> msger_map);
-
 }  // namespace internal
 
 class Hub {
@@ -151,6 +149,8 @@ class Hub {
                                             const LoadOptions* options = nullptr) const;
   std::shared_ptr<MessagerMap> NewMessagerMap() const;
   const std::shared_ptr<Messager> GetMessager(const std::string& name) const;
+
+  bool Postprocess(std::shared_ptr<MessagerMap> msger_map);
 
  private:
   // For thread-safe guarantee during configuration updating.

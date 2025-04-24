@@ -8,6 +8,7 @@
 #include <string>
 
 #include "messager.pc.h"
+#include "util.pc.h"
 #include "test_conf.pb.h"
 
 namespace tableau {

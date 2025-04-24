@@ -125,10 +125,6 @@ int main() {
   tableau::LoadOptions options;
   options.ignore_unknown_fields = true;
   options.patch_dirs = {"../../testdata/patchconf/"};
-  options.postprocessor = [](const tableau::Hub& hub) {
-    std::cout << "post process done!" << std::endl;
-    return 1;
-  };
   options.paths["ItemConf"] = "../../testdata/conf/ItemConf.json";
 
   bool ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);

@@ -1,0 +1,56 @@
+#include "util.pc.h"
+
+#ifdef _WIN32
+#include <direct.h>
+#include <windows.h>
+#else
+#include <sys/stat.h>
+#endif
+
+#include "messager.pc.h"
+
+namespace tableau {
+#ifdef _WIN32
+#define mkdir(path, mode) _mkdir(path)
+static constexpr char kPathSeperator = '\\';
+#else
+static constexpr char kPathSeperator = '/';
+#endif
+
+namespace util {
+int Mkdir(const std::string& path) {
+  std::string path_ = path + kPathSeperator;
+  struct stat info;
+  for (size_t pos = path_.find(kPathSeperator, 0); pos != std::string::npos; pos = path_.find(kPathSeperator, pos)) {
+    ++pos;
+    auto sub_dir = path_.substr(0, pos);
+    if (stat(sub_dir.c_str(), &info) == 0 && info.st_mode & S_IFDIR) {
+      continue;
+    }
+    int status = mkdir(sub_dir.c_str(), 0755);
+    if (status != 0) {
+      std::cerr << "system error: " << strerror(errno) << std::endl;
+      return -1;
+    }
+  }
+  return 0;
+}
+
+std::string GetDir(const std::string& path) {
+  size_t pos = path.find_last_of(kPathSeperator);
+  if (pos != std::string::npos) {
+    return path.substr(0, pos);
+  }
+  return kEmpty;
+}
+
+std::string GetExt(const std::string& path) {
+  std::size_t pos = path.find_last_of(".");
+  if (pos != std::string::npos) {
+    return path.substr(pos);
+  }
+  return kEmpty;
+}
+
+}  // namespace util
+}  // namespace tableau

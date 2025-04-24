@@ -4,13 +4,6 @@
 #include <google/protobuf/stubs/status.h>
 #include <google/protobuf/text_format.h>
 
-#ifdef _WIN32
-#include <direct.h>
-#include <windows.h>
-#else
-#include <sys/stat.h>
-#endif
-
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -19,16 +12,13 @@
 #include "logger.pc.h"
 #include "messager.pc.h"
 #include "registry.pc.h"
+#include "util.pc.h"
 
 // Auto-generated includes below
 
 namespace tableau {
 #ifdef _WIN32
 #undef GetMessage
-#define mkdir(path, mode) _mkdir(path)
-static constexpr char kPathSeperator = '\\';
-#else
-static constexpr char kPathSeperator = '/';
 #endif
 
 static thread_local std::string g_err_msg;
@@ -446,7 +436,7 @@ bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */, const L
   if (!msger_map) {
     return false;
   }
-  bool ok = internal::Postprocess(options->postprocessor, msger_map);
+  bool ok = Postprocess(msger_map);
   if (!ok) {
     return false;
   }
@@ -460,7 +450,7 @@ bool Hub::AsyncLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
   if (!msger_map) {
     return false;
   }
-  bool ok = internal::Postprocess(options->postprocessor, msger_map);
+  bool ok = Postprocess(msger_map);
   if (!ok) {
     return false;
   }
@@ -526,6 +516,23 @@ const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const 
   return nullptr;
 }
 
+bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {
+  // create a temporary hub with messager container for post process
+  Hub tmp_hub;
+  tmp_hub.SetMessagerMap(msger_map);
+
+  // messager-level postprocess
+  for (auto iter : *msger_map) {
+    auto msger = iter.second;
+    bool ok = msger->ProcessAfterLoadAll(tmp_hub);
+    if (!ok) {
+      g_err_msg = "hub call ProcessAfterLoadAll failed, messager: " + msger->Name();
+      return false;
+    }
+  }
+  return true;
+}
+
 std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainer()->last_loaded_time_; }
 
 // Auto-generated specializations below
@@ -583,70 +590,6 @@ void Scheduler::AssertInLoopThread() const {
   }
 }
 
-bool Postprocess(Postprocessor postprocessor, std::shared_ptr<MessagerMap> msger_map) {
-  // create a temporary hub with messager container for post process
-  Hub tmp_hub;
-  tmp_hub.SetMessagerMap(msger_map);
-
-  // messager-level postprocess
-  for (auto iter : *msger_map) {
-    auto msger = iter.second;
-    bool ok = msger->ProcessAfterLoadAll(tmp_hub);
-    if (!ok) {
-      g_err_msg = "hub call ProcessAfterLoadAll failed, messager: " + msger->Name();
-      return false;
-    }
-  }
-
-  // hub-level postprocess
-  if (postprocessor != nullptr) {
-    bool ok = postprocessor(tmp_hub);
-    if (!ok) {
-      g_err_msg = "hub call Postprocesser failed, you'd better check your custom 'postprocessor' load option";
-      return false;
-    }
-  }
-
-  return true;
-}
-
 }  // namespace internal
-
-namespace util {
-int Mkdir(const std::string& path) {
-  std::string path_ = path + kPathSeperator;
-  struct stat info;
-  for (size_t pos = path_.find(kPathSeperator, 0); pos != std::string::npos; pos = path_.find(kPathSeperator, pos)) {
-    ++pos;
-    auto sub_dir = path_.substr(0, pos);
-    if (stat(sub_dir.c_str(), &info) == 0 && info.st_mode & S_IFDIR) {
-      continue;
-    }
-    int status = mkdir(sub_dir.c_str(), 0755);
-    if (status != 0) {
-      std::cerr << "system error: " << strerror(errno) << std::endl;
-      return -1;
-    }
-  }
-  return 0;
-}
-
-std::string GetDir(const std::string& path) {
-  size_t pos = path.find_last_of(kPathSeperator);
-  if (pos != std::string::npos) {
-    return path.substr(0, pos);
-  }
-  return kEmpty;
-}
-
-std::string GetExt(const std::string& path) {
-  std::size_t pos = path.find_last_of(".");
-  if (pos != std::string::npos) {
-    return path.substr(pos);
-  }
-  return kEmpty;
-}
-
-}  // namespace util
 
 }  // namespace tableau
