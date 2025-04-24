@@ -17,8 +17,6 @@
 
 #include "messager.pc.h"
 
-// Auto-generated includes below
-
 namespace tableau {
 extern const std::string kUnknownExt;
 extern const std::string kJSONExt;
@@ -29,6 +27,8 @@ const std::string& GetErrMsg();
 
 class MessagerContainer;
 class Hub;
+
+// Auto-generated declarations below
 
 using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
 // FilterFunc filter in messagers if returned value is true.
@@ -168,14 +168,9 @@ const U* Hub::GetOrderedMap(Args... args) const {
 }
 
 // Auto-generated specializations below
-
 class MessagerContainer {
  public:
-  MessagerContainer(std::shared_ptr<MessagerMap> msger_map = nullptr)
-      : msger_map_(msger_map != nullptr ? msger_map : std::make_shared<MessagerMap>()),
-        last_loaded_time_(std::time(nullptr)) {
-    // Auto-generated initializations below
-  }
+  MessagerContainer(std::shared_ptr<MessagerMap> msger_map = nullptr);
 
  public:
   std::shared_ptr<MessagerMap> msger_map_;

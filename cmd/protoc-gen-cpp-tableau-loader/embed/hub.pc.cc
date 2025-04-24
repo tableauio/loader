@@ -20,6 +20,8 @@
 #include "messager.pc.h"
 #include "registry.pc.h"
 
+// Auto-generated includes below
+
 namespace tableau {
 #ifdef _WIN32
 #undef GetMessage
@@ -527,6 +529,11 @@ const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const 
 std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainer()->last_loaded_time_; }
 
 // Auto-generated specializations below
+MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* = nullptr*/)
+    : msger_map_(msger_map != nullptr ? msger_map : std::make_shared<MessagerMap>()),
+      last_loaded_time_(std::time(nullptr)) {
+  // Auto-generated initializations below
+}
 
 namespace internal {
 // Thread-local storage (TLS)

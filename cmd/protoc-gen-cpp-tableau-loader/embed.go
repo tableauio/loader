@@ -15,6 +15,7 @@ var efs embed.FS
 
 const (
 	includeNotes        = "// Auto-generated includes below\n"
+	declarationNotes    = "// Auto-generated declarations below\n"
 	specializationNotes = "// Auto-generated specializations below\n"
 	initializationNotes = "// Auto-generated initializations below\n"
 	fieldNotes          = "// Auto-generated fields below\n"
@@ -43,19 +44,6 @@ func generateEmbed(gen *protogen.Plugin) {
 		file := string(content)
 		switch entry.Name() {
 		case "hub.pc.cc":
-			// Auto-generated specializations below
-			impl := ""
-			for _, proto := range protofiles {
-				for _, messager := range fileMessagers[proto] {
-					impl += "template <>\n"
-					impl += "const std::shared_ptr<" + messager + "> Hub::Get<" + messager + ">() const {\n"
-					impl += "  return GetMessagerContainer()->" + strcase.ToSnake(messager) + "_;\n"
-					impl += "}\n"
-					impl += "\n"
-				}
-			}
-			file = strings.ReplaceAll(file, specializationNotes, specializationNotes+impl)
-		case "hub.pc.h":
 			// Auto-generated includes below
 			impl := ""
 			for _, proto := range protofiles {
@@ -67,7 +55,9 @@ func generateEmbed(gen *protogen.Plugin) {
 			for _, proto := range protofiles {
 				for _, messager := range fileMessagers[proto] {
 					impl += "template <>\n"
-					impl += "const std::shared_ptr<" + messager + "> Hub::Get<" + messager + ">() const;\n"
+					impl += "const std::shared_ptr<" + messager + "> Hub::Get<" + messager + ">() const {\n"
+					impl += "  return GetMessagerContainer()->" + strcase.ToSnake(messager) + "_;\n"
+					impl += "}\n"
 					impl += "\n"
 				}
 			}
@@ -76,10 +66,29 @@ func generateEmbed(gen *protogen.Plugin) {
 			impl = ""
 			for _, proto := range protofiles {
 				for _, messager := range fileMessagers[proto] {
-					impl += "    " + strcase.ToSnake(messager) + "_ = std::dynamic_pointer_cast<" + messager + `>((*msger_map_)["` + messager + `"]);` + "\n"
+					impl += "  " + strcase.ToSnake(messager) + "_ = std::dynamic_pointer_cast<" + messager + `>((*msger_map_)["` + messager + `"]);` + "\n"
 				}
 			}
 			file = strings.ReplaceAll(file, initializationNotes, initializationNotes+impl)
+		case "hub.pc.h":
+			// Auto-generated declarations below
+			impl := ""
+			for _, proto := range protofiles {
+				for _, messager := range fileMessagers[proto] {
+					impl += "class " + messager + ";\n"
+				}
+			}
+			file = strings.ReplaceAll(file, declarationNotes, declarationNotes+impl)
+			// Auto-generated specializations below
+			impl = ""
+			for _, proto := range protofiles {
+				for _, messager := range fileMessagers[proto] {
+					impl += "template <>\n"
+					impl += "const std::shared_ptr<" + messager + "> Hub::Get<" + messager + ">() const;\n"
+					impl += "\n"
+				}
+			}
+			file = strings.ReplaceAll(file, specializationNotes, specializationNotes+impl)
 			// Auto-generated fields below
 			impl = ""
 			for _, proto := range protofiles {

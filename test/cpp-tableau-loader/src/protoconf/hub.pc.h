@@ -22,12 +22,6 @@
 
 #include "messager.pc.h"
 
-// Auto-generated includes below
-#include "hero_conf.pc.h"
-#include "item_conf.pc.h"
-#include "patch_conf.pc.h"
-#include "test_conf.pc.h"
-
 namespace tableau {
 extern const std::string kUnknownExt;
 extern const std::string kJSONExt;
@@ -38,6 +32,17 @@ const std::string& GetErrMsg();
 
 class MessagerContainer;
 class Hub;
+
+// Auto-generated declarations below
+class HeroBaseConf;
+class HeroConf;
+class ItemConf;
+class PatchMergeConf;
+class PatchReplaceConf;
+class RecursivePatchConf;
+class ActivityConf;
+class ChapterConf;
+class ThemeConf;
 
 using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
 // FilterFunc filter in messagers if returned value is true.
@@ -204,23 +209,9 @@ const std::shared_ptr<ChapterConf> Hub::Get<ChapterConf>() const;
 template <>
 const std::shared_ptr<ThemeConf> Hub::Get<ThemeConf>() const;
 
-
 class MessagerContainer {
  public:
-  MessagerContainer(std::shared_ptr<MessagerMap> msger_map = nullptr)
-      : msger_map_(msger_map != nullptr ? msger_map : std::make_shared<MessagerMap>()),
-        last_loaded_time_(std::time(nullptr)) {
-    // Auto-generated initializations below
-    hero_base_conf_ = std::dynamic_pointer_cast<HeroBaseConf>((*msger_map_)["HeroBaseConf"]);
-    hero_conf_ = std::dynamic_pointer_cast<HeroConf>((*msger_map_)["HeroConf"]);
-    item_conf_ = std::dynamic_pointer_cast<ItemConf>((*msger_map_)["ItemConf"]);
-    patch_merge_conf_ = std::dynamic_pointer_cast<PatchMergeConf>((*msger_map_)["PatchMergeConf"]);
-    patch_replace_conf_ = std::dynamic_pointer_cast<PatchReplaceConf>((*msger_map_)["PatchReplaceConf"]);
-    recursive_patch_conf_ = std::dynamic_pointer_cast<RecursivePatchConf>((*msger_map_)["RecursivePatchConf"]);
-    activity_conf_ = std::dynamic_pointer_cast<ActivityConf>((*msger_map_)["ActivityConf"]);
-    chapter_conf_ = std::dynamic_pointer_cast<ChapterConf>((*msger_map_)["ChapterConf"]);
-    theme_conf_ = std::dynamic_pointer_cast<ThemeConf>((*msger_map_)["ThemeConf"]);
-  }
+  MessagerContainer(std::shared_ptr<MessagerMap> msger_map = nullptr);
 
  public:
   std::shared_ptr<MessagerMap> msger_map_;
