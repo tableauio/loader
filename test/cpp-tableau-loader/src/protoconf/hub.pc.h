@@ -156,10 +156,12 @@ template <>
 const std::shared_ptr<ThemeConf> Hub::Get<ThemeConf>() const;
 
 class MessagerContainer {
+  friend class Hub;
+
  public:
   MessagerContainer(std::shared_ptr<MessagerMap> msger_map = nullptr);
 
- public:
+ private:
   std::shared_ptr<MessagerMap> msger_map_;
   std::time_t last_loaded_time_;
   // Auto-generated all messagers as fields for fast access below
