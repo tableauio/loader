@@ -8,25 +8,17 @@
 #include <google/protobuf/util/json_util.h>
 #include <tableau/protobuf/tableau.pb.h>
 
-#include <algorithm>
-#include <cstddef>
 #include <ctime>
 #include <functional>
 #include <mutex>
 #include <string>
 #include <unordered_map>
 
+#include "load.pc.h"
 #include "messager.pc.h"
 #include "scheduler.pc.h"
 
 namespace tableau {
-extern const std::string kUnknownExt;
-extern const std::string kJSONExt;
-extern const std::string kTextExt;
-extern const std::string kBinExt;
-
-const std::string& GetErrMsg();
-
 class MessagerContainer;
 class Hub;
 
@@ -55,26 +47,6 @@ struct HubOptions {
   // consistent in a coroutine or a transaction.
   MessagerContainerProvider provider;
 };
-
-// Convert file extension to Format type.
-// NOTE: ext includes dot ".", such as:
-//  - kJSONExt：".json"
-//  - kTextExt".txt"
-//  - kBinExt".bin"
-Format Ext2Format(const std::string& ext);
-// Empty string will be returned if an unsupported enum value has been passed,
-// and the error message can be obtained by GetErrMsg().
-const std::string& Format2Ext(Format fmt);
-bool Message2JSON(const google::protobuf::Message& msg, std::string& json);
-bool JSON2Message(const std::string& json, google::protobuf::Message& msg, const LoadOptions* options = nullptr);
-bool Text2Message(const std::string& text, google::protobuf::Message& msg);
-bool Bin2Message(const std::string& bin, google::protobuf::Message& msg);
-void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& msg);
-const std::string& GetProtoName(const google::protobuf::Message& msg);
-bool LoadMessageByPath(google::protobuf::Message& msg, const std::string& path, Format fmt = Format::kJSON,
-                       const LoadOptions* options = nullptr);
-bool LoadMessage(google::protobuf::Message& msg, const std::string& dir, Format fmt = Format::kJSON,
-                 const LoadOptions* options = nullptr);
 
 class Hub {
  public:
@@ -201,5 +173,4 @@ class MessagerContainer {
   std::shared_ptr<ChapterConf> chapter_conf_;
   std::shared_ptr<ThemeConf> theme_conf_;
 };
-
 }  // namespace tableau

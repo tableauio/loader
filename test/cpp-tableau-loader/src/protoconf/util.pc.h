@@ -4,12 +4,33 @@
 // - protoc                        v3.19.3
 
 #pragma once
+#include <google/protobuf/message.h>
 
 #include <chrono>
 #include <functional>
 #include <string>
 
+#include "tableau/protobuf/tableau.pb.h"
+
 namespace tableau {
+const std::string& GetErrMsg();
+void SetErrMsg(const std::string& msg);
+
+enum class Format {
+  kUnknown,
+  kJSON,
+  kText,
+  kBin,
+};
+
+static const std::string kEmpty = "";
+extern const std::string kUnknownExt;
+extern const std::string kJSONExt;
+extern const std::string kTextExt;
+extern const std::string kBinExt;
+
+struct LoadOptions;
+
 namespace util {
 // Combine hash values
 //
@@ -37,11 +58,35 @@ int Mkdir(const std::string& path);
 // GetDir returns all but the last element of path, typically the path's
 // directory.
 std::string GetDir(const std::string& path);
+// ExistsFile checks if a file exists.
+bool ExistsFile(const std::string& filename);
+// ReadFile reads the file named by filename and returns the contents.
+bool ReadFile(const std::string& filename, std::string& content);
+
 // GetExt returns the file name extension used by path.
 // The extension is the suffix beginning at the final dot
 // in the final element of path; it is empty if there is
 // no dot.
 std::string GetExt(const std::string& path);
+// Convert file extension to Format type.
+// NOTE: ext includes dot ".", such as:
+//  - kJSONExt：".json"
+//  - kTextExt".txt"
+//  - kBinExt".bin"
+Format Ext2Format(const std::string& ext);
+// Empty string will be returned if an unsupported enum value has been passed,
+// and the error message can be obtained by GetErrMsg().
+const std::string& Format2Ext(Format fmt);
+
+bool Message2JSON(const google::protobuf::Message& msg, std::string& json);
+bool JSON2Message(const std::string& json, google::protobuf::Message& msg, const LoadOptions* options = nullptr);
+bool Text2Message(const std::string& text, google::protobuf::Message& msg);
+bool Bin2Message(const std::string& bin, google::protobuf::Message& msg);
+
+const std::string& GetProtoName(const google::protobuf::Message& msg);
+std::string GetPatchName(tableau::Patch patch);
+
+void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& msg);
 
 class TimeProfiler {
  protected:
@@ -59,6 +104,5 @@ class TimeProfiler {
     return std::chrono::duration_cast<std::chrono::microseconds>(duration);
   }
 };
-
 }  // namespace util
 }  // namespace tableau
