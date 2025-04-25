@@ -13,16 +13,11 @@
 
 #include "logger.pc.h"
 #include "messager.pc.h"
-#include "registry.pc.h"
 #include "util.pc.h"
 
-// Auto-generated includes below
-#include "hero_conf.pc.h"
-#include "item_conf.pc.h"
-#include "patch_conf.pc.h"
-#include "test_conf.pc.h"
-
 namespace tableau {
+Registrar Registry::registrar = Registrar();
+
 bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */, const LoadOptions* options /* = nullptr */) {
   auto msger_map = InternalLoad(dir, fmt, options);
   if (!msger_map) {
@@ -128,64 +123,17 @@ bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {
 
 std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainer()->last_loaded_time_; }
 
-// Auto-generated template specializations below
-template <>
-const std::shared_ptr<HeroBaseConf> Hub::Get<HeroBaseConf>() const {
-  return GetMessagerContainer()->hero_base_conf_;
-}
-
-template <>
-const std::shared_ptr<HeroConf> Hub::Get<HeroConf>() const {
-  return GetMessagerContainer()->hero_conf_;
-}
-
-template <>
-const std::shared_ptr<ItemConf> Hub::Get<ItemConf>() const {
-  return GetMessagerContainer()->item_conf_;
-}
-
-template <>
-const std::shared_ptr<PatchMergeConf> Hub::Get<PatchMergeConf>() const {
-  return GetMessagerContainer()->patch_merge_conf_;
-}
-
-template <>
-const std::shared_ptr<PatchReplaceConf> Hub::Get<PatchReplaceConf>() const {
-  return GetMessagerContainer()->patch_replace_conf_;
-}
-
-template <>
-const std::shared_ptr<RecursivePatchConf> Hub::Get<RecursivePatchConf>() const {
-  return GetMessagerContainer()->recursive_patch_conf_;
-}
-
-template <>
-const std::shared_ptr<ActivityConf> Hub::Get<ActivityConf>() const {
-  return GetMessagerContainer()->activity_conf_;
-}
-
-template <>
-const std::shared_ptr<ChapterConf> Hub::Get<ChapterConf>() const {
-  return GetMessagerContainer()->chapter_conf_;
-}
-
-template <>
-const std::shared_ptr<ThemeConf> Hub::Get<ThemeConf>() const {
-  return GetMessagerContainer()->theme_conf_;
-}
-
 MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* = nullptr*/)
     : msger_map_(msger_map != nullptr ? msger_map : std::make_shared<MessagerMap>()),
       last_loaded_time_(std::time(nullptr)) {
-  // Auto-generated initializations below
-  hero_base_conf_ = std::dynamic_pointer_cast<HeroBaseConf>((*msger_map_)["HeroBaseConf"]);
-  hero_conf_ = std::dynamic_pointer_cast<HeroConf>((*msger_map_)["HeroConf"]);
-  item_conf_ = std::dynamic_pointer_cast<ItemConf>((*msger_map_)["ItemConf"]);
-  patch_merge_conf_ = std::dynamic_pointer_cast<PatchMergeConf>((*msger_map_)["PatchMergeConf"]);
-  patch_replace_conf_ = std::dynamic_pointer_cast<PatchReplaceConf>((*msger_map_)["PatchReplaceConf"]);
-  recursive_patch_conf_ = std::dynamic_pointer_cast<RecursivePatchConf>((*msger_map_)["RecursivePatchConf"]);
-  activity_conf_ = std::dynamic_pointer_cast<ActivityConf>((*msger_map_)["ActivityConf"]);
-  chapter_conf_ = std::dynamic_pointer_cast<ChapterConf>((*msger_map_)["ChapterConf"]);
-  theme_conf_ = std::dynamic_pointer_cast<ThemeConf>((*msger_map_)["ThemeConf"]);
+  // Auto-generated shards below
+  InitShard0();
+  InitShard1();
+}
+
+void Registry::Init() {
+  // Auto-generated shards below
+  InitShard0();
+  InitShard1();
 }
 }  // namespace tableau

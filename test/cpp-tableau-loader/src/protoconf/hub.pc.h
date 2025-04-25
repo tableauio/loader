@@ -162,6 +162,11 @@ class MessagerContainer {
   MessagerContainer(std::shared_ptr<MessagerMap> msger_map = nullptr);
 
  private:
+  // Auto-generated shards below
+  void InitShard0();
+  void InitShard1();
+
+ private:
   std::shared_ptr<MessagerMap> msger_map_;
   std::time_t last_loaded_time_;
   // Auto-generated all messagers as fields for fast access below
@@ -175,4 +180,30 @@ class MessagerContainer {
   std::shared_ptr<ChapterConf> chapter_conf_;
   std::shared_ptr<ThemeConf> theme_conf_;
 };
+
+using MessagerGenerator = std::function<std::shared_ptr<Messager>()>;
+// messager name -> messager generator
+using Registrar = std::unordered_map<std::string, MessagerGenerator>;
+class Registry {
+  friend class Hub;
+
+ public:
+  static void Init();
+
+  template <typename T>
+  static void Register();
+
+ private:
+  // Auto-generated shards below
+  static void InitShard0();
+  static void InitShard1();
+
+ private:
+  static Registrar registrar;
+};
+
+template <typename T>
+void Registry::Register() {
+  registrar[T::Name()] = []() { return std::make_shared<T>(); };
+}
 }  // namespace tableau

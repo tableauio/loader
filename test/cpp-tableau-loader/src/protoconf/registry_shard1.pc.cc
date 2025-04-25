@@ -3,7 +3,7 @@
 // - protoc-gen-cpp-tableau-loader v0.8.0
 // - protoc                        v3.19.3
 
-#include "registry.pc.h"
+#include "hub.pc.h"
 
 #include "patch_conf.pc.h"
 #include "test_conf.pc.h"
@@ -16,5 +16,44 @@ void Registry::InitShard1() {
   Register<ActivityConf>();
   Register<ChapterConf>();
   Register<ThemeConf>();
+}
+
+void MessagerContainer::InitShard1() {
+  patch_merge_conf_ = std::dynamic_pointer_cast<PatchMergeConf>((*msger_map_)["PatchMergeConf"]);
+  patch_replace_conf_ = std::dynamic_pointer_cast<PatchReplaceConf>((*msger_map_)["PatchReplaceConf"]);
+  recursive_patch_conf_ = std::dynamic_pointer_cast<RecursivePatchConf>((*msger_map_)["RecursivePatchConf"]);
+  activity_conf_ = std::dynamic_pointer_cast<ActivityConf>((*msger_map_)["ActivityConf"]);
+  chapter_conf_ = std::dynamic_pointer_cast<ChapterConf>((*msger_map_)["ChapterConf"]);
+  theme_conf_ = std::dynamic_pointer_cast<ThemeConf>((*msger_map_)["ThemeConf"]);
+}
+
+template <>
+const std::shared_ptr<PatchMergeConf> Hub::Get<PatchMergeConf>() const {
+  return GetMessagerContainer()->patch_merge_conf_;
+}
+
+template <>
+const std::shared_ptr<PatchReplaceConf> Hub::Get<PatchReplaceConf>() const {
+  return GetMessagerContainer()->patch_replace_conf_;
+}
+
+template <>
+const std::shared_ptr<RecursivePatchConf> Hub::Get<RecursivePatchConf>() const {
+  return GetMessagerContainer()->recursive_patch_conf_;
+}
+
+template <>
+const std::shared_ptr<ActivityConf> Hub::Get<ActivityConf>() const {
+  return GetMessagerContainer()->activity_conf_;
+}
+
+template <>
+const std::shared_ptr<ChapterConf> Hub::Get<ChapterConf>() const {
+  return GetMessagerContainer()->chapter_conf_;
+}
+
+template <>
+const std::shared_ptr<ThemeConf> Hub::Get<ThemeConf>() const {
+  return GetMessagerContainer()->theme_conf_;
 }
 }  // namespace tableau

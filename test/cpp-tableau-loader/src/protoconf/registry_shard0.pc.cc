@@ -3,7 +3,7 @@
 // - protoc-gen-cpp-tableau-loader v0.8.0
 // - protoc                        v3.19.3
 
-#include "registry.pc.h"
+#include "hub.pc.h"
 
 #include "hero_conf.pc.h"
 #include "item_conf.pc.h"
@@ -13,5 +13,26 @@ void Registry::InitShard0() {
   Register<HeroBaseConf>();
   Register<HeroConf>();
   Register<ItemConf>();
+}
+
+void MessagerContainer::InitShard0() {
+  hero_base_conf_ = std::dynamic_pointer_cast<HeroBaseConf>((*msger_map_)["HeroBaseConf"]);
+  hero_conf_ = std::dynamic_pointer_cast<HeroConf>((*msger_map_)["HeroConf"]);
+  item_conf_ = std::dynamic_pointer_cast<ItemConf>((*msger_map_)["ItemConf"]);
+}
+
+template <>
+const std::shared_ptr<HeroBaseConf> Hub::Get<HeroBaseConf>() const {
+  return GetMessagerContainer()->hero_base_conf_;
+}
+
+template <>
+const std::shared_ptr<HeroConf> Hub::Get<HeroConf>() const {
+  return GetMessagerContainer()->hero_conf_;
+}
+
+template <>
+const std::shared_ptr<ItemConf> Hub::Get<ItemConf>() const {
+  return GetMessagerContainer()->item_conf_;
 }
 }  // namespace tableau
