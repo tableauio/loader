@@ -14,7 +14,7 @@ func generateShardedHub(gen *protogen.Plugin) {
 	protofiles, fileMessagers := getAllOrderedFilesAndMessagers(gen)
 
 	// detect real shard num
-	realShardNum := *registryShards
+	realShardNum := *shards
 	if realShardNum > len(protofiles) {
 		realShardNum = len(protofiles)
 	}

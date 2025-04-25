@@ -50,7 +50,7 @@ func getAllOrderedFilesAndMessagers(gen *protogen.Plugin) (protofiles []string, 
 
 // generateHub generates related hub files.
 func generateHub(gen *protogen.Plugin) {
-	if *registryShards <= 1 {
+	if *shards <= 1 {
 		protofiles, fileMessagers := getAllOrderedFilesAndMessagers(gen)
 
 		hppFilename := "hub." + pcExt + ".h"
