@@ -127,7 +127,6 @@ const U* Hub::GetOrderedMap(Args... args) const {
   return msger ? msger->GetOrderedMap(args...) : nullptr;
 }
 
-// Auto-generated template specializations below
 template <>
 const std::shared_ptr<HeroBaseConf> Hub::Get<HeroBaseConf>() const;
 
@@ -162,14 +161,14 @@ class MessagerContainer {
   MessagerContainer(std::shared_ptr<MessagerMap> msger_map = nullptr);
 
  private:
-  // Auto-generated shards below
+  std::shared_ptr<MessagerMap> msger_map_;
+  std::time_t last_loaded_time_;
+
+ private:
   void InitShard0();
   void InitShard1();
 
  private:
-  std::shared_ptr<MessagerMap> msger_map_;
-  std::time_t last_loaded_time_;
-  // Auto-generated all messagers as fields for fast access below
   std::shared_ptr<HeroBaseConf> hero_base_conf_;
   std::shared_ptr<HeroConf> hero_conf_;
   std::shared_ptr<ItemConf> item_conf_;
@@ -194,7 +193,6 @@ class Registry {
   static void Register();
 
  private:
-  // Auto-generated shards below
   static void InitShard0();
   static void InitShard1();
 

@@ -26,7 +26,7 @@ var registryShards *int
 
 const (
 	ModeDefault  = "default"  // generate all at once.
-	ModeRegistry = "registry" // only generate "registry.pc.h/cc" files.
+	ModeHub      = "hub"      // only generate "hub.pc.h/cc" files.
 	ModeMessager = "messager" // only generate "*.pc.h/cc" for each .proto files.
 )
 
@@ -34,12 +34,12 @@ func main() {
 	var flags flag.FlagSet
 	namespace = flags.String("namespace", "tableau", "tableau namespace")
 	messagerSuffix = flags.String("suffix", "Mgr", "tableau messager name suffix")
-	mode = flags.String("mode", "default", `available mode: default, registry, and messager. 
+	mode = flags.String("mode", "default", `available mode: default, hub, and messager. 
   - default: generate all at once.
-  - registry: only generate "registry.pc.h/cc" files.
+  - hub: only generate "hub.pc.h/cc" files.
   - messager: only generate "*.pc.h/cc" for each .proto files.
 `)
-	registryShards = flags.Int("registry-shards", 1, "count of generated registry files")
+	registryShards = flags.Int("registry-shards", 1, "count of generated hub & registry files")
 	flag.Parse()
 
 	protogen.Options{
@@ -54,7 +54,7 @@ func main() {
 			switch *mode {
 			case ModeMessager:
 				generateMessager(gen, f)
-			case ModeRegistry:
+			case ModeHub:
 				// pass
 			case ModeDefault:
 				generateMessager(gen, f)
@@ -63,12 +63,12 @@ func main() {
 
 		switch *mode {
 		case ModeDefault:
-			generateRegistry(gen)
+			generateHub(gen)
 			generateEmbed(gen)
 		case ModeMessager:
 			// pass
-		case ModeRegistry:
-			generateRegistry(gen)
+		case ModeHub:
+			generateHub(gen)
 		}
 		return nil
 	})

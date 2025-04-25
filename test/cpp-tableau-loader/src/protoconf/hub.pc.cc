@@ -126,13 +126,11 @@ std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainer()->last
 MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* = nullptr*/)
     : msger_map_(msger_map != nullptr ? msger_map : std::make_shared<MessagerMap>()),
       last_loaded_time_(std::time(nullptr)) {
-  // Auto-generated shards below
   InitShard0();
   InitShard1();
 }
 
 void Registry::Init() {
-  // Auto-generated shards below
   InitShard0();
   InitShard1();
 }

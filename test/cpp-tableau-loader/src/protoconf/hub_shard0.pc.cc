@@ -9,18 +9,6 @@
 #include "item_conf.pc.h"
 
 namespace tableau {
-void Registry::InitShard0() {
-  Register<HeroBaseConf>();
-  Register<HeroConf>();
-  Register<ItemConf>();
-}
-
-void MessagerContainer::InitShard0() {
-  hero_base_conf_ = std::dynamic_pointer_cast<HeroBaseConf>((*msger_map_)["HeroBaseConf"]);
-  hero_conf_ = std::dynamic_pointer_cast<HeroConf>((*msger_map_)["HeroConf"]);
-  item_conf_ = std::dynamic_pointer_cast<ItemConf>((*msger_map_)["ItemConf"]);
-}
-
 template <>
 const std::shared_ptr<HeroBaseConf> Hub::Get<HeroBaseConf>() const {
   return GetMessagerContainer()->hero_base_conf_;
@@ -34,5 +22,17 @@ const std::shared_ptr<HeroConf> Hub::Get<HeroConf>() const {
 template <>
 const std::shared_ptr<ItemConf> Hub::Get<ItemConf>() const {
   return GetMessagerContainer()->item_conf_;
+}
+
+void MessagerContainer::InitShard0() {
+  hero_base_conf_ = std::dynamic_pointer_cast<HeroBaseConf>((*msger_map_)["HeroBaseConf"]);
+  hero_conf_ = std::dynamic_pointer_cast<HeroConf>((*msger_map_)["HeroConf"]);
+  item_conf_ = std::dynamic_pointer_cast<ItemConf>((*msger_map_)["ItemConf"]);
+}
+
+void Registry::InitShard0() {
+  Register<HeroBaseConf>();
+  Register<HeroConf>();
+  Register<ItemConf>();
 }
 }  // namespace tableau

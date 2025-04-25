@@ -9,24 +9,6 @@
 #include "test_conf.pc.h"
 
 namespace tableau {
-void Registry::InitShard1() {
-  Register<PatchMergeConf>();
-  Register<PatchReplaceConf>();
-  Register<RecursivePatchConf>();
-  Register<ActivityConf>();
-  Register<ChapterConf>();
-  Register<ThemeConf>();
-}
-
-void MessagerContainer::InitShard1() {
-  patch_merge_conf_ = std::dynamic_pointer_cast<PatchMergeConf>((*msger_map_)["PatchMergeConf"]);
-  patch_replace_conf_ = std::dynamic_pointer_cast<PatchReplaceConf>((*msger_map_)["PatchReplaceConf"]);
-  recursive_patch_conf_ = std::dynamic_pointer_cast<RecursivePatchConf>((*msger_map_)["RecursivePatchConf"]);
-  activity_conf_ = std::dynamic_pointer_cast<ActivityConf>((*msger_map_)["ActivityConf"]);
-  chapter_conf_ = std::dynamic_pointer_cast<ChapterConf>((*msger_map_)["ChapterConf"]);
-  theme_conf_ = std::dynamic_pointer_cast<ThemeConf>((*msger_map_)["ThemeConf"]);
-}
-
 template <>
 const std::shared_ptr<PatchMergeConf> Hub::Get<PatchMergeConf>() const {
   return GetMessagerContainer()->patch_merge_conf_;
@@ -55,5 +37,23 @@ const std::shared_ptr<ChapterConf> Hub::Get<ChapterConf>() const {
 template <>
 const std::shared_ptr<ThemeConf> Hub::Get<ThemeConf>() const {
   return GetMessagerContainer()->theme_conf_;
+}
+
+void MessagerContainer::InitShard1() {
+  patch_merge_conf_ = std::dynamic_pointer_cast<PatchMergeConf>((*msger_map_)["PatchMergeConf"]);
+  patch_replace_conf_ = std::dynamic_pointer_cast<PatchReplaceConf>((*msger_map_)["PatchReplaceConf"]);
+  recursive_patch_conf_ = std::dynamic_pointer_cast<RecursivePatchConf>((*msger_map_)["RecursivePatchConf"]);
+  activity_conf_ = std::dynamic_pointer_cast<ActivityConf>((*msger_map_)["ActivityConf"]);
+  chapter_conf_ = std::dynamic_pointer_cast<ChapterConf>((*msger_map_)["ChapterConf"]);
+  theme_conf_ = std::dynamic_pointer_cast<ThemeConf>((*msger_map_)["ThemeConf"]);
+}
+
+void Registry::InitShard1() {
+  Register<PatchMergeConf>();
+  Register<PatchReplaceConf>();
+  Register<RecursivePatchConf>();
+  Register<ActivityConf>();
+  Register<ChapterConf>();
+  Register<ThemeConf>();
 }
 }  // namespace tableau
