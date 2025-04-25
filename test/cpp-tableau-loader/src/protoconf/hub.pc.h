@@ -22,17 +22,6 @@ namespace tableau {
 class MessagerContainer;
 class Hub;
 
-// Auto-generated declarations below
-class HeroBaseConf;
-class HeroConf;
-class ItemConf;
-class PatchMergeConf;
-class PatchReplaceConf;
-class RecursivePatchConf;
-class ActivityConf;
-class ChapterConf;
-class ThemeConf;
-
 using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
 // FilterFunc filter in messagers if returned value is true.
 // NOTE: name is the protobuf message name, e.g.: "message ItemConf{...}".
@@ -127,30 +116,39 @@ const U* Hub::GetOrderedMap(Args... args) const {
   return msger ? msger->GetOrderedMap(args...) : nullptr;
 }
 
+class HeroBaseConf;
 template <>
 const std::shared_ptr<HeroBaseConf> Hub::Get<HeroBaseConf>() const;
 
+class HeroConf;
 template <>
 const std::shared_ptr<HeroConf> Hub::Get<HeroConf>() const;
 
+class ItemConf;
 template <>
 const std::shared_ptr<ItemConf> Hub::Get<ItemConf>() const;
 
+class PatchMergeConf;
 template <>
 const std::shared_ptr<PatchMergeConf> Hub::Get<PatchMergeConf>() const;
 
+class PatchReplaceConf;
 template <>
 const std::shared_ptr<PatchReplaceConf> Hub::Get<PatchReplaceConf>() const;
 
+class RecursivePatchConf;
 template <>
 const std::shared_ptr<RecursivePatchConf> Hub::Get<RecursivePatchConf>() const;
 
+class ActivityConf;
 template <>
 const std::shared_ptr<ActivityConf> Hub::Get<ActivityConf>() const;
 
+class ChapterConf;
 template <>
 const std::shared_ptr<ChapterConf> Hub::Get<ChapterConf>() const;
 
+class ThemeConf;
 template <>
 const std::shared_ptr<ThemeConf> Hub::Get<ThemeConf>() const;
 

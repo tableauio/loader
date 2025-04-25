@@ -86,6 +86,7 @@ func generateHub(gen *protogen.Plugin) {
 func generateHubHppTplSpec(gen *protogen.Plugin, g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
+			g.P("class ", messager, ";")
 			g.P("template <>")
 			g.P("const std::shared_ptr<", messager, "> Hub::Get<", messager, ">() const;")
 			g.P()
@@ -154,17 +155,6 @@ const hubHpp = `#pragma once
 namespace tableau {
 class MessagerContainer;
 class Hub;
-
-// Auto-generated declarations below
-class HeroBaseConf;
-class HeroConf;
-class ItemConf;
-class PatchMergeConf;
-class PatchReplaceConf;
-class RecursivePatchConf;
-class ActivityConf;
-class ChapterConf;
-class ThemeConf;
 
 using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
 // FilterFunc filter in messagers if returned value is true.
