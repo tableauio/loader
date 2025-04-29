@@ -7,11 +7,16 @@
 #include <sstream>
 #include <string>
 
+#if __cplusplus >= 201703L
+#include <filesystem>
+namespace fs = std::filesystem;
+#else
 #ifdef _WIN32
 #include <direct.h>
 #include <windows.h>
 #else
 #include <sys/stat.h>
+#endif
 #endif
 
 #include "load.pc.h"
@@ -37,6 +42,16 @@ const std::string kBinExt = ".bin";
 
 namespace util {
 int Mkdir(const std::string& path) {
+#if __cplusplus >= 201703L
+  std::error_code ec;
+  if (!fs::create_directories(path, ec)) {
+    if (ec) {
+      std::cerr << "system error: " << ec.message() << std::endl;
+      return -1;
+    }
+  }
+  return 0;
+#else
   std::string path_ = path + kPathSeperator;
   struct stat info;
   for (size_t pos = path_.find(kPathSeperator, 0); pos != std::string::npos; pos = path_.find(kPathSeperator, pos)) {
@@ -52,20 +67,29 @@ int Mkdir(const std::string& path) {
     }
   }
   return 0;
+#endif
 }
 
 std::string GetDir(const std::string& path) {
+#if __cplusplus >= 201703L
+  return fs::path(path).parent_path().string();
+#else
   size_t pos = path.find_last_of(kPathSeperator);
   if (pos != std::string::npos) {
     return path.substr(0, pos);
   }
   return kEmpty;
+#endif
 }
 
 bool ExistsFile(const std::string& filename) {
+#if __cplusplus >= 201703L
+  return fs::exists(filename);
+#else
   std::ifstream file(filename);
   // returns true if the file exists and is accessible
   return file.good();
+#endif
 }
 
 bool ReadFile(const std::string& filename, std::string& content) {

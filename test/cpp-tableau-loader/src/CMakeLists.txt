@@ -5,13 +5,35 @@ project(loader)
 file(GLOB_RECURSE PROTO_SOURCE *.cc)
 file(GLOB_RECURSE SOURCE *.cpp)
 
+# Add option to switch between C++11 and C++17
+option(USE_CPP17 "Use C++17 standard (otherwise use C++11)" OFF)
+
 # specify the C++ standard
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-if (MSVC)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /DNDEBUG")
+if(USE_CPP17)
+    set(CMAKE_CXX_STANDARD 17)
+    message(STATUS "Using C++17 standard")
 else()
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -fPIC -std=c++11 -Wno-deprecated -Wno-unused-variable -Wno-sign-compare -Wno-strict-aliasing -fno-strict-aliasing -DNDEBUG")
+    set(CMAKE_CXX_STANDARD 11)
+    message(STATUS "Using C++11 standard")
+endif()
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+if (MSVC)
+    if(USE_CPP17)
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /DNDEBUG /std:c++17")
+    else()
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /DNDEBUG /std:c++11")
+    endif()
+else()
+    if(USE_CPP17)
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -fPIC -std=c++17 -Wno-deprecated -Wno-unused-variable -Wno-sign-compare -Wno-strict-aliasing -fno-strict-aliasing -DNDEBUG")
+        # For older GCC versions that need explicit linking with stdc++fs
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.0")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++fs")
+        endif()
+    else()
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -fPIC -std=c++11 -Wno-deprecated -Wno-unused-variable -Wno-sign-compare -Wno-strict-aliasing -fno-strict-aliasing -DNDEBUG")
+    endif()
 endif()
 
 # root dir define
@@ -43,6 +65,7 @@ else()
     SET(COMMON_LIB
         ${PROTOBUF_LIB}/libprotobuf.a
         pthread
+        $<$<BOOL:${USE_CPP17}>:stdc++fs>
         )
 endif()
 
