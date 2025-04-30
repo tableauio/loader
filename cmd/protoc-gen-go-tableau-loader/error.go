@@ -17,6 +17,7 @@ func generateError(gen *protogen.Plugin) {
 	g.P("package ", errPkg)
 	g.P()
 	g.P(`import (`)
+	g.P(`"errors"`)
 	g.P(`"fmt"`)
 	g.P(codePackage)
 	g.P(")")
@@ -56,8 +57,9 @@ func Code(err error) code.Code {
 	if err == nil {
 		return code.Success
 	}
-	if ferr, ok := err.(*Error); ok {
-		return ferr.Code()
+	var e *Error
+	if errors.As(err, &e) {
+		return e.Code()
 	}
 	return code.Unknown
 }
