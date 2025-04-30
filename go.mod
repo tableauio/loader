@@ -9,6 +9,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tableauio/tableau v0.14.2
 	golang.org/x/exp v0.0.0-20230418202329-0354be287a23
+	golang.org/x/text v0.19.0
 	google.golang.org/protobuf v1.34.2
 )
 
@@ -40,7 +41,6 @@ require (
 	golang.org/x/crypto v0.28.0 // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
