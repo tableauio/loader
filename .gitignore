@@ -27,11 +27,12 @@
 *.out
 *.app
 
-# custom files and directories 
+# custom files and directories
 third_party/_submodules
 _out/
 build/
 bin/
+obj/
 .idea
 node_modules
 
@@ -39,6 +40,9 @@ node_modules
 
 cmd/protoc-gen-cpp-tableau-loader/protoc-gen-cpp-tableau-loader
 cmd/protoc-gen-go-tableau-loader/protoc-gen-go-tableau-loader
+cmd/protoc-gen-csharp-tableau-loader/protoc-gen-csharp-tableau-loader
 
 test/go-tableau-loader/go-tableau-loader
 _lab/ts/src/protoconf
+!test/testdata/bin/
+test/csharp-tableau-loader/protoconf
