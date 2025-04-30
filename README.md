@@ -56,6 +56,19 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 - [Protocol Buffers Go Reference](https://protobuf.dev/reference/go/)
 
+## C#
+
+### Requirements
+
+- dotnet-sdk-8.0
+
+### Test
+
+- Change dir: `cd test/csharp-tableau-loader`
+- Install depedencies: `sudo yum install dotnet-sdk-8.0 -y`
+- Generate protoconf: `sh gen.sh`
+- Test: `dotnet run`
+
 ## TypeScript
 
 ### Requirements
