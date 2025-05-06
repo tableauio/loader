@@ -6,6 +6,7 @@
 package xerrors
 
 import (
+	"errors"
 	"fmt"
 	"github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
 )
@@ -40,8 +41,9 @@ func Code(err error) code.Code {
 	if err == nil {
 		return code.Success
 	}
-	if ferr, ok := err.(*Error); ok {
-		return ferr.Code()
+	var e *Error
+	if errors.As(err, &e) {
+		return e.Code()
 	}
 	return code.Unknown
 }
