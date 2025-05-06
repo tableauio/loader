@@ -7,6 +7,7 @@
 #include "patch_conf.pc.h"
 
 #include "hub.pc.h"
+#include "util.pc.h"
 
 namespace tableau {
 const std::string PatchReplaceConf::kProtoName = "PatchReplaceConf";

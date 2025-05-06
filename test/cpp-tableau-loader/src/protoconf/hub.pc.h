@@ -8,158 +8,39 @@
 #include <google/protobuf/util/json_util.h>
 #include <tableau/protobuf/tableau.pb.h>
 
-#include <algorithm>
-#include <chrono>
-#include <cstddef>
 #include <ctime>
 #include <functional>
-#include <map>
 #include <mutex>
 #include <string>
-#include <thread>
 #include <unordered_map>
-#include <vector>
+
+#include "load.pc.h"
+#include "messager.pc.h"
+#include "scheduler.pc.h"
 
 namespace tableau {
-enum class Format {
-  kUnknown,
-  kJSON,
-  kText,
-  kBin,
-};
-
-enum class LoadMode {
-  kModeDefault,
-  kModeOnlyMain,
-  kModeOnlyPatch,
-};
-
-extern const std::string kUnknownExt;
-extern const std::string kJSONExt;
-extern const std::string kTextExt;
-extern const std::string kBinExt;
-
-static const std::string kEmpty = "";
-const std::string& GetErrMsg();
-
-class Messager;
+class MessagerContainer;
 class Hub;
 
 using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
-using MessagerContainer = std::shared_ptr<MessagerMap>;
 // FilterFunc filter in messagers if returned value is true.
 // NOTE: name is the protobuf message name, e.g.: "message ItemConf{...}".
 using Filter = std::function<bool(const std::string& name)>;
-using MessagerContainerProvider = std::function<MessagerContainer()>;
-using Postprocessor = std::function<bool(const Hub& hub)>;
-// ReadFunc reads the config file and returns its content.
-using ReadFunc = std::function<bool(const std::string& filename, std::string& content)>;
+using MessagerContainerProvider = std::function<std::shared_ptr<MessagerContainer>()>;
 
 struct HubOptions {
   // Filter can only filter in certain specific messagers based on the
   // condition that you provide.
   Filter filter;
-};
-
-struct LoadOptions {
-  // postprocessor is called after loading all configurations.
-  Postprocessor postprocessor;
-  // read_func reads the config file and returns its content.
-  ReadFunc read_func;
-  // Whether to ignore unknown JSON fields during parsing.
-  //
-  // Refer https://protobuf.dev/reference/cpp/api-docs/google.protobuf.util.json_util/#JsonParseOptions.
-  bool ignore_unknown_fields = false;
-  // Paths maps each messager name to a corresponding config file path.
-  // If specified, then the main messager will be parsed from the file
-  // directly, other than the specified load dir.
-  std::unordered_map<std::string, std::string> paths;
-  // Patch paths maps each messager name to one or multiple corresponding patch file paths.
-  // If specified, then main messager will be patched.
-  std::unordered_map<std::string, std::vector<std::string>> patch_paths;
-  // Patch dirs specifies the directory paths for config patching.
-  std::vector<std::string> patch_dirs;
-  // Mode specifies the loading mode for config patching.
-  LoadMode mode = LoadMode::kModeDefault;
-};
-
-// Convert file extension to Format type.
-// NOTE: ext includes dot ".", such as:
-//  - kJSONExt：".json"
-//  - kTextExt".txt"
-//  - kBinExt".bin"
-Format Ext2Format(const std::string& ext);
-// Empty string will be returned if an unsupported enum value has been passed,
-// and the error message can be obtained by GetErrMsg().
-const std::string& Format2Ext(Format fmt);
-bool Message2JSON(const google::protobuf::Message& msg, std::string& json);
-bool JSON2Message(const std::string& json, google::protobuf::Message& msg, const LoadOptions* options = nullptr);
-bool Text2Message(const std::string& text, google::protobuf::Message& msg);
-bool Bin2Message(const std::string& bin, google::protobuf::Message& msg);
-void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& msg);
-const std::string& GetProtoName(const google::protobuf::Message& msg);
-bool LoadMessageByPath(google::protobuf::Message& msg, const std::string& path, Format fmt = Format::kJSON,
-                       const LoadOptions* options = nullptr);
-bool LoadMessage(google::protobuf::Message& msg, const std::string& dir, Format fmt = Format::kJSON,
-                 const LoadOptions* options = nullptr);
-
-namespace internal {
-class Scheduler {
- public:
-  typedef std::function<void()> Job;
-
- public:
-  Scheduler() : thread_id_(std::this_thread::get_id()) {}
-  static Scheduler& Current();
-  // thread-safety
-  void Post(const Job& job);
-  void Dispatch(const Job& job);
-  int LoopOnce();
-  bool IsLoopThread() const;
-  void AssertInLoopThread() const;
-
- private:
-  std::thread::id thread_id_;
-  std::mutex mutex_;
-  std::vector<Job> jobs_;
-};
-
-bool Postprocess(Postprocessor postprocessor, MessagerContainer container);
-
-}  // namespace internal
-
-class Messager {
- public:
-  struct Stats {
-    std::chrono::microseconds duration;  // total load time consuming.
-    // TODO: crc32 of config file to decide whether changed or not
-    // std::string crc32;
-    // int64_t last_modified_time = 0; // unix timestamp
-  };
-
- public:
-  virtual ~Messager() = default;
-  static const std::string& Name() { return kEmpty; }
-  const Stats& GetStats() { return stats_; }
-  // Load fills message from file in the specified directory and format.
-  virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) = 0;
-  // Message returns the inner message data.
-  virtual const google::protobuf::Message* Message() const { return nullptr; }
-  // callback after all messagers loaded.
-  virtual bool ProcessAfterLoadAll(const Hub& hub) { return true; }
-
- protected:
-  // callback after this messager loaded.
-  virtual bool ProcessAfterLoad() { return true; };
-  Stats stats_;
+  // Provide custom MessagerContainer. For keeping configuration access
+  // consistent in a coroutine or a transaction.
+  MessagerContainerProvider provider;
 };
 
 class Hub {
  public:
-  Hub(const HubOptions* options = nullptr) : options_(options ? *options : HubOptions{}) {}
-  Hub(MessagerContainer container, const HubOptions* options = nullptr) : options_(options ? *options : HubOptions{}) {
-    SetMessagerContainer(container);
-  }
+  Hub(const HubOptions* options = nullptr)
+      : msger_container_(std::make_shared<MessagerContainer>()), options_(options ? *options : HubOptions{}) {}
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
   bool Load(const std::string& dir, Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
@@ -172,9 +53,18 @@ class Hub {
   // You'd better initialize the scheduler in the main thread.
   void InitScheduler();
 
+  /***** MessagerMap *****/
+  std::shared_ptr<MessagerMap> GetMessagerMap() const;
+  void SetMessagerMap(std::shared_ptr<MessagerMap> msger_map);
+
   /***** MessagerContainer *****/
-  MessagerContainer GetMessagerContainer() const { return msger_container_; }
-  void SetMessagerContainerProvider(MessagerContainerProvider provider) { msger_container_provider_ = provider; }
+  // This function is exposed only for use in MessagerContainerProvider.
+  std::shared_ptr<MessagerContainer> GetMessagerContainer() const {
+    if (options_.provider != nullptr) {
+      return options_.provider();
+    }
+    return msger_container_;
+  }
 
   /***** Access APIs *****/
   template <typename T>
@@ -187,28 +77,23 @@ class Hub {
   const U* GetOrderedMap(Args... args) const;
 
   // GetLastLoadedTime returns the time when hub's msger_container_ was last set.
-  inline std::time_t GetLastLoadedTime() const { return last_loaded_time_; }
+  inline std::time_t GetLastLoadedTime() const;
 
  private:
-  MessagerContainer LoadNewMessagerContainer(const std::string& dir, Format fmt = Format::kJSON,
-                                             const LoadOptions* options = nullptr);
-  MessagerContainer NewMessagerContainer();
-  void SetMessagerContainer(MessagerContainer msger_container);
-  MessagerContainer GetMessagerContainerWithProvider() const;
+  std::shared_ptr<MessagerMap> InternalLoad(const std::string& dir, Format fmt = Format::kJSON,
+                                            const LoadOptions* options = nullptr) const;
+  std::shared_ptr<MessagerMap> NewMessagerMap() const;
   const std::shared_ptr<Messager> GetMessager(const std::string& name) const;
+
+  bool Postprocess(std::shared_ptr<MessagerMap> msger_map);
 
  private:
   // For thread-safe guarantee during configuration updating.
   std::mutex mutex_;
   // All messagers' container.
-  MessagerContainer msger_container_;
-  // Provide custom MessagerContainer. For keeping configuration access
-  // consistent in a coroutine or a transaction.
-  MessagerContainerProvider msger_container_provider_;
+  std::shared_ptr<MessagerContainer> msger_container_;
   // Loading scheduler.
   internal::Scheduler* sched_ = nullptr;
-  // Last loaded time
-  std::time_t last_loaded_time_ = 0;
   // Hub options
   const HubOptions options_;
 };
@@ -221,69 +106,100 @@ const std::shared_ptr<T> Hub::Get() const {
 
 template <typename T, typename U, typename... Args>
 const U* Hub::Get(Args... args) const {
-  auto msg = GetMessager(T::Name());
-  auto msger = std::dynamic_pointer_cast<T>(msg);
+  auto msger = Get<T>();
   return msger ? msger->Get(args...) : nullptr;
 }
 
 template <typename T, typename U, typename... Args>
 const U* Hub::GetOrderedMap(Args... args) const {
-  auto msg = GetMessager(T::Name());
-  auto msger = std::dynamic_pointer_cast<T>(msg);
+  auto msger = Get<T>();
   return msger ? msger->GetOrderedMap(args...) : nullptr;
 }
 
-namespace util {
+class HeroBaseConf;
+template <>
+const std::shared_ptr<HeroBaseConf> Hub::Get<HeroBaseConf>() const;
 
-// Combine hash values
-//
-// References:
-//  - https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x
-//  - https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
-inline void HashCombine(std::size_t& seed) {}
+class HeroConf;
+template <>
+const std::shared_ptr<HeroConf> Hub::Get<HeroConf>() const;
 
-template <typename T, typename... O>
-inline void HashCombine(std::size_t& seed, const T& v, O... others) {
-  std::hash<T> hasher;
-  seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-  HashCombine(seed, others...);
-}
+class ItemConf;
+template <>
+const std::shared_ptr<ItemConf> Hub::Get<ItemConf>() const;
 
-template <typename T, typename... O>
-inline std::size_t SugaredHashCombine(const T& v, O... others) {
-  std::size_t seed = 0;  // start with a hash value 0
-  HashCombine(seed, v, others...);
-  return seed;
-}
+class PatchMergeConf;
+template <>
+const std::shared_ptr<PatchMergeConf> Hub::Get<PatchMergeConf>() const;
 
-// Mkdir makes dir recursively.
-int Mkdir(const std::string& path);
-// GetDir returns all but the last element of path, typically the path's
-// directory.
-std::string GetDir(const std::string& path);
-// GetExt returns the file name extension used by path.
-// The extension is the suffix beginning at the final dot
-// in the final element of path; it is empty if there is
-// no dot.
-std::string GetExt(const std::string& path);
+class PatchReplaceConf;
+template <>
+const std::shared_ptr<PatchReplaceConf> Hub::Get<PatchReplaceConf>() const;
 
-class TimeProfiler {
- protected:
-  std::chrono::time_point<std::chrono::steady_clock> last_;
+class RecursivePatchConf;
+template <>
+const std::shared_ptr<RecursivePatchConf> Hub::Get<RecursivePatchConf>() const;
+
+class ActivityConf;
+template <>
+const std::shared_ptr<ActivityConf> Hub::Get<ActivityConf>() const;
+
+class ChapterConf;
+template <>
+const std::shared_ptr<ChapterConf> Hub::Get<ChapterConf>() const;
+
+class ThemeConf;
+template <>
+const std::shared_ptr<ThemeConf> Hub::Get<ThemeConf>() const;
+
+class MessagerContainer {
+  friend class Hub;
 
  public:
-  TimeProfiler() { Start(); }
-  void Start() { last_ = std::chrono::steady_clock::now(); }
-  // Calculate duration between the last time point and now,
-  // and update last time point to now.
-  std::chrono::microseconds Elapse() {
-    auto now = std::chrono::steady_clock::now();
-    auto duration = now - last_;  // This is of type std::chrono::duration
-    last_ = now;
-    return std::chrono::duration_cast<std::chrono::microseconds>(duration);
-  }
+  MessagerContainer(std::shared_ptr<MessagerMap> msger_map = nullptr);
+
+ private:
+  std::shared_ptr<MessagerMap> msger_map_;
+  std::time_t last_loaded_time_;
+
+ private:
+  void InitShard0();
+  void InitShard1();
+
+ private:
+  std::shared_ptr<HeroBaseConf> hero_base_conf_;
+  std::shared_ptr<HeroConf> hero_conf_;
+  std::shared_ptr<ItemConf> item_conf_;
+  std::shared_ptr<PatchMergeConf> patch_merge_conf_;
+  std::shared_ptr<PatchReplaceConf> patch_replace_conf_;
+  std::shared_ptr<RecursivePatchConf> recursive_patch_conf_;
+  std::shared_ptr<ActivityConf> activity_conf_;
+  std::shared_ptr<ChapterConf> chapter_conf_;
+  std::shared_ptr<ThemeConf> theme_conf_;
 };
 
-}  // namespace util
+using MessagerGenerator = std::function<std::shared_ptr<Messager>()>;
+// messager name -> messager generator
+using Registrar = std::unordered_map<std::string, MessagerGenerator>;
+class Registry {
+  friend class Hub;
 
+ public:
+  static void Init();
+
+  template <typename T>
+  static void Register();
+
+ private:
+  static void InitShard0();
+  static void InitShard1();
+
+ private:
+  static Registrar registrar;
+};
+
+template <typename T>
+void Registry::Register() {
+  registrar[T::Name()] = []() { return std::make_shared<T>(); };
+}
 }  // namespace tableau

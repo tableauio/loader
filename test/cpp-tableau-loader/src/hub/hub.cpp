@@ -3,7 +3,6 @@
 #include "hub.h"
 #include "hub/custom/item/custom_item_conf.h"
 #include "protoconf/logger.pc.h"
-#include "protoconf/registry.pc.h"
 
 void LogWrite(std::ostream* os, const tableau::log::SourceLocation& loc, const tableau::log::LevelInfo& lvl,
               const std::string& content) {

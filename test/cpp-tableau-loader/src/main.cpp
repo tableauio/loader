@@ -125,10 +125,6 @@ int main() {
   tableau::LoadOptions options;
   options.ignore_unknown_fields = true;
   options.patch_dirs = {"../../testdata/patchconf/"};
-  options.postprocessor = [](const tableau::Hub& hub) {
-    std::cout << "post process done!" << std::endl;
-    return 1;
-  };
   options.paths["ItemConf"] = "../../testdata/conf/ItemConf.json";
 
   bool ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
@@ -136,8 +132,8 @@ int main() {
     std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
     return 1;
   }
-  auto msger_container = Hub::Instance().GetMessagerContainer();
-  for (auto&& item : *msger_container) {
+  auto msger_map = Hub::Instance().GetMessagerMap();
+  for (auto&& item : *msger_map) {
     auto&& stats = item.second->GetStats();
     ATOM_DEBUG("%s: duration: %dus", item.first.c_str(), stats.duration.count());
   }

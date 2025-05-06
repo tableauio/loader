@@ -45,7 +45,8 @@ func generateHppFileContent(gen *protogen.Plugin, file *protogen.File, g *protog
 	g.P("#pragma once")
 	g.P("#include <string>")
 	g.P()
-	g.P(`#include "`, "hub.", pcExt, `.h"`)
+	g.P(`#include "`, "messager.", pcExt, `.h"`)
+	g.P(`#include "`, "util.", pcExt, `.h"`)
 	g.P(`#include "`, file.GeneratedFilenamePrefix, ".", pbExt, `.h"`)
 	g.P()
 
@@ -135,6 +136,7 @@ func generateCppFileContent(gen *protogen.Plugin, file *protogen.File, g *protog
 	g.P(`#include "`, file.GeneratedFilenamePrefix, ".", pcExt, `.h"`)
 	g.P()
 	g.P(`#include "hub.pc.h"`)
+	g.P(`#include "util.pc.h"`)
 	g.P()
 
 	g.P("namespace ", *namespace, " {")

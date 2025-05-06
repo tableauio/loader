@@ -15,7 +15,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 - Change dir: `cd test/cpp-tableau-loader`
 - Generate protoconf: `bash ./gen.sh`
 - Create build dir: `mkdir build && cd build`
-- Run cmake: `cmake ../src/`
+- Run cmake: `cmake ../src/`(use c++11) or `cmake -DUSE_CPP17=ON ../src/`(use c++17)
 - Build: `make -j8`, then the **bin** dir will be generated at `test/cpp-tableau-loader/bin`.
 
 ### References

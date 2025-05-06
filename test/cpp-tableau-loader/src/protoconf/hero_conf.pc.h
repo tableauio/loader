@@ -7,7 +7,8 @@
 #pragma once
 #include <string>
 
-#include "hub.pc.h"
+#include "messager.pc.h"
+#include "util.pc.h"
 #include "hero_conf.pb.h"
 
 namespace tableau {
