@@ -5,12 +5,6 @@
 
 #include "hub.pc.h"
 
-#include <google/protobuf/stubs/logging.h>
-#include <google/protobuf/stubs/status.h>
-#include <google/protobuf/text_format.h>
-
-#include <string>
-
 #include "logger.pc.h"
 #include "messager.pc.h"
 #include "util.pc.h"
