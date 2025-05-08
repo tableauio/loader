@@ -142,14 +142,6 @@ const std::string& Format2Ext(Format fmt) {
   }
 }
 
-bool Message2JSON(const google::protobuf::Message& msg, std::string& json) {
-  google::protobuf::util::JsonPrintOptions options;
-  options.add_whitespace = true;
-  options.always_print_primitive_fields = true;
-  options.preserve_proto_field_names = true;
-  return google::protobuf::util::MessageToJsonString(msg, &json, options).ok();
-}
-
 bool JSON2Message(const std::string& json, google::protobuf::Message& msg, const LoadOptions* options /* = nullptr */) {
   google::protobuf::util::Status status;
   if (options != nullptr) {
