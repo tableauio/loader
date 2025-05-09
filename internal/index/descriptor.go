@@ -1,6 +1,7 @@
 package index
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/tableauio/tableau/proto/tableaupb"
@@ -160,6 +161,15 @@ func ParseIndexDescriptor(gen *protogen.Plugin, md protoreflect.MessageDescripto
 			descriptor.Name = string(descriptor.MD.Name())
 		}
 		descriptors = append(descriptors, descriptor)
+	}
+	// check duplicate index name
+	indexNameMap := map[string]int{}
+	for i, descriptor := range descriptors {
+		if j, ok := indexNameMap[descriptor.Name]; ok {
+			panic(fmt.Sprintf("duplicate index name: %v and %v", indexes[j], indexes[i]))
+		} else {
+			indexNameMap[descriptor.Name] = i
+		}
 	}
 	return descriptors
 }
