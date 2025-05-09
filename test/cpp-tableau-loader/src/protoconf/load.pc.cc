@@ -7,7 +7,6 @@
 
 #if __cplusplus >= 201703L
 #include <filesystem>
-namespace fs = std::filesystem;
 #endif
 
 #include "logger.pc.h"
@@ -188,7 +187,7 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
     std::string filename = name + util::Format2Ext(fmt);
     for (auto&& patch_dir : options->patch_dirs) {
 #if __cplusplus >= 201703L
-      patch_paths.emplace_back((fs::path(patch_dir) / filename).make_preferred().string());
+      patch_paths.emplace_back((std::filesystem::path(patch_dir) / filename).make_preferred().string());
 #else
       patch_paths.emplace_back(patch_dir + kPathSeperator + filename);
 #endif
@@ -293,7 +292,7 @@ bool LoadMessage(google::protobuf::Message& msg, const std::string& dir, Format 
   if (path.empty()) {
     std::string filename = name + util::Format2Ext(fmt);
 #if __cplusplus >= 201703L
-    path = (fs::path(dir) / filename).make_preferred().string();
+    path = (std::filesystem::path(dir) / filename).make_preferred().string();
 #else
     path = dir + kPathSeperator + filename;
 #endif

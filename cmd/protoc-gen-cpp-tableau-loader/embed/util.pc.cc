@@ -9,7 +9,6 @@
 
 #if __cplusplus >= 201703L
 #include <filesystem>
-namespace fs = std::filesystem;
 #else
 #ifdef _WIN32
 #include <direct.h>
@@ -44,7 +43,7 @@ namespace util {
 int Mkdir(const std::string& path) {
 #if __cplusplus >= 201703L
   std::error_code ec;
-  if (!fs::create_directories(path, ec)) {
+  if (!std::filesystem::create_directories(path, ec)) {
     if (ec) {
       std::cerr << "system error: " << ec.message() << std::endl;
       return -1;
@@ -72,7 +71,7 @@ int Mkdir(const std::string& path) {
 
 std::string GetDir(const std::string& path) {
 #if __cplusplus >= 201703L
-  return fs::path(path).parent_path().string();
+  return std::filesystem::path(path).parent_path().string();
 #else
   size_t pos = path.find_last_of(kPathSeperator);
   if (pos != std::string::npos) {
@@ -84,7 +83,7 @@ std::string GetDir(const std::string& path) {
 
 bool ExistsFile(const std::string& filename) {
 #if __cplusplus >= 201703L
-  return fs::exists(filename);
+  return std::filesystem::exists(filename);
 #else
   std::ifstream file(filename);
   // returns true if the file exists and is accessible
