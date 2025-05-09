@@ -4,10 +4,6 @@
 // - protoc                        v3.19.3
 
 #pragma once
-#include <google/protobuf/message.h>
-#include <google/protobuf/util/json_util.h>
-#include <tableau/protobuf/tableau.pb.h>
-
 #include <ctime>
 #include <functional>
 #include <mutex>

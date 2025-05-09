@@ -1,6 +1,7 @@
 #pragma once
 #include <google/protobuf/message.h>
 
+#include <chrono>
 #include <functional>
 #include <string>
 
@@ -14,9 +15,6 @@ class Messager {
  public:
   struct Stats {
     std::chrono::microseconds duration;  // total load time consuming.
-    // TODO: crc32 of config file to decide whether changed or not
-    // std::string crc32;
-    // int64_t last_modified_time = 0; // unix timestamp
   };
 
  public:

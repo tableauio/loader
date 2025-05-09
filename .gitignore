@@ -27,11 +27,12 @@
 *.out
 *.app
 
-# custom files and directories 
+# custom files and directories
 third_party/_submodules
 _out/
 build/
 bin/
+obj/
 .idea
 node_modules
 

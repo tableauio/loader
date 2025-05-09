@@ -16,6 +16,15 @@ namespace tableau {
 const std::string& GetErrMsg();
 void SetErrMsg(const std::string& msg);
 
+#if __cplusplus < 201703L
+// Platform-specific path separator
+#ifdef _WIN32
+constexpr char kPathSeperator = '\\';
+#else
+constexpr char kPathSeperator = '/';
+#endif
+#endif
+
 enum class Format {
   kUnknown,
   kJSON,
@@ -78,7 +87,6 @@ Format Ext2Format(const std::string& ext);
 // and the error message can be obtained by GetErrMsg().
 const std::string& Format2Ext(Format fmt);
 
-bool Message2JSON(const google::protobuf::Message& msg, std::string& json);
 bool JSON2Message(const std::string& json, google::protobuf::Message& msg, const LoadOptions* options = nullptr);
 bool Text2Message(const std::string& text, google::protobuf::Message& msg);
 bool Bin2Message(const std::string& bin, google::protobuf::Message& msg);
