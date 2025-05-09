@@ -43,8 +43,8 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 ### Test
 
+- Install: **dotnet-sdk-8.0**
 - Change dir: `cd test/csharp-tableau-loader`
-- Install depedencies: `sudo yum install dotnet-sdk-8.0 -y`
 - Generate protoconf: `sh gen.sh`
 - Test: `dotnet run`
 
