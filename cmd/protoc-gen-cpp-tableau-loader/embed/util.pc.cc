@@ -26,9 +26,9 @@ namespace fs = std::filesystem;
 namespace tableau {
 #ifdef _WIN32
 #define mkdir(path, mode) _mkdir(path)
-constexpr char kPathSeperator = '\\';
+const char kPathSeperator = '\\';
 #else
-constexpr char kPathSeperator = '/';
+const char kPathSeperator = '/';
 #endif
 
 static thread_local std::string g_err_msg;
