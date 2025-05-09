@@ -25,9 +25,6 @@
 namespace tableau {
 #ifdef _WIN32
 #define mkdir(path, mode) _mkdir(path)
-const char kPathSeperator = '\\';
-#else
-const char kPathSeperator = '/';
 #endif
 
 static thread_local std::string g_err_msg;

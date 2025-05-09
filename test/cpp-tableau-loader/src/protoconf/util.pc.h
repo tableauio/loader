@@ -16,8 +16,14 @@ namespace tableau {
 const std::string& GetErrMsg();
 void SetErrMsg(const std::string& msg);
 
+#if __cplusplus < 201703L
 // Platform-specific path separator
-extern const char kPathSeperator;
+#ifdef _WIN32
+constexpr char kPathSeperator = '\\';
+#else
+constexpr char kPathSeperator = '/';
+#endif
+#endif
 
 enum class Format {
   kUnknown,
