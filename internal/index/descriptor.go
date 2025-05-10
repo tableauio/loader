@@ -166,7 +166,7 @@ func ParseIndexDescriptor(gen *protogen.Plugin, md protoreflect.MessageDescripto
 	indexNameMap := map[string]int{}
 	for i, descriptor := range descriptors {
 		if j, ok := indexNameMap[descriptor.Name]; ok {
-			panic(fmt.Sprintf("duplicate index name: %v and %v", indexes[j], indexes[i]))
+			panic(fmt.Sprintf("duplicate index name on %v: %v and %v", md.Name(), indexes[j], indexes[i]))
 		} else {
 			indexNameMap[descriptor.Name] = i
 		}
