@@ -6,6 +6,7 @@ import (
 
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-csharp-tableau-loader/helper"
+	"github.com/tableauio/loader/internal/options"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -50,9 +51,14 @@ func generateFileContent(gen *protogen.Plugin, file *protogen.File, g *protogen.
 // genMessage generates a message definition.
 func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message) {
 	messagerName := string(message.Desc.Name())
+	messagerFullName := string(message.Desc.FullName())
 
 	g.P("    public class ", messagerName, " : Messager, IMessagerName")
 	g.P("    {")
+	// type definitions
+	if options.NeedGenOrderedMap(message.Desc, options.LangCS) {
+		genOrderedMapTypeDef(gen, g, message.Desc, 1, nil, messagerFullName)
+	}
 	g.P("        private Protoconf.", messagerName, " Data_ = new Protoconf.", messagerName, "();")
 	g.P()
 	g.P("        public static string Name() => Protoconf.", messagerName, ".Descriptor.Name;")
@@ -68,8 +74,23 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("        }")
 	g.P()
 	g.P("        public ref readonly Protoconf.", messagerName, " Data() => ref Data_;")
+
+	if options.NeedGenOrderedMap(message.Desc, options.LangCS) || options.NeedGenIndex(message.Desc, options.LangCS) {
+		g.P()
+		g.P("        protected override bool ProcessAfterLoad()")
+		g.P("        {")
+		if options.NeedGenOrderedMap(message.Desc, options.LangCS) {
+			genOrderedMapLoader(gen, g, message.Desc, 1, messagerFullName)
+		}
+		g.P("            return true;")
+		g.P("        }")
+	}
+
 	// syntactic sugar for accessing map items
 	genMapGetters(gen, g, message.Desc, 1, nil, messagerName)
+	if options.NeedGenOrderedMap(message.Desc, options.LangCS) {
+		genOrderedMapGetters(gen, g, message.Desc, 1, nil, messagerFullName)
+	}
 	g.P("    }")
 }
 
@@ -104,6 +125,19 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md protorefl
 			break
 		}
 	}
+}
+
+func getNextLevelMapFD(fd protoreflect.FieldDescriptor) protoreflect.FieldDescriptor {
+	if fd.Kind() == protoreflect.MessageKind {
+		md := fd.Message()
+		for i := 0; i < md.Fields().Len(); i++ {
+			fd := md.Fields().Get(i)
+			if fd.IsMap() {
+				return fd
+			}
+		}
+	}
+	return nil
 }
 
 func parseMapValueType(fd protoreflect.FieldDescriptor) string {
