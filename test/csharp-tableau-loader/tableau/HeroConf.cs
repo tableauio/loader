@@ -12,6 +12,17 @@ namespace Tableau
 {
     public class HeroConf : Messager, IMessagerName
     {
+        // OrderedMap types.
+        public class Hero_Attr_OrderedMap : SortedDictionary<string, Protoconf.HeroConf.Types.Hero.Types.Attr> { }
+
+        public class Hero_OrderedMapValue : Tuple<Hero_Attr_OrderedMap, Protoconf.HeroConf.Types.Hero?>
+        {
+            public Hero_OrderedMapValue(Hero_Attr_OrderedMap item1, Protoconf.HeroConf.Types.Hero? item2) : base(item1, item2) { }
+        }
+        public class Hero_OrderedMap : SortedDictionary<string, Hero_OrderedMapValue> { }
+
+        private Hero_OrderedMap OrderedMap = new Hero_OrderedMap();
+
         private Protoconf.HeroConf Data_ = new Protoconf.HeroConf();
 
         public static string Name() => Protoconf.HeroConf.Descriptor.Name;
@@ -28,6 +39,22 @@ namespace Tableau
 
         public ref readonly Protoconf.HeroConf Data() => ref Data_;
 
+        protected override bool ProcessAfterLoad()
+        {
+            // OrderedMap init.
+            OrderedMap.Clear();
+            foreach (var (key1, value1) in Data_.HeroMap)
+            {
+                var ordered_map1 = new Hero_Attr_OrderedMap();
+                foreach (var (key2, value2) in value1.AttrMap)
+                {
+                    ordered_map1[key2] = value2;
+                }
+                OrderedMap[key1] = new Hero_OrderedMapValue(ordered_map1, value1);
+            }
+            return true;
+        }
+
         public Protoconf.HeroConf.Types.Hero? Get1(string name)
         {
             if (Data_.HeroMap.TryGetValue(name, out var val))
@@ -43,6 +70,21 @@ namespace Tableau
             if (conf?.AttrMap != null && conf.AttrMap.TryGetValue(title, out var val))
             {
                 return val;
+            }
+            return null;
+        }
+
+        // OrderedMap accessors.
+        public ref readonly Hero_OrderedMap GetOrderedMap()
+        {
+            return ref OrderedMap;
+        }
+
+        public Hero_Attr_OrderedMap? GetOrderedMap1(string name)
+        {
+            if (OrderedMap.TryGetValue(name, out var value))
+            {
+                return value.Item1;
             }
             return null;
         }
