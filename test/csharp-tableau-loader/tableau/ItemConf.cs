@@ -12,6 +12,11 @@ namespace Tableau
 {
     public class ItemConf : Messager, IMessagerName
     {
+        // OrderedMap types.
+        public class Item_OrderedMap : SortedDictionary<uint, Protoconf.ItemConf.Types.Item> { }
+
+        private Item_OrderedMap OrderedMap = new Item_OrderedMap();
+
         private Protoconf.ItemConf Data_ = new Protoconf.ItemConf();
 
         public static string Name() => Protoconf.ItemConf.Descriptor.Name;
@@ -28,6 +33,17 @@ namespace Tableau
 
         public ref readonly Protoconf.ItemConf Data() => ref Data_;
 
+        protected override bool ProcessAfterLoad()
+        {
+            // OrderedMap init.
+            OrderedMap.Clear();
+            foreach (var (key1, value1) in Data_.ItemMap)
+            {
+                OrderedMap[key1] = value1;
+            }
+            return true;
+        }
+
         public Protoconf.ItemConf.Types.Item? Get1(uint id)
         {
             if (Data_.ItemMap.TryGetValue(id, out var val))
@@ -35,6 +51,12 @@ namespace Tableau
                 return val;
             }
             return null;
+        }
+
+        // OrderedMap accessors.
+        public ref readonly Item_OrderedMap GetOrderedMap()
+        {
+            return ref OrderedMap;
         }
     }
 
