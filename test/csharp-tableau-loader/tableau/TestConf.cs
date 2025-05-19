@@ -12,6 +12,29 @@ namespace Tableau
 {
     public class ActivityConf : Messager, IMessagerName
     {
+        // OrderedMap types.
+        public class int32_OrderedMap : SortedDictionary<uint, int> { }
+
+        public class protoconf_Section_OrderedMapValue : Tuple<int32_OrderedMap, Protoconf.Section?>
+        {
+            public protoconf_Section_OrderedMapValue(int32_OrderedMap item1, Protoconf.Section? item2) : base(item1, item2) { }
+        }
+        public class protoconf_Section_OrderedMap : SortedDictionary<uint, protoconf_Section_OrderedMapValue> { }
+
+        public class Activity_Chapter_OrderedMapValue : Tuple<protoconf_Section_OrderedMap, Protoconf.ActivityConf.Types.Activity.Types.Chapter?>
+        {
+            public Activity_Chapter_OrderedMapValue(protoconf_Section_OrderedMap item1, Protoconf.ActivityConf.Types.Activity.Types.Chapter? item2) : base(item1, item2) { }
+        }
+        public class Activity_Chapter_OrderedMap : SortedDictionary<uint, Activity_Chapter_OrderedMapValue> { }
+
+        public class Activity_OrderedMapValue : Tuple<Activity_Chapter_OrderedMap, Protoconf.ActivityConf.Types.Activity?>
+        {
+            public Activity_OrderedMapValue(Activity_Chapter_OrderedMap item1, Protoconf.ActivityConf.Types.Activity? item2) : base(item1, item2) { }
+        }
+        public class Activity_OrderedMap : SortedDictionary<ulong, Activity_OrderedMapValue> { }
+
+        private Activity_OrderedMap OrderedMap = new Activity_OrderedMap();
+
         private Protoconf.ActivityConf Data_ = new Protoconf.ActivityConf();
 
         public static string Name() => Protoconf.ActivityConf.Descriptor.Name;
@@ -27,6 +50,32 @@ namespace Tableau
         }
 
         public ref readonly Protoconf.ActivityConf Data() => ref Data_;
+
+        protected override bool ProcessAfterLoad()
+        {
+            // OrderedMap init.
+            OrderedMap.Clear();
+            foreach (var (key1, value1) in Data_.ActivityMap)
+            {
+                var ordered_map1 = new Activity_Chapter_OrderedMap();
+                foreach (var (key2, value2) in value1.ChapterMap)
+                {
+                    var ordered_map2 = new protoconf_Section_OrderedMap();
+                    foreach (var (key3, value3) in value2.SectionMap)
+                    {
+                        var ordered_map3 = new int32_OrderedMap();
+                        foreach (var (key4, value4) in value3.SectionRankMap)
+                        {
+                            ordered_map3[key4] = value4;
+                        }
+                        ordered_map2[key3] = new protoconf_Section_OrderedMapValue(ordered_map3, value3);
+                    }
+                    ordered_map1[key2] = new Activity_Chapter_OrderedMapValue(ordered_map2, value2);
+                }
+                OrderedMap[key1] = new Activity_OrderedMapValue(ordered_map1, value1);
+            }
+            return true;
+        }
 
         public Protoconf.ActivityConf.Types.Activity? Get1(ulong activityId)
         {
@@ -63,6 +112,41 @@ namespace Tableau
             if (conf?.SectionRankMap != null && conf.SectionRankMap.TryGetValue(key4, out var val))
             {
                 return val;
+            }
+            return null;
+        }
+
+        // OrderedMap accessors.
+        public ref readonly Activity_OrderedMap GetOrderedMap()
+        {
+            return ref OrderedMap;
+        }
+
+        public Activity_Chapter_OrderedMap? GetOrderedMap1(ulong activityId)
+        {
+            if (OrderedMap.TryGetValue(activityId, out var value))
+            {
+                return value.Item1;
+            }
+            return null;
+        }
+
+        public protoconf_Section_OrderedMap? GetOrderedMap2(ulong activityId, uint chapterId)
+        {
+            var conf = GetOrderedMap1(activityId);
+            if (conf != null && conf.TryGetValue(chapterId, out var value))
+            {
+                return value.Item1;
+            }
+            return null;
+        }
+
+        public int32_OrderedMap? GetOrderedMap3(ulong activityId, uint chapterId, uint sectionId)
+        {
+            var conf = GetOrderedMap2(activityId, chapterId);
+            if (conf != null && conf.TryGetValue(sectionId, out var value))
+            {
+                return value.Item1;
             }
             return null;
         }
