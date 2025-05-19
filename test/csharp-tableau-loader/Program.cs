@@ -26,6 +26,27 @@ class Program
         {
             Console.WriteLine($"HeroConf: {heroConf.Data()}");
             Console.WriteLine($"HeroConf Load duration: {heroConf.GetStats().Duration.TotalMilliseconds} ms");
+            // Traverse top-level OrderedMap (HeroOrderedMap)
+            var heroOrderedMap = heroConf.GetOrderedMap();
+            if (heroOrderedMap != null)
+            {
+                Console.WriteLine("Hero OrderedMap:");
+                foreach (var heroPair in heroOrderedMap)
+                {
+                    Console.WriteLine($"Hero: {heroPair.Key}");
+                    Console.WriteLine($"  - Hero Data: {heroPair.Value.Item2}");
+                    // Traverse nested Attr OrderedMap
+                    var attrOrderedMap = heroPair.Value.Item1;
+                    if (attrOrderedMap != null && attrOrderedMap.Count > 0)
+                    {
+                        Console.WriteLine("  Attributes:");
+                        foreach (var attrPair in attrOrderedMap)
+                        {
+                            Console.WriteLine($"    - {attrPair.Key}: {attrPair.Value}");
+                        }
+                    }
+                }
+            }
         }
 
         var itemConf = hub.Get<Tableau.ItemConf>();
