@@ -6,11 +6,11 @@ import (
 
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
-	"github.com/tableauio/loader/internal/index/desc"
+	"github.com/tableauio/loader/internal/index"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
-func genHppIndexFinders(g *protogen.GeneratedFile, descriptor *desc.IndexDescriptor) {
+func genHppIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor) {
 	g.P("  // Index accessers.")
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
@@ -88,7 +88,7 @@ func genHppIndexFinders(g *protogen.GeneratedFile, descriptor *desc.IndexDescrip
 	}
 }
 
-func genCppIndexLoader(g *protogen.GeneratedFile, descriptor *desc.IndexDescriptor) {
+func genCppIndexLoader(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor) {
 	g.P("  // Index init.")
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
@@ -116,7 +116,7 @@ func genCppIndexLoader(g *protogen.GeneratedFile, descriptor *desc.IndexDescript
 	}
 }
 
-func genOneCppIndexLoader(g *protogen.GeneratedFile, depth int, index *desc.LevelIndex, parentDataName string) {
+func genOneCppIndexLoader(g *protogen.GeneratedFile, depth int, index *index.LevelIndex, parentDataName string) {
 	indexContainerName := "index_" + strcase.ToSnake(index.Name()) + "_map_"
 	g.P(strings.Repeat("  ", depth), "{")
 	g.P(strings.Repeat("  ", depth+1), "// Index: ", index.Index)
@@ -175,7 +175,7 @@ func genOneCppIndexLoader(g *protogen.GeneratedFile, depth int, index *desc.Leve
 	g.P(strings.Repeat("  ", depth), "}")
 }
 
-func generateOneCppMulticolumnIndex(g *protogen.GeneratedFile, depth int, index *desc.LevelIndex, parentDataName string, keys []string) []string {
+func generateOneCppMulticolumnIndex(g *protogen.GeneratedFile, depth int, index *index.LevelIndex, parentDataName string, keys []string) []string {
 	cursor := len(keys)
 	if cursor >= len(index.ColFields) {
 		var keyParams string
@@ -218,7 +218,7 @@ func generateOneCppMulticolumnIndex(g *protogen.GeneratedFile, depth int, index 
 	return keys
 }
 
-func genCppIndexFinders(g *protogen.GeneratedFile, descriptor *desc.IndexDescriptor, messagerName string) {
+func genCppIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, messagerName string) {
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
 			vectorType := "Index_" + index.Name() + "Vector"

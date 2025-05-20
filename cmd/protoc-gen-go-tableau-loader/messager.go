@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
-	"github.com/tableauio/loader/internal/index/desc"
+	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/loader/internal/options"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -77,7 +77,7 @@ func generateRegister(messagers []string, g *protogen.GeneratedFile) {
 // genMessage generates a message definition.
 func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message) {
 	messagerName := string(message.Desc.Name())
-	indexDescriptor := desc.ParseIndexDescriptor(message.Desc)
+	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
 	// type definitions
 	if options.NeedGenOrderedMap(message.Desc, options.LangGO) {

@@ -1,10 +1,9 @@
-package desc
+package index
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/loader/test/go-tableau-loader/protoconf"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -29,7 +28,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 					NextLevel: &LevelMessage{
 						Indexes: []*LevelIndex{
 							{
-								Index: &index.Index{
+								Index: &Index{
 									Cols: []string{"Type"},
 									Name: "",
 								},
@@ -44,7 +43,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								},
 							},
 							{
-								Index: &index.Index{
+								Index: &Index{
 									Cols: []string{"Param"},
 									Keys: []string{"ID"},
 									Name: "ItemInfo",
@@ -68,7 +67,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								},
 							},
 							{
-								Index: &index.Index{
+								Index: &Index{
 									Cols: []string{"Default"},
 									Name: "ItemDefaultInfo",
 								},
@@ -83,7 +82,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								},
 							},
 							{
-								Index: &index.Index{
+								Index: &Index{
 									Cols: []string{"ExtType"},
 									Name: "ItemExtInfo",
 								},
@@ -98,7 +97,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								},
 							},
 							{
-								Index: &index.Index{
+								Index: &Index{
 									Cols: []string{"ID", "Name"},
 									Keys: []string{"Type", "UseEffectType"},
 									Name: "AwardItem",
@@ -135,7 +134,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								},
 							},
 							{
-								Index: &index.Index{
+								Index: &Index{
 									Cols: []string{"ID", "Type", "Param", "ExtType"},
 									Name: "SpecialItem",
 								},
@@ -168,7 +167,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								},
 							},
 							{
-								Index: &index.Index{
+								Index: &Index{
 									Cols: []string{"PathDir"},
 									Name: "ItemPathDir",
 								},
@@ -184,7 +183,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								},
 							},
 							{
-								Index: &index.Index{
+								Index: &Index{
 									Cols: []string{"PathName"},
 									Name: "ItemPathName",
 								},
@@ -200,7 +199,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								},
 							},
 							{
-								Index: &index.Index{
+								Index: &Index{
 									Cols: []string{"PathFriendID"},
 									Name: "ItemPathFriendID",
 								},
@@ -217,7 +216,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								},
 							},
 							{
-								Index: &index.Index{
+								Index: &Index{
 									Cols: []string{"UseEffectType"},
 									Name: "UseEffectType",
 								},
@@ -250,7 +249,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 						NextLevel: &LevelMessage{
 							Indexes: []*LevelIndex{
 								{
-									Index: &index.Index{
+									Index: &Index{
 										Cols: []string{"Title"},
 										Name: "",
 									},
@@ -282,7 +281,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 						FD: (&protoconf.ActivityConf_Activity{}).ProtoReflect().Descriptor().Fields().ByName("chapter_map"),
 						Indexes: []*LevelIndex{
 							{
-								Index: &index.Index{
+								Index: &Index{
 									Cols: []string{"ActivityName"},
 									Name: "",
 								},
@@ -301,7 +300,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 							FD: (&protoconf.ActivityConf_Activity_Chapter{}).ProtoReflect().Descriptor().Fields().ByName("section_map"),
 							Indexes: []*LevelIndex{
 								{
-									Index: &index.Index{
+									Index: &Index{
 										Cols: []string{"ChapterID"},
 										Name: "",
 									},
@@ -316,7 +315,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 									},
 								},
 								{
-									Index: &index.Index{
+									Index: &Index{
 										Cols: []string{"ChapterName"},
 										Keys: []string{"AwardID"},
 										Name: "NamedChapter",
@@ -345,7 +344,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								NextLevel: &LevelMessage{
 									Indexes: []*LevelIndex{
 										{
-											Index: &index.Index{
+											Index: &Index{
 												Cols: []string{"SectionItemID"},
 												Name: "Award",
 											},

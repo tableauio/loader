@@ -5,11 +5,11 @@ import (
 
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
-	"github.com/tableauio/loader/internal/index/desc"
+	"github.com/tableauio/loader/internal/index"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
-func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *desc.IndexDescriptor, messagerName string) {
+func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, messagerName string) {
 	g.P("// Index types.")
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
@@ -40,7 +40,7 @@ func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor
 	}
 }
 
-func genIndexField(g *protogen.GeneratedFile, descriptor *desc.IndexDescriptor, messagerName string) {
+func genIndexField(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, messagerName string) {
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
 			indexContainerName := "index" + strcase.ToCamel(index.Name()) + "Map"
@@ -50,7 +50,7 @@ func genIndexField(g *protogen.GeneratedFile, descriptor *desc.IndexDescriptor, 
 	}
 }
 
-func genIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *desc.IndexDescriptor, messagerName string) {
+func genIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, messagerName string) {
 	g.P("  // Index init.")
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
@@ -75,7 +75,7 @@ func genIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor 
 	}
 }
 
-func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth int, index *desc.LevelIndex,
+func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth int, index *index.LevelIndex,
 	parentDataName string, messagerName string) {
 	indexContainerName := "index" + strcase.ToCamel(index.Name()) + "Map"
 	g.P("{")
@@ -128,7 +128,7 @@ func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth in
 }
 
 func generateOneMulticolumnIndex(gen *protogen.Plugin, g *protogen.GeneratedFile,
-	depth int, index *desc.LevelIndex, parentDataName string, messagerName string, keys []string) []string {
+	depth int, index *index.LevelIndex, parentDataName string, messagerName string, keys []string) []string {
 	cursor := len(keys)
 	if cursor >= len(index.ColFields) {
 		var keyParams string
@@ -167,7 +167,7 @@ func generateOneMulticolumnIndex(gen *protogen.Plugin, g *protogen.GeneratedFile
 	return keys
 }
 
-func genIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *desc.IndexDescriptor, messagerName string) {
+func genIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, messagerName string) {
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
 			mapType := fmt.Sprintf("%s_Index_%sMap", messagerName, index.Name())

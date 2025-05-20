@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
-	"github.com/tableauio/loader/internal/index/desc"
+	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/loader/internal/options"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -80,7 +80,7 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	pkg := string(file.Desc.Package())
 	cppFullName := strings.ReplaceAll(pkg, ".", "::") + "::" + string(message.Desc.Name())
 	messagerFullName := string(message.Desc.FullName())
-	indexDescriptor := desc.ParseIndexDescriptor(message.Desc)
+	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
 	g.P("class ", message.Desc.Name(), " : public Messager {")
 	g.P(" public:")
@@ -154,7 +154,7 @@ func generateCppFileContent(gen *protogen.Plugin, file *protogen.File, g *protog
 func genCppMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message) {
 	messagerName := string(message.Desc.Name())
 	messagerFullName := string(message.Desc.FullName())
-	indexDescriptor := desc.ParseIndexDescriptor(message.Desc)
+	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
 	g.P("const std::string ", messagerName, "::kProtoName = ", `"`, messagerName, `";`)
 	g.P()
