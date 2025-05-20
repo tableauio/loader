@@ -152,88 +152,90 @@ func (x *ItemConf) processAfterLoad() error {
 		map1.Put(k1, v1)
 	}
 	// Index init.
-	// Index: Type
 	x.indexItemMap = make(ItemConf_Index_ItemMap)
-	for _, item1 := range x.data.GetItemMap() {
-		key := item1.GetType()
-		x.indexItemMap[key] = append(x.indexItemMap[key], item1)
-	}
-	// Index: Param<ID>@ItemInfo
 	x.indexItemInfoMap = make(ItemConf_Index_ItemInfoMap)
-	for _, item1 := range x.data.GetItemMap() {
-		for _, item2 := range item1.GetParamList() {
-			key := item2
-			x.indexItemInfoMap[key] = append(x.indexItemInfoMap[key], item1)
-		}
-	}
-	for _, item := range x.indexItemInfoMap {
-		sort.Slice(item, func(i, j int) bool {
-			return item[i].GetId() < item[j].GetId()
-		})
-	}
-	// Index: Default@ItemDefaultInfo
 	x.indexItemDefaultInfoMap = make(ItemConf_Index_ItemDefaultInfoMap)
-	for _, item1 := range x.data.GetItemMap() {
-		key := item1.GetDefault()
-		x.indexItemDefaultInfoMap[key] = append(x.indexItemDefaultInfoMap[key], item1)
-	}
-	// Index: ExtType@ItemExtInfo
 	x.indexItemExtInfoMap = make(ItemConf_Index_ItemExtInfoMap)
-	for _, item1 := range x.data.GetItemMap() {
-		for _, item2 := range item1.GetExtTypeList() {
-			key := item2
-			x.indexItemExtInfoMap[key] = append(x.indexItemExtInfoMap[key], item1)
-		}
-	}
-	// Index: (ID,Name)<Type,UseEffectType>@AwardItem
 	x.indexAwardItemMap = make(ItemConf_Index_AwardItemMap)
-	for _, item1 := range x.data.GetItemMap() {
-		key := ItemConf_Index_AwardItemKey{item1.GetId(), item1.GetName()}
-		x.indexAwardItemMap[key] = append(x.indexAwardItemMap[key], item1)
-	}
-	for _, item := range x.indexAwardItemMap {
-		sort.Slice(item, func(i, j int) bool {
-			if item[i].GetType() != item[j].GetType() {
-				return item[i].GetType() < item[j].GetType()
-			}
-			return item[i].GetUseEffect().GetType() < item[j].GetUseEffect().GetType()
-		})
-	}
-	// Index: (ID,Type,Param,ExtType)@SpecialItem
 	x.indexSpecialItemMap = make(ItemConf_Index_SpecialItemMap)
-	for _, item1 := range x.data.GetItemMap() {
-		for _, indexItem2 := range item1.GetParamList() {
-			for _, indexItem3 := range item1.GetExtTypeList() {
-				key := ItemConf_Index_SpecialItemKey{item1.GetId(), item1.GetType(), indexItem2, indexItem3}
-				x.indexSpecialItemMap[key] = append(x.indexSpecialItemMap[key], item1)
-			}
-		}
-	}
-	// Index: PathDir@ItemPathDir
 	x.indexItemPathDirMap = make(ItemConf_Index_ItemPathDirMap)
-	for _, item1 := range x.data.GetItemMap() {
-		key := item1.GetPath().GetDir()
-		x.indexItemPathDirMap[key] = append(x.indexItemPathDirMap[key], item1)
-	}
-	// Index: PathName@ItemPathName
 	x.indexItemPathNameMap = make(ItemConf_Index_ItemPathNameMap)
-	for _, item1 := range x.data.GetItemMap() {
-		for _, item2 := range item1.GetPath().GetNameList() {
-			key := item2
-			x.indexItemPathNameMap[key] = append(x.indexItemPathNameMap[key], item1)
-		}
-	}
-	// Index: PathFriendID@ItemPathFriendID
 	x.indexItemPathFriendIdMap = make(ItemConf_Index_ItemPathFriendIDMap)
-	for _, item1 := range x.data.GetItemMap() {
-		key := item1.GetPath().GetFriend().GetId()
-		x.indexItemPathFriendIdMap[key] = append(x.indexItemPathFriendIdMap[key], item1)
-	}
-	// Index: UseEffectType@UseEffectType
 	x.indexUseEffectTypeMap = make(ItemConf_Index_UseEffectTypeMap)
 	for _, item1 := range x.data.GetItemMap() {
-		key := item1.GetUseEffect().GetType()
-		x.indexUseEffectTypeMap[key] = append(x.indexUseEffectTypeMap[key], item1)
+		{
+			// Index: Type
+			key := item1.GetType()
+			x.indexItemMap[key] = append(x.indexItemMap[key], item1)
+		}
+		{
+			// Index: Param<ID>@ItemInfo
+			for _, item2 := range item1.GetParamList() {
+				key := item2
+				x.indexItemInfoMap[key] = append(x.indexItemInfoMap[key], item1)
+			}
+			for _, item := range x.indexItemInfoMap {
+				sort.Slice(item, func(i, j int) bool {
+					return item[i].GetId() < item[j].GetId()
+				})
+			}
+		}
+		{
+			// Index: Default@ItemDefaultInfo
+			key := item1.GetDefault()
+			x.indexItemDefaultInfoMap[key] = append(x.indexItemDefaultInfoMap[key], item1)
+		}
+		{
+			// Index: ExtType@ItemExtInfo
+			for _, item2 := range item1.GetExtTypeList() {
+				key := item2
+				x.indexItemExtInfoMap[key] = append(x.indexItemExtInfoMap[key], item1)
+			}
+		}
+		{
+			// Index: (ID,Name)<Type,UseEffectType>@AwardItem
+			key := ItemConf_Index_AwardItemKey{item1.GetId(), item1.GetName()}
+			x.indexAwardItemMap[key] = append(x.indexAwardItemMap[key], item1)
+			for _, item := range x.indexAwardItemMap {
+				sort.Slice(item, func(i, j int) bool {
+					if item[i].GetType() != item[j].GetType() {
+						return item[i].GetType() < item[j].GetType()
+					}
+					return item[i].GetUseEffect().GetType() < item[j].GetUseEffect().GetType()
+				})
+			}
+		}
+		{
+			// Index: (ID,Type,Param,ExtType)@SpecialItem
+			for _, indexItem2 := range item1.GetParamList() {
+				for _, indexItem3 := range item1.GetExtTypeList() {
+					key := ItemConf_Index_SpecialItemKey{item1.GetId(), item1.GetType(), indexItem2, indexItem3}
+					x.indexSpecialItemMap[key] = append(x.indexSpecialItemMap[key], item1)
+				}
+			}
+		}
+		{
+			// Index: PathDir@ItemPathDir
+			key := item1.GetPath().GetDir()
+			x.indexItemPathDirMap[key] = append(x.indexItemPathDirMap[key], item1)
+		}
+		{
+			// Index: PathName@ItemPathName
+			for _, item2 := range item1.GetPath().GetNameList() {
+				key := item2
+				x.indexItemPathNameMap[key] = append(x.indexItemPathNameMap[key], item1)
+			}
+		}
+		{
+			// Index: PathFriendID@ItemPathFriendID
+			key := item1.GetPath().GetFriend().GetId()
+			x.indexItemPathFriendIdMap[key] = append(x.indexItemPathFriendIdMap[key], item1)
+		}
+		{
+			// Index: UseEffectType@UseEffectType
+			key := item1.GetUseEffect().GetType()
+			x.indexUseEffectTypeMap[key] = append(x.indexUseEffectTypeMap[key], item1)
+		}
 	}
 	return nil
 }

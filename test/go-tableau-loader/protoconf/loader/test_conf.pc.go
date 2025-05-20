@@ -152,41 +152,39 @@ func (x *ActivityConf) processAfterLoad() error {
 		}
 	}
 	// Index init.
-	// Index: ActivityName
 	x.indexActivityMap = make(ActivityConf_Index_ActivityMap)
-	for _, item1 := range x.data.GetActivityMap() {
-		key := item1.GetActivityName()
-		x.indexActivityMap[key] = append(x.indexActivityMap[key], item1)
-	}
-	// Index: ChapterID
 	x.indexChapterMap = make(ActivityConf_Index_ChapterMap)
-	for _, item1 := range x.data.GetActivityMap() {
-		for _, item2 := range item1.GetChapterMap() {
-			key := item2.GetChapterId()
-			x.indexChapterMap[key] = append(x.indexChapterMap[key], item2)
-		}
-	}
-	// Index: ChapterName<AwardID>@NamedChapter
 	x.indexNamedChapterMap = make(ActivityConf_Index_NamedChapterMap)
-	for _, item1 := range x.data.GetActivityMap() {
-		for _, item2 := range item1.GetChapterMap() {
-			key := item2.GetChapterName()
-			x.indexNamedChapterMap[key] = append(x.indexNamedChapterMap[key], item2)
-		}
-	}
-	for _, item := range x.indexNamedChapterMap {
-		sort.Slice(item, func(i, j int) bool {
-			return item[i].GetAwardId() < item[j].GetAwardId()
-		})
-	}
-	// Index: SectionItemID@Award
 	x.indexAwardMap = make(ActivityConf_Index_AwardMap)
 	for _, item1 := range x.data.GetActivityMap() {
+		{
+			// Index: ActivityName
+			key := item1.GetActivityName()
+			x.indexActivityMap[key] = append(x.indexActivityMap[key], item1)
+		}
 		for _, item2 := range item1.GetChapterMap() {
+			{
+				// Index: ChapterID
+				key := item2.GetChapterId()
+				x.indexChapterMap[key] = append(x.indexChapterMap[key], item2)
+			}
+			{
+				// Index: ChapterName<AwardID>@NamedChapter
+				key := item2.GetChapterName()
+				x.indexNamedChapterMap[key] = append(x.indexNamedChapterMap[key], item2)
+				for _, item := range x.indexNamedChapterMap {
+					sort.Slice(item, func(i, j int) bool {
+						return item[i].GetAwardId() < item[j].GetAwardId()
+					})
+				}
+			}
 			for _, item3 := range item2.GetSectionMap() {
 				for _, item4 := range item3.GetSectionItemList() {
-					key := item4.GetId()
-					x.indexAwardMap[key] = append(x.indexAwardMap[key], item4)
+					{
+						// Index: SectionItemID@Award
+						key := item4.GetId()
+						x.indexAwardMap[key] = append(x.indexAwardMap[key], item4)
+					}
 				}
 			}
 		}

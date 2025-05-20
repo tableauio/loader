@@ -131,7 +131,7 @@ func parseInSameLevel(gen *protogen.Plugin, cols []string, prefix string, md pro
 
 func ParseIndexDescriptor(gen *protogen.Plugin, md protoreflect.MessageDescriptor) []*IndexDescriptor {
 	descriptors := []*IndexDescriptor{}
-	indexes := parseWSOptionIndex(md)
+	indexes := ParseWSOptionIndex(md)
 	for _, index := range indexes {
 		if len(index.Cols) == 0 {
 			continue

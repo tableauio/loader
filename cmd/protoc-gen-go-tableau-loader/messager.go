@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
-	"github.com/tableauio/loader/internal/index"
+	"github.com/tableauio/loader/internal/index/desc"
 	"github.com/tableauio/loader/internal/options"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -77,14 +77,14 @@ func generateRegister(messagers []string, g *protogen.GeneratedFile) {
 // genMessage generates a message definition.
 func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message) {
 	messagerName := string(message.Desc.Name())
-	indexDescriptors := index.ParseIndexDescriptor(gen, message.Desc)
+	indexDescriptor := desc.ParseIndexDescriptor(message.Desc)
 
 	// type definitions
 	if options.NeedGenOrderedMap(message.Desc, options.LangGO) {
 		genOrderedMapTypeDef(gen, g, message.Desc, 1, nil, messagerName)
 	}
 	if options.NeedGenIndex(message.Desc, options.LangGO) {
-		genIndexTypeDef(gen, g, indexDescriptors, messagerName)
+		genIndexTypeDef(gen, g, indexDescriptor, messagerName)
 	}
 
 	g.P("// ", messagerName, " is a wrapper around protobuf message: ", message.GoIdent, ".")
@@ -102,7 +102,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 		genOrderedMapField(g, message.Desc)
 	}
 	if options.NeedGenIndex(message.Desc, options.LangGO) {
-		genIndexField(g, indexDescriptors, messagerName)
+		genIndexField(g, indexDescriptor, messagerName)
 	}
 	g.P("}")
 	g.P()
@@ -179,7 +179,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 			genOrderedMapLoader(gen, g, message.Desc, 1, nil, messagerName, "")
 		}
 		if options.NeedGenIndex(message.Desc, options.LangGO) {
-			genIndexLoader(gen, g, indexDescriptors, messagerName)
+			genIndexLoader(gen, g, indexDescriptor, messagerName)
 		}
 		g.P("return nil")
 		g.P("}")
@@ -192,7 +192,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 		genOrderedMapGetters(gen, g, message.Desc, 1, nil, messagerName)
 	}
 	if options.NeedGenIndex(message.Desc, options.LangGO) {
-		genIndexFinders(gen, g, indexDescriptors, messagerName)
+		genIndexFinders(gen, g, indexDescriptor, messagerName)
 	}
 }
 
