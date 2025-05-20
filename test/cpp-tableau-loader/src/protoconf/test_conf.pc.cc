@@ -22,6 +22,7 @@ bool ActivityConf::Load(const std::string& dir, Format fmt, const LoadOptions* o
 
 bool ActivityConf::ProcessAfterLoad() {
   // OrderedMap init.
+  ordered_map_.clear();
   for (auto&& item1 : data_.activity_map()) {
     ordered_map_[item1.first] = Activity_OrderedMapValue(Activity_Chapter_OrderedMap(), &item1.second);
     auto&& ordered_map1 = ordered_map_[item1.first].first;
@@ -39,12 +40,14 @@ bool ActivityConf::ProcessAfterLoad() {
   }
   // Index init.
   // Index: ChapterID
+  index_chapter_map_.clear();
   for (auto&& item1 : data_.activity_map()) {
     for (auto&& item2 : item1.second.chapter_map()) {
       index_chapter_map_[item2.second.chapter_id()].push_back(&item2.second);
     }
   }
   // Index: ChapterName<AwardID>@NamedChapter
+  index_named_chapter_map_.clear();
   for (auto&& item1 : data_.activity_map()) {
     for (auto&& item2 : item1.second.chapter_map()) {
       index_named_chapter_map_[item2.second.chapter_name()].push_back(&item2.second);

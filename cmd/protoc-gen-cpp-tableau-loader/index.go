@@ -100,6 +100,9 @@ func genOneCppIndexLoader(g *protogen.GeneratedFile, depth int, descriptor *inde
 		return
 	}
 	indexContainerName := "index_" + strcase.ToSnake(descriptor.Name) + "_map_"
+	if depth == 1 {
+		g.P("  ", indexContainerName, ".clear();")
+	}
 	if levelMessage.NextLevel != nil {
 		itemName := fmt.Sprintf("item%d", depth)
 		g.P(strings.Repeat("  ", depth), "for (auto&& "+itemName+" : "+parentDataName+"."+helper.ParseIndexFieldName(levelMessage.FD)+"()) {")

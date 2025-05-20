@@ -62,6 +62,7 @@ func genHppOrderedMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageD
 func genCppOrderedMapLoader(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, messagerFullName string) {
 	if depth == 1 {
 		g.P("  // OrderedMap init.")
+		g.P("  ordered_map_.clear();")
 	}
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)

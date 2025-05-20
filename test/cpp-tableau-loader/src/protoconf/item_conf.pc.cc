@@ -22,15 +22,18 @@ bool ItemConf::Load(const std::string& dir, Format fmt, const LoadOptions* optio
 
 bool ItemConf::ProcessAfterLoad() {
   // OrderedMap init.
+  ordered_map_.clear();
   for (auto&& item1 : data_.item_map()) {
     ordered_map_[item1.first] = &item1.second;
   }
   // Index init.
   // Index: Type
+  index_item_map_.clear();
   for (auto&& item1 : data_.item_map()) {
     index_item_map_[item1.second.type()].push_back(&item1.second);
   }
   // Index: Param<ID>@ItemInfo
+  index_item_info_map_.clear();
   for (auto&& item1 : data_.item_map()) {
     for (auto&& item2 : item1.second.param_list()) {
       index_item_info_map_[item2].push_back(&item1.second);
@@ -43,16 +46,19 @@ bool ItemConf::ProcessAfterLoad() {
               });
   }
   // Index: Default@ItemDefaultInfo
+  index_item_default_info_map_.clear();
   for (auto&& item1 : data_.item_map()) {
     index_item_default_info_map_[item1.second.default_()].push_back(&item1.second);
   }
   // Index: ExtType@ItemExtInfo
+  index_item_ext_info_map_.clear();
   for (auto&& item1 : data_.item_map()) {
     for (auto&& item2 : item1.second.ext_type_list()) {
       index_item_ext_info_map_[static_cast<protoconf::FruitType>(item2)].push_back(&item1.second);
     }
   }
   // Index: (ID,Name)<Type,UseEffectType>@AwardItem
+  index_award_item_map_.clear();
   for (auto&& item1 : data_.item_map()) {
     Index_AwardItemKey key{item1.second.id(), item1.second.name()};
     index_award_item_map_[key].push_back(&item1.second);
@@ -67,6 +73,7 @@ bool ItemConf::ProcessAfterLoad() {
               });
   }
   // Index: (ID,Type,Param,ExtType)@SpecialItem
+  index_special_item_map_.clear();
   for (auto&& item1 : data_.item_map()) {
     for (auto&& index_item2 : item1.second.param_list()) {
       for (auto&& index_item3 : item1.second.ext_type_list()) {
@@ -76,20 +83,24 @@ bool ItemConf::ProcessAfterLoad() {
     }
   }
   // Index: PathDir@ItemPathDir
+  index_item_path_dir_map_.clear();
   for (auto&& item1 : data_.item_map()) {
     index_item_path_dir_map_[item1.second.path().dir()].push_back(&item1.second);
   }
   // Index: PathName@ItemPathName
+  index_item_path_name_map_.clear();
   for (auto&& item1 : data_.item_map()) {
     for (auto&& item2 : item1.second.path().name_list()) {
       index_item_path_name_map_[item2].push_back(&item1.second);
     }
   }
   // Index: PathFriendID@ItemPathFriendID
+  index_item_path_friend_id_map_.clear();
   for (auto&& item1 : data_.item_map()) {
     index_item_path_friend_id_map_[item1.second.path().friend_().id()].push_back(&item1.second);
   }
   // Index: UseEffectType@UseEffectType
+  index_use_effect_type_map_.clear();
   for (auto&& item1 : data_.item_map()) {
     index_use_effect_type_map_[item1.second.use_effect().type()].push_back(&item1.second);
   }
