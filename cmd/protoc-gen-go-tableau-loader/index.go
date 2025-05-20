@@ -70,8 +70,8 @@ func genIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor 
 		}
 		g.P("for _, ", itemName, " := range "+parentDataName+".Get"+helper.ParseIndexFieldName(gen, levelMessage.FD)+"() {")
 		parentDataName = itemName
-		depth++
 		defer g.P("}")
+		depth++
 	}
 }
 

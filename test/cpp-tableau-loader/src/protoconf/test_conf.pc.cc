@@ -39,38 +39,36 @@ bool ActivityConf::ProcessAfterLoad() {
     }
   }
   // Index init.
-  // Index: ActivityName
   index_activity_map_.clear();
-  for (auto&& item1 : data_.activity_map()) {
-    index_activity_map_[item1.second.activity_name()].push_back(&item1.second);
-  }
-  // Index: ChapterID
   index_chapter_map_.clear();
-  for (auto&& item1 : data_.activity_map()) {
-    for (auto&& item2 : item1.second.chapter_map()) {
-      index_chapter_map_[item2.second.chapter_id()].push_back(&item2.second);
-    }
-  }
-  // Index: ChapterName<AwardID>@NamedChapter
   index_named_chapter_map_.clear();
-  for (auto&& item1 : data_.activity_map()) {
-    for (auto&& item2 : item1.second.chapter_map()) {
-      index_named_chapter_map_[item2.second.chapter_name()].push_back(&item2.second);
-    }
-  }
-  for (auto&& item : index_named_chapter_map_) {
-    std::sort(item.second.begin(), item.second.end(),
-              [](const protoconf::ActivityConf::Activity::Chapter* a, const protoconf::ActivityConf::Activity::Chapter* b) {
-                return a->award_id() < b->award_id();
-              });
-  }
-  // Index: SectionItemID@Award
   index_award_map_.clear();
   for (auto&& item1 : data_.activity_map()) {
+    {
+      // Index: ActivityName
+      index_activity_map_[item1.second.activity_name()].push_back(&item1.second);
+    }
     for (auto&& item2 : item1.second.chapter_map()) {
+      {
+        // Index: ChapterID
+        index_chapter_map_[item2.second.chapter_id()].push_back(&item2.second);
+      }
+      {
+        // Index: ChapterName<AwardID>@NamedChapter
+        index_named_chapter_map_[item2.second.chapter_name()].push_back(&item2.second);
+        for (auto&& item : index_named_chapter_map_) {
+          std::sort(item.second.begin(), item.second.end(),
+                    [](const protoconf::ActivityConf::Activity::Chapter* a, const protoconf::ActivityConf::Activity::Chapter* b) {
+                      return a->award_id() < b->award_id();
+                    });
+        }
+      }
       for (auto&& item3 : item2.second.section_map()) {
         for (auto&& item4 : item3.second.section_item_list()) {
-          index_award_map_[item4.id()].push_back(&item4);
+          {
+            // Index: SectionItemID@Award
+            index_award_map_[item4.id()].push_back(&item4);
+          }
         }
       }
     }
