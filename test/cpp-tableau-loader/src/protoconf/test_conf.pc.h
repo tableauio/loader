@@ -53,6 +53,17 @@ class ActivityConf : public Messager {
   Activity_OrderedMap ordered_map_;
 
   // Index accessers.
+  // Index: ActivityName
+ public:
+  using Index_ActivityVector = std::vector<const protoconf::ActivityConf::Activity*>;
+  using Index_ActivityMap = std::unordered_map<std::string, Index_ActivityVector>;
+  const Index_ActivityMap& FindActivity() const;
+  const Index_ActivityVector* FindActivity(const std::string& activity_name) const;
+  const protoconf::ActivityConf::Activity* FindFirstActivity(const std::string& activity_name) const;
+
+ private:
+  Index_ActivityMap index_activity_map_;
+
   // Index: ChapterID
  public:
   using Index_ChapterVector = std::vector<const protoconf::ActivityConf::Activity::Chapter*>;
@@ -74,6 +85,17 @@ class ActivityConf : public Messager {
 
  private:
   Index_NamedChapterMap index_named_chapter_map_;
+
+  // Index: SectionItemID@Award
+ public:
+  using Index_AwardVector = std::vector<const protoconf::Item*>;
+  using Index_AwardMap = std::unordered_map<uint32_t, Index_AwardVector>;
+  const Index_AwardMap& FindAward() const;
+  const Index_AwardVector* FindAward(uint32_t id) const;
+  const protoconf::Item* FindFirstAward(uint32_t id) const;
+
+ private:
+  Index_AwardMap index_award_map_;
 
 };
 
