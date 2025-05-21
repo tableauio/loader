@@ -1,24 +1,16 @@
 package index
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/tableauio/tableau/proto/tableaupb"
-	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 type IndexDescriptor struct {
-	*Index
-
-	MD   protoreflect.MessageDescriptor // deepest level message descriptor
-	Name string                         // index name, e.g.: name of (ID, Name)@ItemInfo is "ItemInfo"
-
-	Fields    []*LevelField // index fields in the same struct (protobuf message), refer to the deepest level message's Fields.
-	KeyFields []*LevelField // key fields in the same struct (protobuf message), refer to the deepest level message's Fields.
-
 	LevelMessage *LevelMessage // message hierarchy to the deepest level message which contains all index fields.
 }
 
@@ -54,59 +46,79 @@ type LevelField struct {
 type LevelMessage struct {
 	NextLevel *LevelMessage
 
-	// Current level mesage's field which contains index fields.
-	// NOTE: FD, FieldName, and FieldCard are only valid when NextLevel is not nil.
-	FD protoreflect.FieldDescriptor // index field descriptor
+	// Current level message's field which contains index fields.
+	// Only valid when NextLevel is not nil.
+	FD protoreflect.FieldDescriptor
 
-	// Deepest level message fields corresponding to index fields
-	// NOTE: Fields is valid only when this level is the deepest level.
-	Fields []*LevelField
+	// Current level message's all index fields
+	Indexes []*LevelIndex
+}
 
-	// Deepest level message fields corresponding to key fields
-	// NOTE: Fields is valid only when this level is the deepest level.
+type LevelIndex struct {
+	*Index
+	MD        protoreflect.MessageDescriptor
+	ColFields []*LevelField
 	KeyFields []*LevelField
 }
 
-// parseRecursively parses multi-column index related info.
-func parseRecursively(gen *protogen.Plugin, cols, keys []string, prefix string, md protoreflect.MessageDescriptor) *LevelMessage {
+func (l *LevelIndex) Name() string {
+	name := l.Index.Name
+	if name == "" {
+		name = string(l.MD.Name())
+	}
+	return name
+}
+
+func parseLevelMessage(md protoreflect.MessageDescriptor) *LevelMessage {
 	levelInfo := &LevelMessage{}
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
-
-		opts := fd.Options().(*descriptorpb.FieldOptions)
-		fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
-		fieldOptName := fdOpts.GetName()
 		if fd.IsMap() && fd.MapValue().Kind() == protoreflect.MessageKind {
-			levelInfo.NextLevel = parseRecursively(gen, cols, keys, prefix+fieldOptName, fd.MapValue().Message())
-			if levelInfo.NextLevel != nil {
-				levelInfo.FD = fd
-				return levelInfo
-			}
+			levelInfo.NextLevel = parseLevelMessage(fd.MapValue().Message())
+			levelInfo.FD = fd
+			return levelInfo
 		} else if fd.IsList() && fd.Kind() == protoreflect.MessageKind {
-			levelInfo.NextLevel = parseRecursively(gen, cols, keys, prefix+fieldOptName, fd.Message())
-			if levelInfo.NextLevel != nil {
-				levelInfo.FD = fd
-				return levelInfo
-			}
+			levelInfo.NextLevel = parseLevelMessage(fd.Message())
+			levelInfo.FD = fd
+			return levelInfo
 		}
 	}
-	levelInfo.Fields = parseInSameLevel(gen, cols, prefix, md, nil)
-	levelInfo.KeyFields = parseInSameLevel(gen, keys, prefix, md, nil)
-	if len(levelInfo.Fields) != 0 {
-		return levelInfo
-	}
-	return nil
+	return &LevelMessage{}
 }
 
-func parseInSameLevel(gen *protogen.Plugin, cols []string, prefix string, md protoreflect.MessageDescriptor, leveledFDList []protoreflect.FieldDescriptor) []*LevelField {
-	levelFields := []*LevelField{}
-	for i := 0; i < md.Fields().Len(); i++ {
-		fd := md.Fields().Get(i)
-
+// parseRecursively parses multi-column index related info.
+func parseRecursively(index *Index, prefix string, md protoreflect.MessageDescriptor, levelMessage *LevelMessage) {
+	colFields := parseInSameLevel(index.Cols, prefix, md, nil)
+	keyFields := parseInSameLevel(index.Keys, prefix, md, nil)
+	if len(colFields) != 0 {
+		// index belongs to current level
+		levelMessage.Indexes = append(levelMessage.Indexes, &LevelIndex{
+			Index:     index,
+			MD:        md,
+			ColFields: colFields,
+			KeyFields: keyFields,
+		})
+	} else if levelMessage != nil && levelMessage.NextLevel != nil {
+		// index invalid or belongs to deeper level
+		fd := levelMessage.FD
 		opts := fd.Options().(*descriptorpb.FieldOptions)
 		fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
 		fieldOptName := fdOpts.GetName()
+		if fd.IsMap() {
+			parseRecursively(index, prefix+fieldOptName, fd.MapValue().Message(), levelMessage.NextLevel)
+		} else {
+			parseRecursively(index, prefix+fieldOptName, fd.Message(), levelMessage.NextLevel)
+		}
+	}
+}
 
+func parseInSameLevel(cols []string, prefix string, md protoreflect.MessageDescriptor, leveledFDList []protoreflect.FieldDescriptor) []*LevelField {
+	var levelFields []*LevelField
+	for i := 0; i < md.Fields().Len(); i++ {
+		fd := md.Fields().Get(i)
+		opts := fd.Options().(*descriptorpb.FieldOptions)
+		fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
+		fieldOptName := fdOpts.GetName()
 		for _, columnName := range cols {
 			if prefix+fieldOptName == columnName {
 				field := &LevelField{
@@ -115,10 +127,12 @@ func parseInSameLevel(gen *protogen.Plugin, cols []string, prefix string, md pro
 				}
 				levelFields = append(levelFields, field)
 				break
-			} else if fd.Kind() == protoreflect.MessageKind && strings.HasPrefix(columnName, prefix+fieldOptName) {
+			} else if fd.Kind() == protoreflect.MessageKind &&
+				!fd.IsMap() && !fd.IsList() &&
+				strings.HasPrefix(columnName, prefix+fieldOptName) {
 				levelFields = append(levelFields,
 					parseInSameLevel(
-						gen, cols, prefix+fieldOptName, fd.Message(),
+						cols, prefix+fieldOptName, fd.Message(),
 						append(leveledFDList, fd),
 					)...,
 				)
@@ -128,38 +142,29 @@ func parseInSameLevel(gen *protogen.Plugin, cols []string, prefix string, md pro
 	return levelFields
 }
 
-func ParseIndexDescriptor(gen *protogen.Plugin, md protoreflect.MessageDescriptor) []*IndexDescriptor {
-	descriptors := []*IndexDescriptor{}
-	indexes := parseWSOptionIndex(md)
+func ParseIndexDescriptor(md protoreflect.MessageDescriptor) *IndexDescriptor {
+	descriptor := &IndexDescriptor{
+		LevelMessage: parseLevelMessage(md),
+	}
+	indexes := ParseWSOptionIndex(md)
+	// parse indexes into level message
 	for _, index := range indexes {
 		if len(index.Cols) == 0 {
 			continue
 		}
-		levelInfo := parseRecursively(gen, index.Cols, index.Keys, "", md)
-		if levelInfo == nil {
-			continue
-		}
-		descriptor := &IndexDescriptor{
-			Index:        index,
-			LevelMessage: levelInfo,
-		}
-		deepestLevelMessage := descriptor.LevelMessage
-		for deepestLevelMessage.NextLevel != nil {
-			if fd := deepestLevelMessage.FD; fd.IsMap() {
-				descriptor.MD = fd.MapValue().Message()
-			} else {
-				descriptor.MD = fd.Message()
-			}
-			deepestLevelMessage = deepestLevelMessage.NextLevel
-		}
-		descriptor.Fields = deepestLevelMessage.Fields
-		descriptor.KeyFields = deepestLevelMessage.KeyFields
-		descriptor.Name = index.Name
-		if descriptor.Name == "" {
-			// use index field's parent message name if not set.
-			descriptor.Name = string(descriptor.MD.Name())
-		}
-		descriptors = append(descriptors, descriptor)
+		parseRecursively(index, "", md, descriptor.LevelMessage)
 	}
-	return descriptors
+	// check duplicate index name
+	indexNameMap := map[string]*Index{}
+	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
+		for _, index := range levelMessage.Indexes {
+			name := index.Name()
+			if existingIndex, ok := indexNameMap[name]; ok {
+				panic(fmt.Sprintf("duplicate index name on %v in %v: %v and %v", md.Name(), md.ParentFile().Path(), index, existingIndex))
+			} else {
+				indexNameMap[name] = index.Index
+			}
+		}
+	}
+	return descriptor
 }

@@ -33,11 +33,17 @@ type ProtoconfActivityConfActivityMap_OrderedMapValue = pair.Pair[*ProtoconfActi
 type ProtoconfActivityConfActivityMap_OrderedMap = treemap.TreeMap[uint64, *ProtoconfActivityConfActivityMap_OrderedMapValue]
 
 // Index types.
+// Index: ActivityName
+type ActivityConf_Index_ActivityMap = map[string][]*protoconf.ActivityConf_Activity
+
 // Index: ChapterID
 type ActivityConf_Index_ChapterMap = map[uint32][]*protoconf.ActivityConf_Activity_Chapter
 
 // Index: ChapterName<AwardID>@NamedChapter
 type ActivityConf_Index_NamedChapterMap = map[string][]*protoconf.ActivityConf_Activity_Chapter
+
+// Index: SectionItemID@Award
+type ActivityConf_Index_AwardMap = map[uint32][]*protoconf.Item
 
 // ActivityConf is a wrapper around protobuf message: protoconf.ActivityConf.
 //
@@ -50,8 +56,10 @@ type ActivityConf struct {
 	UnimplementedMessager
 	data, originalData   *protoconf.ActivityConf
 	orderedMap           *ProtoconfActivityConfActivityMap_OrderedMap
+	indexActivityMap     ActivityConf_Index_ActivityMap
 	indexChapterMap      ActivityConf_Index_ChapterMap
 	indexNamedChapterMap ActivityConf_Index_NamedChapterMap
+	indexAwardMap        ActivityConf_Index_AwardMap
 }
 
 // Name returns the ActivityConf's message name.
@@ -144,26 +152,42 @@ func (x *ActivityConf) processAfterLoad() error {
 		}
 	}
 	// Index init.
-	// Index: ChapterID
+	x.indexActivityMap = make(ActivityConf_Index_ActivityMap)
 	x.indexChapterMap = make(ActivityConf_Index_ChapterMap)
-	for _, item1 := range x.data.GetActivityMap() {
-		for _, item2 := range item1.GetChapterMap() {
-			key := item2.GetChapterId()
-			x.indexChapterMap[key] = append(x.indexChapterMap[key], item2)
-		}
-	}
-	// Index: ChapterName<AwardID>@NamedChapter
 	x.indexNamedChapterMap = make(ActivityConf_Index_NamedChapterMap)
+	x.indexAwardMap = make(ActivityConf_Index_AwardMap)
 	for _, item1 := range x.data.GetActivityMap() {
-		for _, item2 := range item1.GetChapterMap() {
-			key := item2.GetChapterName()
-			x.indexNamedChapterMap[key] = append(x.indexNamedChapterMap[key], item2)
+		{
+			// Index: ActivityName
+			key := item1.GetActivityName()
+			x.indexActivityMap[key] = append(x.indexActivityMap[key], item1)
 		}
-	}
-	for _, item := range x.indexNamedChapterMap {
-		sort.Slice(item, func(i, j int) bool {
-			return item[i].GetAwardId() < item[j].GetAwardId()
-		})
+		for _, item2 := range item1.GetChapterMap() {
+			{
+				// Index: ChapterID
+				key := item2.GetChapterId()
+				x.indexChapterMap[key] = append(x.indexChapterMap[key], item2)
+			}
+			{
+				// Index: ChapterName<AwardID>@NamedChapter
+				key := item2.GetChapterName()
+				x.indexNamedChapterMap[key] = append(x.indexNamedChapterMap[key], item2)
+				for _, item := range x.indexNamedChapterMap {
+					sort.Slice(item, func(i, j int) bool {
+						return item[i].GetAwardId() < item[j].GetAwardId()
+					})
+				}
+			}
+			for _, item3 := range item2.GetSectionMap() {
+				for _, item4 := range item3.GetSectionItemList() {
+					{
+						// Index: SectionItemID@Award
+						key := item4.GetId()
+						x.indexAwardMap[key] = append(x.indexAwardMap[key], item4)
+					}
+				}
+			}
+		}
 	}
 	return nil
 }
@@ -268,6 +292,29 @@ func (x *ActivityConf) GetOrderedMap3(activityId uint64, chapterId uint32, secti
 	}
 }
 
+// Index: ActivityName
+
+// FindActivityMap returns the index(ActivityName) to value(protoconf.ActivityConf_Activity) map.
+// One key may correspond to multiple values, which are contained by a slice.
+func (x *ActivityConf) FindActivityMap() ActivityConf_Index_ActivityMap {
+	return x.indexActivityMap
+}
+
+// FindActivity returns a slice of all values of the given key.
+func (x *ActivityConf) FindActivity(activityName string) []*protoconf.ActivityConf_Activity {
+	return x.indexActivityMap[activityName]
+}
+
+// FindFirstActivity returns the first value of the given key,
+// or nil if the key correspond to no value.
+func (x *ActivityConf) FindFirstActivity(activityName string) *protoconf.ActivityConf_Activity {
+	val := x.indexActivityMap[activityName]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
 // Index: ChapterID
 
 // FindChapterMap returns the index(ChapterID) to value(protoconf.ActivityConf_Activity_Chapter) map.
@@ -308,6 +355,29 @@ func (x *ActivityConf) FindNamedChapter(chapterName string) []*protoconf.Activit
 // or nil if the key correspond to no value.
 func (x *ActivityConf) FindFirstNamedChapter(chapterName string) *protoconf.ActivityConf_Activity_Chapter {
 	val := x.indexNamedChapterMap[chapterName]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: SectionItemID@Award
+
+// FindAwardMap returns the index(SectionItemID@Award) to value(protoconf.Item) map.
+// One key may correspond to multiple values, which are contained by a slice.
+func (x *ActivityConf) FindAwardMap() ActivityConf_Index_AwardMap {
+	return x.indexAwardMap
+}
+
+// FindAward returns a slice of all values of the given key.
+func (x *ActivityConf) FindAward(id uint32) []*protoconf.Item {
+	return x.indexAwardMap[id]
+}
+
+// FindFirstAward returns the first value of the given key,
+// or nil if the key correspond to no value.
+func (x *ActivityConf) FindFirstAward(id uint32) *protoconf.Item {
+	val := x.indexAwardMap[id]
 	if len(val) > 0 {
 		return val[0]
 	}

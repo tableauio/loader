@@ -54,7 +54,7 @@ func (index *Index) String() string {
 }
 
 // parse worksheet option index
-func parseWSOptionIndex(md protoreflect.MessageDescriptor) []*Index {
+func ParseWSOptionIndex(md protoreflect.MessageDescriptor) []*Index {
 	opts := md.Options().(*descriptorpb.MessageOptions)
 	wsOpts := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
 	return parseIndexFrom(wsOpts.Index)

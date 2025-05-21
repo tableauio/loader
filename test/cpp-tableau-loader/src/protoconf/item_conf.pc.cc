@@ -22,76 +22,89 @@ bool ItemConf::Load(const std::string& dir, Format fmt, const LoadOptions* optio
 
 bool ItemConf::ProcessAfterLoad() {
   // OrderedMap init.
+  ordered_map_.clear();
   for (auto&& item1 : data_.item_map()) {
     ordered_map_[item1.first] = &item1.second;
   }
   // Index init.
-  // Index: Type
+  index_item_map_.clear();
+  index_item_info_map_.clear();
+  index_item_default_info_map_.clear();
+  index_item_ext_info_map_.clear();
+  index_award_item_map_.clear();
+  index_special_item_map_.clear();
+  index_item_path_dir_map_.clear();
+  index_item_path_name_map_.clear();
+  index_item_path_friend_id_map_.clear();
+  index_use_effect_type_map_.clear();
   for (auto&& item1 : data_.item_map()) {
-    index_item_map_[item1.second.type()].push_back(&item1.second);
-  }
-  // Index: Param<ID>@ItemInfo
-  for (auto&& item1 : data_.item_map()) {
-    for (auto&& item2 : item1.second.param_list()) {
-      index_item_info_map_[item2].push_back(&item1.second);
+    {
+      // Index: Type
+      index_item_map_[item1.second.type()].push_back(&item1.second);
     }
-  }
-  for (auto&& item : index_item_info_map_) {
-    std::sort(item.second.begin(), item.second.end(),
-              [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
-                return a->id() < b->id();
-              });
-  }
-  // Index: Default@ItemDefaultInfo
-  for (auto&& item1 : data_.item_map()) {
-    index_item_default_info_map_[item1.second.default_()].push_back(&item1.second);
-  }
-  // Index: ExtType@ItemExtInfo
-  for (auto&& item1 : data_.item_map()) {
-    for (auto&& item2 : item1.second.ext_type_list()) {
-      index_item_ext_info_map_[static_cast<protoconf::FruitType>(item2)].push_back(&item1.second);
-    }
-  }
-  // Index: (ID,Name)<Type,UseEffectType>@AwardItem
-  for (auto&& item1 : data_.item_map()) {
-    Index_AwardItemKey key{item1.second.id(), item1.second.name()};
-    index_award_item_map_[key].push_back(&item1.second);
-  }
-  for (auto&& item : index_award_item_map_) {
-    std::sort(item.second.begin(), item.second.end(),
-              [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
-                if (a->type() != b->type()) {
-                  return a->type() < b->type();
-                }
-                return a->use_effect().type() < b->use_effect().type();
-              });
-  }
-  // Index: (ID,Type,Param,ExtType)@SpecialItem
-  for (auto&& item1 : data_.item_map()) {
-    for (auto&& index_item2 : item1.second.param_list()) {
-      for (auto&& index_item3 : item1.second.ext_type_list()) {
-        Index_SpecialItemKey key{item1.second.id(), item1.second.type(), index_item2, static_cast<protoconf::FruitType>(index_item3)};
-        index_special_item_map_[key].push_back(&item1.second);
+    {
+      // Index: Param<ID>@ItemInfo
+      for (auto&& item2 : item1.second.param_list()) {
+        index_item_info_map_[item2].push_back(&item1.second);
+      }
+      for (auto&& item : index_item_info_map_) {
+        std::sort(item.second.begin(), item.second.end(),
+                  [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
+                    return a->id() < b->id();
+                  });
       }
     }
-  }
-  // Index: PathDir@ItemPathDir
-  for (auto&& item1 : data_.item_map()) {
-    index_item_path_dir_map_[item1.second.path().dir()].push_back(&item1.second);
-  }
-  // Index: PathName@ItemPathName
-  for (auto&& item1 : data_.item_map()) {
-    for (auto&& item2 : item1.second.path().name_list()) {
-      index_item_path_name_map_[item2].push_back(&item1.second);
+    {
+      // Index: Default@ItemDefaultInfo
+      index_item_default_info_map_[item1.second.default_()].push_back(&item1.second);
     }
-  }
-  // Index: PathFriendID@ItemPathFriendID
-  for (auto&& item1 : data_.item_map()) {
-    index_item_path_friend_id_map_[item1.second.path().friend_().id()].push_back(&item1.second);
-  }
-  // Index: UseEffectType@UseEffectType
-  for (auto&& item1 : data_.item_map()) {
-    index_use_effect_type_map_[item1.second.use_effect().type()].push_back(&item1.second);
+    {
+      // Index: ExtType@ItemExtInfo
+      for (auto&& item2 : item1.second.ext_type_list()) {
+        index_item_ext_info_map_[static_cast<protoconf::FruitType>(item2)].push_back(&item1.second);
+      }
+    }
+    {
+      // Index: (ID,Name)<Type,UseEffectType>@AwardItem
+      Index_AwardItemKey key{item1.second.id(), item1.second.name()};
+      index_award_item_map_[key].push_back(&item1.second);
+      for (auto&& item : index_award_item_map_) {
+        std::sort(item.second.begin(), item.second.end(),
+                  [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
+                    if (a->type() != b->type()) {
+                      return a->type() < b->type();
+                    }
+                    return a->use_effect().type() < b->use_effect().type();
+                  });
+      }
+    }
+    {
+      // Index: (ID,Type,Param,ExtType)@SpecialItem
+      for (auto&& index_item2 : item1.second.param_list()) {
+        for (auto&& index_item3 : item1.second.ext_type_list()) {
+          Index_SpecialItemKey key{item1.second.id(), item1.second.type(), index_item2, static_cast<protoconf::FruitType>(index_item3)};
+          index_special_item_map_[key].push_back(&item1.second);
+        }
+      }
+    }
+    {
+      // Index: PathDir@ItemPathDir
+      index_item_path_dir_map_[item1.second.path().dir()].push_back(&item1.second);
+    }
+    {
+      // Index: PathName@ItemPathName
+      for (auto&& item2 : item1.second.path().name_list()) {
+        index_item_path_name_map_[item2].push_back(&item1.second);
+      }
+    }
+    {
+      // Index: PathFriendID@ItemPathFriendID
+      index_item_path_friend_id_map_[item1.second.path().friend_().id()].push_back(&item1.second);
+    }
+    {
+      // Index: UseEffectType@UseEffectType
+      index_use_effect_type_map_[item1.second.use_effect().type()].push_back(&item1.second);
+    }
   }
   return true;
 }

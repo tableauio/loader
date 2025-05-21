@@ -22,6 +22,7 @@ bool HeroConf::Load(const std::string& dir, Format fmt, const LoadOptions* optio
 
 bool HeroConf::ProcessAfterLoad() {
   // OrderedMap init.
+  ordered_map_.clear();
   for (auto&& item1 : data_.hero_map()) {
     ordered_map_[item1.first] = Hero_OrderedMapValue(Hero_Attr_OrderedMap(), &item1.second);
     auto&& ordered_map1 = ordered_map_[item1.first].first;

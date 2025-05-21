@@ -22,6 +22,7 @@ bool ActivityConf::Load(const std::string& dir, Format fmt, const LoadOptions* o
 
 bool ActivityConf::ProcessAfterLoad() {
   // OrderedMap init.
+  ordered_map_.clear();
   for (auto&& item1 : data_.activity_map()) {
     ordered_map_[item1.first] = Activity_OrderedMapValue(Activity_Chapter_OrderedMap(), &item1.second);
     auto&& ordered_map1 = ordered_map_[item1.first].first;
@@ -38,23 +39,39 @@ bool ActivityConf::ProcessAfterLoad() {
     }
   }
   // Index init.
-  // Index: ChapterID
+  index_activity_map_.clear();
+  index_chapter_map_.clear();
+  index_named_chapter_map_.clear();
+  index_award_map_.clear();
   for (auto&& item1 : data_.activity_map()) {
-    for (auto&& item2 : item1.second.chapter_map()) {
-      index_chapter_map_[item2.second.chapter_id()].push_back(&item2.second);
+    {
+      // Index: ActivityName
+      index_activity_map_[item1.second.activity_name()].push_back(&item1.second);
     }
-  }
-  // Index: ChapterName<AwardID>@NamedChapter
-  for (auto&& item1 : data_.activity_map()) {
     for (auto&& item2 : item1.second.chapter_map()) {
-      index_named_chapter_map_[item2.second.chapter_name()].push_back(&item2.second);
+      {
+        // Index: ChapterID
+        index_chapter_map_[item2.second.chapter_id()].push_back(&item2.second);
+      }
+      {
+        // Index: ChapterName<AwardID>@NamedChapter
+        index_named_chapter_map_[item2.second.chapter_name()].push_back(&item2.second);
+        for (auto&& item : index_named_chapter_map_) {
+          std::sort(item.second.begin(), item.second.end(),
+                    [](const protoconf::ActivityConf::Activity::Chapter* a, const protoconf::ActivityConf::Activity::Chapter* b) {
+                      return a->award_id() < b->award_id();
+                    });
+        }
+      }
+      for (auto&& item3 : item2.second.section_map()) {
+        for (auto&& item4 : item3.second.section_item_list()) {
+          {
+            // Index: SectionItemID@Award
+            index_award_map_[item4.id()].push_back(&item4);
+          }
+        }
+      }
     }
-  }
-  for (auto&& item : index_named_chapter_map_) {
-    std::sort(item.second.begin(), item.second.end(),
-              [](const protoconf::ActivityConf::Activity::Chapter* a, const protoconf::ActivityConf::Activity::Chapter* b) {
-                return a->award_id() < b->award_id();
-              });
   }
   return true;
 }
@@ -143,6 +160,25 @@ const ActivityConf::int32_OrderedMap* ActivityConf::GetOrderedMap(uint64_t activ
   return &iter->second.first;
 }
 
+// Index: ActivityName
+const ActivityConf::Index_ActivityMap& ActivityConf::FindActivity() const { return index_activity_map_ ;}
+
+const ActivityConf::Index_ActivityVector* ActivityConf::FindActivity(const std::string& activity_name) const {
+  auto iter = index_activity_map_.find(activity_name);
+  if (iter == index_activity_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::ActivityConf::Activity* ActivityConf::FindFirstActivity(const std::string& activity_name) const {
+  auto conf = FindActivity(activity_name);
+  if (conf == nullptr || conf->size() == 0) {
+    return nullptr;
+  }
+  return (*conf)[0];
+}
+
 // Index: ChapterID
 const ActivityConf::Index_ChapterMap& ActivityConf::FindChapter() const { return index_chapter_map_ ;}
 
@@ -175,6 +211,25 @@ const ActivityConf::Index_NamedChapterVector* ActivityConf::FindNamedChapter(con
 
 const protoconf::ActivityConf::Activity::Chapter* ActivityConf::FindFirstNamedChapter(const std::string& chapter_name) const {
   auto conf = FindNamedChapter(chapter_name);
+  if (conf == nullptr || conf->size() == 0) {
+    return nullptr;
+  }
+  return (*conf)[0];
+}
+
+// Index: SectionItemID@Award
+const ActivityConf::Index_AwardMap& ActivityConf::FindAward() const { return index_award_map_ ;}
+
+const ActivityConf::Index_AwardVector* ActivityConf::FindAward(uint32_t id) const {
+  auto iter = index_award_map_.find(id);
+  if (iter == index_award_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::Item* ActivityConf::FindFirstAward(uint32_t id) const {
+  auto conf = FindAward(id);
   if (conf == nullptr || conf->size() == 0) {
     return nullptr;
   }

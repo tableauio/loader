@@ -80,7 +80,7 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	pkg := string(file.Desc.Package())
 	cppFullName := strings.ReplaceAll(pkg, ".", "::") + "::" + string(message.Desc.Name())
 	messagerFullName := string(message.Desc.FullName())
-	indexDescriptors := index.ParseIndexDescriptor(gen, message.Desc)
+	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
 	g.P("class ", message.Desc.Name(), " : public Messager {")
 	g.P(" public:")
@@ -108,7 +108,7 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	}
 	if options.NeedGenIndex(message.Desc, options.LangCPP) {
 		g.P()
-		genHppIndexFinders(g, indexDescriptors)
+		genHppIndexFinders(g, indexDescriptor)
 	}
 	g.P("};")
 	g.P()
@@ -154,7 +154,7 @@ func generateCppFileContent(gen *protogen.Plugin, file *protogen.File, g *protog
 func genCppMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message) {
 	messagerName := string(message.Desc.Name())
 	messagerFullName := string(message.Desc.FullName())
-	indexDescriptors := index.ParseIndexDescriptor(gen, message.Desc)
+	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
 	g.P("const std::string ", messagerName, "::kProtoName = ", `"`, messagerName, `";`)
 	g.P()
@@ -173,7 +173,7 @@ func genCppMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 			genCppOrderedMapLoader(g, message.Desc, 1, messagerFullName)
 		}
 		if options.NeedGenIndex(message.Desc, options.LangCPP) {
-			genCppIndexLoader(g, indexDescriptors)
+			genCppIndexLoader(g, indexDescriptor)
 		}
 		g.P("  return true;")
 		g.P("}")
@@ -184,7 +184,7 @@ func genCppMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 	genCppMapGetters(g, message.Desc, 1, nil, messagerName)
 	genCppOrderedMapGetters(g, message.Desc, 1, nil, messagerName, messagerFullName)
 	if options.NeedGenIndex(message.Desc, options.LangCPP) {
-		genCppIndexFinders(g, indexDescriptors, messagerName)
+		genCppIndexFinders(g, indexDescriptor, messagerName)
 		g.P()
 	}
 }
