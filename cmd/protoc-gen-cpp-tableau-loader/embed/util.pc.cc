@@ -9,7 +9,6 @@
 
 #if __cplusplus >= 201703L
 #include <filesystem>
-namespace fs = std::filesystem;
 #else
 #ifdef _WIN32
 #include <direct.h>
@@ -26,9 +25,6 @@ namespace fs = std::filesystem;
 namespace tableau {
 #ifdef _WIN32
 #define mkdir(path, mode) _mkdir(path)
-static constexpr char kPathSeperator = '\\';
-#else
-static constexpr char kPathSeperator = '/';
 #endif
 
 static thread_local std::string g_err_msg;
@@ -44,7 +40,7 @@ namespace util {
 int Mkdir(const std::string& path) {
 #if __cplusplus >= 201703L
   std::error_code ec;
-  if (!fs::create_directories(path, ec)) {
+  if (!std::filesystem::create_directories(path, ec)) {
     if (ec) {
       std::cerr << "system error: " << ec.message() << std::endl;
       return -1;
@@ -72,7 +68,7 @@ int Mkdir(const std::string& path) {
 
 std::string GetDir(const std::string& path) {
 #if __cplusplus >= 201703L
-  return fs::path(path).parent_path().string();
+  return std::filesystem::path(path).parent_path().string();
 #else
   size_t pos = path.find_last_of(kPathSeperator);
   if (pos != std::string::npos) {
@@ -84,7 +80,7 @@ std::string GetDir(const std::string& path) {
 
 bool ExistsFile(const std::string& filename) {
 #if __cplusplus >= 201703L
-  return fs::exists(filename);
+  return std::filesystem::exists(filename);
 #else
   std::ifstream file(filename);
   // returns true if the file exists and is accessible
@@ -135,14 +131,6 @@ const std::string& Format2Ext(Format fmt) {
     default:
       return kUnknownExt;
   }
-}
-
-bool Message2JSON(const google::protobuf::Message& msg, std::string& json) {
-  google::protobuf::util::JsonPrintOptions options;
-  options.add_whitespace = true;
-  options.always_print_primitive_fields = true;
-  options.preserve_proto_field_names = true;
-  return google::protobuf::util::MessageToJsonString(msg, &json, options).ok();
 }
 
 bool JSON2Message(const std::string& json, google::protobuf::Message& msg, const LoadOptions* options /* = nullptr */) {

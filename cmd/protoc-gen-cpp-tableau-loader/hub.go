@@ -138,10 +138,6 @@ func generateHubCppRegistry(gen *protogen.Plugin, g *protogen.GeneratedFile, pro
 }
 
 const hubHpp = `#pragma once
-#include <google/protobuf/message.h>
-#include <google/protobuf/util/json_util.h>
-#include <tableau/protobuf/tableau.pb.h>
-
 #include <ctime>
 #include <functional>
 #include <mutex>
@@ -289,12 +285,6 @@ void Registry::Register() {
 }  // namespace tableau`
 
 const hubCppHeader = `#include "hub.pc.h"
-
-#include <google/protobuf/stubs/logging.h>
-#include <google/protobuf/stubs/status.h>
-#include <google/protobuf/text_format.h>
-
-#include <string>
 
 #include "logger.pc.h"
 #include "messager.pc.h"
