@@ -75,10 +75,7 @@ namespace Tableau
         }
 
         // OrderedMap accessors.
-        public ref readonly Hero_OrderedMap GetOrderedMap()
-        {
-            return ref OrderedMap;
-        }
+        public ref readonly Hero_OrderedMap GetOrderedMap() => ref OrderedMap;
 
         public Hero_Attr_OrderedMap? GetOrderedMap1(string name)
         {
