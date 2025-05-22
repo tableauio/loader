@@ -3,6 +3,7 @@ package main
 import (
 	"path/filepath"
 
+	"github.com/tableauio/loader/cmd/protoc-gen-csharp-tableau-loader/helper"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
@@ -10,7 +11,7 @@ import (
 func generateHub(gen *protogen.Plugin) {
 	filename := filepath.Join("Hub.cs")
 	g := gen.NewGeneratedFile(filename, "")
-	generateCommonHeader(gen, g)
+	helper.GenerateCommonHeader(gen, g, version)
 	g.P(staticHubContent1)
 	for _, messager := range messagers {
 		g.P("            Register<Tableau.", messager, ">();")
