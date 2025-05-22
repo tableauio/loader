@@ -35,6 +35,27 @@ namespace Tableau
 
         private Activity_OrderedMap OrderedMap = new Activity_OrderedMap();
 
+        // Index types.
+        // Index: ActivityName
+        public class Index_ActivityMap : Dictionary<string, List<Protoconf.ActivityConf.Types.Activity>> { }
+
+        private Index_ActivityMap IndexActivityMap = new Index_ActivityMap();
+
+        // Index: ChapterID
+        public class Index_ChapterMap : Dictionary<uint, List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>> { }
+
+        private Index_ChapterMap IndexChapterMap = new Index_ChapterMap();
+
+        // Index: ChapterName<AwardID>@NamedChapter
+        public class Index_NamedChapterMap : Dictionary<string, List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>> { }
+
+        private Index_NamedChapterMap IndexNamedChapterMap = new Index_NamedChapterMap();
+
+        // Index: SectionItemID@Award
+        public class Index_AwardMap : Dictionary<uint, List<Protoconf.Item>> { }
+
+        private Index_AwardMap IndexAwardMap = new Index_AwardMap();
+
         private Protoconf.ActivityConf Data_ = new Protoconf.ActivityConf();
 
         public static string Name() => Protoconf.ActivityConf.Descriptor.Name;
@@ -73,6 +94,66 @@ namespace Tableau
                     ordered_map1[key2] = new Activity_Chapter_OrderedMapValue(ordered_map2, value2);
                 }
                 OrderedMap[key1] = new Activity_OrderedMapValue(ordered_map1, value1);
+            }
+            // Index init.
+            IndexActivityMap.Clear();
+            IndexChapterMap.Clear();
+            IndexNamedChapterMap.Clear();
+            IndexAwardMap.Clear();
+            foreach (var item1 in Data_.ActivityMap)
+            {
+                {
+                    // Index: ActivityName
+                    var key = item1.Value.ActivityName;
+                    if (!IndexActivityMap.ContainsKey(key))
+                    {
+                        IndexActivityMap[key] = new List<Protoconf.ActivityConf.Types.Activity>();
+                    }
+                    IndexActivityMap[key].Add(item1.Value);
+                }
+                foreach (var item2 in item1.Value.ChapterMap)
+                {
+                    {
+                        // Index: ChapterID
+                        var key = item2.Value.ChapterId;
+                        if (!IndexChapterMap.ContainsKey(key))
+                        {
+                            IndexChapterMap[key] = new List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>();
+                        }
+                        IndexChapterMap[key].Add(item2.Value);
+                    }
+                    {
+                        // Index: ChapterName<AwardID>@NamedChapter
+                        var key = item2.Value.ChapterName;
+                        if (!IndexNamedChapterMap.ContainsKey(key))
+                        {
+                            IndexNamedChapterMap[key] = new List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>();
+                        }
+                        IndexNamedChapterMap[key].Add(item2.Value);
+                        foreach (var item in IndexNamedChapterMap)
+                        {
+                            item.Value.Sort((a, b) =>
+                            {
+                                return a.AwardId.CompareTo(b.AwardId);
+                            });
+                        }
+                    }
+                    foreach (var item3 in item2.Value.SectionMap)
+                    {
+                        foreach (var item4 in item3.Value.SectionItemList)
+                        {
+                            {
+                                // Index: SectionItemID@Award
+                                var key = item4.Id;
+                                if (!IndexAwardMap.ContainsKey(key))
+                                {
+                                    IndexAwardMap[key] = new List<Protoconf.Item>();
+                                }
+                                IndexAwardMap[key].Add(item4);
+                            }
+                        }
+                    }
+                }
             }
             return true;
         }
@@ -117,10 +198,7 @@ namespace Tableau
         }
 
         // OrderedMap accessors.
-        public ref readonly Activity_OrderedMap GetOrderedMap()
-        {
-            return ref OrderedMap;
-        }
+        public ref readonly Activity_OrderedMap GetOrderedMap() => ref OrderedMap;
 
         public Activity_Chapter_OrderedMap? GetOrderedMap1(ulong activityId)
         {
@@ -150,8 +228,35 @@ namespace Tableau
             }
             return null;
         }
-    }
 
+        // Index: ActivityName
+        public ref readonly Index_ActivityMap GetActivityMap() => ref IndexActivityMap;
+
+        public List<Protoconf.ActivityConf.Types.Activity>? GetActivity(string ActivityName) => IndexActivityMap.TryGetValue(ActivityName, out var value) ? value : null;
+
+        public Protoconf.ActivityConf.Types.Activity? GetFirstActivity(string ActivityName) => GetActivity(ActivityName)?.FirstOrDefault();
+
+        // Index: ChapterID
+        public ref readonly Index_ChapterMap GetChapterMap() => ref IndexChapterMap;
+
+        public List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>? GetChapter(uint ChapterId) => IndexChapterMap.TryGetValue(ChapterId, out var value) ? value : null;
+
+        public Protoconf.ActivityConf.Types.Activity.Types.Chapter? GetFirstChapter(uint ChapterId) => GetChapter(ChapterId)?.FirstOrDefault();
+
+        // Index: ChapterName<AwardID>@NamedChapter
+        public ref readonly Index_NamedChapterMap GetNamedChapterMap() => ref IndexNamedChapterMap;
+
+        public List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>? GetNamedChapter(string ChapterName) => IndexNamedChapterMap.TryGetValue(ChapterName, out var value) ? value : null;
+
+        public Protoconf.ActivityConf.Types.Activity.Types.Chapter? GetFirstNamedChapter(string ChapterName) => GetNamedChapter(ChapterName)?.FirstOrDefault();
+
+        // Index: SectionItemID@Award
+        public ref readonly Index_AwardMap GetAwardMap() => ref IndexAwardMap;
+
+        public List<Protoconf.Item>? GetAward(uint Id) => IndexAwardMap.TryGetValue(Id, out var value) ? value : null;
+
+        public Protoconf.Item? GetFirstAward(uint Id) => GetAward(Id)?.FirstOrDefault();
+    }
 
     public class ChapterConf : Messager, IMessagerName
     {
