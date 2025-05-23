@@ -59,5 +59,16 @@ class Program
             Console.WriteLine($"ItemConf: {itemConf.Data()}");
             Console.WriteLine($"ItemConf Load duration: {itemConf.GetStats().Duration.TotalMilliseconds} ms");
         }
+
+        itemConf = hub.GetItemConf();
+        if (itemConf is null)
+        {
+            Console.WriteLine("ItemConf is null");
+        }
+        else
+        {
+            Console.WriteLine($"ItemConf: {itemConf.Data()}");
+            Console.WriteLine($"ItemConf Load duration: {itemConf.GetStats().Duration.TotalMilliseconds} ms");
+        }
     }
 }

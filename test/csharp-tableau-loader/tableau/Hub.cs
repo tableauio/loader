@@ -37,13 +37,13 @@ namespace Tableau
 
         public ref Stats GetStats() { return ref LoadStats; }
 
-        public abstract bool Load(string dir, Format fmt, LoadOptions? options = null);
+        public abstract bool Load(string dir, Format fmt, in LoadOptions? options = null);
 
         protected virtual bool ProcessAfterLoad() { return true; }
 
         public virtual bool ProcessAfterLoadAll(in Hub hub) { return true; }
 
-        internal bool LoadMessageByPath<T>(out T msg, string dir, Format fmt, LoadOptions? options = null) where T : Google.Protobuf.IMessage<T>, new()
+        internal bool LoadMessageByPath<T>(out T msg, string dir, Format fmt, in LoadOptions? options = null) where T : Google.Protobuf.IMessage<T>, new()
         {
             msg = new T();
             string name = msg.Descriptor.Name;
@@ -94,8 +94,62 @@ namespace Tableau
 
     internal class MessagerContainer
     {
-        public Dictionary<string, Messager> MessagerMap = new Dictionary<string, Messager>();
+        public Dictionary<string, Messager> MessagerMap;
         public DateTime LastLoadedTime;
+        public HeroConf? HeroConf;
+        public HeroBaseConf? HeroBaseConf;
+        public ItemConf? ItemConf;
+        public PatchReplaceConf? PatchReplaceConf;
+        public PatchMergeConf? PatchMergeConf;
+        public RecursivePatchConf? RecursivePatchConf;
+        public ActivityConf? ActivityConf;
+        public ChapterConf? ChapterConf;
+        public ThemeConf? ThemeConf;
+
+        public MessagerContainer(in Dictionary<string, Messager>? messagerMap = null)
+        {
+            MessagerMap = messagerMap ?? new Dictionary<string, Messager>();
+            LastLoadedTime = DateTime.Now;
+            if (messagerMap != null)
+            {
+                if (messagerMap.ContainsKey("HeroConf"))
+                {
+                    HeroConf = (HeroConf)messagerMap["HeroConf"];
+                }
+                if (messagerMap.ContainsKey("HeroBaseConf"))
+                {
+                    HeroBaseConf = (HeroBaseConf)messagerMap["HeroBaseConf"];
+                }
+                if (messagerMap.ContainsKey("ItemConf"))
+                {
+                    ItemConf = (ItemConf)messagerMap["ItemConf"];
+                }
+                if (messagerMap.ContainsKey("PatchReplaceConf"))
+                {
+                    PatchReplaceConf = (PatchReplaceConf)messagerMap["PatchReplaceConf"];
+                }
+                if (messagerMap.ContainsKey("PatchMergeConf"))
+                {
+                    PatchMergeConf = (PatchMergeConf)messagerMap["PatchMergeConf"];
+                }
+                if (messagerMap.ContainsKey("RecursivePatchConf"))
+                {
+                    RecursivePatchConf = (RecursivePatchConf)messagerMap["RecursivePatchConf"];
+                }
+                if (messagerMap.ContainsKey("ActivityConf"))
+                {
+                    ActivityConf = (ActivityConf)messagerMap["ActivityConf"];
+                }
+                if (messagerMap.ContainsKey("ChapterConf"))
+                {
+                    ChapterConf = (ChapterConf)messagerMap["ChapterConf"];
+                }
+                if (messagerMap.ContainsKey("ThemeConf"))
+                {
+                    ThemeConf = (ThemeConf)messagerMap["ThemeConf"];
+                }
+            }
+        }
     }
 
     public class HubOptions
@@ -113,7 +167,7 @@ namespace Tableau
             Options = options ?? new HubOptions();
         }
 
-        public bool Load(string dir, Format fmt, LoadOptions? options = null)
+        public bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var messagerMap = NewMessagerMap();
             foreach (var messager in messagerMap.Values)
@@ -124,7 +178,7 @@ namespace Tableau
                 }
             }
             var tmpHub = new Hub();
-            tmpHub.SetMessagerMap(MessagerContainer.MessagerMap);
+            tmpHub.SetMessagerMap(messagerMap);
             foreach (var messager in messagerMap.Values)
             {
                 if (!messager.ProcessAfterLoadAll(tmpHub))
@@ -143,8 +197,7 @@ namespace Tableau
 
         public void SetMessagerMap(in Dictionary<string, Messager> map)
         {
-            MessagerContainer.MessagerMap = map;
-            MessagerContainer.LastLoadedTime = DateTime.Now;
+            MessagerContainer = new MessagerContainer(map);
         }
 
         public T? Get<T>() where T : Messager, IMessagerName, new()
@@ -155,6 +208,51 @@ namespace Tableau
                 return (T)messager;
             }
             return default;
+        }
+
+        public HeroConf? GetHeroConf()
+        {
+            return MessagerContainer.HeroConf;
+        }
+
+        public HeroBaseConf? GetHeroBaseConf()
+        {
+            return MessagerContainer.HeroBaseConf;
+        }
+
+        public ItemConf? GetItemConf()
+        {
+            return MessagerContainer.ItemConf;
+        }
+
+        public PatchReplaceConf? GetPatchReplaceConf()
+        {
+            return MessagerContainer.PatchReplaceConf;
+        }
+
+        public PatchMergeConf? GetPatchMergeConf()
+        {
+            return MessagerContainer.PatchMergeConf;
+        }
+
+        public RecursivePatchConf? GetRecursivePatchConf()
+        {
+            return MessagerContainer.RecursivePatchConf;
+        }
+
+        public ActivityConf? GetActivityConf()
+        {
+            return MessagerContainer.ActivityConf;
+        }
+
+        public ChapterConf? GetChapterConf()
+        {
+            return MessagerContainer.ChapterConf;
+        }
+
+        public ThemeConf? GetThemeConf()
+        {
+            return MessagerContainer.ThemeConf;
         }
 
         private Messager GetMessager(string name)
