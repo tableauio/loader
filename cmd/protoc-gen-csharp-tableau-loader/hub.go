@@ -14,9 +14,28 @@ func generateHub(gen *protogen.Plugin) {
 	helper.GenerateCommonHeader(gen, g, version)
 	g.P(staticHubContent1)
 	for _, messager := range messagers {
-		g.P("            Register<Tableau.", messager, ">();")
+		g.P(helper.Indent(2), "public ", messager, "? ", messager, ";")
 	}
 	g.P(staticHubContent2)
+	for _, messager := range messagers {
+		g.P(helper.Indent(4), `if (messagerMap.ContainsKey("`, messager, `"))`)
+		g.P(helper.Indent(4), "{")
+		g.P(helper.Indent(5), messager, " = (", messager, `)messagerMap["`, messager, `"];`)
+		g.P(helper.Indent(4), "}")
+	}
+	g.P(staticHubContent3)
+	for _, messager := range messagers {
+		g.P()
+		g.P(helper.Indent(2), "public ", messager, "? Get", messager, "()")
+		g.P(helper.Indent(2), "{")
+		g.P(helper.Indent(3), "return MessagerContainer.", messager, ";")
+		g.P(helper.Indent(2), "}")
+	}
+	g.P(staticHubContent4)
+	for _, messager := range messagers {
+		g.P("            Register<Tableau.", messager, ">();")
+	}
+	g.P(staticHubContent5)
 }
 
 const staticHubContent1 = `using System;
@@ -54,13 +73,13 @@ namespace Tableau
 
         public ref Stats GetStats() { return ref LoadStats; }
 
-        public abstract bool Load(string dir, Format fmt, LoadOptions? options = null);
+        public abstract bool Load(string dir, Format fmt, in LoadOptions? options = null);
 
         protected virtual bool ProcessAfterLoad() { return true; }
 
         public virtual bool ProcessAfterLoadAll(in Hub hub) { return true; }
 
-        internal bool LoadMessageByPath<T>(out T msg, string dir, Format fmt, LoadOptions? options = null) where T : Google.Protobuf.IMessage<T>, new()
+        internal bool LoadMessageByPath<T>(out T msg, string dir, Format fmt, in LoadOptions? options = null) where T : Google.Protobuf.IMessage<T>, new()
         {
             msg = new T();
             string name = msg.Descriptor.Name;
@@ -111,8 +130,19 @@ namespace Tableau
 
     internal class MessagerContainer
     {
-        public Dictionary<string, Messager> MessagerMap = new Dictionary<string, Messager>();
-        public DateTime LastLoadedTime;
+        public Dictionary<string, Messager> MessagerMap;
+        public DateTime LastLoadedTime;`
+
+var staticHubContent2 = `
+        public MessagerContainer(in Dictionary<string, Messager>? messagerMap = null)
+        {
+            MessagerMap = messagerMap ?? new Dictionary<string, Messager>();
+            LastLoadedTime = DateTime.Now;
+            if (messagerMap != null)
+            {`
+
+var staticHubContent3 = `            }
+        }
     }
 
     public class HubOptions
@@ -130,7 +160,7 @@ namespace Tableau
             Options = options ?? new HubOptions();
         }
 
-        public bool Load(string dir, Format fmt, LoadOptions? options = null)
+        public bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var messagerMap = NewMessagerMap();
             foreach (var messager in messagerMap.Values)
@@ -141,7 +171,7 @@ namespace Tableau
                 }
             }
             var tmpHub = new Hub();
-            tmpHub.SetMessagerMap(MessagerContainer.MessagerMap);
+            tmpHub.SetMessagerMap(messagerMap);
             foreach (var messager in messagerMap.Values)
             {
                 if (!messager.ProcessAfterLoadAll(tmpHub))
@@ -160,8 +190,7 @@ namespace Tableau
 
         public void SetMessagerMap(in Dictionary<string, Messager> map)
         {
-            MessagerContainer.MessagerMap = map;
-            MessagerContainer.LastLoadedTime = DateTime.Now;
+            MessagerContainer = new MessagerContainer(map);
         }
 
         public T? Get<T>() where T : Messager, IMessagerName, new()
@@ -172,8 +201,9 @@ namespace Tableau
                 return (T)messager;
             }
             return default;
-        }
+        }`
 
+const staticHubContent4 = `
         private Messager GetMessager(string name)
         {
             return GetMessagerMap()[name];
@@ -211,6 +241,6 @@ namespace Tableau
         public static void Init()
         {`
 
-const staticHubContent2 = `        }
+const staticHubContent5 = `        }
     }
 }`

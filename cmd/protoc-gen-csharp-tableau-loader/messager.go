@@ -70,7 +70,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P()
 	g.P(helper.Indent(2), "public static string Name() => Protoconf.", messagerName, ".Descriptor.Name;")
 	g.P()
-	g.P(helper.Indent(2), "public override bool Load(string dir, Format fmt, LoadOptions? options = null)")
+	g.P(helper.Indent(2), "public override bool Load(string dir, Format fmt, in LoadOptions? options = null)")
 	g.P(helper.Indent(2), "{")
 	g.P(helper.Indent(3), "var start = DateTime.Now;")
 	g.P(helper.Indent(3), "bool loaded = LoadMessageByPath<Protoconf.", messagerName, ">(out var msg, dir, fmt, options);")
