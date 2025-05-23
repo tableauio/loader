@@ -1,5 +1,5 @@
 module github.com/tableauio/loader/pkg
 
-go 1.23.4
+go 1.20
 
-require golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
+require golang.org/x/exp v0.0.0-20230418202329-0354be287a23

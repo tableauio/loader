@@ -1,6 +1,6 @@
 module github.com/tableauio/loader
 
-go 1.23.4
+go 1.20
 
 replace github.com/tableauio/loader/pkg => ./pkg
 
@@ -11,7 +11,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tableauio/loader/pkg v0.0.0-00010101000000-000000000000
 	github.com/tableauio/tableau v0.13.0
-	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
+	golang.org/x/exp v0.0.0-20230418202329-0354be287a23
 	google.golang.org/protobuf v1.34.2
 )
 
@@ -42,7 +42,7 @@ require (
 	golang.org/x/arch v0.14.0 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/net v0.22.0 // indirect
-	golang.org/x/sync v0.14.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
