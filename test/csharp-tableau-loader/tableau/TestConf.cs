@@ -60,7 +60,7 @@ namespace Tableau
 
         public static string Name() => Protoconf.ActivityConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, LoadOptions? options = null)
+        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.ActivityConf>(out var msg, dir, fmt, options);
@@ -264,7 +264,7 @@ namespace Tableau
 
         public static string Name() => Protoconf.ChapterConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, LoadOptions? options = null)
+        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.ChapterConf>(out var msg, dir, fmt, options);
@@ -292,7 +292,7 @@ namespace Tableau
 
         public static string Name() => Protoconf.ThemeConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, LoadOptions? options = null)
+        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.ThemeConf>(out var msg, dir, fmt, options);

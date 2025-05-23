@@ -27,7 +27,7 @@ namespace Tableau
 
         public static string Name() => Protoconf.HeroConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, LoadOptions? options = null)
+        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.HeroConf>(out var msg, dir, fmt, options);
@@ -93,7 +93,7 @@ namespace Tableau
 
         public static string Name() => Protoconf.HeroBaseConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, LoadOptions? options = null)
+        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.HeroBaseConf>(out var msg, dir, fmt, options);
