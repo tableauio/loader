@@ -16,7 +16,7 @@ namespace Tableau
 
         public static string Name() => Protoconf.PatchReplaceConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, LoadOptions? options = null)
+        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.PatchReplaceConf>(out var msg, dir, fmt, options);
@@ -35,7 +35,7 @@ namespace Tableau
 
         public static string Name() => Protoconf.PatchMergeConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, LoadOptions? options = null)
+        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.PatchMergeConf>(out var msg, dir, fmt, options);
@@ -63,7 +63,7 @@ namespace Tableau
 
         public static string Name() => Protoconf.RecursivePatchConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, LoadOptions? options = null)
+        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.RecursivePatchConf>(out var msg, dir, fmt, options);
