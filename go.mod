@@ -2,15 +2,12 @@ module github.com/tableauio/loader
 
 go 1.20
 
-replace github.com/tableauio/loader/pkg => ./pkg
-
 require (
 	github.com/iancoleman/strcase v0.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/stretchr/testify v1.10.0
-	github.com/tableauio/loader/pkg v0.0.0-00010101000000-000000000000
-	github.com/tableauio/tableau v0.13.0
+	github.com/tableauio/tableau v0.13.1-0.20250523120611-7f880d7ea583
 	golang.org/x/exp v0.0.0-20230418202329-0354be287a23
 	google.golang.org/protobuf v1.34.2
 )
