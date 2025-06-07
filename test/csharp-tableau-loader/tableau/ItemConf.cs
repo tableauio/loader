@@ -153,13 +153,6 @@ namespace Tableau
                         }
                         IndexItemInfoMap[key].Add(item1.Value);
                     }
-                    foreach (var item in IndexItemInfoMap)
-                    {
-                        item.Value.Sort((a, b) =>
-                        {
-                            return a.Id.CompareTo(b.Id);
-                        });
-                    }
                 }
                 {
                     // Index: Default@ItemDefaultInfo
@@ -190,17 +183,6 @@ namespace Tableau
                         IndexAwardItemMap[key] = new List<Protoconf.ItemConf.Types.Item>();
                     }
                     IndexAwardItemMap[key].Add(item1.Value);
-                    foreach (var item in IndexAwardItemMap)
-                    {
-                        item.Value.Sort((a, b) =>
-                        {
-                            if (a.Type != b.Type)
-                            {
-                                return a.Type.CompareTo(b.Type);
-                            }
-                            return (a.UseEffect?.Type ?? 0).CompareTo(b.UseEffect?.Type ?? 0);
-                        });
-                    }
                 }
                 {
                     // Index: (ID,Type,Param,ExtType)@SpecialItem
@@ -256,6 +238,24 @@ namespace Tableau
                     }
                     IndexUseEffectTypeMap[key].Add(item1.Value);
                 }
+            }
+            foreach (var item in IndexItemInfoMap)
+            {
+                item.Value.Sort((a, b) =>
+                {
+                    return a.Id.CompareTo(b.Id);
+                });
+            }
+            foreach (var item in IndexAwardItemMap)
+            {
+                item.Value.Sort((a, b) =>
+                {
+                    if (a.Type != b.Type)
+                    {
+                        return a.Type.CompareTo(b.Type);
+                    }
+                    return (a.UseEffect?.Type ?? 0).CompareTo(b.UseEffect?.Type ?? 0);
+                });
             }
             return true;
         }

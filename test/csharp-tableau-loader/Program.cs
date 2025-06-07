@@ -58,17 +58,21 @@ class Program
         {
             Console.WriteLine($"ItemConf: {itemConf.Data()}");
             Console.WriteLine($"ItemConf Load duration: {itemConf.GetStats().Duration.TotalMilliseconds} ms");
-        }
-
-        itemConf = hub.GetItemConf();
-        if (itemConf is null)
-        {
-            Console.WriteLine("ItemConf is null");
-        }
-        else
-        {
-            Console.WriteLine($"ItemConf: {itemConf.Data()}");
-            Console.WriteLine($"ItemConf Load duration: {itemConf.GetStats().Duration.TotalMilliseconds} ms");
+            var itemConf2 = hub.GetItemConf();
+            Console.WriteLine($"hub.Get<Tableau.ItemConf>() returns same instance with hub.GetItemConf(): {ReferenceEquals(itemConf, itemConf2)}");
+            var itemInfoMap = itemConf.GetItemInfoMap();
+            if (itemInfoMap != null)
+            {
+                Console.WriteLine("ItemInfoMap Contents:");
+                foreach (var itemPair in itemInfoMap)
+                {
+                    Console.WriteLine($"  - {itemPair.Key}: ");
+                    foreach (var element in itemPair.Value)
+                    {
+                        Console.WriteLine($"    - {element}");
+                    }
+                }
+            }
         }
     }
 }
