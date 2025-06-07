@@ -43,7 +43,7 @@ type ActivityConf_Index_ChapterMap = map[uint32][]*protoconf.ActivityConf_Activi
 type ActivityConf_Index_NamedChapterMap = map[string][]*protoconf.ActivityConf_Activity_Chapter
 
 // Index: SectionItemID@Award
-type ActivityConf_Index_AwardMap = map[uint32][]*protoconf.Item
+type ActivityConf_Index_AwardMap = map[uint32][]*protoconf.Section_SectionItem
 
 // ActivityConf is a wrapper around protobuf message: protoconf.ActivityConf.
 //
@@ -363,20 +363,20 @@ func (x *ActivityConf) FindFirstNamedChapter(chapterName string) *protoconf.Acti
 
 // Index: SectionItemID@Award
 
-// FindAwardMap returns the index(SectionItemID@Award) to value(protoconf.Item) map.
+// FindAwardMap returns the index(SectionItemID@Award) to value(protoconf.Section_SectionItem) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ActivityConf) FindAwardMap() ActivityConf_Index_AwardMap {
 	return x.indexAwardMap
 }
 
 // FindAward returns a slice of all values of the given key.
-func (x *ActivityConf) FindAward(id uint32) []*protoconf.Item {
+func (x *ActivityConf) FindAward(id uint32) []*protoconf.Section_SectionItem {
 	return x.indexAwardMap[id]
 }
 
 // FindFirstAward returns the first value of the given key,
 // or nil if the key correspond to no value.
-func (x *ActivityConf) FindFirstAward(id uint32) *protoconf.Item {
+func (x *ActivityConf) FindFirstAward(id uint32) *protoconf.Section_SectionItem {
 	val := x.indexAwardMap[id]
 	if len(val) > 0 {
 		return val[0]

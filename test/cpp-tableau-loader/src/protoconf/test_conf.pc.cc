@@ -228,7 +228,7 @@ const ActivityConf::Index_AwardVector* ActivityConf::FindAward(uint32_t id) cons
   return &iter->second;
 }
 
-const protoconf::Item* ActivityConf::FindFirstAward(uint32_t id) const {
+const protoconf::Section::SectionItem* ActivityConf::FindFirstAward(uint32_t id) const {
   auto conf = FindAward(id);
   if (conf == nullptr || conf->size() == 0) {
     return nullptr;

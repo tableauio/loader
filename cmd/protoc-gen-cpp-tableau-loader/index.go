@@ -106,6 +106,9 @@ func genCppIndexLoader(g *protogen.GeneratedFile, descriptor *index.IndexDescrip
 		if levelMessage.FD == nil {
 			break
 		}
+		if !levelMessage.NextLevel.NeedGen() {
+			break
+		}
 		g.P(strings.Repeat("  ", depth), "for (auto&& "+itemName+" : "+parentDataName+"."+helper.ParseIndexFieldName(levelMessage.FD)+"()) {")
 		parentDataName = itemName
 		if levelMessage.FD.IsMap() {

@@ -61,7 +61,14 @@ message ActivityConf {
 message Section {
   uint32 section_id = 1 [(tableau.field) = { name: "SectionID" }];
   string section_name = 2 [(tableau.field) = { name: "SectionName" }];
-  repeated Item section_item_list = 3 [(tableau.field) = { name: "SectionItem" layout: LAYOUT_HORIZONTAL }];
+  repeated SectionItem section_item_list = 3 [(tableau.field) = { name: "SectionItem" layout: LAYOUT_HORIZONTAL }];
+  message SectionItem {
+    uint32 id = 1 [(tableau.field) = { name: "ID" }];
+    int32 num = 2 [(tableau.field) = { name: "Num" }];
+    repeated protoconf.Item decompose_item_list = 3 [
+      (tableau.field) = { name: "DecomposeItem" layout: LAYOUT_HORIZONTAL }
+    ];  // do not generate for-range loops for index at this level
+  }
   map<uint32, int32> section_rank_map = 4 [(tableau.field) = { layout: LAYOUT_VERTICAL }];
 }
 

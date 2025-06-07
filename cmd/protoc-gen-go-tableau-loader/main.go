@@ -15,7 +15,6 @@ var pkg *string
 func main() {
 	var flags flag.FlagSet
 	pkg = flags.String("pkg", "tableau", "tableau package name")
-	flag.Parse()
 
 	protogen.Options{
 		ParamFunc: flags.Set,
