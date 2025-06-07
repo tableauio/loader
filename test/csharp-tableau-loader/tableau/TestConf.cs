@@ -52,7 +52,7 @@ namespace Tableau
         private Index_NamedChapterMap IndexNamedChapterMap = new Index_NamedChapterMap();
 
         // Index: SectionItemID@Award
-        public class Index_AwardMap : Dictionary<uint, List<Protoconf.Item>> { }
+        public class Index_AwardMap : Dictionary<uint, List<Protoconf.Section.Types.SectionItem>> { }
 
         private Index_AwardMap IndexAwardMap = new Index_AwardMap();
 
@@ -130,13 +130,6 @@ namespace Tableau
                             IndexNamedChapterMap[key] = new List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>();
                         }
                         IndexNamedChapterMap[key].Add(item2.Value);
-                        foreach (var item in IndexNamedChapterMap)
-                        {
-                            item.Value.Sort((a, b) =>
-                            {
-                                return a.AwardId.CompareTo(b.AwardId);
-                            });
-                        }
                     }
                     foreach (var item3 in item2.Value.SectionMap)
                     {
@@ -147,13 +140,20 @@ namespace Tableau
                                 var key = item4.Id;
                                 if (!IndexAwardMap.ContainsKey(key))
                                 {
-                                    IndexAwardMap[key] = new List<Protoconf.Item>();
+                                    IndexAwardMap[key] = new List<Protoconf.Section.Types.SectionItem>();
                                 }
                                 IndexAwardMap[key].Add(item4);
                             }
                         }
                     }
                 }
+            }
+            foreach (var item in IndexNamedChapterMap)
+            {
+                item.Value.Sort((a, b) =>
+                {
+                    return a.AwardId.CompareTo(b.AwardId);
+                });
             }
             return true;
         }
@@ -253,9 +253,9 @@ namespace Tableau
         // Index: SectionItemID@Award
         public ref readonly Index_AwardMap GetAwardMap() => ref IndexAwardMap;
 
-        public List<Protoconf.Item>? GetAward(uint Id) => IndexAwardMap.TryGetValue(Id, out var value) ? value : null;
+        public List<Protoconf.Section.Types.SectionItem>? GetAward(uint Id) => IndexAwardMap.TryGetValue(Id, out var value) ? value : null;
 
-        public Protoconf.Item? GetFirstAward(uint Id) => GetAward(Id)?.FirstOrDefault();
+        public Protoconf.Section.Types.SectionItem? GetFirstAward(uint Id) => GetAward(Id)?.FirstOrDefault();
     }
 
     public class ChapterConf : Messager, IMessagerName
