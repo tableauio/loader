@@ -51,7 +51,7 @@ func genIndexField(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor,
 }
 
 func genIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, messagerName string) {
-	g.P("  // Index init.")
+	g.P("// Index init.")
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
 			indexContainerName := "index" + strcase.ToCamel(index.Name()) + "Map"
@@ -85,7 +85,7 @@ func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth in
 	parentDataName string, messagerName string) {
 	indexContainerName := "index" + strcase.ToCamel(index.Name()) + "Map"
 	g.P("{")
-	g.P("  // Index: ", index.Index)
+	g.P("// Index: ", index.Index)
 	if len(index.ColFields) == 1 {
 		// single-column index
 		field := index.ColFields[0] // just take the first field
@@ -119,7 +119,7 @@ func genIndexSorter(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor 
 		for _, index := range levelMessage.Indexes {
 			indexContainerName := "index" + strcase.ToCamel(index.Name()) + "Map"
 			if len(index.KeyFields) != 0 {
-				g.P("  // Index(sort): ", index.Index)
+				g.P("// Index(sort): ", index.Index)
 				g.P("for _, item := range x.", indexContainerName, " {")
 				g.P(sortPackage.Ident("Slice"), "(item, func(i, j int) bool {")
 				for i, field := range index.KeyFields {

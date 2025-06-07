@@ -84,15 +84,15 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 
 	g.P("class ", message.Desc.Name(), " : public Messager {")
 	g.P(" public:")
-	g.P("  static const std::string& Name() { return kProtoName; }")
-	g.P("  virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;")
-	g.P("  const ", cppFullName, "& Data() const { return data_; }")
-	g.P("  const google::protobuf::Message* Message() const override { return &data_; }")
+	g.P(helper.Indent(1), "static const std::string& Name() { return kProtoName; }")
+	g.P(helper.Indent(1), "virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;")
+	g.P(helper.Indent(1), "const ", cppFullName, "& Data() const { return data_; }")
+	g.P(helper.Indent(1), "const google::protobuf::Message* Message() const override { return &data_; }")
 	g.P()
 
 	if options.NeedGenOrderedMap(message.Desc, options.LangCPP) || options.NeedGenIndex(message.Desc, options.LangCPP) {
 		g.P(" private:")
-		g.P("  virtual bool ProcessAfterLoad() override final;")
+		g.P(helper.Indent(1), "virtual bool ProcessAfterLoad() override final;")
 		g.P()
 	}
 
@@ -100,8 +100,8 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	genHppMapGetters(1, nil, g, message.Desc)
 	g.P()
 	g.P(" private:")
-	g.P("  static const std::string kProtoName;")
-	g.P("  ", cppFullName, " data_;")
+	g.P(helper.Indent(1), "static const std::string kProtoName;")
+	g.P(helper.Indent(1), cppFullName, " data_;")
 	if options.NeedGenOrderedMap(message.Desc, options.LangCPP) {
 		g.P()
 		genHppOrderedMapGetters(g, message.Desc, 1, nil, messagerFullName)
@@ -122,7 +122,7 @@ func genHppMapGetters(depth int, keys []helper.MapKey, g *protogen.GeneratedFile
 				g.P(" public:")
 			}
 			keys = helper.AddMapKey(fd, keys)
-			g.P("  const ", helper.ParseCppType(fd.MapValue()), "* Get(", helper.GenGetParams(keys), ") const;")
+			g.P(helper.Indent(1), "const ", helper.ParseCppType(fd.MapValue()), "* Get(", helper.GenGetParams(keys), ") const;")
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
 				genHppMapGetters(depth+1, keys, g, fd.MapValue().Message())
 			}
@@ -159,11 +159,11 @@ func genCppMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 	g.P("const std::string ", messagerName, "::kProtoName = ", `"`, messagerName, `";`)
 	g.P()
 	g.P("bool ", messagerName, "::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {")
-	g.P("  tableau::util::TimeProfiler profiler;")
-	g.P("  bool loaded = LoadMessage(data_, dir, fmt, options);")
-	g.P("  bool ok = loaded ? ProcessAfterLoad() : false;")
-	g.P("  stats_.duration = profiler.Elapse();")
-	g.P("  return ok;")
+	g.P(helper.Indent(1), "tableau::util::TimeProfiler profiler;")
+	g.P(helper.Indent(1), "bool loaded = LoadMessage(data_, dir, fmt, options);")
+	g.P(helper.Indent(1), "bool ok = loaded ? ProcessAfterLoad() : false;")
+	g.P(helper.Indent(1), "stats_.duration = profiler.Elapse();")
+	g.P(helper.Indent(1), "return ok;")
 	g.P("}")
 	g.P()
 
@@ -175,7 +175,7 @@ func genCppMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 		if options.NeedGenIndex(message.Desc, options.LangCPP) {
 			genCppIndexLoader(g, indexDescriptor)
 		}
-		g.P("  return true;")
+		g.P(helper.Indent(1), "return true;")
 		g.P("}")
 		g.P()
 	}
@@ -202,17 +202,17 @@ func genCppMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescript
 			} else {
 				container = "conf->" + string(fd.Name()) + "()"
 				prevKeys := keys[:len(keys)-1]
-				g.P("  const auto* conf = Get(", helper.GenGetArguments(prevKeys), ");")
-				g.P("  if (conf == nullptr) {")
-				g.P("    return nullptr;")
-				g.P("  }")
+				g.P(helper.Indent(1), "const auto* conf = Get(", helper.GenGetArguments(prevKeys), ");")
+				g.P(helper.Indent(1), "if (conf == nullptr) {")
+				g.P(helper.Indent(2), "return nullptr;")
+				g.P(helper.Indent(1), "}")
 			}
 			lastKeyName := keys[len(keys)-1].Name
-			g.P("  auto iter = ", container, ".find(", lastKeyName, ");")
-			g.P("  if (iter == ", container, ".end()) {")
-			g.P("    return nullptr;")
-			g.P("  }")
-			g.P("  return &iter->second;")
+			g.P(helper.Indent(1), "auto iter = ", container, ".find(", lastKeyName, ");")
+			g.P(helper.Indent(1), "if (iter == ", container, ".end()) {")
+			g.P(helper.Indent(2), "return nullptr;")
+			g.P(helper.Indent(1), "}")
+			g.P(helper.Indent(1), "return &iter->second;")
 			g.P("}")
 			g.P()
 
