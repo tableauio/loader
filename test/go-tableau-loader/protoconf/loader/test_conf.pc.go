@@ -184,6 +184,7 @@ func (x *ActivityConf) processAfterLoad() error {
 			}
 		}
 	}
+	// Index(sort): ChapterName<AwardID>@NamedChapter
 	for _, item := range x.indexNamedChapterMap {
 		sort.Slice(item, func(i, j int) bool {
 			return item[i].GetAwardId() < item[j].GetAwardId()

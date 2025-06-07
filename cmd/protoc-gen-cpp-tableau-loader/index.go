@@ -162,6 +162,7 @@ func genIndexSorter(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor
 		for _, index := range levelMessage.Indexes {
 			indexContainerName := "index_" + strcase.ToSnake(index.Name()) + "_map_"
 			if len(index.KeyFields) != 0 {
+				g.P("  // Index(sort): ", index.Index)
 				g.P(strings.Repeat("  ", 1), "for (auto&& item : ", indexContainerName, ") {")
 				g.P(strings.Repeat("  ", 2), "std::sort(item.second.begin(), item.second.end(),")
 				g.P(strings.Repeat("  ", 7), "[](const ", helper.ParseCppClassType(index.MD), "* a, const ", helper.ParseCppClassType(index.MD), "* b) {")

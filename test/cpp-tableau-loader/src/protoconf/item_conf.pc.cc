@@ -91,12 +91,14 @@ bool ItemConf::ProcessAfterLoad() {
       index_use_effect_type_map_[item1.second.use_effect().type()].push_back(&item1.second);
     }
   }
+  // Index(sort): Param<ID>@ItemInfo
   for (auto&& item : index_item_info_map_) {
     std::sort(item.second.begin(), item.second.end(),
               [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
                 return a->id() < b->id();
               });
   }
+  // Index(sort): (ID,Name)<Type,UseEffectType>@AwardItem
   for (auto&& item : index_award_item_map_) {
     std::sort(item.second.begin(), item.second.end(),
               [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {

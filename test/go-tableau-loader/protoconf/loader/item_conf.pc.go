@@ -224,11 +224,13 @@ func (x *ItemConf) processAfterLoad() error {
 			x.indexUseEffectTypeMap[key] = append(x.indexUseEffectTypeMap[key], item1)
 		}
 	}
+	// Index(sort): Param<ID>@ItemInfo
 	for _, item := range x.indexItemInfoMap {
 		sort.Slice(item, func(i, j int) bool {
 			return item[i].GetId() < item[j].GetId()
 		})
 	}
+	// Index(sort): (ID,Name)<Type,UseEffectType>@AwardItem
 	for _, item := range x.indexAwardItemMap {
 		sort.Slice(item, func(i, j int) bool {
 			if item[i].GetType() != item[j].GetType() {

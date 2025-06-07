@@ -119,6 +119,7 @@ func genIndexSorter(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor 
 		for _, index := range levelMessage.Indexes {
 			indexContainerName := "index" + strcase.ToCamel(index.Name()) + "Map"
 			if len(index.KeyFields) != 0 {
+				g.P("  // Index(sort): ", index.Index)
 				g.P("for _, item := range x.", indexContainerName, " {")
 				g.P(sortPackage.Ident("Slice"), "(item, func(i, j int) bool {")
 				for i, field := range index.KeyFields {

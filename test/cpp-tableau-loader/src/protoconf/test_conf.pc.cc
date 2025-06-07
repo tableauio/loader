@@ -67,6 +67,7 @@ bool ActivityConf::ProcessAfterLoad() {
       }
     }
   }
+  // Index(sort): ChapterName<AwardID>@NamedChapter
   for (auto&& item : index_named_chapter_map_) {
     std::sort(item.second.begin(), item.second.end(),
               [](const protoconf::ActivityConf::Activity::Chapter* a, const protoconf::ActivityConf::Activity::Chapter* b) {
