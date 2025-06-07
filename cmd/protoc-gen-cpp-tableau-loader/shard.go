@@ -61,7 +61,7 @@ func generateShardedHub(gen *protogen.Plugin) {
 
 func generateShardedHubHppMsgContainerShards(gen *protogen.Plugin, g *protogen.GeneratedFile, shardNum int) {
 	for i := 0; i < shardNum; i++ {
-		g.P("  void InitShard", i, "();")
+		g.P(helper.Indent(1), "void InitShard", i, "();")
 	}
 	g.P()
 	g.P(" private:")
@@ -69,7 +69,7 @@ func generateShardedHubHppMsgContainerShards(gen *protogen.Plugin, g *protogen.G
 
 func generateShardedHubHppRegistryShards(gen *protogen.Plugin, g *protogen.GeneratedFile, shardNum int) {
 	for i := 0; i < shardNum; i++ {
-		g.P("  static void InitShard", i, "();")
+		g.P(helper.Indent(1), "static void InitShard", i, "();")
 	}
 	g.P()
 	g.P(" private:")
@@ -77,13 +77,13 @@ func generateShardedHubHppRegistryShards(gen *protogen.Plugin, g *protogen.Gener
 
 func generateShardedHubCppMsgContainerShards(gen *protogen.Plugin, g *protogen.GeneratedFile, shardNum int) {
 	for i := 0; i < shardNum; i++ {
-		g.P("  InitShard", i, "();")
+		g.P(helper.Indent(1), "InitShard", i, "();")
 	}
 }
 
 func generateShardedHubCppRegistryShards(gen *protogen.Plugin, g *protogen.GeneratedFile, shardNum int) {
 	for i := 0; i < shardNum; i++ {
-		g.P("  InitShard", i, "();")
+		g.P(helper.Indent(1), "InitShard", i, "();")
 	}
 }
 
@@ -100,7 +100,7 @@ func generateShardedHubCppFileContent(gen *protogen.Plugin, g *protogen.Generate
 		for _, messager := range fileMessagers[proto] {
 			g.P("template <>")
 			g.P("const std::shared_ptr<" + messager + "> Hub::Get<" + messager + ">() const {")
-			g.P("  return GetMessagerContainer()->", strcase.ToSnake(messager), "_;")
+			g.P(helper.Indent(1), "return GetMessagerContainer()->", strcase.ToSnake(messager), "_;")
 			g.P("}")
 			g.P()
 		}
@@ -109,7 +109,7 @@ func generateShardedHubCppFileContent(gen *protogen.Plugin, g *protogen.Generate
 	g.P("void MessagerContainer::InitShard", shardIndex, "() {")
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
-			g.P("  ", strcase.ToSnake(messager), "_ = std::dynamic_pointer_cast<", messager, `>((*msger_map_)["`, messager, `"]);`)
+			g.P(helper.Indent(1), strcase.ToSnake(messager), "_ = std::dynamic_pointer_cast<", messager, `>((*msger_map_)["`, messager, `"]);`)
 		}
 	}
 	g.P("}")
@@ -118,7 +118,7 @@ func generateShardedHubCppFileContent(gen *protogen.Plugin, g *protogen.Generate
 	g.P("void Registry::InitShard", shardIndex, "() {")
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
-			g.P("  Register<", messager, ">();")
+			g.P(helper.Indent(1), "Register<", messager, ">();")
 		}
 	}
 	g.P("}")

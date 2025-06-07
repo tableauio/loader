@@ -152,3 +152,7 @@ func GenGetArguments(keys []MapKey) string {
 	}
 	return params
 }
+
+func Indent(depth int) string {
+	return strings.Repeat("  ", depth)
+}

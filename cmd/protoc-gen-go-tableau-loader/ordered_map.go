@@ -157,7 +157,7 @@ func genOrderedMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md pr
 			if depth == 1 {
 				g.P("// ", getter, " returns the 1-level ordered map.")
 				g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") *", orderedMap, "{")
-				g.P("  return x.orderedMap ")
+				g.P("return x.orderedMap ")
 			} else {
 				g.P("// ", getter, " finds value in the ", depth-1, "-level ordered map. It will return")
 				g.P("// NotFound error if the key is not found.")
