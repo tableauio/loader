@@ -75,15 +75,21 @@ func genIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor 
 		if levelMessage.FD == nil {
 			break
 		}
+		if !levelMessage.NextLevel.NeedGen() {
+			break
+		}
 		g.P(helper.Indent(depth+2), "foreach (var ", itemName, " in ", parentDataName, ".", helper.ParseIndexFieldName(levelMessage.FD), ")")
 		g.P(helper.Indent(depth+2), "{")
 		parentDataName = itemName
 		if levelMessage.FD.IsMap() {
 			parentDataName = itemName + ".Value"
 		}
-		defer g.P(helper.Indent(depth+2), "}")
 		depth++
 	}
+	for i := depth - 1; i > 0; i-- {
+		g.P(helper.Indent(i+2), "}")
+	}
+	genIndexSorter(gen, g, descriptor)
 }
 
 func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth int, index *index.LevelIndex, parentDataName string, messagerName string) {
@@ -134,43 +140,51 @@ func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth in
 		// multi-column index
 		generateOneMulticolumnIndex(gen, g, depth, index, parentDataName, messagerName, nil)
 	}
-	if len(index.KeyFields) != 0 {
-		g.P(helper.Indent(depth+3), "foreach (var item in ", indexContainerName, ")")
-		g.P(helper.Indent(depth+3), "{")
-		g.P(helper.Indent(depth+4), "item.Value.Sort((a, b) =>")
-		g.P(helper.Indent(depth+4), "{")
-		for i, field := range index.KeyFields {
-			fieldName := ""
-			for i, leveledFd := range field.LeveledFDList {
-				if i != 0 {
-					fieldName += "?"
+	g.P(helper.Indent(depth+2), "}")
+}
+
+func genIndexSorter(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor) {
+	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
+		for _, index := range levelMessage.Indexes {
+			indexContainerName := "Index" + strcase.ToCamel(index.Name()) + "Map"
+			if len(index.KeyFields) != 0 {
+				g.P(helper.Indent(3), "foreach (var item in ", indexContainerName, ")")
+				g.P(helper.Indent(3), "{")
+				g.P(helper.Indent(4), "item.Value.Sort((a, b) =>")
+				g.P(helper.Indent(4), "{")
+				for i, field := range index.KeyFields {
+					fieldName := ""
+					for i, leveledFd := range field.LeveledFDList {
+						if i != 0 {
+							fieldName += "?"
+						}
+						fieldName += "." + helper.ParseIndexFieldName(leveledFd)
+					}
+					if len(field.LeveledFDList) > 1 {
+						fieldName += " ?? " + helper.GetTypeEmptyValue(field.FD)
+					}
+					if i == len(index.KeyFields)-1 {
+						if len(field.LeveledFDList) > 1 {
+							g.P(helper.Indent(5), "return (a", fieldName, ").CompareTo(b", fieldName, ");")
+						} else {
+							g.P(helper.Indent(5), "return a", fieldName, ".CompareTo(b", fieldName, ");")
+						}
+					} else {
+						g.P(helper.Indent(5), "if (a", fieldName, " != b", fieldName, ")")
+						g.P(helper.Indent(5), "{")
+						if len(field.LeveledFDList) > 1 {
+							g.P(helper.Indent(6), "return (a", fieldName, ").CompareTo(b", fieldName, ");")
+						} else {
+							g.P(helper.Indent(6), "return a", fieldName, ".CompareTo(b", fieldName, ");")
+						}
+						g.P(helper.Indent(5), "}")
+					}
 				}
-				fieldName += "." + helper.ParseIndexFieldName(leveledFd)
-			}
-			if len(field.LeveledFDList) > 1 {
-				fieldName += " ?? " + helper.GetTypeEmptyValue(field.FD)
-			}
-			if i == len(index.KeyFields)-1 {
-				if len(field.LeveledFDList) > 1 {
-					g.P(helper.Indent(depth+5), "return (a", fieldName, ").CompareTo(b", fieldName, ");")
-				} else {
-					g.P(helper.Indent(depth+5), "return a", fieldName, ".CompareTo(b", fieldName, ");")
-				}
-			} else {
-				g.P(helper.Indent(depth+5), "if (a", fieldName, " != b", fieldName, ")")
-				g.P(helper.Indent(depth+5), "{")
-				if len(field.LeveledFDList) > 1 {
-					g.P(helper.Indent(depth+6), "return (a", fieldName, ").CompareTo(b", fieldName, ");")
-				} else {
-					g.P(helper.Indent(depth+6), "return a", fieldName, ".CompareTo(b", fieldName, ");")
-				}
-				g.P(helper.Indent(depth+5), "}")
+				g.P(helper.Indent(4), "});")
+				g.P(helper.Indent(3), "}")
 			}
 		}
-		g.P(helper.Indent(depth+4), "});")
-		g.P(helper.Indent(depth+3), "}")
 	}
-	g.P(helper.Indent(depth+2), "}")
 }
 
 func generateOneMulticolumnIndex(gen *protogen.Plugin, g *protogen.GeneratedFile, depth int, index *index.LevelIndex, parentDataName string, messagerName string, keys []string) []string {
