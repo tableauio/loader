@@ -73,9 +73,12 @@ func genIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor 
 		}
 		g.P("for _, ", itemName, " := range "+parentDataName+".Get"+helper.ParseIndexFieldName(gen, levelMessage.FD)+"() {")
 		parentDataName = itemName
-		defer g.P("}")
 		depth++
 	}
+	for i := depth - 1; i > 0; i-- {
+		g.P("}")
+	}
+	genIndexSorter(gen, g, descriptor)
 }
 
 func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth int, index *index.LevelIndex,
@@ -108,26 +111,34 @@ func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth in
 		// multi-column index
 		generateOneMulticolumnIndex(gen, g, depth, index, parentDataName, messagerName, nil)
 	}
-	if len(index.KeyFields) != 0 {
-		g.P("for _, item := range x.", indexContainerName, " {")
-		g.P(sortPackage.Ident("Slice"), "(item, func(i, j int) bool {")
-		for i, field := range index.KeyFields {
-			fieldName := ""
-			for _, leveledFd := range field.LeveledFDList {
-				fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
-			}
-			if i == len(index.KeyFields)-1 {
-				g.P("return item[i]", fieldName, " < item[j]", fieldName)
-			} else {
-				g.P("if item[i]", fieldName, " != item[j]", fieldName, " {")
-				g.P("return item[i]", fieldName, " < item[j]", fieldName)
+	g.P("}")
+}
+
+func genIndexSorter(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor) {
+	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
+		for _, index := range levelMessage.Indexes {
+			indexContainerName := "index" + strcase.ToCamel(index.Name()) + "Map"
+			if len(index.KeyFields) != 0 {
+				g.P("for _, item := range x.", indexContainerName, " {")
+				g.P(sortPackage.Ident("Slice"), "(item, func(i, j int) bool {")
+				for i, field := range index.KeyFields {
+					fieldName := ""
+					for _, leveledFd := range field.LeveledFDList {
+						fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
+					}
+					if i == len(index.KeyFields)-1 {
+						g.P("return item[i]", fieldName, " < item[j]", fieldName)
+					} else {
+						g.P("if item[i]", fieldName, " != item[j]", fieldName, " {")
+						g.P("return item[i]", fieldName, " < item[j]", fieldName)
+						g.P("}")
+					}
+				}
+				g.P("})")
 				g.P("}")
 			}
 		}
-		g.P("})")
-		g.P("}")
 	}
-	g.P("}")
 }
 
 func generateOneMulticolumnIndex(gen *protogen.Plugin, g *protogen.GeneratedFile,

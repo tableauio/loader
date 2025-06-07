@@ -47,12 +47,6 @@ bool ItemConf::ProcessAfterLoad() {
       for (auto&& item2 : item1.second.param_list()) {
         index_item_info_map_[item2].push_back(&item1.second);
       }
-      for (auto&& item : index_item_info_map_) {
-        std::sort(item.second.begin(), item.second.end(),
-                  [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
-                    return a->id() < b->id();
-                  });
-      }
     }
     {
       // Index: Default@ItemDefaultInfo
@@ -68,15 +62,6 @@ bool ItemConf::ProcessAfterLoad() {
       // Index: (ID,Name)<Type,UseEffectType>@AwardItem
       Index_AwardItemKey key{item1.second.id(), item1.second.name()};
       index_award_item_map_[key].push_back(&item1.second);
-      for (auto&& item : index_award_item_map_) {
-        std::sort(item.second.begin(), item.second.end(),
-                  [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
-                    if (a->type() != b->type()) {
-                      return a->type() < b->type();
-                    }
-                    return a->use_effect().type() < b->use_effect().type();
-                  });
-      }
     }
     {
       // Index: (ID,Type,Param,ExtType)@SpecialItem
@@ -105,6 +90,21 @@ bool ItemConf::ProcessAfterLoad() {
       // Index: UseEffectType@UseEffectType
       index_use_effect_type_map_[item1.second.use_effect().type()].push_back(&item1.second);
     }
+  }
+  for (auto&& item : index_item_info_map_) {
+    std::sort(item.second.begin(), item.second.end(),
+              [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
+                return a->id() < b->id();
+              });
+  }
+  for (auto&& item : index_award_item_map_) {
+    std::sort(item.second.begin(), item.second.end(),
+              [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
+                if (a->type() != b->type()) {
+                  return a->type() < b->type();
+                }
+                return a->use_effect().type() < b->use_effect().type();
+              });
   }
   return true;
 }

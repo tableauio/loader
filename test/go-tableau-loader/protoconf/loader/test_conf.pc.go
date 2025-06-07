@@ -172,11 +172,6 @@ func (x *ActivityConf) processAfterLoad() error {
 				// Index: ChapterName<AwardID>@NamedChapter
 				key := item2.GetChapterName()
 				x.indexNamedChapterMap[key] = append(x.indexNamedChapterMap[key], item2)
-				for _, item := range x.indexNamedChapterMap {
-					sort.Slice(item, func(i, j int) bool {
-						return item[i].GetAwardId() < item[j].GetAwardId()
-					})
-				}
 			}
 			for _, item3 := range item2.GetSectionMap() {
 				for _, item4 := range item3.GetSectionItemList() {
@@ -188,6 +183,11 @@ func (x *ActivityConf) processAfterLoad() error {
 				}
 			}
 		}
+	}
+	for _, item := range x.indexNamedChapterMap {
+		sort.Slice(item, func(i, j int) bool {
+			return item[i].GetAwardId() < item[j].GetAwardId()
+		})
 	}
 	return nil
 }
