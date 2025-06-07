@@ -106,14 +106,20 @@ func genCppIndexLoader(g *protogen.GeneratedFile, descriptor *index.IndexDescrip
 		if levelMessage.FD == nil {
 			break
 		}
+		if !levelMessage.NextLevel.NeedGen() {
+			break
+		}
 		g.P(strings.Repeat("  ", depth), "for (auto&& "+itemName+" : "+parentDataName+"."+helper.ParseIndexFieldName(levelMessage.FD)+"()) {")
 		parentDataName = itemName
 		if levelMessage.FD.IsMap() {
 			parentDataName = itemName + ".second"
 		}
-		defer g.P(strings.Repeat("  ", depth), "}")
 		depth++
 	}
+	for i := depth - 1; i > 0; i-- {
+		g.P(strings.Repeat("  ", i), "}")
+	}
+	genIndexSorter(g, descriptor)
 }
 
 func genOneCppIndexLoader(g *protogen.GeneratedFile, depth int, index *index.LevelIndex, parentDataName string) {
@@ -148,31 +154,40 @@ func genOneCppIndexLoader(g *protogen.GeneratedFile, depth int, index *index.Lev
 		// multi-column index
 		generateOneCppMulticolumnIndex(g, depth, index, parentDataName, nil)
 	}
-	if len(index.KeyFields) != 0 {
-		g.P(strings.Repeat("  ", depth+1), "for (auto&& item : ", indexContainerName, ") {")
-		g.P(strings.Repeat("  ", depth+2), "std::sort(item.second.begin(), item.second.end(),")
-		g.P(strings.Repeat("  ", depth+7), "[](const ", helper.ParseCppClassType(index.MD), "* a, const ", helper.ParseCppClassType(index.MD), "* b) {")
-		for i, field := range index.KeyFields {
-			fieldName := ""
-			for i, leveledFd := range field.LeveledFDList {
-				accessOperator := "."
-				if i == 0 {
-					accessOperator = "->"
+	g.P(strings.Repeat("  ", depth), "}")
+}
+
+func genIndexSorter(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor) {
+	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
+		for _, index := range levelMessage.Indexes {
+			indexContainerName := "index_" + strcase.ToSnake(index.Name()) + "_map_"
+			if len(index.KeyFields) != 0 {
+				g.P("  // Index(sort): ", index.Index)
+				g.P(strings.Repeat("  ", 1), "for (auto&& item : ", indexContainerName, ") {")
+				g.P(strings.Repeat("  ", 2), "std::sort(item.second.begin(), item.second.end(),")
+				g.P(strings.Repeat("  ", 7), "[](const ", helper.ParseCppClassType(index.MD), "* a, const ", helper.ParseCppClassType(index.MD), "* b) {")
+				for i, field := range index.KeyFields {
+					fieldName := ""
+					for i, leveledFd := range field.LeveledFDList {
+						accessOperator := "."
+						if i == 0 {
+							accessOperator = "->"
+						}
+						fieldName += accessOperator + helper.ParseIndexFieldName(leveledFd) + "()"
+					}
+					if i == len(index.KeyFields)-1 {
+						g.P(strings.Repeat("  ", 8), "return a", fieldName, " < b", fieldName, ";")
+					} else {
+						g.P(strings.Repeat("  ", 8), "if (a", fieldName, " != b", fieldName, ") {")
+						g.P(strings.Repeat("  ", 9), "return a", fieldName, " < b", fieldName, ";")
+						g.P(strings.Repeat("  ", 8), "}")
+					}
 				}
-				fieldName += accessOperator + helper.ParseIndexFieldName(leveledFd) + "()"
-			}
-			if i == len(index.KeyFields)-1 {
-				g.P(strings.Repeat("  ", depth+8), "return a", fieldName, " < b", fieldName, ";")
-			} else {
-				g.P(strings.Repeat("  ", depth+8), "if (a", fieldName, " != b", fieldName, ") {")
-				g.P(strings.Repeat("  ", depth+9), "return a", fieldName, " < b", fieldName, ";")
-				g.P(strings.Repeat("  ", depth+8), "}")
+				g.P(strings.Repeat("  ", 7), "});")
+				g.P(strings.Repeat("  ", 1), "}")
 			}
 		}
-		g.P(strings.Repeat("  ", depth+7), "});")
-		g.P(strings.Repeat("  ", depth+1), "}")
 	}
-	g.P(strings.Repeat("  ", depth), "}")
 }
 
 func generateOneCppMulticolumnIndex(g *protogen.GeneratedFile, depth int, index *index.LevelIndex, parentDataName string, keys []string) []string {

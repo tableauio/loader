@@ -174,11 +174,6 @@ func (x *ItemConf) processAfterLoad() error {
 				key := item2
 				x.indexItemInfoMap[key] = append(x.indexItemInfoMap[key], item1)
 			}
-			for _, item := range x.indexItemInfoMap {
-				sort.Slice(item, func(i, j int) bool {
-					return item[i].GetId() < item[j].GetId()
-				})
-			}
 		}
 		{
 			// Index: Default@ItemDefaultInfo
@@ -196,14 +191,6 @@ func (x *ItemConf) processAfterLoad() error {
 			// Index: (ID,Name)<Type,UseEffectType>@AwardItem
 			key := ItemConf_Index_AwardItemKey{item1.GetId(), item1.GetName()}
 			x.indexAwardItemMap[key] = append(x.indexAwardItemMap[key], item1)
-			for _, item := range x.indexAwardItemMap {
-				sort.Slice(item, func(i, j int) bool {
-					if item[i].GetType() != item[j].GetType() {
-						return item[i].GetType() < item[j].GetType()
-					}
-					return item[i].GetUseEffect().GetType() < item[j].GetUseEffect().GetType()
-				})
-			}
 		}
 		{
 			// Index: (ID,Type,Param,ExtType)@SpecialItem
@@ -236,6 +223,21 @@ func (x *ItemConf) processAfterLoad() error {
 			key := item1.GetUseEffect().GetType()
 			x.indexUseEffectTypeMap[key] = append(x.indexUseEffectTypeMap[key], item1)
 		}
+	}
+	// Index(sort): Param<ID>@ItemInfo
+	for _, item := range x.indexItemInfoMap {
+		sort.Slice(item, func(i, j int) bool {
+			return item[i].GetId() < item[j].GetId()
+		})
+	}
+	// Index(sort): (ID,Name)<Type,UseEffectType>@AwardItem
+	for _, item := range x.indexAwardItemMap {
+		sort.Slice(item, func(i, j int) bool {
+			if item[i].GetType() != item[j].GetType() {
+				return item[i].GetType() < item[j].GetType()
+			}
+			return item[i].GetUseEffect().GetType() < item[j].GetUseEffect().GetType()
+		})
 	}
 	return nil
 }

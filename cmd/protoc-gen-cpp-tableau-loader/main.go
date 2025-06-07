@@ -40,7 +40,6 @@ func main() {
   - messager: only generate "*.pc.h/cc" for each .proto files.
 `)
 	shards = flags.Int("shards", 1, "count of generated hub cpp files for distributed compiling speed-up")
-	flag.Parse()
 
 	protogen.Options{
 		ParamFunc: flags.Set,

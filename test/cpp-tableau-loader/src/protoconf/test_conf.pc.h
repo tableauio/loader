@@ -88,11 +88,11 @@ class ActivityConf : public Messager {
 
   // Index: SectionItemID@Award
  public:
-  using Index_AwardVector = std::vector<const protoconf::Item*>;
+  using Index_AwardVector = std::vector<const protoconf::Section::SectionItem*>;
   using Index_AwardMap = std::unordered_map<uint32_t, Index_AwardVector>;
   const Index_AwardMap& FindAward() const;
   const Index_AwardVector* FindAward(uint32_t id) const;
-  const protoconf::Item* FindFirstAward(uint32_t id) const;
+  const protoconf::Section::SectionItem* FindFirstAward(uint32_t id) const;
 
  private:
   Index_AwardMap index_award_map_;

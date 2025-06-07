@@ -54,6 +54,13 @@ type LevelMessage struct {
 	Indexes []*LevelIndex
 }
 
+func (l *LevelMessage) NeedGen() bool {
+	if l == nil {
+		return false
+	}
+	return len(l.Indexes) != 0 || l.NextLevel.NeedGen()
+}
+
 type LevelIndex struct {
 	*Index
 	MD        protoreflect.MessageDescriptor
