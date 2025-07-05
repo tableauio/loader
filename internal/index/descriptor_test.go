@@ -5,8 +5,18 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tableauio/loader/test/go-tableau-loader/protoconf"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
+
+func md[T proto.Message]() protoreflect.MessageDescriptor {
+	var t T
+	return t.ProtoReflect().Descriptor()
+}
+
+func fd[T proto.Message](name protoreflect.Name) protoreflect.FieldDescriptor {
+	return md[T]().Fields().ByName(name)
+}
 
 func Test_ParseIndexDescriptor(t *testing.T) {
 	type args struct {
@@ -20,11 +30,11 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 		{
 			name: "ItemConf",
 			args: args{
-				md: (&protoconf.ItemConf{}).ProtoReflect().Descriptor(),
+				md: md[*protoconf.ItemConf](),
 			},
 			want: &IndexDescriptor{
 				LevelMessage: &LevelMessage{
-					FD: (&protoconf.ItemConf{}).ProtoReflect().Descriptor().Fields().ByName("item_map"),
+					FD: fd[*protoconf.ItemConf]("item_map"),
 					NextLevel: &LevelMessage{
 						Indexes: []*LevelIndex{
 							{
@@ -32,12 +42,12 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 									Cols: []string{"Type"},
 									Name: "",
 								},
-								MD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor(),
+								MD: md[*protoconf.ItemConf_Item](),
 								ColFields: []*LevelField{
 									{
-										FD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("type"),
+										FD: fd[*protoconf.ItemConf_Item]("type"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("type"),
+											fd[*protoconf.ItemConf_Item]("type"),
 										},
 									},
 								},
@@ -48,20 +58,20 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 									Keys: []string{"ID"},
 									Name: "ItemInfo",
 								},
-								MD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor(),
+								MD: md[*protoconf.ItemConf_Item](),
 								ColFields: []*LevelField{
 									{
-										FD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("param_list"),
+										FD: fd[*protoconf.ItemConf_Item]("param_list"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("param_list"),
+											fd[*protoconf.ItemConf_Item]("param_list"),
 										},
 									},
 								},
 								KeyFields: []*LevelField{
 									{
-										FD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+										FD: fd[*protoconf.ItemConf_Item]("id"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+											fd[*protoconf.ItemConf_Item]("id"),
 										},
 									},
 								},
@@ -71,12 +81,12 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 									Cols: []string{"Default"},
 									Name: "ItemDefaultInfo",
 								},
-								MD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor(),
+								MD: md[*protoconf.ItemConf_Item](),
 								ColFields: []*LevelField{
 									{
-										FD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("default"),
+										FD: fd[*protoconf.ItemConf_Item]("default"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("default"),
+											fd[*protoconf.ItemConf_Item]("default"),
 										},
 									},
 								},
@@ -86,12 +96,12 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 									Cols: []string{"ExtType"},
 									Name: "ItemExtInfo",
 								},
-								MD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor(),
+								MD: md[*protoconf.ItemConf_Item](),
 								ColFields: []*LevelField{
 									{
-										FD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("ext_type_list"),
+										FD: fd[*protoconf.ItemConf_Item]("ext_type_list"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("ext_type_list"),
+											fd[*protoconf.ItemConf_Item]("ext_type_list"),
 										},
 									},
 								},
@@ -102,33 +112,33 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 									Keys: []string{"Type", "UseEffectType"},
 									Name: "AwardItem",
 								},
-								MD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor(),
+								MD: md[*protoconf.ItemConf_Item](),
 								ColFields: []*LevelField{
 									{
-										FD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+										FD: fd[*protoconf.ItemConf_Item]("id"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+											fd[*protoconf.ItemConf_Item]("id"),
 										},
 									},
 									{
-										FD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("name"),
+										FD: fd[*protoconf.ItemConf_Item]("name"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("name"),
+											fd[*protoconf.ItemConf_Item]("name"),
 										},
 									},
 								},
 								KeyFields: []*LevelField{
 									{
-										FD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("type"),
+										FD: fd[*protoconf.ItemConf_Item]("type"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("type"),
+											fd[*protoconf.ItemConf_Item]("type"),
 										},
 									},
 									{
-										FD: (&protoconf.UseEffect{}).ProtoReflect().Descriptor().Fields().ByName("type"),
+										FD: fd[*protoconf.UseEffect]("type"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("use_effect"),
-											(&protoconf.UseEffect{}).ProtoReflect().Descriptor().Fields().ByName("type"),
+											fd[*protoconf.ItemConf_Item]("use_effect"),
+											fd[*protoconf.UseEffect]("type"),
 										},
 									},
 								},
@@ -138,30 +148,30 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 									Cols: []string{"ID", "Type", "Param", "ExtType"},
 									Name: "SpecialItem",
 								},
-								MD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor(),
+								MD: md[*protoconf.ItemConf_Item](),
 								ColFields: []*LevelField{
 									{
-										FD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+										FD: fd[*protoconf.ItemConf_Item]("id"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+											fd[*protoconf.ItemConf_Item]("id"),
 										},
 									},
 									{
-										FD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("type"),
+										FD: fd[*protoconf.ItemConf_Item]("type"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("type"),
+											fd[*protoconf.ItemConf_Item]("type"),
 										},
 									},
 									{
-										FD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("param_list"),
+										FD: fd[*protoconf.ItemConf_Item]("param_list"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("param_list"),
+											fd[*protoconf.ItemConf_Item]("param_list"),
 										},
 									},
 									{
-										FD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("ext_type_list"),
+										FD: fd[*protoconf.ItemConf_Item]("ext_type_list"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("ext_type_list"),
+											fd[*protoconf.ItemConf_Item]("ext_type_list"),
 										},
 									},
 								},
@@ -171,13 +181,13 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 									Cols: []string{"PathDir"},
 									Name: "ItemPathDir",
 								},
-								MD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor(),
+								MD: md[*protoconf.ItemConf_Item](),
 								ColFields: []*LevelField{
 									{
-										FD: (&protoconf.Path{}).ProtoReflect().Descriptor().Fields().ByName("dir"),
+										FD: fd[*protoconf.Path]("dir"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("path"),
-											(&protoconf.Path{}).ProtoReflect().Descriptor().Fields().ByName("dir"),
+											fd[*protoconf.ItemConf_Item]("path"),
+											fd[*protoconf.Path]("dir"),
 										},
 									},
 								},
@@ -187,13 +197,13 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 									Cols: []string{"PathName"},
 									Name: "ItemPathName",
 								},
-								MD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor(),
+								MD: md[*protoconf.ItemConf_Item](),
 								ColFields: []*LevelField{
 									{
-										FD: (&protoconf.Path{}).ProtoReflect().Descriptor().Fields().ByName("name_list"),
+										FD: fd[*protoconf.Path]("name_list"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("path"),
-											(&protoconf.Path{}).ProtoReflect().Descriptor().Fields().ByName("name_list"),
+											fd[*protoconf.ItemConf_Item]("path"),
+											fd[*protoconf.Path]("name_list"),
 										},
 									},
 								},
@@ -203,14 +213,14 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 									Cols: []string{"PathFriendID"},
 									Name: "ItemPathFriendID",
 								},
-								MD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor(),
+								MD: md[*protoconf.ItemConf_Item](),
 								ColFields: []*LevelField{
 									{
-										FD: (&protoconf.Path_Friend{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+										FD: fd[*protoconf.Path_Friend]("id"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("path"),
-											(&protoconf.Path{}).ProtoReflect().Descriptor().Fields().ByName("friend"),
-											(&protoconf.Path_Friend{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+											fd[*protoconf.ItemConf_Item]("path"),
+											fd[*protoconf.Path]("friend"),
+											fd[*protoconf.Path_Friend]("id"),
 										},
 									},
 								},
@@ -220,13 +230,13 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 									Cols: []string{"UseEffectType"},
 									Name: "UseEffectType",
 								},
-								MD: (&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor(),
+								MD: md[*protoconf.ItemConf_Item](),
 								ColFields: []*LevelField{
 									{
-										FD: (&protoconf.UseEffect{}).ProtoReflect().Descriptor().Fields().ByName("type"),
+										FD: fd[*protoconf.UseEffect]("type"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ItemConf_Item{}).ProtoReflect().Descriptor().Fields().ByName("use_effect"),
-											(&protoconf.UseEffect{}).ProtoReflect().Descriptor().Fields().ByName("type"),
+											fd[*protoconf.ItemConf_Item]("use_effect"),
+											fd[*protoconf.UseEffect]("type"),
 										},
 									},
 								},
@@ -239,13 +249,13 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 		{
 			name: "HeroConf",
 			args: args{
-				md: (&protoconf.HeroConf{}).ProtoReflect().Descriptor(),
+				md: md[*protoconf.HeroConf](),
 			},
 			want: &IndexDescriptor{
 				LevelMessage: &LevelMessage{
-					FD: (&protoconf.HeroConf{}).ProtoReflect().Descriptor().Fields().ByName("hero_map"),
+					FD: fd[*protoconf.HeroConf]("hero_map"),
 					NextLevel: &LevelMessage{
-						FD: (&protoconf.HeroConf_Hero{}).ProtoReflect().Descriptor().Fields().ByName("attr_map"),
+						FD: fd[*protoconf.HeroConf_Hero]("attr_map"),
 						NextLevel: &LevelMessage{
 							Indexes: []*LevelIndex{
 								{
@@ -253,12 +263,12 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 										Cols: []string{"Title"},
 										Name: "",
 									},
-									MD: (&protoconf.HeroConf_Hero_Attr{}).ProtoReflect().Descriptor(),
+									MD: md[*protoconf.HeroConf_Hero_Attr](),
 									ColFields: []*LevelField{
 										{
-											FD: (&protoconf.HeroConf_Hero_Attr{}).ProtoReflect().Descriptor().Fields().ByName("title"),
+											FD: fd[*protoconf.HeroConf_Hero_Attr]("title"),
 											LeveledFDList: []protoreflect.FieldDescriptor{
-												(&protoconf.HeroConf_Hero_Attr{}).ProtoReflect().Descriptor().Fields().ByName("title"),
+												fd[*protoconf.HeroConf_Hero_Attr]("title"),
 											},
 										},
 									},
@@ -272,44 +282,44 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 		{
 			name: "ActivityConf",
 			args: args{
-				md: (&protoconf.ActivityConf{}).ProtoReflect().Descriptor(),
+				md: md[*protoconf.ActivityConf](),
 			},
 			want: &IndexDescriptor{
 				LevelMessage: &LevelMessage{
-					FD: (&protoconf.ActivityConf{}).ProtoReflect().Descriptor().Fields().ByName("activity_map"),
+					FD: fd[*protoconf.ActivityConf]("activity_map"),
 					NextLevel: &LevelMessage{
-						FD: (&protoconf.ActivityConf_Activity{}).ProtoReflect().Descriptor().Fields().ByName("chapter_map"),
+						FD: fd[*protoconf.ActivityConf_Activity]("chapter_map"),
 						Indexes: []*LevelIndex{
 							{
 								Index: &Index{
 									Cols: []string{"ActivityName"},
 									Name: "",
 								},
-								MD: (&protoconf.ActivityConf_Activity{}).ProtoReflect().Descriptor(),
+								MD: md[*protoconf.ActivityConf_Activity](),
 								ColFields: []*LevelField{
 									{
-										FD: (&protoconf.ActivityConf_Activity{}).ProtoReflect().Descriptor().Fields().ByName("activity_name"),
+										FD: fd[*protoconf.ActivityConf_Activity]("activity_name"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.ActivityConf_Activity{}).ProtoReflect().Descriptor().Fields().ByName("activity_name"),
+											fd[*protoconf.ActivityConf_Activity]("activity_name"),
 										},
 									},
 								},
 							},
 						},
 						NextLevel: &LevelMessage{
-							FD: (&protoconf.ActivityConf_Activity_Chapter{}).ProtoReflect().Descriptor().Fields().ByName("section_map"),
+							FD: fd[*protoconf.ActivityConf_Activity_Chapter]("section_map"),
 							Indexes: []*LevelIndex{
 								{
 									Index: &Index{
 										Cols: []string{"ChapterID"},
 										Name: "",
 									},
-									MD: (&protoconf.ActivityConf_Activity_Chapter{}).ProtoReflect().Descriptor(),
+									MD: md[*protoconf.ActivityConf_Activity_Chapter](),
 									ColFields: []*LevelField{
 										{
-											FD: (&protoconf.ActivityConf_Activity_Chapter{}).ProtoReflect().Descriptor().Fields().ByName("chapter_id"),
+											FD: fd[*protoconf.ActivityConf_Activity_Chapter]("chapter_id"),
 											LeveledFDList: []protoreflect.FieldDescriptor{
-												(&protoconf.ActivityConf_Activity_Chapter{}).ProtoReflect().Descriptor().Fields().ByName("chapter_id"),
+												fd[*protoconf.ActivityConf_Activity_Chapter]("chapter_id"),
 											},
 										},
 									},
@@ -320,41 +330,41 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 										Keys: []string{"AwardID"},
 										Name: "NamedChapter",
 									},
-									MD: (&protoconf.ActivityConf_Activity_Chapter{}).ProtoReflect().Descriptor(),
+									MD: md[*protoconf.ActivityConf_Activity_Chapter](),
 									ColFields: []*LevelField{
 										{
-											FD: (&protoconf.ActivityConf_Activity_Chapter{}).ProtoReflect().Descriptor().Fields().ByName("chapter_name"),
+											FD: fd[*protoconf.ActivityConf_Activity_Chapter]("chapter_name"),
 											LeveledFDList: []protoreflect.FieldDescriptor{
-												(&protoconf.ActivityConf_Activity_Chapter{}).ProtoReflect().Descriptor().Fields().ByName("chapter_name"),
+												fd[*protoconf.ActivityConf_Activity_Chapter]("chapter_name"),
 											},
 										},
 									},
 									KeyFields: []*LevelField{
 										{
-											FD: (&protoconf.ActivityConf_Activity_Chapter{}).ProtoReflect().Descriptor().Fields().ByName("award_id"),
+											FD: fd[*protoconf.ActivityConf_Activity_Chapter]("award_id"),
 											LeveledFDList: []protoreflect.FieldDescriptor{
-												(&protoconf.ActivityConf_Activity_Chapter{}).ProtoReflect().Descriptor().Fields().ByName("award_id"),
+												fd[*protoconf.ActivityConf_Activity_Chapter]("award_id"),
 											},
 										},
 									},
 								},
 							},
 							NextLevel: &LevelMessage{
-								FD: (&protoconf.Section{}).ProtoReflect().Descriptor().Fields().ByName("section_item_list"),
+								FD: fd[*protoconf.Section]("section_item_list"),
 								NextLevel: &LevelMessage{
-									FD: (&protoconf.Section_SectionItem{}).ProtoReflect().Descriptor().Fields().ByName("decompose_item_list"),
+									FD: fd[*protoconf.Section_SectionItem]("decompose_item_list"),
 									Indexes: []*LevelIndex{
 										{
 											Index: &Index{
 												Cols: []string{"SectionItemID"},
 												Name: "Award",
 											},
-											MD: (&protoconf.Section_SectionItem{}).ProtoReflect().Descriptor(),
+											MD: md[*protoconf.Section_SectionItem](),
 											ColFields: []*LevelField{
 												{
-													FD: (&protoconf.Section_SectionItem{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+													FD: fd[*protoconf.Section_SectionItem]("id"),
 													LeveledFDList: []protoreflect.FieldDescriptor{
-														(&protoconf.Section_SectionItem{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+														fd[*protoconf.Section_SectionItem]("id"),
 													},
 												},
 											},
@@ -371,11 +381,11 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 		{
 			name: "TaskConf",
 			args: args{
-				md: (&protoconf.TaskConf{}).ProtoReflect().Descriptor(),
+				md: md[*protoconf.TaskConf](),
 			},
 			want: &IndexDescriptor{
 				LevelMessage: &LevelMessage{
-					FD: (&protoconf.TaskConf{}).ProtoReflect().Descriptor().Fields().ByName("task_map"),
+					FD: fd[*protoconf.TaskConf]("task_map"),
 					NextLevel: &LevelMessage{
 						Indexes: []*LevelIndex{
 							{
@@ -384,26 +394,26 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 									Keys: []string{"Goal", "ID"},
 									Name: "",
 								},
-								MD: (&protoconf.TaskConf_Task{}).ProtoReflect().Descriptor(),
+								MD: md[*protoconf.TaskConf_Task](),
 								ColFields: []*LevelField{
 									{
-										FD: (&protoconf.TaskConf_Task{}).ProtoReflect().Descriptor().Fields().ByName("activity_id"),
+										FD: fd[*protoconf.TaskConf_Task]("activity_id"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.TaskConf_Task{}).ProtoReflect().Descriptor().Fields().ByName("activity_id"),
+											fd[*protoconf.TaskConf_Task]("activity_id"),
 										},
 									},
 								},
 								KeyFields: []*LevelField{
 									{
-										FD: (&protoconf.TaskConf_Task{}).ProtoReflect().Descriptor().Fields().ByName("goal"),
+										FD: fd[*protoconf.TaskConf_Task]("goal"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.TaskConf_Task{}).ProtoReflect().Descriptor().Fields().ByName("goal"),
+											fd[*protoconf.TaskConf_Task]("goal"),
 										},
 									},
 									{
-										FD: (&protoconf.TaskConf_Task{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+										FD: fd[*protoconf.TaskConf_Task]("id"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
-											(&protoconf.TaskConf_Task{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+											fd[*protoconf.TaskConf_Task]("id"),
 										},
 									},
 								},

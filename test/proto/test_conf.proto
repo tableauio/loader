@@ -105,10 +105,7 @@ message TaskConf {
   message Task {
     int64 id = 1 [(tableau.field) = { name: "ID" }];
     int64 activity_id = 2 [(tableau.field) = { name: "ActivityID" }];
-    int64 goal = 3 [(tableau.field) = {
-      name: "Goal"
-      prop: { range: "0,~" }
-    }];
+    int64 goal = 3 [(tableau.field) = { name: "Goal" }];
     protoconf.Item reward = 4 [(tableau.field) = { name: "Reward" }];
   }
 }
