@@ -342,21 +342,68 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 							NextLevel: &LevelMessage{
 								FD: (&protoconf.Section{}).ProtoReflect().Descriptor().Fields().ByName("section_item_list"),
 								NextLevel: &LevelMessage{
+									FD: (&protoconf.Section_SectionItem{}).ProtoReflect().Descriptor().Fields().ByName("decompose_item_list"),
 									Indexes: []*LevelIndex{
 										{
 											Index: &Index{
 												Cols: []string{"SectionItemID"},
 												Name: "Award",
 											},
-											MD: (&protoconf.Item{}).ProtoReflect().Descriptor(),
+											MD: (&protoconf.Section_SectionItem{}).ProtoReflect().Descriptor(),
 											ColFields: []*LevelField{
 												{
-													FD: (&protoconf.Item{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+													FD: (&protoconf.Section_SectionItem{}).ProtoReflect().Descriptor().Fields().ByName("id"),
 													LeveledFDList: []protoreflect.FieldDescriptor{
-														(&protoconf.Item{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+														(&protoconf.Section_SectionItem{}).ProtoReflect().Descriptor().Fields().ByName("id"),
 													},
 												},
 											},
+										},
+									},
+									NextLevel: &LevelMessage{},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "TaskConf",
+			args: args{
+				md: (&protoconf.TaskConf{}).ProtoReflect().Descriptor(),
+			},
+			want: &IndexDescriptor{
+				LevelMessage: &LevelMessage{
+					FD: (&protoconf.TaskConf{}).ProtoReflect().Descriptor().Fields().ByName("task_map"),
+					NextLevel: &LevelMessage{
+						Indexes: []*LevelIndex{
+							{
+								Index: &Index{
+									Cols: []string{"ActivityID"},
+									Keys: []string{"Goal", "ID"},
+									Name: "",
+								},
+								MD: (&protoconf.TaskConf_Task{}).ProtoReflect().Descriptor(),
+								ColFields: []*LevelField{
+									{
+										FD: (&protoconf.TaskConf_Task{}).ProtoReflect().Descriptor().Fields().ByName("activity_id"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											(&protoconf.TaskConf_Task{}).ProtoReflect().Descriptor().Fields().ByName("activity_id"),
+										},
+									},
+								},
+								KeyFields: []*LevelField{
+									{
+										FD: (&protoconf.TaskConf_Task{}).ProtoReflect().Descriptor().Fields().ByName("goal"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											(&protoconf.TaskConf_Task{}).ProtoReflect().Descriptor().Fields().ByName("goal"),
+										},
+									},
+									{
+										FD: (&protoconf.TaskConf_Task{}).ProtoReflect().Descriptor().Fields().ByName("id"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											(&protoconf.TaskConf_Task{}).ProtoReflect().Descriptor().Fields().ByName("id"),
 										},
 									},
 								},

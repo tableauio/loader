@@ -94,3 +94,21 @@ message ThemeConf {
     map<string, string> param_map = 3 [(tableau.field) = { key: "Param" layout: LAYOUT_INCELL }];
   }
 }
+
+message TaskConf {
+  option (tableau.worksheet) = {
+    name: "TaskConf"
+    index: "ActivityID<Goal,ID>"
+  };
+
+  map<int64, Task> task_map = 1 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
+  message Task {
+    int64 id = 1 [(tableau.field) = { name: "ID" }];
+    int64 activity_id = 2 [(tableau.field) = { name: "ActivityID" }];
+    int64 goal = 3 [(tableau.field) = {
+      name: "Goal"
+      prop: { range: "0,~" }
+    }];
+    protoconf.Item reward = 4 [(tableau.field) = { name: "Reward" }];
+  }
+}

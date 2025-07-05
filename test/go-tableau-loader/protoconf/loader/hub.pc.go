@@ -329,6 +329,7 @@ type messagerContainer struct {
 	activityConf       *ActivityConf
 	chapterConf        *ChapterConf
 	themeConf          *ThemeConf
+	taskConf           *TaskConf
 }
 
 func newMessagerContainer(messagerMap MessagerMap) *messagerContainer {
@@ -345,6 +346,7 @@ func newMessagerContainer(messagerMap MessagerMap) *messagerContainer {
 	messagerContainer.activityConf, _ = messagerMap["ActivityConf"].(*ActivityConf)
 	messagerContainer.chapterConf, _ = messagerMap["ChapterConf"].(*ChapterConf)
 	messagerContainer.themeConf, _ = messagerMap["ThemeConf"].(*ThemeConf)
+	messagerContainer.taskConf, _ = messagerMap["TaskConf"].(*TaskConf)
 	return messagerContainer
 }
 
@@ -384,4 +386,8 @@ func (h *Hub) GetChapterConf() *ChapterConf {
 
 func (h *Hub) GetThemeConf() *ThemeConf {
 	return h.messagerContainer.Load().themeConf
+}
+
+func (h *Hub) GetTaskConf() *TaskConf {
+	return h.messagerContainer.Load().taskConf
 }

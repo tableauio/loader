@@ -53,6 +53,14 @@ func Test_parseColsFrom(t *testing.T) {
 			},
 		},
 		{
+			name:  "zinotest",
+			input: "ActivityID<Goal,ID>",
+			want: &Index{
+				Cols: []string{"ActivityID"},
+				Keys: []string{"Goal", "ID"},
+			},
+		},
+		{
 			name:  "Multi-column with spaces around commas",
 			input: "(Column7,  Column8,  Column9)<Key7,  Key8,  Key9>@IndexName",
 			want: &Index{

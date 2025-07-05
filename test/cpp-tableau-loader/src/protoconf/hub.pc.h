@@ -144,6 +144,10 @@ class ChapterConf;
 template <>
 const std::shared_ptr<ChapterConf> Hub::Get<ChapterConf>() const;
 
+class TaskConf;
+template <>
+const std::shared_ptr<TaskConf> Hub::Get<TaskConf>() const;
+
 class ThemeConf;
 template <>
 const std::shared_ptr<ThemeConf> Hub::Get<ThemeConf>() const;
@@ -171,6 +175,7 @@ class MessagerContainer {
   std::shared_ptr<RecursivePatchConf> recursive_patch_conf_;
   std::shared_ptr<ActivityConf> activity_conf_;
   std::shared_ptr<ChapterConf> chapter_conf_;
+  std::shared_ptr<TaskConf> task_conf_;
   std::shared_ptr<ThemeConf> theme_conf_;
 };
 

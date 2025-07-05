@@ -560,6 +560,137 @@ func (x *ThemeConf) Get2(name string, param string) (string, error) {
 	}
 }
 
+// Index types.
+// Index: ActivityID<Goal,ID>
+type TaskConf_Index_TaskMap = map[int64][]*protoconf.TaskConf_Task
+
+// TaskConf is a wrapper around protobuf message: protoconf.TaskConf.
+//
+// It is designed for three goals:
+//
+//  1. Easy use: simple yet powerful accessers.
+//  2. Elegant API: concise and clean functions.
+//  3. Extensibility: Map, OrdererdMap, Index...
+type TaskConf struct {
+	UnimplementedMessager
+	data, originalData *protoconf.TaskConf
+	indexTaskMap       TaskConf_Index_TaskMap
+}
+
+// Name returns the TaskConf's message name.
+func (x *TaskConf) Name() string {
+	if x != nil {
+		return string(x.data.ProtoReflect().Descriptor().Name())
+	}
+	return ""
+}
+
+// Data returns the TaskConf's inner message data.
+func (x *TaskConf) Data() *protoconf.TaskConf {
+	if x != nil {
+		return x.data
+	}
+	return nil
+}
+
+// Load fills TaskConf's inner message from file in the specified directory and format.
+func (x *TaskConf) Load(dir string, format format.Format, options ...load.Option) error {
+	start := time.Now()
+	defer func() {
+		x.Stats.Duration = time.Since(start)
+	}()
+	x.data = &protoconf.TaskConf{}
+	err := load.Load(x.data, dir, format, options...)
+	if err != nil {
+		return err
+	}
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.TaskConf)
+	}
+	return x.processAfterLoad()
+}
+
+// Store writes TaskConf's inner message to file in the specified directory and format.
+// Available formats: JSON, Bin, and Text.
+func (x *TaskConf) Store(dir string, format format.Format, options ...store.Option) error {
+	return store.Store(x.Data(), dir, format, options...)
+}
+
+// Message returns the TaskConf's inner message data.
+func (x *TaskConf) Message() proto.Message {
+	return x.Data()
+}
+
+// Messager returns the current messager.
+func (x *TaskConf) Messager() Messager {
+	return x
+}
+
+// originalMessage returns the TaskConf's original inner message.
+func (x *TaskConf) originalMessage() proto.Message {
+	if x != nil {
+		return x.originalData
+	}
+	return nil
+}
+
+// processAfterLoad runs after this messager is loaded.
+func (x *TaskConf) processAfterLoad() error {
+	// Index init.
+	x.indexTaskMap = make(TaskConf_Index_TaskMap)
+	for _, item1 := range x.data.GetTaskMap() {
+		{
+			// Index: ActivityID<Goal,ID>
+			key := item1.GetActivityId()
+			x.indexTaskMap[key] = append(x.indexTaskMap[key], item1)
+		}
+	}
+	// Index(sort): ActivityID<Goal,ID>
+	for _, item := range x.indexTaskMap {
+		sort.Slice(item, func(i, j int) bool {
+			if item[i].GetGoal() != item[j].GetGoal() {
+				return item[i].GetGoal() < item[j].GetGoal()
+			}
+			return item[i].GetId() < item[j].GetId()
+		})
+	}
+	return nil
+}
+
+// Get1 finds value in the 1-level map. It will return
+// NotFound error if the key is not found.
+func (x *TaskConf) Get1(id int64) (*protoconf.TaskConf_Task, error) {
+	d := x.Data().GetTaskMap()
+	if val, ok := d[id]; !ok {
+		return nil, xerrors.Errorf(code.NotFound, "id(%v) not found", id)
+	} else {
+		return val, nil
+	}
+}
+
+// Index: ActivityID<Goal,ID>
+
+// FindTaskMap returns the index(ActivityID<Goal,ID>) to value(protoconf.TaskConf_Task) map.
+// One key may correspond to multiple values, which are contained by a slice.
+func (x *TaskConf) FindTaskMap() TaskConf_Index_TaskMap {
+	return x.indexTaskMap
+}
+
+// FindTask returns a slice of all values of the given key.
+func (x *TaskConf) FindTask(activityId int64) []*protoconf.TaskConf_Task {
+	return x.indexTaskMap[activityId]
+}
+
+// FindFirstTask returns the first value of the given key,
+// or nil if the key correspond to no value.
+func (x *TaskConf) FindFirstTask(activityId int64) *protoconf.TaskConf_Task {
+	val := x.indexTaskMap[activityId]
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
 func init() {
 	Register(func() Messager {
 		return new(ActivityConf)
@@ -569,5 +700,8 @@ func init() {
 	})
 	Register(func() Messager {
 		return new(ThemeConf)
+	})
+	Register(func() Messager {
+		return new(TaskConf)
 	})
 }
