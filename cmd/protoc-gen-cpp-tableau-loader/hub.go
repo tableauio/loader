@@ -97,7 +97,7 @@ func generateHubHppTplSpec(gen *protogen.Plugin, g *protogen.GeneratedFile, prot
 func generateHubHppMsgContainerMembers(gen *protogen.Plugin, g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
-			g.P("  std::shared_ptr<", messager, "> ", strcase.ToSnake(messager), "_;")
+			g.P(helper.Indent(1), "std::shared_ptr<", messager, "> ", strcase.ToSnake(messager), "_;")
 		}
 	}
 }
@@ -114,7 +114,7 @@ func generateHubCppTplSpec(gen *protogen.Plugin, g *protogen.GeneratedFile, prot
 		for _, messager := range fileMessagers[proto] {
 			g.P("template <>")
 			g.P("const std::shared_ptr<", messager, "> Hub::Get<", messager, ">() const {;")
-			g.P("  return GetMessagerContainer()->", strcase.ToSnake(messager), "_;")
+			g.P(helper.Indent(1), "return GetMessagerContainer()->", strcase.ToSnake(messager), "_;")
 			g.P("}")
 			g.P()
 		}
@@ -124,7 +124,7 @@ func generateHubCppTplSpec(gen *protogen.Plugin, g *protogen.GeneratedFile, prot
 func generateHubCppMsgContainerCtor(gen *protogen.Plugin, g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
-			g.P("  ", strcase.ToSnake(messager), "_ = std::dynamic_pointer_cast<", messager, `>((*msger_map_)["`, messager, `"]);`)
+			g.P(helper.Indent(1), strcase.ToSnake(messager), "_ = std::dynamic_pointer_cast<", messager, `>((*msger_map_)["`, messager, `"]);`)
 		}
 	}
 }
@@ -132,7 +132,7 @@ func generateHubCppMsgContainerCtor(gen *protogen.Plugin, g *protogen.GeneratedF
 func generateHubCppRegistry(gen *protogen.Plugin, g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
-			g.P("  Register<", messager, ">();")
+			g.P(helper.Indent(1), "Register<", messager, ">();")
 		}
 	}
 }
