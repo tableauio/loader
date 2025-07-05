@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_parseColsFrom(t *testing.T) {
+func Test_parseIndex(t *testing.T) {
 	tests := []struct {
 		name  string
 		input string
@@ -53,6 +53,14 @@ func Test_parseColsFrom(t *testing.T) {
 			},
 		},
 		{
+			name:  "zinotest",
+			input: "ActivityID<Goal,ID>",
+			want: &Index{
+				Cols: []string{"ActivityID"},
+				Keys: []string{"Goal", "ID"},
+			},
+		},
+		{
 			name:  "Multi-column with spaces around commas",
 			input: "(Column7,  Column8,  Column9)<Key7,  Key8,  Key9>@IndexName",
 			want: &Index{
@@ -80,7 +88,7 @@ func Test_parseColsFrom(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := parseIndex(tt.input); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseColsFrom() = %v, want %v", got, tt.want)
+				t.Errorf("parseIndex() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -120,7 +120,18 @@ func parseRecursively(index *Index, prefix string, md protoreflect.MessageDescri
 }
 
 func parseInSameLevel(cols []string, prefix string, md protoreflect.MessageDescriptor, leveledFDList []protoreflect.FieldDescriptor) []*LevelField {
+	levelFieldMap := parseCols(cols, prefix, md, leveledFDList)
 	var levelFields []*LevelField
+	for _, columnName := range cols {
+		if levelFieldMap[columnName] != nil {
+			levelFields = append(levelFields, levelFieldMap[columnName])
+		}
+	}
+	return levelFields
+}
+
+func parseCols(cols []string, prefix string, md protoreflect.MessageDescriptor, leveledFDList []protoreflect.FieldDescriptor) map[string]*LevelField {
+	levelFields := map[string]*LevelField{} // column name -> level field
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		opts := fd.Options().(*descriptorpb.FieldOptions)
@@ -132,17 +143,18 @@ func parseInSameLevel(cols []string, prefix string, md protoreflect.MessageDescr
 					FD:            fd,
 					LeveledFDList: append(leveledFDList, fd),
 				}
-				levelFields = append(levelFields, field)
+				levelFields[columnName] = field
 				break
 			} else if fd.Kind() == protoreflect.MessageKind &&
 				!fd.IsMap() && !fd.IsList() &&
 				strings.HasPrefix(columnName, prefix+fieldOptName) {
-				levelFields = append(levelFields,
-					parseInSameLevel(
-						cols, prefix+fieldOptName, fd.Message(),
-						append(leveledFDList, fd),
-					)...,
+				subLevelFields := parseCols(
+					cols, prefix+fieldOptName, fd.Message(),
+					append(leveledFDList, fd),
 				)
+				for columnName, field := range subLevelFields {
+					levelFields[columnName] = field
+				}
 			}
 		}
 	}

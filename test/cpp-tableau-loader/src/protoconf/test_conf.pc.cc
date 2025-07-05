@@ -286,4 +286,64 @@ const std::string* ThemeConf::Get(const std::string& name, const std::string& pa
   return &iter->second;
 }
 
+const std::string TaskConf::kProtoName = "TaskConf";
+
+bool TaskConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
+  tableau::util::TimeProfiler profiler;
+  bool loaded = LoadMessage(data_, dir, fmt, options);
+  bool ok = loaded ? ProcessAfterLoad() : false;
+  stats_.duration = profiler.Elapse();
+  return ok;
+}
+
+bool TaskConf::ProcessAfterLoad() {
+  // Index init.
+  index_task_map_.clear();
+  for (auto&& item1 : data_.task_map()) {
+    {
+      // Index: ActivityID<Goal,ID>
+      index_task_map_[item1.second.activity_id()].push_back(&item1.second);
+    }
+  }
+  // Index(sort): ActivityID<Goal,ID>
+  for (auto&& item : index_task_map_) {
+    std::sort(item.second.begin(), item.second.end(),
+              [](const protoconf::TaskConf::Task* a, const protoconf::TaskConf::Task* b) {
+                if (a->goal() != b->goal()) {
+                  return a->goal() < b->goal();
+                }
+                return a->id() < b->id();
+              });
+  }
+  return true;
+}
+
+const protoconf::TaskConf::Task* TaskConf::Get(int64_t id) const {
+  auto iter = data_.task_map().find(id);
+  if (iter == data_.task_map().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+// Index: ActivityID<Goal,ID>
+const TaskConf::Index_TaskMap& TaskConf::FindTask() const { return index_task_map_ ;}
+
+const TaskConf::Index_TaskVector* TaskConf::FindTask(int64_t activity_id) const {
+  auto iter = index_task_map_.find(activity_id);
+  if (iter == index_task_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::TaskConf::Task* TaskConf::FindFirstTask(int64_t activity_id) const {
+  auto conf = FindTask(activity_id);
+  if (conf == nullptr || conf->size() == 0) {
+    return nullptr;
+  }
+  return (*conf)[0];
+}
+
+
 }  // namespace tableau

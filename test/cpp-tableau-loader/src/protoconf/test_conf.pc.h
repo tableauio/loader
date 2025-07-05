@@ -130,6 +130,37 @@ class ThemeConf : public Messager {
   protoconf::ThemeConf data_;
 };
 
+class TaskConf : public Messager {
+ public:
+  static const std::string& Name() { return kProtoName; }
+  virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;
+  const protoconf::TaskConf& Data() const { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
+
+ private:
+  virtual bool ProcessAfterLoad() override final;
+
+ public:
+  const protoconf::TaskConf::Task* Get(int64_t id) const;
+
+ private:
+  static const std::string kProtoName;
+  protoconf::TaskConf data_;
+
+  // Index accessers.
+  // Index: ActivityID<Goal,ID>
+ public:
+  using Index_TaskVector = std::vector<const protoconf::TaskConf::Task*>;
+  using Index_TaskMap = std::unordered_map<int64_t, Index_TaskVector>;
+  const Index_TaskMap& FindTask() const;
+  const Index_TaskVector* FindTask(int64_t activity_id) const;
+  const protoconf::TaskConf::Task* FindFirstTask(int64_t activity_id) const;
+
+ private:
+  Index_TaskMap index_task_map_;
+
+};
+
 }  // namespace tableau
 
 namespace protoconf {
@@ -137,4 +168,5 @@ namespace protoconf {
 using ActivityConfMgr = tableau::ActivityConf;
 using ChapterConfMgr = tableau::ChapterConf;
 using ThemeConfMgr = tableau::ThemeConf;
+using TaskConfMgr = tableau::TaskConf;
 }  // namespace protoconf
