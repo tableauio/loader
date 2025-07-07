@@ -24,7 +24,29 @@ func init() {
 	//  - (ID, Name)@Item
 	//  - (ID, Name)<SortedCol>@Item
 	//  - (ID, Name)<SortedCol1, SortedCol2>@Item
-	indexRegexp = regexp.MustCompile(`^(?P<cols>\([^)]+\)|[^<@]+)?(<(?P<sortedCols>[^>]+)>)?(@(?P<name>.+))?$`)
+	indexRegexp = regexp.MustCompile(`^(?P<Cols>\([^)]+\)|[^<@]+)?(<(?P<SortedCols>[^>]+)>)?(@(?P<Name>.+))?$`)
+}
+
+// matchIndex parses the index syntax and returns the columns, sorted columns and name.
+func matchIndex(text string) (cols, sortedCols, name string) {
+	match := indexRegexp.FindStringSubmatch(text)
+	if match == nil {
+		return "", "", ""
+	}
+	for i, expName := range indexRegexp.SubexpNames() {
+		value := strings.TrimSpace(match[i])
+		switch expName {
+		case "Cols":
+			cols = value
+		case "SortedCols":
+			sortedCols = value
+		case "Name":
+			name = value
+		default:
+			continue
+		}
+	}
+	return cols, sortedCols, name
 }
 
 type Index struct {
@@ -61,10 +83,10 @@ func ParseWSOptionIndex(md protoreflect.MessageDescriptor) []*Index {
 }
 
 func parseIndex(indexStr string) *Index {
+	cols, sortedCols, name := matchIndex(indexStr)
 	index := &Index{}
-	matches := indexRegexp.FindStringSubmatch(indexStr)
 	// Extract columns
-	if cols := matches[indexRegexp.SubexpIndex("cols")]; cols != "" {
+	if cols != "" {
 		if strings.HasPrefix(cols, "(") && strings.HasSuffix(cols, ")") {
 			// Multi-column index
 			cols = cols[1 : len(cols)-1]
@@ -93,16 +115,14 @@ func parseIndex(indexStr string) *Index {
 		return nil
 	}
 	// Extract sortedCols
-	if sortedCols := matches[indexRegexp.SubexpIndex("sortedCols")]; sortedCols != "" {
+	if sortedCols != "" {
 		index.SortedCols = strings.Split(sortedCols, ",")
 		for i, col := range index.SortedCols {
 			index.SortedCols[i] = strings.TrimSpace(col)
 		}
 	}
 	// Extract name
-	if name := matches[indexRegexp.SubexpIndex("name")]; name != "" {
-		index.Name = name
-	}
+	index.Name = name
 	return index
 }
 
