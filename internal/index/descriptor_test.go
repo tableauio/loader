@@ -55,7 +55,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 							{
 								Index: &Index{
 									Cols: []string{"Param"},
-									Keys: []string{"ID"},
+									SortedCols: []string{"ID"},
 									Name: "ItemInfo",
 								},
 								MD: md[*protoconf.ItemConf_Item](),
@@ -67,7 +67,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 										},
 									},
 								},
-								KeyFields: []*LevelField{
+								SortedColFields: []*LevelField{
 									{
 										FD: fd[*protoconf.ItemConf_Item]("id"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
@@ -109,7 +109,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 							{
 								Index: &Index{
 									Cols: []string{"ID", "Name"},
-									Keys: []string{"Type", "UseEffectType"},
+									SortedCols: []string{"Type", "UseEffectType"},
 									Name: "AwardItem",
 								},
 								MD: md[*protoconf.ItemConf_Item](),
@@ -127,7 +127,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 										},
 									},
 								},
-								KeyFields: []*LevelField{
+								SortedColFields: []*LevelField{
 									{
 										FD: fd[*protoconf.ItemConf_Item]("type"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
@@ -327,7 +327,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								{
 									Index: &Index{
 										Cols: []string{"ChapterName"},
-										Keys: []string{"AwardID"},
+										SortedCols: []string{"AwardID"},
 										Name: "NamedChapter",
 									},
 									MD: md[*protoconf.ActivityConf_Activity_Chapter](),
@@ -339,7 +339,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 											},
 										},
 									},
-									KeyFields: []*LevelField{
+									SortedColFields: []*LevelField{
 										{
 											FD: fd[*protoconf.ActivityConf_Activity_Chapter]("award_id"),
 											LeveledFDList: []protoreflect.FieldDescriptor{
@@ -391,7 +391,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 							{
 								Index: &Index{
 									Cols: []string{"ActivityID"},
-									Keys: []string{"Goal", "ID"},
+									SortedCols: []string{"Goal", "ID"},
 									Name: "",
 								},
 								MD: md[*protoconf.TaskConf_Task](),
@@ -403,7 +403,7 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 										},
 									},
 								},
-								KeyFields: []*LevelField{
+								SortedColFields: []*LevelField{
 									{
 										FD: fd[*protoconf.TaskConf_Task]("goal"),
 										LeveledFDList: []protoreflect.FieldDescriptor{

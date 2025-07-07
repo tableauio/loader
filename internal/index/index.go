@@ -16,21 +16,21 @@ func init() {
 	// Single-column index:
 	//  - ID
 	//  - ID@Item
-	//  - ID<Key>@Item
-	//  - ID<Key, Key2>@Item
+	//  - ID<SortedCol>@Item
+	//  - ID<SortedCol1, SortedCol2>@Item
 	//
 	// Multi-column index (composite index):
 	//  - (ID, Name)
 	//  - (ID, Name)@Item
-	//  - (ID, Name)<Key>@Item
-	//  - (ID, Name)<Key1, Key2>@Item
-	indexRegexp = regexp.MustCompile(`^(?P<cols>\([^)]+\)|[^<@]+)?(<(?P<keys>[^>]+)>)?(@(?P<name>.+))?$`)
+	//  - (ID, Name)<SortedCol>@Item
+	//  - (ID, Name)<SortedCol1, SortedCol2>@Item
+	indexRegexp = regexp.MustCompile(`^(?P<cols>\([^)]+\)|[^<@]+)?(<(?P<sortedCols>[^>]+)>)?(@(?P<name>.+))?$`)
 }
 
 type Index struct {
-	Cols []string // column names in CamelCase (single-column or multi-column)
-	Name string   // index name in CamelCase
-	Keys []string // key names in CamelCase (single-column or multi-column)
+	Cols       []string // column names in CamelCase (single-column or multi-column)
+	Name       string   // index name in CamelCase
+	SortedCols []string // sorted column names in CamelCase (single-column or multi-column)
 }
 
 func (index *Index) String() string {
@@ -44,8 +44,8 @@ func (index *Index) String() string {
 	if len(index.Cols) > 1 {
 		syntax = "(" + syntax + ")"
 	}
-	if len(index.Keys) != 0 {
-		syntax += "<" + strings.Join(index.Keys, ",") + ">"
+	if len(index.SortedCols) != 0 {
+		syntax += "<" + strings.Join(index.SortedCols, ",") + ">"
 	}
 	if index.Name != "" {
 		syntax += "@" + index.Name
@@ -92,11 +92,11 @@ func parseIndex(indexStr string) *Index {
 	if len(index.Cols) == 0 {
 		return nil
 	}
-	// Extract keys
-	if keys := matches[indexRegexp.SubexpIndex("keys")]; keys != "" {
-		index.Keys = strings.Split(keys, ",")
-		for i, key := range index.Keys {
-			index.Keys[i] = strings.TrimSpace(key)
+	// Extract sortedCols
+	if sortedCols := matches[indexRegexp.SubexpIndex("sortedCols")]; sortedCols != "" {
+		index.SortedCols = strings.Split(sortedCols, ",")
+		for i, col := range index.SortedCols {
+			index.SortedCols[i] = strings.TrimSpace(col)
 		}
 	}
 	// Extract name

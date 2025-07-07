@@ -63,9 +63,9 @@ func (l *LevelMessage) NeedGen() bool {
 
 type LevelIndex struct {
 	*Index
-	MD        protoreflect.MessageDescriptor
-	ColFields []*LevelField
-	KeyFields []*LevelField
+	MD              protoreflect.MessageDescriptor
+	ColFields       []*LevelField
+	SortedColFields []*LevelField
 }
 
 func (l *LevelIndex) Name() string {
@@ -96,14 +96,14 @@ func parseLevelMessage(md protoreflect.MessageDescriptor) *LevelMessage {
 // parseRecursively parses multi-column index related info.
 func parseRecursively(index *Index, prefix string, md protoreflect.MessageDescriptor, levelMessage *LevelMessage) {
 	colFields := parseInSameLevel(index.Cols, prefix, md, nil)
-	keyFields := parseInSameLevel(index.Keys, prefix, md, nil)
+	sortedColFields := parseInSameLevel(index.SortedCols, prefix, md, nil)
 	if len(colFields) != 0 {
 		// index belongs to current level
 		levelMessage.Indexes = append(levelMessage.Indexes, &LevelIndex{
-			Index:     index,
-			MD:        md,
-			ColFields: colFields,
-			KeyFields: keyFields,
+			Index:           index,
+			MD:              md,
+			ColFields:       colFields,
+			SortedColFields: sortedColFields,
 		})
 	} else if levelMessage != nil && levelMessage.NextLevel != nil {
 		// index invalid or belongs to deeper level

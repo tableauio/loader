@@ -160,12 +160,12 @@ func genIndexSorter(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
 			indexContainerName := "index_" + strcase.ToSnake(index.Name()) + "_map_"
-			if len(index.KeyFields) != 0 {
+			if len(index.SortedColFields) != 0 {
 				g.P(helper.Indent(1), "// Index(sort): ", index.Index)
 				g.P(helper.Indent(1), "for (auto&& item : ", indexContainerName, ") {")
 				g.P(helper.Indent(2), "std::sort(item.second.begin(), item.second.end(),")
 				g.P(helper.Indent(7), "[](const ", helper.ParseCppClassType(index.MD), "* a, const ", helper.ParseCppClassType(index.MD), "* b) {")
-				for i, field := range index.KeyFields {
+				for i, field := range index.SortedColFields {
 					fieldName := ""
 					for i, leveledFd := range field.LeveledFDList {
 						accessOperator := "."
@@ -174,7 +174,7 @@ func genIndexSorter(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor
 						}
 						fieldName += accessOperator + helper.ParseIndexFieldName(leveledFd) + "()"
 					}
-					if i == len(index.KeyFields)-1 {
+					if i == len(index.SortedColFields)-1 {
 						g.P(helper.Indent(8), "return a", fieldName, " < b", fieldName, ";")
 					} else {
 						g.P(helper.Indent(8), "if (a", fieldName, " != b", fieldName, ") {")
