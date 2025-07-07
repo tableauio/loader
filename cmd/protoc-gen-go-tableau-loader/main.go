@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
 	"github.com/tableauio/loader/internal/options"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -13,6 +14,13 @@ const version = "0.8.0"
 var pkg *string
 
 func main() {
+	showVersion := flag.Bool("version", false, "print the version and exit")
+	flag.Parse()
+	if *showVersion {
+		fmt.Printf("protoc-gen-cpp-tableau-loader %v\n", version)
+		return
+	}
+
 	var flags flag.FlagSet
 	pkg = flags.String("pkg", "tableau", "tableau package name")
 
