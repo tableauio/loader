@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
 	"github.com/tableauio/loader/internal/options"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -31,6 +32,13 @@ const (
 )
 
 func main() {
+	showVersion := flag.Bool("version", false, "print the version and exit")
+	flag.Parse()
+	if *showVersion {
+		fmt.Printf("protoc-gen-cpp-tableau-loader %v\n", version)
+		return
+	}
+
 	var flags flag.FlagSet
 	namespace = flags.String("namespace", "tableau", "tableau namespace")
 	messagerSuffix = flags.String("suffix", "Mgr", "tableau messager name suffix")

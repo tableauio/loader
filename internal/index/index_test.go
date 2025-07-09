@@ -12,20 +12,20 @@ func Test_parseIndex(t *testing.T) {
 		want  *Index
 	}{
 		{
-			name:  "Single column with single key and name",
-			input: "Column1<Key1>@IndexName",
+			name:  "Single column with single sorted column and name",
+			input: "Column1<SortedCol1>@IndexName",
 			want: &Index{
 				Cols: []string{"Column1"},
-				Keys: []string{"Key1"},
+				SortedCols: []string{"SortedCol1"},
 				Name: "IndexName",
 			},
 		},
 		{
-			name:  "Multi-column with multi-key and name",
-			input: "( Column1 , Column2 )< Key1 , Key2 >@IndexName",
+			name:  "Multi-column with multi sorted column and name",
+			input: "( Column1 , Column2 )< SortedCol1 , SortedCol2 >@IndexName",
 			want: &Index{
 				Cols: []string{"Column1", "Column2"},
-				Keys: []string{"Key1", "Key2"},
+				SortedCols: []string{"SortedCol1", "SortedCol2"},
 				Name: "IndexName",
 			},
 		},
@@ -38,18 +38,18 @@ func Test_parseIndex(t *testing.T) {
 			},
 		},
 		{
-			name:  "Multi-column without keys or name",
+			name:  "Multi-column without sorted columns or name",
 			input: "(Column4, Column5)",
 			want: &Index{
 				Cols: []string{"Column4", "Column5"},
 			},
 		},
 		{
-			name:  "Single column with single key only",
-			input: "Column6<Key6>",
+			name:  "Single column with single sorted column only",
+			input: "Column6<SortedCol>",
 			want: &Index{
 				Cols: []string{"Column6"},
-				Keys: []string{"Key6"},
+				SortedCols: []string{"SortedCol"},
 			},
 		},
 		{
@@ -57,31 +57,31 @@ func Test_parseIndex(t *testing.T) {
 			input: "ActivityID<Goal,ID>",
 			want: &Index{
 				Cols: []string{"ActivityID"},
-				Keys: []string{"Goal", "ID"},
+				SortedCols: []string{"Goal", "ID"},
 			},
 		},
 		{
 			name:  "Multi-column with spaces around commas",
-			input: "(Column7,  Column8,  Column9)<Key7,  Key8,  Key9>@IndexName",
+			input: "(Column7,  Column8,  Column9)<SortedCol7,  SortedCol8,  SortedCol9>@IndexName",
 			want: &Index{
 				Cols: []string{"Column7", "Column8", "Column9"},
-				Keys: []string{"Key7", "Key8", "Key9"},
+				SortedCols: []string{"SortedCol7", "SortedCol8", "SortedCol9"},
 				Name: "IndexName",
 			},
 		},
 		{
 			name:  "Invalid format (multi-column without parentheses)",
-			input: "Column10, Column11<Key10, Key11>@IndexName",
+			input: "Column10, Column11<SortedCol10, SortedCol11>@IndexName",
 			want:  nil,
 		},
 		{
 			name:  "Invalid format (single column with parentheses)",
-			input: "(Column12)<Key12>@IndexName",
+			input: "(Column12)<SortedCol12>@IndexName",
 			want:  nil,
 		},
 		{
 			name:  "Invalid format (empty columns)",
-			input: "<Key13>@IndexName",
+			input: "<SortedCol13>@IndexName",
 			want:  nil,
 		},
 	}

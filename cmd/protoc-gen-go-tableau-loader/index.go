@@ -118,16 +118,16 @@ func genIndexSorter(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor 
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
 			indexContainerName := "index" + strcase.ToCamel(index.Name()) + "Map"
-			if len(index.KeyFields) != 0 {
+			if len(index.SortedColFields) != 0 {
 				g.P("// Index(sort): ", index.Index)
 				g.P("for _, item := range x.", indexContainerName, " {")
 				g.P(sortPackage.Ident("Slice"), "(item, func(i, j int) bool {")
-				for i, field := range index.KeyFields {
+				for i, field := range index.SortedColFields {
 					fieldName := ""
 					for _, leveledFd := range field.LeveledFDList {
 						fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
 					}
-					if i == len(index.KeyFields)-1 {
+					if i == len(index.SortedColFields)-1 {
 						g.P("return item[i]", fieldName, " < item[j]", fieldName)
 					} else {
 						g.P("if item[i]", fieldName, " != item[j]", fieldName, " {")
