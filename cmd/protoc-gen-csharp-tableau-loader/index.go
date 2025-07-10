@@ -147,12 +147,13 @@ func genIndexSorter(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor 
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
 			indexContainerName := "Index" + strcase.ToCamel(index.Name()) + "Map"
-			if len(index.KeyFields) != 0 {
+			if len(index.SortedColFields) != 0 {
+				g.P(helper.Indent(3), "// Index(sort): ", index.Index)
 				g.P(helper.Indent(3), "foreach (var item in ", indexContainerName, ")")
 				g.P(helper.Indent(3), "{")
 				g.P(helper.Indent(4), "item.Value.Sort((a, b) =>")
 				g.P(helper.Indent(4), "{")
-				for i, field := range index.KeyFields {
+				for i, field := range index.SortedColFields {
 					fieldName := ""
 					for i, leveledFd := range field.LeveledFDList {
 						if i != 0 {
@@ -163,7 +164,7 @@ func genIndexSorter(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor 
 					if len(field.LeveledFDList) > 1 {
 						fieldName += " ?? " + helper.GetTypeEmptyValue(field.FD)
 					}
-					if i == len(index.KeyFields)-1 {
+					if i == len(index.SortedColFields)-1 {
 						if len(field.LeveledFDList) > 1 {
 							g.P(helper.Indent(5), "return (a", fieldName, ").CompareTo(b", fieldName, ");")
 						} else {
