@@ -148,6 +148,7 @@ namespace Tableau
                     }
                 }
             }
+            // Index(sort): ChapterName<AwardID>@NamedChapter
             foreach (var item in IndexNamedChapterMap)
             {
                 item.Value.Sort((a, b) =>
@@ -322,5 +323,77 @@ namespace Tableau
             }
             return null;
         }
+    }
+
+    public class TaskConf : Messager, IMessagerName
+    {
+        // Index types.
+        // Index: ActivityID<Goal,ID>
+        public class Index_TaskMap : Dictionary<long, List<Protoconf.TaskConf.Types.Task>> { }
+
+        private Index_TaskMap IndexTaskMap = new Index_TaskMap();
+
+        private Protoconf.TaskConf Data_ = new Protoconf.TaskConf();
+
+        public static string Name() => Protoconf.TaskConf.Descriptor.Name;
+
+        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
+        {
+            var start = DateTime.Now;
+            bool loaded = LoadMessageByPath<Protoconf.TaskConf>(out var msg, dir, fmt, options);
+            Data_ = msg;
+            bool ok = loaded ? ProcessAfterLoad() : false;
+            LoadStats.Duration = DateTime.Now - start;
+            return ok;
+        }
+
+        public ref readonly Protoconf.TaskConf Data() => ref Data_;
+
+        protected override bool ProcessAfterLoad()
+        {
+            // Index init.
+            IndexTaskMap.Clear();
+            foreach (var item1 in Data_.TaskMap)
+            {
+                {
+                    // Index: ActivityID<Goal,ID>
+                    var key = item1.Value.ActivityId;
+                    if (!IndexTaskMap.ContainsKey(key))
+                    {
+                        IndexTaskMap[key] = new List<Protoconf.TaskConf.Types.Task>();
+                    }
+                    IndexTaskMap[key].Add(item1.Value);
+                }
+            }
+            // Index(sort): ActivityID<Goal,ID>
+            foreach (var item in IndexTaskMap)
+            {
+                item.Value.Sort((a, b) =>
+                {
+                    if (a.Goal != b.Goal)
+                    {
+                        return a.Goal.CompareTo(b.Goal);
+                    }
+                    return a.Id.CompareTo(b.Id);
+                });
+            }
+            return true;
+        }
+
+        public Protoconf.TaskConf.Types.Task? Get1(long id)
+        {
+            if (Data_.TaskMap.TryGetValue(id, out var val))
+            {
+                return val;
+            }
+            return null;
+        }
+
+        // Index: ActivityID<Goal,ID>
+        public ref readonly Index_TaskMap GetTaskMap() => ref IndexTaskMap;
+
+        public List<Protoconf.TaskConf.Types.Task>? GetTask(long ActivityId) => IndexTaskMap.TryGetValue(ActivityId, out var value) ? value : null;
+
+        public Protoconf.TaskConf.Types.Task? GetFirstTask(long ActivityId) => GetTask(ActivityId)?.FirstOrDefault();
     }
 }

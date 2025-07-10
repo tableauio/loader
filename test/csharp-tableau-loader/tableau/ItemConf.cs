@@ -239,6 +239,7 @@ namespace Tableau
                     IndexUseEffectTypeMap[key].Add(item1.Value);
                 }
             }
+            // Index(sort): Param<ID>@ItemInfo
             foreach (var item in IndexItemInfoMap)
             {
                 item.Value.Sort((a, b) =>
@@ -246,6 +247,7 @@ namespace Tableau
                     return a.Id.CompareTo(b.Id);
                 });
             }
+            // Index(sort): (ID,Name)<Type,UseEffectType>@AwardItem
             foreach (var item in IndexAwardItemMap)
             {
                 item.Value.Sort((a, b) =>

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
 	"github.com/tableauio/loader/internal/options"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -11,8 +12,14 @@ import (
 const version = "0.1.0"
 
 func main() {
-	var flags flag.FlagSet
+	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
+	if *showVersion {
+		fmt.Printf("protoc-gen-csharp-tableau-loader %v\n", version)
+		return
+	}
+
+	var flags flag.FlagSet
 
 	protogen.Options{
 		ParamFunc: flags.Set,

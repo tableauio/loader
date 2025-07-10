@@ -105,6 +105,7 @@ namespace Tableau
         public ActivityConf? ActivityConf;
         public ChapterConf? ChapterConf;
         public ThemeConf? ThemeConf;
+        public TaskConf? TaskConf;
 
         public MessagerContainer(in Dictionary<string, Messager>? messagerMap = null)
         {
@@ -147,6 +148,10 @@ namespace Tableau
                 if (messagerMap.ContainsKey("ThemeConf"))
                 {
                     ThemeConf = (ThemeConf)messagerMap["ThemeConf"];
+                }
+                if (messagerMap.ContainsKey("TaskConf"))
+                {
+                    TaskConf = (TaskConf)messagerMap["TaskConf"];
                 }
             }
         }
@@ -255,6 +260,11 @@ namespace Tableau
             return MessagerContainer.ThemeConf;
         }
 
+        public TaskConf? GetTaskConf()
+        {
+            return MessagerContainer.TaskConf;
+        }
+
         private Messager GetMessager(string name)
         {
             return GetMessagerMap()[name];
@@ -300,6 +310,7 @@ namespace Tableau
             Register<Tableau.ActivityConf>();
             Register<Tableau.ChapterConf>();
             Register<Tableau.ThemeConf>();
+            Register<Tableau.TaskConf>();
         }
     }
 }
