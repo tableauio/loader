@@ -55,36 +55,14 @@ namespace Tableau
             return true;
         }
 
-        public Protoconf.HeroConf.Types.Hero? Get1(string name)
-        {
-            if (Data_.HeroMap.TryGetValue(name, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Protoconf.HeroConf.Types.Hero? Get1(string name) => Data_.HeroMap?.TryGetValue(name, out var val) == true ? val : null;
 
-        public Protoconf.HeroConf.Types.Hero.Types.Attr? Get2(string name, string title)
-        {
-            var conf = Get1(name);
-            if (conf?.AttrMap != null && conf.AttrMap.TryGetValue(title, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Protoconf.HeroConf.Types.Hero.Types.Attr? Get2(string name, string title) => Get1(name)?.AttrMap?.TryGetValue(title, out var val) == true ? val : null;
 
         // OrderedMap accessors.
         public ref readonly Hero_OrderedMap GetOrderedMap() => ref OrderedMap;
 
-        public Hero_Attr_OrderedMap? GetOrderedMap1(string name)
-        {
-            if (OrderedMap.TryGetValue(name, out var value))
-            {
-                return value.Item1;
-            }
-            return null;
-        }
+        public Hero_Attr_OrderedMap? GetOrderedMap1(string name) => OrderedMap.TryGetValue(name, out var value) ? value.Item1 : null;
     }
 
     public class HeroBaseConf : Messager, IMessagerName
@@ -105,23 +83,8 @@ namespace Tableau
 
         public ref readonly Protoconf.HeroBaseConf Data() => ref Data_;
 
-        public Base.Hero? Get1(string name)
-        {
-            if (Data_.HeroMap.TryGetValue(name, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Base.Hero? Get1(string name) => Data_.HeroMap?.TryGetValue(name, out var val) == true ? val : null;
 
-        public Base.Item? Get2(string name, string id)
-        {
-            var conf = Get1(name);
-            if (conf?.ItemMap != null && conf.ItemMap.TryGetValue(id, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Base.Item? Get2(string name, string id) => Get1(name)?.ItemMap?.TryGetValue(id, out var val) == true ? val : null;
     }
 }
