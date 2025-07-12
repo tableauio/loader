@@ -47,14 +47,7 @@ namespace Tableau
 
         public ref readonly Protoconf.PatchMergeConf Data() => ref Data_;
 
-        public Protoconf.Item? Get1(uint id)
-        {
-            if (Data_.ItemMap.TryGetValue(id, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Protoconf.Item? Get1(uint id) => Data_.ItemMap?.TryGetValue(id, out var val) == true ? val : null;
     }
 
     public class RecursivePatchConf : Messager, IMessagerName
@@ -75,43 +68,12 @@ namespace Tableau
 
         public ref readonly Protoconf.RecursivePatchConf Data() => ref Data_;
 
-        public Protoconf.RecursivePatchConf.Types.Shop? Get1(uint shopId)
-        {
-            if (Data_.ShopMap.TryGetValue(shopId, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Protoconf.RecursivePatchConf.Types.Shop? Get1(uint shopId) => Data_.ShopMap?.TryGetValue(shopId, out var val) == true ? val : null;
 
-        public Protoconf.RecursivePatchConf.Types.Shop.Types.Goods? Get2(uint shopId, uint goodsId)
-        {
-            var conf = Get1(shopId);
-            if (conf?.GoodsMap != null && conf.GoodsMap.TryGetValue(goodsId, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Protoconf.RecursivePatchConf.Types.Shop.Types.Goods? Get2(uint shopId, uint goodsId) => Get1(shopId)?.GoodsMap?.TryGetValue(goodsId, out var val) == true ? val : null;
 
-        public Protoconf.RecursivePatchConf.Types.Shop.Types.Goods.Types.Currency? Get3(uint shopId, uint goodsId, uint type)
-        {
-            var conf = Get2(shopId, goodsId);
-            if (conf?.CurrencyMap != null && conf.CurrencyMap.TryGetValue(type, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Protoconf.RecursivePatchConf.Types.Shop.Types.Goods.Types.Currency? Get3(uint shopId, uint goodsId, uint type) => Get2(shopId, goodsId)?.CurrencyMap?.TryGetValue(type, out var val) == true ? val : null;
 
-        public int? Get4(uint shopId, uint goodsId, uint type, int key4)
-        {
-            var conf = Get3(shopId, goodsId, type);
-            if (conf?.ValueList != null && conf.ValueList.TryGetValue(key4, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public int? Get4(uint shopId, uint goodsId, uint type, int key4) => Get3(shopId, goodsId, type)?.ValueList?.TryGetValue(key4, out var val) == true ? val : null;
     }
 }

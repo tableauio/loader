@@ -105,31 +105,25 @@ namespace Tableau
                 {
                     // Index: ActivityName
                     var key = item1.Value.ActivityName;
-                    if (!IndexActivityMap.ContainsKey(key))
-                    {
-                        IndexActivityMap[key] = new List<Protoconf.ActivityConf.Types.Activity>();
-                    }
-                    IndexActivityMap[key].Add(item1.Value);
+                    var list = IndexActivityMap.TryGetValue(key, out var existingList) ?
+                    existingList : IndexActivityMap[key] = new List<Protoconf.ActivityConf.Types.Activity>();
+                    list.Add(item1.Value);
                 }
                 foreach (var item2 in item1.Value.ChapterMap)
                 {
                     {
                         // Index: ChapterID
                         var key = item2.Value.ChapterId;
-                        if (!IndexChapterMap.ContainsKey(key))
-                        {
-                            IndexChapterMap[key] = new List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>();
-                        }
-                        IndexChapterMap[key].Add(item2.Value);
+                        var list = IndexChapterMap.TryGetValue(key, out var existingList) ?
+                        existingList : IndexChapterMap[key] = new List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>();
+                        list.Add(item2.Value);
                     }
                     {
                         // Index: ChapterName<AwardID>@NamedChapter
                         var key = item2.Value.ChapterName;
-                        if (!IndexNamedChapterMap.ContainsKey(key))
-                        {
-                            IndexNamedChapterMap[key] = new List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>();
-                        }
-                        IndexNamedChapterMap[key].Add(item2.Value);
+                        var list = IndexNamedChapterMap.TryGetValue(key, out var existingList) ?
+                        existingList : IndexNamedChapterMap[key] = new List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>();
+                        list.Add(item2.Value);
                     }
                     foreach (var item3 in item2.Value.SectionMap)
                     {
@@ -138,11 +132,9 @@ namespace Tableau
                             {
                                 // Index: SectionItemID@Award
                                 var key = item4.Id;
-                                if (!IndexAwardMap.ContainsKey(key))
-                                {
-                                    IndexAwardMap[key] = new List<Protoconf.Section.Types.SectionItem>();
-                                }
-                                IndexAwardMap[key].Add(item4);
+                                var list = IndexAwardMap.TryGetValue(key, out var existingList) ?
+                                existingList : IndexAwardMap[key] = new List<Protoconf.Section.Types.SectionItem>();
+                                list.Add(item4);
                             }
                         }
                     }
@@ -159,76 +151,22 @@ namespace Tableau
             return true;
         }
 
-        public Protoconf.ActivityConf.Types.Activity? Get1(ulong activityId)
-        {
-            if (Data_.ActivityMap.TryGetValue(activityId, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Protoconf.ActivityConf.Types.Activity? Get1(ulong activityId) => Data_.ActivityMap?.TryGetValue(activityId, out var val) == true ? val : null;
 
-        public Protoconf.ActivityConf.Types.Activity.Types.Chapter? Get2(ulong activityId, uint chapterId)
-        {
-            var conf = Get1(activityId);
-            if (conf?.ChapterMap != null && conf.ChapterMap.TryGetValue(chapterId, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Protoconf.ActivityConf.Types.Activity.Types.Chapter? Get2(ulong activityId, uint chapterId) => Get1(activityId)?.ChapterMap?.TryGetValue(chapterId, out var val) == true ? val : null;
 
-        public Protoconf.Section? Get3(ulong activityId, uint chapterId, uint sectionId)
-        {
-            var conf = Get2(activityId, chapterId);
-            if (conf?.SectionMap != null && conf.SectionMap.TryGetValue(sectionId, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Protoconf.Section? Get3(ulong activityId, uint chapterId, uint sectionId) => Get2(activityId, chapterId)?.SectionMap?.TryGetValue(sectionId, out var val) == true ? val : null;
 
-        public int? Get4(ulong activityId, uint chapterId, uint sectionId, uint key4)
-        {
-            var conf = Get3(activityId, chapterId, sectionId);
-            if (conf?.SectionRankMap != null && conf.SectionRankMap.TryGetValue(key4, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public int? Get4(ulong activityId, uint chapterId, uint sectionId, uint key4) => Get3(activityId, chapterId, sectionId)?.SectionRankMap?.TryGetValue(key4, out var val) == true ? val : null;
 
         // OrderedMap accessors.
         public ref readonly Activity_OrderedMap GetOrderedMap() => ref OrderedMap;
 
-        public Activity_Chapter_OrderedMap? GetOrderedMap1(ulong activityId)
-        {
-            if (OrderedMap.TryGetValue(activityId, out var value))
-            {
-                return value.Item1;
-            }
-            return null;
-        }
+        public Activity_Chapter_OrderedMap? GetOrderedMap1(ulong activityId) => OrderedMap.TryGetValue(activityId, out var value) ? value.Item1 : null;
 
-        public protoconf_Section_OrderedMap? GetOrderedMap2(ulong activityId, uint chapterId)
-        {
-            var conf = GetOrderedMap1(activityId);
-            if (conf != null && conf.TryGetValue(chapterId, out var value))
-            {
-                return value.Item1;
-            }
-            return null;
-        }
+        public protoconf_Section_OrderedMap? GetOrderedMap2(ulong activityId, uint chapterId) => GetOrderedMap1(activityId)?.TryGetValue(chapterId, out var value) == true ? value.Item1 : null;
 
-        public int32_OrderedMap? GetOrderedMap3(ulong activityId, uint chapterId, uint sectionId)
-        {
-            var conf = GetOrderedMap2(activityId, chapterId);
-            if (conf != null && conf.TryGetValue(sectionId, out var value))
-            {
-                return value.Item1;
-            }
-            return null;
-        }
+        public int32_OrderedMap? GetOrderedMap3(ulong activityId, uint chapterId, uint sectionId) => GetOrderedMap2(activityId, chapterId)?.TryGetValue(sectionId, out var value) == true ? value.Item1 : null;
 
         // Index: ActivityName
         public ref readonly Index_ActivityMap GetActivityMap() => ref IndexActivityMap;
@@ -277,14 +215,7 @@ namespace Tableau
 
         public ref readonly Protoconf.ChapterConf Data() => ref Data_;
 
-        public Protoconf.ChapterConf.Types.Chapter? Get1(ulong id)
-        {
-            if (Data_.ChapterMap.TryGetValue(id, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Protoconf.ChapterConf.Types.Chapter? Get1(ulong id) => Data_.ChapterMap?.TryGetValue(id, out var val) == true ? val : null;
     }
 
     public class ThemeConf : Messager, IMessagerName
@@ -305,24 +236,9 @@ namespace Tableau
 
         public ref readonly Protoconf.ThemeConf Data() => ref Data_;
 
-        public Protoconf.ThemeConf.Types.Theme? Get1(string name)
-        {
-            if (Data_.ThemeMap.TryGetValue(name, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Protoconf.ThemeConf.Types.Theme? Get1(string name) => Data_.ThemeMap?.TryGetValue(name, out var val) == true ? val : null;
 
-        public string? Get2(string name, string param)
-        {
-            var conf = Get1(name);
-            if (conf?.ParamMap != null && conf.ParamMap.TryGetValue(param, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public string? Get2(string name, string param) => Get1(name)?.ParamMap?.TryGetValue(param, out var val) == true ? val : null;
     }
 
     public class TaskConf : Messager, IMessagerName
@@ -358,11 +274,9 @@ namespace Tableau
                 {
                     // Index: ActivityID<Goal,ID>
                     var key = item1.Value.ActivityId;
-                    if (!IndexTaskMap.ContainsKey(key))
-                    {
-                        IndexTaskMap[key] = new List<Protoconf.TaskConf.Types.Task>();
-                    }
-                    IndexTaskMap[key].Add(item1.Value);
+                    var list = IndexTaskMap.TryGetValue(key, out var existingList) ?
+                    existingList : IndexTaskMap[key] = new List<Protoconf.TaskConf.Types.Task>();
+                    list.Add(item1.Value);
                 }
             }
             // Index(sort): ActivityID<Goal,ID>
@@ -380,14 +294,7 @@ namespace Tableau
             return true;
         }
 
-        public Protoconf.TaskConf.Types.Task? Get1(long id)
-        {
-            if (Data_.TaskMap.TryGetValue(id, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Protoconf.TaskConf.Types.Task? Get1(long id) => Data_.TaskMap?.TryGetValue(id, out var val) == true ? val : null;
 
         // Index: ActivityID<Goal,ID>
         public ref readonly Index_TaskMap GetTaskMap() => ref IndexTaskMap;

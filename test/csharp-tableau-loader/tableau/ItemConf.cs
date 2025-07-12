@@ -136,53 +136,43 @@ namespace Tableau
                 {
                     // Index: Type
                     var key = item1.Value.Type;
-                    if (!IndexItemMap.ContainsKey(key))
-                    {
-                        IndexItemMap[key] = new List<Protoconf.ItemConf.Types.Item>();
-                    }
-                    IndexItemMap[key].Add(item1.Value);
+                    var list = IndexItemMap.TryGetValue(key, out var existingList) ?
+                    existingList : IndexItemMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                    list.Add(item1.Value);
                 }
                 {
                     // Index: Param<ID>@ItemInfo
                     foreach (var item2 in item1.Value.ParamList ?? Enumerable.Empty<int>())
                     {
                         var key = item2;
-                        if (!IndexItemInfoMap.ContainsKey(key))
-                        {
-                            IndexItemInfoMap[key] = new List<Protoconf.ItemConf.Types.Item>();
-                        }
-                        IndexItemInfoMap[key].Add(item1.Value);
+                        var list = IndexItemInfoMap.TryGetValue(key, out var existingList) ?
+                        existingList : IndexItemInfoMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                        list.Add(item1.Value);
                     }
                 }
                 {
                     // Index: Default@ItemDefaultInfo
                     var key = item1.Value.Default;
-                    if (!IndexItemDefaultInfoMap.ContainsKey(key))
-                    {
-                        IndexItemDefaultInfoMap[key] = new List<Protoconf.ItemConf.Types.Item>();
-                    }
-                    IndexItemDefaultInfoMap[key].Add(item1.Value);
+                    var list = IndexItemDefaultInfoMap.TryGetValue(key, out var existingList) ?
+                    existingList : IndexItemDefaultInfoMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                    list.Add(item1.Value);
                 }
                 {
                     // Index: ExtType@ItemExtInfo
                     foreach (var item2 in item1.Value.ExtTypeList ?? Enumerable.Empty<Protoconf.FruitType>())
                     {
                         var key = item2;
-                        if (!IndexItemExtInfoMap.ContainsKey(key))
-                        {
-                            IndexItemExtInfoMap[key] = new List<Protoconf.ItemConf.Types.Item>();
-                        }
-                        IndexItemExtInfoMap[key].Add(item1.Value);
+                        var list = IndexItemExtInfoMap.TryGetValue(key, out var existingList) ?
+                        existingList : IndexItemExtInfoMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                        list.Add(item1.Value);
                     }
                 }
                 {
                     // Index: (ID,Name)<Type,UseEffectType>@AwardItem
                     var key = new ItemConf_Index_AwardItemKey(item1.Value.Id, item1.Value.Name);
-                    if (!IndexAwardItemMap.ContainsKey(key))
-                    {
-                        IndexAwardItemMap[key] = new List<Protoconf.ItemConf.Types.Item>();
-                    }
-                    IndexAwardItemMap[key].Add(item1.Value);
+                    var list = IndexAwardItemMap.TryGetValue(key, out var existingList) ?
+                    existingList : IndexAwardItemMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                    list.Add(item1.Value);
                 }
                 {
                     // Index: (ID,Type,Param,ExtType)@SpecialItem
@@ -191,52 +181,42 @@ namespace Tableau
                         foreach (var indexItem3 in item1.Value.ExtTypeList ?? Enumerable.Empty<Protoconf.FruitType>())
                         {
                             var key = new ItemConf_Index_SpecialItemKey(item1.Value.Id, item1.Value.Type, indexItem2, indexItem3);
-                            if (!IndexSpecialItemMap.ContainsKey(key))
-                            {
-                                IndexSpecialItemMap[key] = new List<Protoconf.ItemConf.Types.Item>();
-                            }
-                            IndexSpecialItemMap[key].Add(item1.Value);
+                            var list = IndexSpecialItemMap.TryGetValue(key, out var existingList) ?
+                            existingList : IndexSpecialItemMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                            list.Add(item1.Value);
                         }
                     }
                 }
                 {
                     // Index: PathDir@ItemPathDir
                     var key = item1.Value.Path?.Dir ?? "";
-                    if (!IndexItemPathDirMap.ContainsKey(key))
-                    {
-                        IndexItemPathDirMap[key] = new List<Protoconf.ItemConf.Types.Item>();
-                    }
-                    IndexItemPathDirMap[key].Add(item1.Value);
+                    var list = IndexItemPathDirMap.TryGetValue(key, out var existingList) ?
+                    existingList : IndexItemPathDirMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                    list.Add(item1.Value);
                 }
                 {
                     // Index: PathName@ItemPathName
                     foreach (var item2 in item1.Value.Path?.NameList ?? Enumerable.Empty<string>())
                     {
                         var key = item2;
-                        if (!IndexItemPathNameMap.ContainsKey(key))
-                        {
-                            IndexItemPathNameMap[key] = new List<Protoconf.ItemConf.Types.Item>();
-                        }
-                        IndexItemPathNameMap[key].Add(item1.Value);
+                        var list = IndexItemPathNameMap.TryGetValue(key, out var existingList) ?
+                        existingList : IndexItemPathNameMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                        list.Add(item1.Value);
                     }
                 }
                 {
                     // Index: PathFriendID@ItemPathFriendID
                     var key = item1.Value.Path?.Friend?.Id ?? 0;
-                    if (!IndexItemPathFriendIdMap.ContainsKey(key))
-                    {
-                        IndexItemPathFriendIdMap[key] = new List<Protoconf.ItemConf.Types.Item>();
-                    }
-                    IndexItemPathFriendIdMap[key].Add(item1.Value);
+                    var list = IndexItemPathFriendIdMap.TryGetValue(key, out var existingList) ?
+                    existingList : IndexItemPathFriendIdMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                    list.Add(item1.Value);
                 }
                 {
                     // Index: UseEffectType@UseEffectType
                     var key = item1.Value.UseEffect?.Type ?? 0;
-                    if (!IndexUseEffectTypeMap.ContainsKey(key))
-                    {
-                        IndexUseEffectTypeMap[key] = new List<Protoconf.ItemConf.Types.Item>();
-                    }
-                    IndexUseEffectTypeMap[key].Add(item1.Value);
+                    var list = IndexUseEffectTypeMap.TryGetValue(key, out var existingList) ?
+                    existingList : IndexUseEffectTypeMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                    list.Add(item1.Value);
                 }
             }
             // Index(sort): Param<ID>@ItemInfo
@@ -262,14 +242,7 @@ namespace Tableau
             return true;
         }
 
-        public Protoconf.ItemConf.Types.Item? Get1(uint id)
-        {
-            if (Data_.ItemMap.TryGetValue(id, out var val))
-            {
-                return val;
-            }
-            return null;
-        }
+        public Protoconf.ItemConf.Types.Item? Get1(uint id) => Data_.ItemMap?.TryGetValue(id, out var val) == true ? val : null;
 
         // OrderedMap accessors.
         public ref readonly Item_OrderedMap GetOrderedMap() => ref OrderedMap;
