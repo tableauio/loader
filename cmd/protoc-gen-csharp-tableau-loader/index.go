@@ -111,11 +111,9 @@ func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth in
 			g.P(helper.Indent(depth+3), "foreach (var ", itemName, " in ", parentDataName, fieldName, " ?? Enumerable.Empty<", helper.ParseCsharpType(field.FD), ">())")
 			g.P(helper.Indent(depth+3), "{")
 			g.P(helper.Indent(depth+4), "var key = ", itemName, ";")
-			g.P(helper.Indent(depth+4), "if (!", indexContainerName, ".ContainsKey(key))")
-			g.P(helper.Indent(depth+4), "{")
-			g.P(helper.Indent(depth+5), indexContainerName, "[key] = new List<", helper.ParseCsharpClassType(index.MD), ">();")
-			g.P(helper.Indent(depth+4), "}")
-			g.P(helper.Indent(depth+4), indexContainerName, "[key].Add(", parentDataName, ");")
+			g.P(helper.Indent(depth+4), "var list = ", indexContainerName, ".TryGetValue(key, out var existingList) ?")
+			g.P(helper.Indent(depth+4), "existingList : ", indexContainerName, "[key] = new List<", helper.ParseCsharpClassType(index.MD), ">();")
+			g.P(helper.Indent(depth+4), "list.Add(", parentDataName, ");")
 			g.P(helper.Indent(depth+3), "}")
 		} else {
 			fieldName := ""
@@ -130,11 +128,9 @@ func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth in
 				key += " ?? " + helper.GetTypeEmptyValue(field.FD)
 			}
 			g.P(helper.Indent(depth+3), "var key = ", key, ";")
-			g.P(helper.Indent(depth+3), "if (!", indexContainerName, ".ContainsKey(key))")
-			g.P(helper.Indent(depth+3), "{")
-			g.P(helper.Indent(depth+4), indexContainerName, "[key] = new List<", helper.ParseCsharpClassType(index.MD), ">();")
-			g.P(helper.Indent(depth+3), "}")
-			g.P(helper.Indent(depth+3), indexContainerName, "[key].Add(", parentDataName, ");")
+			g.P(helper.Indent(depth+3), "var list = ", indexContainerName, ".TryGetValue(key, out var existingList) ?")
+			g.P(helper.Indent(depth+3), "existingList : ", indexContainerName, "[key] = new List<", helper.ParseCsharpClassType(index.MD), ">();")
+			g.P(helper.Indent(depth+3), "list.Add(", parentDataName, ");")
 		}
 	} else {
 		// multi-column index
@@ -201,11 +197,9 @@ func generateOneMulticolumnIndex(gen *protogen.Plugin, g *protogen.GeneratedFile
 		keyType := fmt.Sprintf("%s_Index_%sKey", messagerName, index.Name())
 		indexContainerName := "Index" + strcase.ToCamel(index.Name()) + "Map"
 		g.P(helper.Indent(depth+3), "var key = new ", keyType, "(", keyParams, ");")
-		g.P(helper.Indent(depth+3), "if (!", indexContainerName, ".ContainsKey(key))")
-		g.P(helper.Indent(depth+3), "{")
-		g.P(helper.Indent(depth+4), indexContainerName, "[key] = new List<", helper.ParseCsharpClassType(index.MD), ">();")
-		g.P(helper.Indent(depth+3), "}")
-		g.P(helper.Indent(depth+3), indexContainerName, "[key].Add(", parentDataName, ");")
+		g.P(helper.Indent(depth+3), "var list = ", indexContainerName, ".TryGetValue(key, out var existingList) ?")
+		g.P(helper.Indent(depth+3), "existingList : ", indexContainerName, "[key] = new List<", helper.ParseCsharpClassType(index.MD), ">();")
+		g.P(helper.Indent(depth+3), "list.Add(", parentDataName, ");")
 		return keys
 	}
 	field := index.ColFields[cursor]
