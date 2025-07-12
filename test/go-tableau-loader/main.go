@@ -31,6 +31,14 @@ func main() {
 		panic("ActivityConf is nil")
 	}
 
+	fmt.Println("indexItemInfoMap: ")
+	for key, value := range hub.GetHub().GetItemConf().FindItemInfoMap() {
+		fmt.Printf("  - %v: \n", key)
+		for _, element := range value {
+			fmt.Printf("    - %v\n", element)
+		}
+	}
+
 	// error: not found
 	if _, err := conf.Get3(100001, 1, 999); err != nil {
 		if xerrors.Is(err, code.NotFound) {
