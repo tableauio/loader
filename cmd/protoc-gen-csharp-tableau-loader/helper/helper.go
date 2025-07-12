@@ -138,7 +138,7 @@ func AddMapKey(gen *protogen.Plugin, fd protoreflect.FieldDescriptor, keys []Map
 		valueFd := fd.MapValue().Message().Fields().Get(0)
 		name = string(valueFd.Name())
 	}
-	// name = escapeIdentifier(name)
+	name = escapeIdentifier(name)
 	if name == "" {
 		name = fmt.Sprintf("key%d", len(keys)+1)
 	} else {
@@ -150,7 +150,7 @@ func AddMapKey(gen *protogen.Plugin, fd protoreflect.FieldDescriptor, keys []Map
 			}
 		}
 	}
-	keys = append(keys, MapKey{ParseCsharpType(fd.MapKey()), strcase.ToLowerCamel(name)})
+	keys = append(keys, MapKey{ParseCsharpType(fd.MapKey()), name})
 	return keys
 }
 
