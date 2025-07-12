@@ -129,22 +129,16 @@ func genOrderedMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md pr
 			if depth == 1 {
 				g.P(helper.Indent(2), "public ref readonly ", orderedMap, " ", getter, "() => ref OrderedMap;")
 			} else {
-				g.P(helper.Indent(2), "public ", orderedMap, "? ", getter, "(", helper.GenGetParams(keys), ")")
-				g.P(helper.Indent(2), "{")
 				lastKeyName := keys[len(keys)-1].Name
 				if depth == 2 {
-					g.P(helper.Indent(3), "if (OrderedMap.TryGetValue(", lastKeyName, ", out var value))")
+					g.P(helper.Indent(2), "public ", orderedMap, "? ", getter, "(", helper.GenGetParams(keys), ") => ",
+						"OrderedMap.TryGetValue(", lastKeyName, ", out var value) ? value.Item1 : null;")
 				} else {
 					prevKeys := keys[:len(keys)-1]
 					prevGetter := genGetterName(depth - 1)
-					g.P(helper.Indent(3), "var conf = ", prevGetter, "(", helper.GenGetArguments(prevKeys), ");")
-					g.P(helper.Indent(3), "if (conf != null && conf.TryGetValue(", lastKeyName, ", out var value))")
+					g.P(helper.Indent(2), "public ", orderedMap, "? ", getter, "(", helper.GenGetParams(keys), ") => ",
+						prevGetter, "(", helper.GenGetArguments(prevKeys), ")?.TryGetValue(", lastKeyName, ", out var value) == true ? value.Item1 : null;")
 				}
-				g.P(helper.Indent(3), "{")
-				g.P(helper.Indent(4), "return value.Item1;")
-				g.P(helper.Indent(3), "}")
-				g.P(helper.Indent(3), "return null;")
-				g.P(helper.Indent(2), "}")
 			}
 
 			keys = helper.AddMapKey(gen, fd, keys)

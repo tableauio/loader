@@ -18,18 +18,12 @@ func generateHub(gen *protogen.Plugin) {
 	}
 	g.P(staticHubContent2)
 	for _, messager := range messagers {
-		g.P(helper.Indent(4), `if (messagerMap.ContainsKey("`, messager, `"))`)
-		g.P(helper.Indent(4), "{")
-		g.P(helper.Indent(5), messager, " = (", messager, `)messagerMap["`, messager, `"];`)
-		g.P(helper.Indent(4), "}")
+		g.P(helper.Indent(4), messager, " = Get<", messager, ">();")
 	}
 	g.P(staticHubContent3)
 	for _, messager := range messagers {
 		g.P()
-		g.P(helper.Indent(2), "public ", messager, "? Get", messager, "()")
-		g.P(helper.Indent(2), "{")
-		g.P(helper.Indent(3), "return MessagerContainer.", messager, ";")
-		g.P(helper.Indent(2), "}")
+		g.P(helper.Indent(2), "public ", messager, "? Get", messager, "() => MessagerContainer.", messager, ";")
 	}
 	g.P(staticHubContent4)
 	for _, messager := range messagers {
@@ -71,15 +65,15 @@ namespace Tableau
 
         protected Stats LoadStats = new Stats();
 
-        public ref Stats GetStats() { return ref LoadStats; }
+        public ref Stats GetStats() => ref LoadStats;
 
         public abstract bool Load(string dir, Format fmt, in LoadOptions? options = null);
 
-        protected virtual bool ProcessAfterLoad() { return true; }
+        protected virtual bool ProcessAfterLoad() => true;
 
-        public virtual bool ProcessAfterLoadAll(in Hub hub) { return true; }
+        public virtual bool ProcessAfterLoadAll(in Hub hub) => true;
 
-        internal bool LoadMessageByPath<T>(out T msg, string dir, Format fmt, in LoadOptions? options = null) where T : Google.Protobuf.IMessage<T>, new()
+        internal bool LoadMessageByPath<T>(out T msg, string dir, Format fmt, in LoadOptions? options = null) where T : IMessage<T>, new()
         {
             msg = new T();
             string name = msg.Descriptor.Name;
@@ -91,11 +85,7 @@ namespace Tableau
                     case Format.JSON:
                         {
                             string content = File.ReadAllText(path);
-                            var parser = Google.Protobuf.JsonParser.Default;
-                            if (options != null)
-                            {
-                                parser = new Google.Protobuf.JsonParser(Google.Protobuf.JsonParser.Settings.Default.WithIgnoreUnknownFields(true));
-                            }
+                            var parser = options is null ? JsonParser.Default : new JsonParser(JsonParser.Settings.Default.WithIgnoreUnknownFields(options.IgnoreUnknownFields));
                             msg = parser.Parse<T>(content);
                             break;
                         }
@@ -143,6 +133,8 @@ var staticHubContent2 = `
 
 var staticHubContent3 = `            }
         }
+
+        public T? Get<T>() where T : Messager, IMessagerName => MessagerMap.TryGetValue(T.Name(), out var messager) ? (T)messager : null;
     }
 
     public class HubOptions
@@ -155,10 +147,7 @@ var staticHubContent3 = `            }
         private MessagerContainer MessagerContainer = new MessagerContainer();
         private readonly HubOptions Options;
 
-        public Hub(HubOptions? options = null)
-        {
-            Options = options ?? new HubOptions();
-        }
+        public Hub(HubOptions? options = null) => Options = options ?? new HubOptions();
 
         public bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
@@ -183,43 +172,21 @@ var staticHubContent3 = `            }
             return true;
         }
 
-        public ref Dictionary<string, Messager> GetMessagerMap()
-        {
-            return ref MessagerContainer.MessagerMap;
-        }
+        public ref Dictionary<string, Messager> GetMessagerMap() => ref MessagerContainer.MessagerMap;
 
-        public void SetMessagerMap(in Dictionary<string, Messager> map)
-        {
-            MessagerContainer = new MessagerContainer(map);
-        }
+        public void SetMessagerMap(in Dictionary<string, Messager> map) => MessagerContainer = new MessagerContainer(map);
 
-        public T? Get<T>() where T : Messager, IMessagerName, new()
-        {
-            string name = T.Name();
-            if (MessagerContainer.MessagerMap.TryGetValue(name, out var messager))
-            {
-                return (T)messager;
-            }
-            return default;
-        }`
+        public T? Get<T>() where T : Messager, IMessagerName => MessagerContainer.Get<T>();`
 
 const staticHubContent4 = `
-        private Messager GetMessager(string name)
-        {
-            return GetMessagerMap()[name];
-        }
-
-        public DateTime GetLastLoadedTime()
-        {
-            return MessagerContainer.LastLoadedTime;
-        }
+        public DateTime GetLastLoadedTime() => MessagerContainer.LastLoadedTime;
 
         private Dictionary<string, Messager> NewMessagerMap()
         {
             var messagerMap = new Dictionary<string, Messager>();
             foreach (var kv in Registry.Registrar)
             {
-                if (Options.Filter == null || Options.Filter(kv.Key))
+                if (Options.Filter?.Invoke(kv.Key) ?? true)
                 {
                     messagerMap[kv.Key] = kv.Value();
                 }
@@ -232,11 +199,7 @@ const staticHubContent4 = `
     {
         internal static readonly Dictionary<string, Func<Messager>> Registrar = new Dictionary<string, Func<Messager>>();
 
-        public static void Register<T>() where T : Messager, IMessagerName, new()
-        {
-            string name = T.Name();
-            Registrar[name] = () => new T();
-        }
+        public static void Register<T>() where T : Messager, IMessagerName, new() => Registrar[T.Name()] = () => new T();
 
         public static void Init()
         {`

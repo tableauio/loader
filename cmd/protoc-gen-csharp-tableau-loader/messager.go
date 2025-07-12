@@ -114,23 +114,17 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md protorefl
 			keys = helper.AddMapKey(gen, fd, keys)
 			getter := fmt.Sprintf("Get%v", depth)
 			g.P()
-			g.P(helper.Indent(2), "public ", parseMapValueType(fd), "? ", getter, "(", helper.GenGetParams(keys), ")")
-			g.P(helper.Indent(2), "{")
 
 			lastKeyName := keys[len(keys)-1].Name
 			if depth == 1 {
-				g.P(helper.Indent(3), "if (Data_.", strcase.ToCamel(string(fd.Name())), ".TryGetValue(", lastKeyName, ", out var val))")
+				g.P(helper.Indent(2), "public ", parseMapValueType(fd), "? ", getter, "(", helper.GenGetParams(keys), ") => ",
+					"Data_.", strcase.ToCamel(string(fd.Name())), "?.TryGetValue(", lastKeyName, ", out var val) == true ? val : null;")
 			} else {
 				prevKeys := keys[:len(keys)-1]
 				prevGetter := fmt.Sprintf("Get%v", depth-1)
-				g.P(helper.Indent(3), "var conf = ", prevGetter, "(", helper.GenGetArguments(prevKeys), ");")
-				g.P(helper.Indent(3), "if (conf?.", strcase.ToCamel(string(fd.Name())), " != null && conf.", strcase.ToCamel(string(fd.Name())), ".TryGetValue(", lastKeyName, ", out var val))")
+				g.P(helper.Indent(2), "public ", parseMapValueType(fd), "? ", getter, "(", helper.GenGetParams(keys), ") => ",
+					prevGetter, "(", helper.GenGetArguments(prevKeys), ")?.", strcase.ToCamel(string(fd.Name())), "?.TryGetValue(", lastKeyName, ", out var val) == true ? val : null;")
 			}
-			g.P(helper.Indent(3), "{")
-			g.P(helper.Indent(4), "return val;")
-			g.P(helper.Indent(3), "}")
-			g.P(helper.Indent(3), "return null;")
-			g.P(helper.Indent(2), "}")
 
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
 				genMapGetters(gen, g, fd.MapValue().Message(), depth+1, keys, messagerName)

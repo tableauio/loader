@@ -11,11 +11,29 @@ class Program
 
         var options = new HubOptions
         {
-            Filter = name => true
+            Filter = name => name != "TaskConf"
         };
         var hub = new Tableau.Hub(options);
-        var ok = hub.Load("../testdata/conf", Tableau.Format.JSON);
-        Console.WriteLine($"Load result: {ok}");
+        var loadOptions = new Tableau.LoadOptions
+        {
+            IgnoreUnknownFields = true
+        };
+        if (!hub.Load("../testdata/conf", Tableau.Format.JSON, loadOptions))
+        {
+            Console.WriteLine("Failed to load configurations");
+            return;
+        }
+
+        var taskConf = hub.Get<Tableau.TaskConf>();
+        if (taskConf is null)
+        {
+            Console.WriteLine("TaskConf is null");
+        }
+        else
+        {
+            Console.WriteLine($"TaskConf: {taskConf.Data()}");
+            Console.WriteLine($"TaskConf Load duration: {taskConf.GetStats().Duration.TotalMilliseconds} ms");
+        }
 
         var heroConf = hub.Get<Tableau.HeroConf>();
         if (heroConf is null)
