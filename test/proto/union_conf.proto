@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package protoconf;
+
+import "tableau/protobuf/tableau.proto";
+
+option go_package = "github.com/tableauio/loader/test/go-tableau-loader/protoconf";
+option (tableau.workbook) = {
+  name: "Union.xlsx"
+};
+
+message HeroTarget {
+  option (tableau.union) = {
+    name: "UnionType"
+    note: "HeroTarget note"
+  };
+
+  Type type = 9999 [(tableau.field) = { name: "Type" }];
+  oneof value {
+    option (tableau.oneof) = {
+      note: "HeroTarget note"
+      field: "Field"
+    };
+
+    StarUp star_up = 1;    // Bound to enum value: TYPE_STAR_UP.
+    LevelUp level_up = 2;  // Bound to enum value: TYPE_LEVEL_UP.
+  }
+
+  enum Type {
+    TYPE_INVALID = 0;
+    TYPE_STAR_UP = 1 [(tableau.evalue).name = "HeroStarUp"];    // HeroStarUp
+    TYPE_LEVEL_UP = 2 [(tableau.evalue).name = "HeroLevelUp"];  // HeroLevelUp
+  }
+
+  message StarUp {
+    uint32 id = 1 [(tableau.field) = { name: "ID" }];
+    int32 star = 2 [(tableau.field) = { name: "Star" }];
+  }
+  message LevelUp {
+    repeated uint32 id_list = 1 [(tableau.field) = { name: "ID" layout: LAYOUT_INCELL }];
+    int32 level = 2 [(tableau.field) = { name: "Level" }];
+    bool super = 3 [(tableau.field) = { name: "Super" }];
+  }
+}

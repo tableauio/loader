@@ -6,6 +6,7 @@ import (
 
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
+	"github.com/tableauio/loader/internal/options"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -15,7 +16,7 @@ import (
 func getAllOrderedFilesAndMessagers(gen *protogen.Plugin) (protofiles []string, fileMessagers map[string][]string) {
 	fileMessagers = map[string][]string{}
 	for _, f := range gen.Files {
-		if !f.Generate {
+		if !options.NeedGenFile(f) {
 			continue
 		}
 		opts := f.Desc.Options().(*descriptorpb.FileOptions)
