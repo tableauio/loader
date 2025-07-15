@@ -76,12 +76,7 @@ class Hub {
                                             const std::shared_ptr<LoadOptions> options = nullptr) const;
   std::shared_ptr<MessagerMap> NewMessagerMap() const;
   const std::shared_ptr<Messager> GetMessager(const std::string& name) const;
-  std::shared_ptr<MessagerContainer> GetProvidedMessagerContainer() const {
-    if (options_ != nullptr && options_->provider != nullptr) {
-      return options_->provider();
-    }
-    return msger_container_;
-  }
+  std::shared_ptr<MessagerContainer> GetProvidedMessagerContainer() const;
 
   bool Postprocess(std::shared_ptr<MessagerMap> msger_map);
 

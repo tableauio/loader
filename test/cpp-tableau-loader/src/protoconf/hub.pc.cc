@@ -105,6 +105,13 @@ const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const 
   return nullptr;
 }
 
+std::shared_ptr<MessagerContainer> Hub::GetProvidedMessagerContainer() const {
+  if (options_ != nullptr && options_->provider != nullptr) {
+    return options_->provider();
+  }
+  return msger_container_;
+}
+
 bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {
   // create a temporary hub with messager container for post process
   Hub tmp_hub;
