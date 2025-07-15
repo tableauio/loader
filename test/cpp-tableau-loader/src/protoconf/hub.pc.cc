@@ -10,7 +10,13 @@
 #include "util.pc.h"
 
 namespace tableau {
-Registrar Registry::registrar = Registrar();
+std::once_flag Registry::once;
+Registrar Registry::registrar;
+
+Hub::Hub(const std::shared_ptr<HubOptions> options /* = nullptr */)
+    : msger_container_(std::make_shared<MessagerContainer>()), options_(options) {
+  tableau::Registry::Init();
+}
 
 bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */,
                const std::shared_ptr<LoadOptions> options /* = nullptr */) {
@@ -126,7 +132,9 @@ MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* =
 }
 
 void Registry::Init() {
-  InitShard0();
-  InitShard1();
+  std::call_once(once, []() {
+    InitShard0();
+    InitShard1();
+  });
 }
 }  // namespace tableau

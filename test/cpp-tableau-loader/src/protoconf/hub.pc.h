@@ -35,8 +35,8 @@ struct HubOptions {
 
 class Hub {
  public:
-  Hub(const std::shared_ptr<HubOptions> options = nullptr)
-      : msger_container_(std::make_shared<MessagerContainer>()), options_(options) {}
+  Hub(const std::shared_ptr<HubOptions> options = nullptr);
+
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
   bool Load(const std::string& dir, Format fmt = Format::kJSON, const std::shared_ptr<LoadOptions> options = nullptr);
@@ -198,6 +198,7 @@ class Registry {
   static void InitShard1();
 
  private:
+  static std::once_flag once;
   static Registrar registrar;
 };
 

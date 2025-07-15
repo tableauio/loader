@@ -38,7 +38,6 @@ const std::shared_ptr<tableau::HubOptions> DefaultHubOptions::GetOptions() {
 void DefaultHubOptions::Init() {
   // custom log
   tableau::log::DefaultLogger()->SetWriter(LogWrite);
-  tableau::Registry::Init();
   InitCustomMessager();
 }
 

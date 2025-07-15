@@ -133,7 +133,7 @@ func generateHubCppMsgContainerCtor(g *protogen.GeneratedFile, protofiles []stri
 func generateHubCppRegistry(g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
-			g.P(helper.Indent(1), "Register<", messager, ">();")
+			g.P(helper.Indent(2), "Register<", messager, ">();")
 		}
 	}
 }
@@ -170,8 +170,8 @@ struct HubOptions {
 
 class Hub {
  public:
-  Hub(const std::shared_ptr<HubOptions> options = nullptr)
-      : msger_container_(std::make_shared<MessagerContainer>()), options_(options) {}
+  Hub(const std::shared_ptr<HubOptions> options = nullptr);
+
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
   bool Load(const std::string& dir, Format fmt = Format::kJSON, const std::shared_ptr<LoadOptions> options = nullptr);
@@ -278,7 +278,8 @@ class Registry {
 
  private:`
 
-const bottomHpp = `  static Registrar registrar;
+const bottomHpp = `  static std::once_flag once;
+  static Registrar registrar;
 };
 
 template <typename T>
@@ -295,7 +296,13 @@ const hubCppHeader = `#include "hub.pc.h"
 
 const hubCpp = `
 namespace tableau {
-Registrar Registry::registrar = Registrar();
+std::once_flag Registry::once;
+Registrar Registry::registrar;
+
+Hub::Hub(const std::shared_ptr<HubOptions> options /* = nullptr */)
+    : msger_container_(std::make_shared<MessagerContainer>()), options_(options) {
+  tableau::Registry::Init();
+}
 
 bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */,
                const std::shared_ptr<LoadOptions> options /* = nullptr */) {
@@ -410,7 +417,9 @@ MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* =
 
 const registryCpp = `}
 
-void Registry::Init() {`
+void Registry::Init() {
+  std::call_once(once, []() {`
 
-const bottomCpp = `}
+const bottomCpp = `  });
+}
 }  // namespace tableau`

@@ -83,7 +83,7 @@ func generateShardedHubCppMsgContainerShards(g *protogen.GeneratedFile, shardNum
 
 func generateShardedHubCppRegistryShards(g *protogen.GeneratedFile, shardNum int) {
 	for i := 0; i < shardNum; i++ {
-		g.P(helper.Indent(1), "InitShard", i, "();")
+		g.P(helper.Indent(2), "InitShard", i, "();")
 	}
 }
 
