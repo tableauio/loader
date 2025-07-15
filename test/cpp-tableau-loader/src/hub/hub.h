@@ -27,18 +27,21 @@ class Singleton {
   Singleton() = default;
 };
 
-class Hub : public tableau::Hub, public Singleton<Hub> {
+template <class T>
+class HubBase : public tableau::Hub, public Singleton<HubBase<T>> {
  public:
-  Hub() : tableau::Hub(GetOptions()) {}
-  void Init();
-
- private:
-  void InitCustomMessager();
-  bool Filter(const std::string& name) { return true; }
-
- private:
-  const tableau::HubOptions* GetOptions() {
-    static const tableau::HubOptions options{std::bind(&Hub::Filter, this, std::placeholders::_1)};
-    return &options;
-  }
+  HubBase() : tableau::Hub(T::GetOptions()) { T::Init(); }
 };
+
+class DefaultHubOptions {
+ public:
+  static const std::shared_ptr<tableau::HubOptions> GetOptions();
+  static void Init();
+
+ private:
+  static bool Filter(const std::string& name);
+  static std::shared_ptr<tableau::MessagerContainer> MessagerContainerProvider();
+  static void InitCustomMessager();
+};
+
+using Hub = HubBase<DefaultHubOptions>;

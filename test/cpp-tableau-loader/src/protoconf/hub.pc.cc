@@ -12,7 +12,8 @@
 namespace tableau {
 Registrar Registry::registrar = Registrar();
 
-bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */, const LoadOptions* options /* = nullptr */) {
+bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */,
+               const std::shared_ptr<LoadOptions> options /* = nullptr */) {
   auto msger_map = InternalLoad(dir, fmt, options);
   if (!msger_map) {
     return false;
@@ -26,7 +27,7 @@ bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */, const L
 }
 
 bool Hub::AsyncLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
-                    const LoadOptions* options /* = nullptr */) {
+                    const std::shared_ptr<LoadOptions> options /* = nullptr */) {
   auto msger_map = InternalLoad(dir, fmt, options);
   if (!msger_map) {
     return false;
@@ -47,14 +48,14 @@ void Hub::InitScheduler() {
 }
 
 std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
-                                               const LoadOptions* options /* = nullptr */) const {
+                                               const std::shared_ptr<LoadOptions> options /* = nullptr */) const {
   // intercept protobuf error logs
   auto old_handler = google::protobuf::SetLogHandler(util::ProtobufLogHandler);
   auto msger_map = NewMessagerMap();
   for (auto iter : *msger_map) {
     auto&& name = iter.first;
     ATOM_DEBUG("loading %s", name.c_str());
-    bool ok = iter.second->Load(dir, fmt, options);
+    bool ok = iter.second->Load(dir, fmt, options.get());
     if (!ok) {
       ATOM_ERROR("load %s failed: %s", name.c_str(), GetErrMsg().c_str());
       // restore to old protobuf log handler
@@ -72,14 +73,14 @@ std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::string& dir, Format fm
 std::shared_ptr<MessagerMap> Hub::NewMessagerMap() const {
   std::shared_ptr<MessagerMap> msger_map = std::make_shared<MessagerMap>();
   for (auto&& it : Registry::registrar) {
-    if (!options_.filter || options_.filter(it.first)) {
+    if (options_ == nullptr || options_->filter == nullptr || options_->filter(it.first)) {
       (*msger_map)[it.first] = it.second();
     }
   }
   return msger_map;
 }
 
-std::shared_ptr<MessagerMap> Hub::GetMessagerMap() const { return GetMessagerContainer()->msger_map_; }
+std::shared_ptr<MessagerMap> Hub::GetMessagerMap() const { return GetProvidedMessagerContainer()->msger_map_; }
 
 void Hub::SetMessagerMap(std::shared_ptr<MessagerMap> msger_map) {
   // replace with thread-safe guarantee.
@@ -115,7 +116,7 @@ bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {
   return true;
 }
 
-std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainer()->last_loaded_time_; }
+std::time_t Hub::GetLastLoadedTime() const { return GetProvidedMessagerContainer()->last_loaded_time_; }
 
 MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* = nullptr*/)
     : msger_map_(msger_map != nullptr ? msger_map : std::make_shared<MessagerMap>()),

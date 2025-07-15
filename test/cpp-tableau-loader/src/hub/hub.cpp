@@ -18,11 +18,28 @@ void LogWrite(std::ostream* os, const tableau::log::SourceLocation& loc, const t
   // clang-format on
 }
 
-void Hub::Init() {
+bool DefaultHubOptions::Filter(const std::string& name) {
+  // all messagers
+  return true;
+}
+
+std::shared_ptr<tableau::MessagerContainer> DefaultHubOptions::MessagerContainerProvider() {
+  // default messager container
+  return HubBase<DefaultHubOptions>::Instance().GetMessagerContainer();
+}
+
+const std::shared_ptr<tableau::HubOptions> DefaultHubOptions::GetOptions() {
+  auto options = std::make_shared<tableau::HubOptions>();
+  options->filter = DefaultHubOptions::Filter;
+  options->provider = DefaultHubOptions::MessagerContainerProvider;
+  return options;
+}
+
+void DefaultHubOptions::Init() {
   // custom log
   tableau::log::DefaultLogger()->SetWriter(LogWrite);
   tableau::Registry::Init();
   InitCustomMessager();
 }
 
-void Hub::InitCustomMessager() { tableau::Registry::Register<CustomItemConf>(); }
+void DefaultHubOptions::InitCustomMessager() { tableau::Registry::Register<CustomItemConf>(); }

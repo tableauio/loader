@@ -35,16 +35,17 @@ struct HubOptions {
 
 class Hub {
  public:
-  Hub(const HubOptions* options = nullptr)
-      : msger_container_(std::make_shared<MessagerContainer>()), options_(options ? *options : HubOptions{}) {}
+  Hub(const std::shared_ptr<HubOptions> options = nullptr)
+      : msger_container_(std::make_shared<MessagerContainer>()), options_(options) {}
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
-  bool Load(const std::string& dir, Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
+  bool Load(const std::string& dir, Format fmt = Format::kJSON, const std::shared_ptr<LoadOptions> options = nullptr);
 
   /***** Asynchronous Loading *****/
   // Load configs into temp MessagerContainer, and you should call LoopOnce() in you app's main loop,
   // in order to take the temp MessagerContainer into effect.
-  bool AsyncLoad(const std::string& dir, Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
+  bool AsyncLoad(const std::string& dir, Format fmt = Format::kJSON,
+                 const std::shared_ptr<LoadOptions> options = nullptr);
   int LoopOnce();
   // You'd better initialize the scheduler in the main thread.
   void InitScheduler();
@@ -55,12 +56,7 @@ class Hub {
 
   /***** MessagerContainer *****/
   // This function is exposed only for use in MessagerContainerProvider.
-  std::shared_ptr<MessagerContainer> GetMessagerContainer() const {
-    if (options_.provider != nullptr) {
-      return options_.provider();
-    }
-    return msger_container_;
-  }
+  std::shared_ptr<MessagerContainer> GetMessagerContainer() const { return msger_container_; }
 
   /***** Access APIs *****/
   template <typename T>
@@ -77,9 +73,15 @@ class Hub {
 
  private:
   std::shared_ptr<MessagerMap> InternalLoad(const std::string& dir, Format fmt = Format::kJSON,
-                                            const LoadOptions* options = nullptr) const;
+                                            const std::shared_ptr<LoadOptions> options = nullptr) const;
   std::shared_ptr<MessagerMap> NewMessagerMap() const;
   const std::shared_ptr<Messager> GetMessager(const std::string& name) const;
+  std::shared_ptr<MessagerContainer> GetProvidedMessagerContainer() const {
+    if (options_ != nullptr && options_->provider != nullptr) {
+      return options_->provider();
+    }
+    return msger_container_;
+  }
 
   bool Postprocess(std::shared_ptr<MessagerMap> msger_map);
 
@@ -91,7 +93,7 @@ class Hub {
   // Loading scheduler.
   internal::Scheduler* sched_ = nullptr;
   // Hub options
-  const HubOptions options_;
+  const std::shared_ptr<HubOptions> options_;
 };
 
 template <typename T>

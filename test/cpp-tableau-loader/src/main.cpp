@@ -13,8 +13,8 @@
 #include "protoconf/patch_conf.pc.h"
 #include "protoconf/test_conf.pc.h"
 
-bool LoadWithPatch(tableau::LoadOptions options) {
-  return Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
+bool LoadWithPatch(const std::shared_ptr<tableau::LoadOptions> options) {
+  return Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
 }
 
 bool CustomReadFile(const std::string& filename, std::string& content) {
@@ -30,13 +30,13 @@ bool CustomReadFile(const std::string& filename, std::string& content) {
 }
 
 bool TestPatch() {
-  tableau::LoadOptions options;
-  options.read_func = CustomReadFile;
+  auto options = std::make_shared<tableau::LoadOptions>();
+  options->read_func = CustomReadFile;
 
   // patchconf
   std::cout << "-----TestPatch patchconf" << std::endl;
-  options.patch_dirs = {"../../testdata/patchconf/"};
-  bool ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
+  options->patch_dirs = {"../../testdata/patchconf/"};
+  bool ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     std::cout << "failed to load with patchconf" << std::endl;
     return false;
@@ -63,8 +63,8 @@ bool TestPatch() {
 
   // patchconf2
   std::cout << "-----TestPatch patchconf2" << std::endl;
-  options.patch_dirs = {"../../testdata/patchconf2/"};
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
+  options->patch_dirs = {"../../testdata/patchconf2/"};
+  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     std::cout << "failed to load with patchconf2" << std::endl;
     return false;
@@ -72,9 +72,9 @@ bool TestPatch() {
 
   // patchconf2 different format
   std::cout << "-----TestPatch patchconf2 different format" << std::endl;
-  options.patch_dirs = {"../../testdata/patchconf2/"};
-  options.patch_paths["PatchMergeConf"] = {"../../testdata/patchconf2/PatchMergeConf.txt"};
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
+  options->patch_dirs = {"../../testdata/patchconf2/"};
+  options->patch_paths["PatchMergeConf"] = {"../../testdata/patchconf2/PatchMergeConf.txt"};
+  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     std::cout << "failed to load with patchconf2" << std::endl;
     return false;
@@ -82,9 +82,9 @@ bool TestPatch() {
 
   // multiple patch files
   std::cout << "-----TestPatch multiple patch files" << std::endl;
-  options.patch_paths["PatchMergeConf"] = {"../../testdata/patchconf/PatchMergeConf.json",
-                                           "../../testdata/patchconf2/PatchMergeConf.json"};
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
+  options->patch_paths["PatchMergeConf"] = {"../../testdata/patchconf/PatchMergeConf.json",
+                                            "../../testdata/patchconf2/PatchMergeConf.json"};
+  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     std::cout << "failed to load with multiple patch files" << std::endl;
     return false;
@@ -92,10 +92,10 @@ bool TestPatch() {
 
   // mode only main
   std::cout << "-----TestPatch ModeOnlyMain" << std::endl;
-  options.patch_paths["PatchMergeConf"] = {"../../testdata/patchconf/PatchMergeConf.json",
-                                           "../../testdata/patchconf2/PatchMergeConf.json"};
-  options.mode = tableau::LoadMode::kModeOnlyMain;
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
+  options->patch_paths["PatchMergeConf"] = {"../../testdata/patchconf/PatchMergeConf.json",
+                                            "../../testdata/patchconf2/PatchMergeConf.json"};
+  options->mode = tableau::LoadMode::kModeOnlyMain;
+  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     std::cout << "failed to load with mode only main" << std::endl;
     return false;
@@ -109,10 +109,10 @@ bool TestPatch() {
 
   // mode only patch
   std::cout << "-----TestPatch ModeOnlyPatch" << std::endl;
-  options.patch_paths["PatchMergeConf"] = {"../../testdata/patchconf/PatchMergeConf.json",
-                                           "../../testdata/patchconf2/PatchMergeConf.json"};
-  options.mode = tableau::LoadMode::kModeOnlyPatch;
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
+  options->patch_paths["PatchMergeConf"] = {"../../testdata/patchconf/PatchMergeConf.json",
+                                            "../../testdata/patchconf2/PatchMergeConf.json"};
+  options->mode = tableau::LoadMode::kModeOnlyPatch;
+  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     std::cout << "failed to load with mode only patch" << std::endl;
     return false;
@@ -121,13 +121,12 @@ bool TestPatch() {
 }
 
 int main() {
-  Hub::Instance().Init();
-  tableau::LoadOptions options;
-  options.ignore_unknown_fields = true;
-  options.patch_dirs = {"../../testdata/patchconf/"};
-  options.paths["ItemConf"] = "../../testdata/conf/ItemConf.json";
+  auto options = std::make_shared<tableau::LoadOptions>();
+  options->ignore_unknown_fields = true;
+  options->patch_dirs = {"../../testdata/patchconf/"};
+  options->paths["ItemConf"] = "../../testdata/conf/ItemConf.json";
 
-  bool ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, &options);
+  bool ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
     return 1;

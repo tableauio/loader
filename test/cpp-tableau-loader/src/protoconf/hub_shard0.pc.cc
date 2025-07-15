@@ -11,17 +11,17 @@
 namespace tableau {
 template <>
 const std::shared_ptr<HeroBaseConf> Hub::Get<HeroBaseConf>() const {
-  return GetMessagerContainer()->hero_base_conf_;
+  return GetProvidedMessagerContainer()->hero_base_conf_;
 }
 
 template <>
 const std::shared_ptr<HeroConf> Hub::Get<HeroConf>() const {
-  return GetMessagerContainer()->hero_conf_;
+  return GetProvidedMessagerContainer()->hero_conf_;
 }
 
 template <>
 const std::shared_ptr<ItemConf> Hub::Get<ItemConf>() const {
-  return GetMessagerContainer()->item_conf_;
+  return GetProvidedMessagerContainer()->item_conf_;
 }
 
 void MessagerContainer::InitShard0() {

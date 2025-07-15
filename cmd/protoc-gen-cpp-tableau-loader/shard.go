@@ -25,12 +25,12 @@ func generateShardedHub(gen *protogen.Plugin) {
 	helper.GenerateCommonHeader(gen, g1, version)
 	g1.P()
 	g1.P(hubHpp)
-	generateHubHppTplSpec(gen, g1, protofiles, fileMessagers)
+	generateHubHppTplSpec(g1, protofiles, fileMessagers)
 	g1.P(msgContainerHpp)
-	generateShardedHubHppMsgContainerShards(gen, g1, realShardNum)
-	generateHubHppMsgContainerMembers(gen, g1, protofiles, fileMessagers)
+	generateShardedHubHppMsgContainerShards(g1, realShardNum)
+	generateHubHppMsgContainerMembers(g1, protofiles, fileMessagers)
 	g1.P(registryHpp)
-	generateShardedHubHppRegistryShards(gen, g1, realShardNum)
+	generateShardedHubHppRegistryShards(g1, realShardNum)
 	g1.P(bottomHpp)
 
 	cppFilename := "hub." + pcExt + ".cc"
@@ -40,9 +40,9 @@ func generateShardedHub(gen *protogen.Plugin) {
 	g2.P(hubCppHeader)
 	g2.P(hubCpp)
 	g2.P(msgContainerCpp)
-	generateShardedHubCppMsgContainerShards(gen, g2, realShardNum)
+	generateShardedHubCppMsgContainerShards(g2, realShardNum)
 	g2.P(registryCpp)
-	generateShardedHubCppRegistryShards(gen, g2, realShardNum)
+	generateShardedHubCppRegistryShards(g2, realShardNum)
 	g2.P(bottomCpp)
 
 	for i := 0; i < realShardNum; i++ {
@@ -55,11 +55,11 @@ func generateShardedHub(gen *protogen.Plugin) {
 		helper.GenerateCommonHeader(gen, g, version)
 		g.P()
 		shardedProtofiles := protofiles[i*shardSize : cursor]
-		generateShardedHubCppFileContent(gen, g, i, shardedProtofiles, fileMessagers)
+		generateShardedHubCppFileContent(g, i, shardedProtofiles, fileMessagers)
 	}
 }
 
-func generateShardedHubHppMsgContainerShards(gen *protogen.Plugin, g *protogen.GeneratedFile, shardNum int) {
+func generateShardedHubHppMsgContainerShards(g *protogen.GeneratedFile, shardNum int) {
 	for i := 0; i < shardNum; i++ {
 		g.P(helper.Indent(1), "void InitShard", i, "();")
 	}
@@ -67,7 +67,7 @@ func generateShardedHubHppMsgContainerShards(gen *protogen.Plugin, g *protogen.G
 	g.P(" private:")
 }
 
-func generateShardedHubHppRegistryShards(gen *protogen.Plugin, g *protogen.GeneratedFile, shardNum int) {
+func generateShardedHubHppRegistryShards(g *protogen.GeneratedFile, shardNum int) {
 	for i := 0; i < shardNum; i++ {
 		g.P(helper.Indent(1), "static void InitShard", i, "();")
 	}
@@ -75,19 +75,19 @@ func generateShardedHubHppRegistryShards(gen *protogen.Plugin, g *protogen.Gener
 	g.P(" private:")
 }
 
-func generateShardedHubCppMsgContainerShards(gen *protogen.Plugin, g *protogen.GeneratedFile, shardNum int) {
+func generateShardedHubCppMsgContainerShards(g *protogen.GeneratedFile, shardNum int) {
 	for i := 0; i < shardNum; i++ {
 		g.P(helper.Indent(1), "InitShard", i, "();")
 	}
 }
 
-func generateShardedHubCppRegistryShards(gen *protogen.Plugin, g *protogen.GeneratedFile, shardNum int) {
+func generateShardedHubCppRegistryShards(g *protogen.GeneratedFile, shardNum int) {
 	for i := 0; i < shardNum; i++ {
 		g.P(helper.Indent(1), "InitShard", i, "();")
 	}
 }
 
-func generateShardedHubCppFileContent(gen *protogen.Plugin, g *protogen.GeneratedFile, shardIndex int, protofiles []string, fileMessagers map[string][]string) {
+func generateShardedHubCppFileContent(g *protogen.GeneratedFile, shardIndex int, protofiles []string, fileMessagers map[string][]string) {
 	g.P(`#include "`, "hub.", pcExt, `.h"`)
 	g.P()
 	for _, proto := range protofiles {
@@ -100,7 +100,7 @@ func generateShardedHubCppFileContent(gen *protogen.Plugin, g *protogen.Generate
 		for _, messager := range fileMessagers[proto] {
 			g.P("template <>")
 			g.P("const std::shared_ptr<" + messager + "> Hub::Get<" + messager + ">() const {")
-			g.P(helper.Indent(1), "return GetMessagerContainer()->", strcase.ToSnake(messager), "_;")
+			g.P(helper.Indent(1), "return GetProvidedMessagerContainer()->", strcase.ToSnake(messager), "_;")
 			g.P("}")
 			g.P()
 		}
