@@ -1,6 +1,5 @@
 #include "hub/hub.h"
 
-#include "hub.h"
 #include "hub/custom/item/custom_item_conf.h"
 #include "protoconf/logger.pc.h"
 
