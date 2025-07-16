@@ -28,7 +28,7 @@ std::shared_ptr<tableau::MessagerContainer> DefaultHubOptions::MessagerContainer
   return HubBase<DefaultHubOptions>::Instance().GetMessagerContainer();
 }
 
-const std::shared_ptr<tableau::HubOptions> DefaultHubOptions::GetOptions() {
+std::shared_ptr<const tableau::HubOptions> DefaultHubOptions::GetOptions() {
   auto options = std::make_shared<tableau::HubOptions>();
   options->filter = DefaultHubOptions::Filter;
   options->provider = DefaultHubOptions::MessagerContainerProvider;

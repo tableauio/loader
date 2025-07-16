@@ -13,13 +13,20 @@ namespace tableau {
 std::once_flag Registry::once;
 Registrar Registry::registrar;
 
-Hub::Hub(const std::shared_ptr<HubOptions> options /* = nullptr */)
+Hub::Hub(std::shared_ptr<const HubOptions> options /* = nullptr */)
     : msger_container_(std::make_shared<MessagerContainer>()), options_(options) {
   tableau::Registry::Init();
 }
 
+void Hub::Init(MessagerContainerProvider provider, Filter filter /* = nullptr */) {
+  auto options = std::make_shared<HubOptions>();
+  options->filter = filter;
+  options->provider = provider;
+  options_ = options;
+}
+
 bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */,
-               const std::shared_ptr<LoadOptions> options /* = nullptr */) {
+               std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   auto msger_map = InternalLoad(dir, fmt, options);
   if (!msger_map) {
     return false;
@@ -33,7 +40,7 @@ bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */,
 }
 
 bool Hub::AsyncLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
-                    const std::shared_ptr<LoadOptions> options /* = nullptr */) {
+                    std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   auto msger_map = InternalLoad(dir, fmt, options);
   if (!msger_map) {
     return false;
@@ -54,7 +61,7 @@ void Hub::InitScheduler() {
 }
 
 std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
-                                               const std::shared_ptr<LoadOptions> options /* = nullptr */) const {
+                                               std::shared_ptr<const LoadOptions> options /* = nullptr */) const {
   // intercept protobuf error logs
   auto old_handler = google::protobuf::SetLogHandler(util::ProtobufLogHandler);
   auto msger_map = NewMessagerMap();

@@ -35,7 +35,7 @@ class HubBase : public tableau::Hub, public Singleton<HubBase<T>> {
 
 class DefaultHubOptions {
  public:
-  static const std::shared_ptr<tableau::HubOptions> GetOptions();
+  static std::shared_ptr<const tableau::HubOptions> GetOptions();
   static void Init();
 
  private:

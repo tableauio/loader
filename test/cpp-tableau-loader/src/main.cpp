@@ -13,7 +13,7 @@
 #include "protoconf/patch_conf.pc.h"
 #include "protoconf/test_conf.pc.h"
 
-bool LoadWithPatch(const std::shared_ptr<tableau::LoadOptions> options) {
+bool LoadWithPatch(std::shared_ptr<const tableau::LoadOptions> options) {
   return Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
 }
 
