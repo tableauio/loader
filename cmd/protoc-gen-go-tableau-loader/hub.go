@@ -19,7 +19,7 @@ func generateHub(gen *protogen.Plugin) {
 	g.P()
 
 	// generate messager container type
-	g.P("type messagerContainer struct {")
+	g.P("type MessagerContainer struct {")
 	g.P("messagerMap MessagerMap")
 	g.P("loadedTime time.Time")
 	g.P("// all messagers as fields for fast access")
@@ -30,8 +30,8 @@ func generateHub(gen *protogen.Plugin) {
 	g.P()
 
 	// generate messager container constructor
-	g.P("func newMessagerContainer(messagerMap MessagerMap) *messagerContainer {")
-	g.P("messagerContainer := &messagerContainer{")
+	g.P("func newMessagerContainer(messagerMap MessagerMap) *MessagerContainer {")
+	g.P("messagerContainer := &MessagerContainer{")
 	g.P("messagerMap: messagerMap,")
 	g.P("loadedTime: time.Now(),")
 	g.P("}")
@@ -46,14 +46,15 @@ func generateHub(gen *protogen.Plugin) {
 	g.P("// Auto-generated getters below")
 	g.P()
 	for _, messager := range messagers {
-		g.P("func (h *Hub) Get", messager, "() *", messager, " {")
-		g.P("return h.messagerContainer.Load().", strcase.ToLowerCamel(messager))
+		g.P("func (h *Hub) Get", messager, "(ctx context.Context) *", messager, " {")
+		g.P("return h.getMessagerContainerWithProvider(ctx).", strcase.ToLowerCamel(messager))
 		g.P("}")
 		g.P()
 	}
 }
 
 const staticHubContent = `import (
+	"context"
 	"fmt"
 	"os"
 	"sync"
@@ -98,6 +99,10 @@ type Options struct {
 	// Default: nil.
 	Filter FilterFunc
 
+	// MessagerContainerProvider provides custom MessagerContainer. For keeping
+	// configuration access consistent in a goroutine or a transaction.
+	MessagerContainerProvider ProviderFunc
+
 	// MutableCheck enables the mutable check of the loaded config,
 	// and specifies its interval and mutable handler.
 	//
@@ -109,6 +114,9 @@ type Options struct {
 //
 // NOTE: name is the protobuf message name, e.g.: "message ItemConf{...}".
 type FilterFunc func(name string) bool
+
+// ProviderFunc provide the MessagerContainer of Hub.
+type ProviderFunc func(ctx context.Context, hub *Hub) *MessagerContainer
 
 type MutableCheck struct {
 	// Interval is the gap duration between two checks.
@@ -145,6 +153,12 @@ func Filter(filter FilterFunc) Option {
 	}
 }
 
+func MessagerContainerProvider(provider ProviderFunc) Option {
+	return func(opts *Options) {
+		opts.MessagerContainerProvider = provider
+	}
+}
+
 // WithMutableCheck enables the mutable check with given params.
 func WithMutableCheck(check *MutableCheck) Option {
 	return func(opts *Options) {
@@ -157,7 +171,7 @@ type Stats struct {
 }
 
 type UnimplementedMessager struct {
-	Stats Stats
+	Stats  Stats
 	backup bool
 }
 
@@ -243,13 +257,13 @@ func BoolToInt(ok bool) int {
 
 // Hub is the messager manager.
 type Hub struct {
-	messagerContainer atomic.Pointer[messagerContainer]
-	opts           *Options
+	messagerContainer atomic.Pointer[MessagerContainer]
+	opts              *Options
 }
 
 func NewHub(options ...Option) *Hub {
 	hub := &Hub{}
-	hub.messagerContainer.Store(&messagerContainer{})
+	hub.messagerContainer.Store(&MessagerContainer{})
 	hub.opts = ParseOptions(options...)
 	if hub.opts.MutableCheck != nil {
 		go hub.mutableCheck()
@@ -273,8 +287,8 @@ func (h *Hub) NewMessagerMap() MessagerMap {
 }
 
 // GetMessagerMap returns hub's inner field messagerMap.
-func (h *Hub) GetMessagerMap() MessagerMap {
-	return h.messagerContainer.Load().messagerMap
+func (h *Hub) GetMessagerMap(ctx context.Context) MessagerMap {
+	return h.getMessagerContainerWithProvider(ctx).messagerMap
 }
 
 // SetMessagerMap sets hub's inner field messagerMap.
@@ -282,9 +296,22 @@ func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
 	h.messagerContainer.Store(newMessagerContainer(messagerMap))
 }
 
+// GetMessagerContainer returns hub's inner field messagerContainer
+// only for use in MessagerContainerProvider.
+func (h *Hub) GetMessagerContainer() *MessagerContainer {
+	return h.messagerContainer.Load()
+}
+
 // GetMessager finds and returns the specified Messenger in hub.
-func (h *Hub) GetMessager(name string) Messager {
-	return h.GetMessagerMap()[name]
+func (h *Hub) GetMessager(ctx context.Context, name string) Messager {
+	return h.GetMessagerMap(ctx)[name]
+}
+
+func (h *Hub) getMessagerContainerWithProvider(ctx context.Context) *MessagerContainer {
+	if h.opts.MessagerContainerProvider != nil {
+		return h.opts.MessagerContainerProvider(ctx, h)
+	}
+	return h.messagerContainer.Load()
 }
 
 // Load fills messages from files in the specified directory and format.
@@ -296,7 +323,7 @@ func (h *Hub) Load(dir string, format format.Format, options ...load.Option) err
 		}
 	}
 	// create a temporary hub with messager container for post process
-	tmpHub := &Hub{}
+	tmpHub := NewHub()
 	tmpHub.SetMessagerMap(messagerMap)
 	for name, msger := range messagerMap {
 		if err := msger.ProcessAfterLoadAll(tmpHub); err != nil {
@@ -311,7 +338,7 @@ func (h *Hub) Load(dir string, format format.Format, options ...load.Option) err
 // Available formats: JSON, Bin, and Text.
 func (h *Hub) Store(dir string, format format.Format, options ...store.Option) error {
 	opts := store.ParseOptions(options...)
-	for name, msger := range h.GetMessagerMap() {
+	for name, msger := range h.GetMessagerMap(context.Background()) {
 		if opts.Filter == nil || opts.Filter(name) {
 			if err := msger.Store(dir, format, options...); err != nil {
 				return errors.WithMessagef(err, "failed to store: %v", name)
@@ -333,7 +360,7 @@ func (h *Hub) mutableCheck() {
 	}
 	for {
 		time.Sleep(interval)
-		messagerMap := h.GetMessagerMap()
+		messagerMap := h.GetMessagerMap(context.Background())
 		for name, msger := range messagerMap {
 			time.Sleep(time.Second)
 			if !proto.Equal(msger.originalMessage(), msger.Message()) {
@@ -360,7 +387,7 @@ func (h *Hub) onMutateDefault(name string, original, current proto.Message) {
 }
 
 // GetLastLoadedTime returns the time when hub's messagerMap was last set.
-func (h *Hub) GetLastLoadedTime() time.Time {
-	return h.messagerContainer.Load().loadedTime
+func (h *Hub) GetLastLoadedTime(ctx context.Context) time.Time {
+	return h.getMessagerContainerWithProvider(ctx).loadedTime
 }
 `

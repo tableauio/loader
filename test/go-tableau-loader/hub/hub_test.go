@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"context"
 	"testing"
 
 	tableau "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader"
@@ -25,7 +26,7 @@ func Benchmark_GetMessager(b *testing.B) {
 	// var once sync.Once
 	hub := prepareHubForTest()
 	for i := 0; i < b.N; i++ {
-		_ = hub.GetMessager("ItemConf").(*tableau.ItemConf)
+		_ = hub.GetMessager(context.Background(), "ItemConf").(*tableau.ItemConf)
 		// once.Do(func() { fmt.Println(msger.Data()) })
 	}
 }
@@ -34,7 +35,7 @@ func Benchmark_GetItemConf(b *testing.B) {
 	// var once sync.Once
 	hub := prepareHubForTest()
 	for i := 0; i < b.N; i++ {
-		_ = hub.GetItemConf()
+		_ = hub.GetItemConf(context.Background())
 		// once.Do(func() { fmt.Println(msger.Data()) })
 	}
 }
