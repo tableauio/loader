@@ -11,37 +11,37 @@
 namespace tableau {
 template <>
 const std::shared_ptr<PatchMergeConf> Hub::Get<PatchMergeConf>() const {
-  return GetProvidedMessagerContainer()->patch_merge_conf_;
+  return GetMessagerContainerWithProvider()->patch_merge_conf_;
 }
 
 template <>
 const std::shared_ptr<PatchReplaceConf> Hub::Get<PatchReplaceConf>() const {
-  return GetProvidedMessagerContainer()->patch_replace_conf_;
+  return GetMessagerContainerWithProvider()->patch_replace_conf_;
 }
 
 template <>
 const std::shared_ptr<RecursivePatchConf> Hub::Get<RecursivePatchConf>() const {
-  return GetProvidedMessagerContainer()->recursive_patch_conf_;
+  return GetMessagerContainerWithProvider()->recursive_patch_conf_;
 }
 
 template <>
 const std::shared_ptr<ActivityConf> Hub::Get<ActivityConf>() const {
-  return GetProvidedMessagerContainer()->activity_conf_;
+  return GetMessagerContainerWithProvider()->activity_conf_;
 }
 
 template <>
 const std::shared_ptr<ChapterConf> Hub::Get<ChapterConf>() const {
-  return GetProvidedMessagerContainer()->chapter_conf_;
+  return GetMessagerContainerWithProvider()->chapter_conf_;
 }
 
 template <>
 const std::shared_ptr<TaskConf> Hub::Get<TaskConf>() const {
-  return GetProvidedMessagerContainer()->task_conf_;
+  return GetMessagerContainerWithProvider()->task_conf_;
 }
 
 template <>
 const std::shared_ptr<ThemeConf> Hub::Get<ThemeConf>() const {
-  return GetProvidedMessagerContainer()->theme_conf_;
+  return GetMessagerContainerWithProvider()->theme_conf_;
 }
 
 void MessagerContainer::InitShard1() {

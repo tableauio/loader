@@ -213,8 +213,8 @@ class Hub {
   std::shared_ptr<MessagerMap> InternalLoad(const std::string& dir, Format fmt = Format::kJSON,
                                             std::shared_ptr<const LoadOptions> options = nullptr) const;
   std::shared_ptr<MessagerMap> NewMessagerMap() const;
+  std::shared_ptr<MessagerContainer> GetMessagerContainerWithProvider() const;
   const std::shared_ptr<Messager> GetMessager(const std::string& name) const;
-  std::shared_ptr<MessagerContainer> GetProvidedMessagerContainer() const;
 
   bool Postprocess(std::shared_ptr<MessagerMap> msger_map);
 
@@ -377,7 +377,7 @@ std::shared_ptr<MessagerMap> Hub::NewMessagerMap() const {
   return msger_map;
 }
 
-std::shared_ptr<MessagerMap> Hub::GetMessagerMap() const { return GetProvidedMessagerContainer()->msger_map_; }
+std::shared_ptr<MessagerMap> Hub::GetMessagerMap() const { return GetMessagerContainerWithProvider()->msger_map_; }
 
 void Hub::SetMessagerMap(std::shared_ptr<MessagerMap> msger_map) {
   // replace with thread-safe guarantee.
@@ -396,7 +396,7 @@ const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const 
   return nullptr;
 }
 
-std::shared_ptr<MessagerContainer> Hub::GetProvidedMessagerContainer() const {
+std::shared_ptr<MessagerContainer> Hub::GetMessagerContainerWithProvider() const {
   if (options_ != nullptr && options_->provider != nullptr) {
     return options_->provider();
   }
@@ -420,7 +420,7 @@ bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {
   return true;
 }
 
-std::time_t Hub::GetLastLoadedTime() const { return GetProvidedMessagerContainer()->last_loaded_time_; }`
+std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainerWithProvider()->last_loaded_time_; }`
 
 const msgContainerCpp = `
 MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* = nullptr*/)

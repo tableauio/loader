@@ -78,8 +78,8 @@ class Hub {
   std::shared_ptr<MessagerMap> InternalLoad(const std::string& dir, Format fmt = Format::kJSON,
                                             std::shared_ptr<const LoadOptions> options = nullptr) const;
   std::shared_ptr<MessagerMap> NewMessagerMap() const;
+  std::shared_ptr<MessagerContainer> GetMessagerContainerWithProvider() const;
   const std::shared_ptr<Messager> GetMessager(const std::string& name) const;
-  std::shared_ptr<MessagerContainer> GetProvidedMessagerContainer() const;
 
   bool Postprocess(std::shared_ptr<MessagerMap> msger_map);
 
