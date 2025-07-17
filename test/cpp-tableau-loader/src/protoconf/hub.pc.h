@@ -38,7 +38,7 @@ class Hub {
   Hub(std::shared_ptr<const HubOptions> options = nullptr);
 
   // Init resets the hub's options.
-  void Init(MessagerContainerProvider provider, Filter filter = nullptr);
+  void Init(std::shared_ptr<const HubOptions> options);
 
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.

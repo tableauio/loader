@@ -173,7 +173,7 @@ class Hub {
   Hub(std::shared_ptr<const HubOptions> options = nullptr);
 
   // Init resets the hub's options.
-  void Init(MessagerContainerProvider provider, Filter filter = nullptr);
+  void Init(std::shared_ptr<const HubOptions> options);
 
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
@@ -302,12 +302,7 @@ Hub::Hub(std::shared_ptr<const HubOptions> options /* = nullptr */)
   tableau::Registry::Init();
 }
 
-void Hub::Init(MessagerContainerProvider provider, Filter filter /* = nullptr */) {
-  auto options = std::make_shared<HubOptions>();
-  options->filter = filter;
-  options->provider = provider;
-  options_ = options;
-}
+void Hub::Init(std::shared_ptr<const HubOptions> options) { options_ = options; }
 
 bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */,
                std::shared_ptr<const LoadOptions> options /* = nullptr */) {
