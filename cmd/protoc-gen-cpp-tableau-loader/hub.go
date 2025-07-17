@@ -157,7 +157,7 @@ using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
 // FilterFunc filter in messagers if returned value is true.
 // NOTE: name is the protobuf message name, e.g.: "message ItemConf{...}".
 using Filter = std::function<bool(const std::string& name)>;
-using MessagerContainerProvider = std::function<std::shared_ptr<MessagerContainer>()>;
+using MessagerContainerProvider = std::function<std::shared_ptr<MessagerContainer>(const Hub&)>;
 
 struct HubOptions {
   // Filter can only filter in certain specific messagers based on the
@@ -170,10 +170,10 @@ struct HubOptions {
 
 class Hub {
  public:
-  Hub(std::shared_ptr<const HubOptions> options = nullptr);
+  Hub();
 
-  // Init resets the hub's options.
-  void Init(std::shared_ptr<const HubOptions> options);
+  // InitOnce sets the hub's options.
+  void InitOnce(std::shared_ptr<const HubOptions> options);
 
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
@@ -225,6 +225,8 @@ class Hub {
   std::shared_ptr<MessagerContainer> msger_container_;
   // Loading scheduler.
   internal::Scheduler* sched_ = nullptr;
+  // Init once
+  std::once_flag init_once_;
   // Hub options
   std::shared_ptr<const HubOptions> options_;
 };
@@ -297,12 +299,11 @@ namespace tableau {
 std::once_flag Registry::once;
 Registrar Registry::registrar;
 
-Hub::Hub(std::shared_ptr<const HubOptions> options /* = nullptr */)
-    : msger_container_(std::make_shared<MessagerContainer>()), options_(options) {
-  tableau::Registry::Init();
-}
+Hub::Hub() { tableau::Registry::Init(); }
 
-void Hub::Init(std::shared_ptr<const HubOptions> options) { options_ = options; }
+void Hub::InitOnce(std::shared_ptr<const HubOptions> options) {
+  std::call_once(init_once_, [&]() { options_ = options; });
+}
 
 bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */,
                std::shared_ptr<const LoadOptions> options /* = nullptr */) {
@@ -393,7 +394,7 @@ const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const 
 
 std::shared_ptr<MessagerContainer> Hub::GetMessagerContainerWithProvider() const {
   if (options_ != nullptr && options_->provider != nullptr) {
-    return options_->provider();
+    return options_->provider(*this);
   }
   return msger_container_;
 }

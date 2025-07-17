@@ -13,12 +13,11 @@ namespace tableau {
 std::once_flag Registry::once;
 Registrar Registry::registrar;
 
-Hub::Hub(std::shared_ptr<const HubOptions> options /* = nullptr */)
-    : msger_container_(std::make_shared<MessagerContainer>()), options_(options) {
-  tableau::Registry::Init();
-}
+Hub::Hub() { tableau::Registry::Init(); }
 
-void Hub::Init(std::shared_ptr<const HubOptions> options) { options_ = options; }
+void Hub::InitOnce(std::shared_ptr<const HubOptions> options) {
+  std::call_once(init_once_, [&]() { options_ = options; });
+}
 
 bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */,
                std::shared_ptr<const LoadOptions> options /* = nullptr */) {
@@ -109,7 +108,7 @@ const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const 
 
 std::shared_ptr<MessagerContainer> Hub::GetMessagerContainerWithProvider() const {
   if (options_ != nullptr && options_->provider != nullptr) {
-    return options_->provider();
+    return options_->provider(*this);
   }
   return msger_container_;
 }

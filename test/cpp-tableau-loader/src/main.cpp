@@ -121,6 +121,7 @@ bool TestPatch() {
 }
 
 int main() {
+  Hub::Instance().InitOnce();
   auto options = std::make_shared<tableau::LoadOptions>();
   options->ignore_unknown_fields = true;
   options->patch_dirs = {"../../testdata/patchconf/"};

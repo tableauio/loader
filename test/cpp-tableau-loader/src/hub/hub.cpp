@@ -17,27 +17,24 @@ void LogWrite(std::ostream* os, const tableau::log::SourceLocation& loc, const t
   // clang-format on
 }
 
-bool DefaultHubOptions::Filter(const std::string& name) {
+bool DefaultFilter(const std::string& name) {
   // all messagers
   return true;
 }
 
-std::shared_ptr<tableau::MessagerContainer> DefaultHubOptions::MessagerContainerProvider() {
+std::shared_ptr<tableau::MessagerContainer> DefaultMessagerContainerProvider(const tableau::Hub& hub) {
   // default messager container
-  return HubBase<DefaultHubOptions>::Instance().GetMessagerContainer();
+  return hub.GetMessagerContainer();
 }
 
-std::shared_ptr<const tableau::HubOptions> DefaultHubOptions::GetOptions() {
-  auto options = std::make_shared<tableau::HubOptions>();
-  options->filter = DefaultHubOptions::Filter;
-  options->provider = DefaultHubOptions::MessagerContainerProvider;
-  return options;
-}
-
-void DefaultHubOptions::Init() {
+void Hub::InitOnce() {
   // custom log
   tableau::log::DefaultLogger()->SetWriter(LogWrite);
+  auto options = std::make_shared<tableau::HubOptions>();
+  options->filter = DefaultFilter;
+  options->provider = DefaultMessagerContainerProvider;
+  tableau::Hub::InitOnce(options);
   InitCustomMessager();
 }
 
-void DefaultHubOptions::InitCustomMessager() { tableau::Registry::Register<CustomItemConf>(); }
+void Hub::InitCustomMessager() { tableau::Registry::Register<CustomItemConf>(); }

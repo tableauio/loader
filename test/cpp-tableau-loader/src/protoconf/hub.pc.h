@@ -22,7 +22,7 @@ using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
 // FilterFunc filter in messagers if returned value is true.
 // NOTE: name is the protobuf message name, e.g.: "message ItemConf{...}".
 using Filter = std::function<bool(const std::string& name)>;
-using MessagerContainerProvider = std::function<std::shared_ptr<MessagerContainer>()>;
+using MessagerContainerProvider = std::function<std::shared_ptr<MessagerContainer>(const Hub&)>;
 
 struct HubOptions {
   // Filter can only filter in certain specific messagers based on the
@@ -35,10 +35,10 @@ struct HubOptions {
 
 class Hub {
  public:
-  Hub(std::shared_ptr<const HubOptions> options = nullptr);
+  Hub();
 
-  // Init resets the hub's options.
-  void Init(std::shared_ptr<const HubOptions> options);
+  // InitOnce sets the hub's options.
+  void InitOnce(std::shared_ptr<const HubOptions> options);
 
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
@@ -90,6 +90,8 @@ class Hub {
   std::shared_ptr<MessagerContainer> msger_container_;
   // Loading scheduler.
   internal::Scheduler* sched_ = nullptr;
+  // Init once
+  std::once_flag init_once_;
   // Hub options
   std::shared_ptr<const HubOptions> options_;
 };
