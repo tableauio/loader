@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"html/template"
 	"path/filepath"
 
 	"github.com/iancoleman/strcase"
@@ -15,7 +17,7 @@ func generateHub(gen *protogen.Plugin) {
 	g.P()
 	g.P("package ", *pkg)
 	g.P()
-	g.P(staticHubContent)
+	g.P(hubContent())
 	g.P()
 
 	// generate messager container type
@@ -46,15 +48,22 @@ func generateHub(gen *protogen.Plugin) {
 	g.P("// Auto-generated getters below")
 	g.P()
 	for _, messager := range messagers {
-		g.P("func (h *Hub) Get", messager, "(ctx context.Context) *", messager, " {")
-		g.P("return h.getMessagerContainerWithProvider(ctx).", strcase.ToLowerCamel(messager))
+		g.P("func (h *Hub) Get", messager, "(", providedTernary("ctx context.Context", ""), ") *", messager, " {")
+		g.P("return h.", providedTernary("getMessagerContainerWithProvider(ctx)", "messagerContainer.Load()"), ".", strcase.ToLowerCamel(messager))
 		g.P("}")
 		g.P()
 	}
 }
 
+func hubContent() string {
+	tmpl, _ := template.New("").Parse(staticHubContent)
+	var buf bytes.Buffer
+	tmpl.Execute(&buf, *provider)
+	return buf.String()
+}
+
 const staticHubContent = `import (
-	"context"
+	{{if .}}"context"{{end}}
 	"fmt"
 	"os"
 	"sync"
@@ -99,9 +108,11 @@ type Options struct {
 	// Default: nil.
 	Filter FilterFunc
 
+	{{if .}}
 	// MessagerContainerProvider provides custom MessagerContainer. For keeping
 	// configuration access consistent in a goroutine or a transaction.
 	MessagerContainerProvider ProviderFunc
+	{{end}}
 
 	// MutableCheck enables the mutable check of the loaded config,
 	// and specifies its interval and mutable handler.
@@ -115,8 +126,10 @@ type Options struct {
 // NOTE: name is the protobuf message name, e.g.: "message ItemConf{...}".
 type FilterFunc func(name string) bool
 
+{{if .}}
 // ProviderFunc provide the MessagerContainer of Hub.
 type ProviderFunc func(ctx context.Context, hub *Hub) *MessagerContainer
+{{end}}
 
 type MutableCheck struct {
 	// Interval is the gap duration between two checks.
@@ -153,11 +166,13 @@ func Filter(filter FilterFunc) Option {
 	}
 }
 
+{{if .}}
 func MessagerContainerProvider(provider ProviderFunc) Option {
 	return func(opts *Options) {
 		opts.MessagerContainerProvider = provider
 	}
 }
+{{end}}
 
 // WithMutableCheck enables the mutable check with given params.
 func WithMutableCheck(check *MutableCheck) Option {
@@ -287,8 +302,8 @@ func (h *Hub) NewMessagerMap() MessagerMap {
 }
 
 // GetMessagerMap returns hub's inner field messagerMap.
-func (h *Hub) GetMessagerMap(ctx context.Context) MessagerMap {
-	return h.getMessagerContainerWithProvider(ctx).messagerMap
+func (h *Hub) GetMessagerMap({{if .}}ctx context.Context{{end}}) MessagerMap {
+	return h.{{if .}}getMessagerContainerWithProvider(ctx){{else}}messagerContainer.Load(){{end}}.messagerMap
 }
 
 // SetMessagerMap sets hub's inner field messagerMap.
@@ -303,16 +318,18 @@ func (h *Hub) GetMessagerContainer() *MessagerContainer {
 }
 
 // GetMessager finds and returns the specified Messenger in hub.
-func (h *Hub) GetMessager(ctx context.Context, name string) Messager {
-	return h.GetMessagerMap(ctx)[name]
+func (h *Hub) GetMessager({{if .}}ctx context.Context, {{end}}name string) Messager {
+	return h.GetMessagerMap({{if .}}ctx{{end}})[name]
 }
 
+{{if .}}
 func (h *Hub) getMessagerContainerWithProvider(ctx context.Context) *MessagerContainer {
 	if h.opts.MessagerContainerProvider != nil {
 		return h.opts.MessagerContainerProvider(ctx, h)
 	}
 	return h.messagerContainer.Load()
 }
+{{end}}
 
 // Load fills messages from files in the specified directory and format.
 func (h *Hub) Load(dir string, format format.Format, options ...load.Option) error {
@@ -338,7 +355,7 @@ func (h *Hub) Load(dir string, format format.Format, options ...load.Option) err
 // Available formats: JSON, Bin, and Text.
 func (h *Hub) Store(dir string, format format.Format, options ...store.Option) error {
 	opts := store.ParseOptions(options...)
-	for name, msger := range h.GetMessagerMap(context.Background()) {
+	for name, msger := range h.GetMessagerMap({{if .}}context.Background(){{end}}) {
 		if opts.Filter == nil || opts.Filter(name) {
 			if err := msger.Store(dir, format, options...); err != nil {
 				return errors.WithMessagef(err, "failed to store: %v", name)
@@ -360,7 +377,7 @@ func (h *Hub) mutableCheck() {
 	}
 	for {
 		time.Sleep(interval)
-		messagerMap := h.GetMessagerMap(context.Background())
+		messagerMap := h.GetMessagerMap({{if .}}context.Background(){{end}})
 		for name, msger := range messagerMap {
 			time.Sleep(time.Second)
 			if !proto.Equal(msger.originalMessage(), msger.Message()) {
@@ -387,7 +404,7 @@ func (h *Hub) onMutateDefault(name string, original, current proto.Message) {
 }
 
 // GetLastLoadedTime returns the time when hub's messagerMap was last set.
-func (h *Hub) GetLastLoadedTime(ctx context.Context) time.Time {
-	return h.getMessagerContainerWithProvider(ctx).loadedTime
+func (h *Hub) GetLastLoadedTime({{if .}}ctx context.Context{{end}}) time.Time {
+	return h.{{if .}}getMessagerContainerWithProvider(ctx){{else}}messagerContainer.Load(){{end}}.loadedTime
 }
 `

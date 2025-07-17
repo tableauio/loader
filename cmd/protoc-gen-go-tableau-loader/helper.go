@@ -36,3 +36,11 @@ func protocVersion(gen *protogen.Plugin) string {
 	}
 	return fmt.Sprintf("v%d.%d.%d%s", v.GetMajor(), v.GetMinor(), v.GetPatch(), suffix)
 }
+
+func providedTernary(yes, no any) any {
+	if *provider {
+		return yes
+	} else {
+		return no
+	}
+}

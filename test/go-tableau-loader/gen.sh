@@ -26,7 +26,7 @@ export PATH="${PLGUIN_DIR}:${PATH}"
 
 ${PROTOC} \
     --go-tableau-loader_out="$LOADER_OUT" \
-    --go-tableau-loader_opt=paths=source_relative,pkg=loader \
+    --go-tableau-loader_opt=paths=source_relative,pkg=loader,provider=true \
     --go_out="$PROTOCONF_OUT" \
     --go_opt=paths=source_relative \
     --proto_path="$PROTOBUF_PROTO" \
