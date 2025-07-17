@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -22,11 +23,13 @@ func main() {
 		panic(err)
 	}
 
-	for name, msger := range hub.GetHub().GetMessagerMap() {
+	ctx := hub.NewContext(context.Background())
+
+	for name, msger := range hub.GetHub().GetMessagerMap(ctx) {
 		fmt.Printf("%s: duration: %v\n", name, msger.GetStats().Duration)
 	}
 
-	conf := hub.GetHub().GetActivityConf()
+	conf := hub.GetHub().GetActivityConf(ctx)
 	if conf == nil {
 		panic("ActivityConf is nil")
 	}
@@ -68,8 +71,8 @@ func main() {
 			fmt.Println()
 		}
 	}
-	fmt.Printf("specialItemName: %v\n", hub.GetHub().GetCustomItemConf().GetSpecialItemName())
-	fmt.Printf("HeroBaseConf: %v\n", hub.GetHub().GetHeroBaseConf().Data().GetHeroMap())
+	fmt.Printf("specialItemName: %v\n", hub.GetHub().GetCustomItemConf(ctx).GetSpecialItemName())
+	fmt.Printf("HeroBaseConf: %v\n", hub.GetHub().GetHeroBaseConf(ctx).Data().GetHeroMap())
 
 	// patchconf
 	err = hub.GetHub().Load("../testdata/conf/", format.JSON,
@@ -80,10 +83,10 @@ func main() {
 		panic(err)
 	}
 	// print recursive patch conf
-	fmt.Printf("RecursivePatchConf: %v\n", hub.GetHub().GetRecursivePatchConf().Data())
+	fmt.Printf("RecursivePatchConf: %v\n", hub.GetHub().GetRecursivePatchConf(ctx).Data())
 
 	// test mutable check
-	delete(hub.GetHub().GetActivityConf().Data().ActivityMap, 100001)
-	hub.GetHub().GetActivityConf().Data().ThemeName = "theme2"
+	delete(hub.GetHub().GetActivityConf(ctx).Data().ActivityMap, 100001)
+	hub.GetHub().GetActivityConf(ctx).Data().ThemeName = "theme2"
 	time.Sleep(time.Minute)
 }

@@ -11,7 +11,10 @@ import (
 
 const version = "0.8.0"
 
-var pkg *string
+var (
+	pkg      *string
+	provider *bool
+)
 
 func main() {
 	showVersion := flag.Bool("version", false, "print the version and exit")
@@ -23,6 +26,7 @@ func main() {
 
 	var flags flag.FlagSet
 	pkg = flags.String("pkg", "tableau", "tableau package name")
+	provider = flags.Bool("provider", false, "generate code with messager provider")
 
 	protogen.Options{
 		ParamFunc: flags.Set,
