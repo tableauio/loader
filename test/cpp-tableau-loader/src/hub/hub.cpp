@@ -18,8 +18,8 @@ void LogWrite(std::ostream* os, const tableau::log::SourceLocation& loc, const t
 }
 
 bool DefaultFilter(const std::string& name) {
-  // all messagers
-  return true;
+  // all messagers except TaskConf
+  return name != "TaskConf";
 }
 
 std::shared_ptr<tableau::MessagerContainer> DefaultMessagerContainerProvider(const tableau::Hub& hub) {

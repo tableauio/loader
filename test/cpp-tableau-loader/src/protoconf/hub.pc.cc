@@ -96,14 +96,7 @@ void Hub::SetMessagerMap(std::shared_ptr<MessagerMap> msger_map) {
 }
 
 const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const {
-  auto msger_map = GetMessagerMap();
-  if (msger_map) {
-    auto it = msger_map->find(name);
-    if (it != msger_map->end()) {
-      return it->second;
-    }
-  }
-  return nullptr;
+  return GetMessagerContainerWithProvider()->GetMessager(name);
 }
 
 std::shared_ptr<MessagerContainer> Hub::GetMessagerContainerWithProvider() const {
@@ -137,6 +130,16 @@ MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* =
       last_loaded_time_(std::time(nullptr)) {
   InitShard0();
   InitShard1();
+}
+
+const std::shared_ptr<Messager> MessagerContainer::GetMessager(const std::string& name) const {
+  if (msger_map_) {
+    auto it = msger_map_->find(name);
+    if (it != msger_map_->end()) {
+      return it->second;
+    }
+  }
+  return nullptr;
 }
 
 void Registry::Init() {

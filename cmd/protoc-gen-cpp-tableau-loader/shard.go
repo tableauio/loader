@@ -109,7 +109,7 @@ func generateShardedHubCppFileContent(g *protogen.GeneratedFile, shardIndex int,
 	g.P("void MessagerContainer::InitShard", shardIndex, "() {")
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
-			g.P(helper.Indent(1), strcase.ToSnake(messager), "_ = std::dynamic_pointer_cast<", messager, `>((*msger_map_)["`, messager, `"]);`)
+			g.P(helper.Indent(1), strcase.ToSnake(messager), "_ = std::dynamic_pointer_cast<", messager, `>(GetMessager("`, messager, `"));`)
 		}
 	}
 	g.P("}")

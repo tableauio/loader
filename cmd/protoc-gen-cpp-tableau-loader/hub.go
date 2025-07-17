@@ -125,7 +125,7 @@ func generateHubCppTplSpec(g *protogen.GeneratedFile, protofiles []string, fileM
 func generateHubCppMsgContainerCtor(g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
-			g.P(helper.Indent(1), strcase.ToSnake(messager), "_ = std::dynamic_pointer_cast<", messager, `>((*msger_map_)["`, messager, `"]);`)
+			g.P(helper.Indent(1), strcase.ToSnake(messager), "_ = std::dynamic_pointer_cast<", messager, `>(GetMessager("`, messager, `"));`)
 		}
 	}
 }
@@ -260,7 +260,8 @@ const msgContainerHpp = `class MessagerContainer {
   std::shared_ptr<MessagerMap> msger_map_;
   std::time_t last_loaded_time_;
 
- private:`
+ private:
+  const std::shared_ptr<Messager> GetMessager(const std::string& name) const;`
 
 const registryHpp = `};
 
@@ -382,14 +383,7 @@ void Hub::SetMessagerMap(std::shared_ptr<MessagerMap> msger_map) {
 }
 
 const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const {
-  auto msger_map = GetMessagerMap();
-  if (msger_map) {
-    auto it = msger_map->find(name);
-    if (it != msger_map->end()) {
-      return it->second;
-    }
-  }
-  return nullptr;
+  return GetMessagerContainerWithProvider()->GetMessager(name);
 }
 
 std::shared_ptr<MessagerContainer> Hub::GetMessagerContainerWithProvider() const {
@@ -424,6 +418,16 @@ MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* =
       last_loaded_time_(std::time(nullptr)) {`
 
 const registryCpp = `}
+
+const std::shared_ptr<Messager> MessagerContainer::GetMessager(const std::string& name) const {
+  if (msger_map_) {
+    auto it = msger_map_->find(name);
+    if (it != msger_map_->end()) {
+      return it->second;
+    }
+  }
+  return nullptr;
+}
 
 void Registry::Init() {
   std::call_once(once, []() {`

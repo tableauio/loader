@@ -165,6 +165,7 @@ class MessagerContainer {
   std::time_t last_loaded_time_;
 
  private:
+  const std::shared_ptr<Messager> GetMessager(const std::string& name) const;
   void InitShard0();
   void InitShard1();
 

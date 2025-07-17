@@ -45,13 +45,13 @@ const std::shared_ptr<ThemeConf> Hub::Get<ThemeConf>() const {
 }
 
 void MessagerContainer::InitShard1() {
-  patch_merge_conf_ = std::dynamic_pointer_cast<PatchMergeConf>((*msger_map_)["PatchMergeConf"]);
-  patch_replace_conf_ = std::dynamic_pointer_cast<PatchReplaceConf>((*msger_map_)["PatchReplaceConf"]);
-  recursive_patch_conf_ = std::dynamic_pointer_cast<RecursivePatchConf>((*msger_map_)["RecursivePatchConf"]);
-  activity_conf_ = std::dynamic_pointer_cast<ActivityConf>((*msger_map_)["ActivityConf"]);
-  chapter_conf_ = std::dynamic_pointer_cast<ChapterConf>((*msger_map_)["ChapterConf"]);
-  task_conf_ = std::dynamic_pointer_cast<TaskConf>((*msger_map_)["TaskConf"]);
-  theme_conf_ = std::dynamic_pointer_cast<ThemeConf>((*msger_map_)["ThemeConf"]);
+  patch_merge_conf_ = std::dynamic_pointer_cast<PatchMergeConf>(GetMessager("PatchMergeConf"));
+  patch_replace_conf_ = std::dynamic_pointer_cast<PatchReplaceConf>(GetMessager("PatchReplaceConf"));
+  recursive_patch_conf_ = std::dynamic_pointer_cast<RecursivePatchConf>(GetMessager("RecursivePatchConf"));
+  activity_conf_ = std::dynamic_pointer_cast<ActivityConf>(GetMessager("ActivityConf"));
+  chapter_conf_ = std::dynamic_pointer_cast<ChapterConf>(GetMessager("ChapterConf"));
+  task_conf_ = std::dynamic_pointer_cast<TaskConf>(GetMessager("TaskConf"));
+  theme_conf_ = std::dynamic_pointer_cast<ThemeConf>(GetMessager("ThemeConf"));
 }
 
 void Registry::InitShard1() {
