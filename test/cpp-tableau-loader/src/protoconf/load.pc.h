@@ -42,7 +42,7 @@ struct LoadOptions {
 };
 
 bool LoadMessageByPath(google::protobuf::Message& msg, const std::string& path, Format fmt = Format::kJSON,
-                       const LoadOptions* options = nullptr);
+                       std::shared_ptr<const LoadOptions> options = nullptr);
 bool LoadMessage(google::protobuf::Message& msg, const std::string& dir, Format fmt = Format::kJSON,
-                 const LoadOptions* options = nullptr);
+                 std::shared_ptr<const LoadOptions> options = nullptr);
 }  // namespace tableau

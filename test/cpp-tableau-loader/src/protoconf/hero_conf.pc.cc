@@ -12,7 +12,7 @@
 namespace tableau {
 const std::string HeroConf::kProtoName = "HeroConf";
 
-bool HeroConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
+bool HeroConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessage(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
@@ -71,7 +71,7 @@ const HeroConf::Hero_Attr_OrderedMap* HeroConf::GetOrderedMap(const std::string&
 
 const std::string HeroBaseConf::kProtoName = "HeroBaseConf";
 
-bool HeroBaseConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
+bool HeroBaseConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessage(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;

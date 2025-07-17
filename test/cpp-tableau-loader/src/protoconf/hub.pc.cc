@@ -68,7 +68,7 @@ std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::string& dir, Format fm
   for (auto iter : *msger_map) {
     auto&& name = iter.first;
     ATOM_DEBUG("loading %s", name.c_str());
-    bool ok = iter.second->Load(dir, fmt, options.get());
+    bool ok = iter.second->Load(dir, fmt, options);
     if (!ok) {
       ATOM_ERROR("load %s failed: %s", name.c_str(), GetErrMsg().c_str());
       // restore to old protobuf log handler

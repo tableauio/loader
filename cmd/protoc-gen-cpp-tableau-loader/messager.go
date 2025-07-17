@@ -85,7 +85,7 @@ func genHppMessage(file *protogen.File, g *protogen.GeneratedFile, message *prot
 	g.P("class ", message.Desc.Name(), " : public Messager {")
 	g.P(" public:")
 	g.P(helper.Indent(1), "static const std::string& Name() { return kProtoName; }")
-	g.P(helper.Indent(1), "virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;")
+	g.P(helper.Indent(1), "virtual bool Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options = nullptr) override;")
 	g.P(helper.Indent(1), "const ", cppFullName, "& Data() const { return data_; }")
 	g.P(helper.Indent(1), "const google::protobuf::Message* Message() const override { return &data_; }")
 	g.P()
@@ -158,7 +158,7 @@ func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 
 	g.P("const std::string ", messagerName, "::kProtoName = ", `"`, messagerName, `";`)
 	g.P()
-	g.P("bool ", messagerName, "::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {")
+	g.P("bool ", messagerName, "::Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options /* = nullptr */) {")
 	g.P(helper.Indent(1), "tableau::util::TimeProfiler profiler;")
 	g.P(helper.Indent(1), "bool loaded = LoadMessage(data_, dir, fmt, options);")
 	g.P(helper.Indent(1), "bool ok = loaded ? ProcessAfterLoad() : false;")
