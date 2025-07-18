@@ -30,10 +30,12 @@ std::shared_ptr<tableau::MessagerContainer> DefaultMessagerContainerProvider(con
 void Hub::InitOnce() {
   // custom log
   tableau::log::DefaultLogger()->SetWriter(LogWrite);
+  // call base hub's InitOnce
   auto options = std::make_shared<tableau::HubOptions>();
   options->filter = DefaultFilter;
   options->provider = DefaultMessagerContainerProvider;
   tableau::Hub::InitOnce(options);
+  // register custom messagers
   InitCustomMessager();
 }
 

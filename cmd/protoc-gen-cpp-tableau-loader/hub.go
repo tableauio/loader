@@ -172,7 +172,7 @@ class Hub {
  public:
   Hub();
 
-  // InitOnce sets the hub's options.
+  // InitOnce inits the hub only once, and the subsequent calls will not take effect.
   void InitOnce(std::shared_ptr<const HubOptions> options);
 
   /***** Synchronous Loading *****/
