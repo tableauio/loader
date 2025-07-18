@@ -168,7 +168,7 @@ bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Messag
 }
 
 bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& path, Format fmt, tableau::Patch patch,
-                          const LoadOptions* options /* = nullptr*/) {
+                          std::shared_ptr<const LoadOptions> options /* = nullptr*/) {
   if (options == nullptr) {
     return LoadMessageByPath(msg, path, fmt, nullptr);
   }
@@ -249,7 +249,7 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
 }
 
 bool LoadMessageByPath(google::protobuf::Message& msg, const std::string& path, Format fmt,
-                       const LoadOptions* options /* = nullptr*/) {
+                       std::shared_ptr<const LoadOptions> options /* = nullptr*/) {
   std::string content;
   ReadFunc read_func = util::ReadFile;
   if (options != nullptr && options->read_func) {
@@ -277,7 +277,7 @@ bool LoadMessageByPath(google::protobuf::Message& msg, const std::string& path, 
 }
 
 bool LoadMessage(google::protobuf::Message& msg, const std::string& dir, Format fmt,
-                 const LoadOptions* options /* = nullptr*/) {
+                 std::shared_ptr<const LoadOptions> options /* = nullptr*/) {
   std::string name = util::GetProtoName(msg);
   std::string path;
   if (options) {

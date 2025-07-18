@@ -22,7 +22,10 @@ using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
 // FilterFunc filter in messagers if returned value is true.
 // NOTE: name is the protobuf message name, e.g.: "message ItemConf{...}".
 using Filter = std::function<bool(const std::string& name)>;
-using MessagerContainerProvider = std::function<std::shared_ptr<MessagerContainer>()>;
+// MessagerContainerProvider provides a custom MessagerContainer for hub.
+// If not specified, the hub's default MessagerContainer will be used.
+// NOTE: This func must return non-nil MessagerContainer.
+using MessagerContainerProvider = std::function<std::shared_ptr<MessagerContainer>(const Hub&)>;
 
 struct HubOptions {
   // Filter can only filter in certain specific messagers based on the
@@ -35,16 +38,20 @@ struct HubOptions {
 
 class Hub {
  public:
-  Hub(const HubOptions* options = nullptr)
-      : msger_container_(std::make_shared<MessagerContainer>()), options_(options ? *options : HubOptions{}) {}
+  Hub();
+
+  // InitOnce inits the hub only once, and the subsequent calls will not take effect.
+  void InitOnce(std::shared_ptr<const HubOptions> options);
+
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
-  bool Load(const std::string& dir, Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
+  bool Load(const std::string& dir, Format fmt = Format::kJSON, std::shared_ptr<const LoadOptions> options = nullptr);
 
   /***** Asynchronous Loading *****/
   // Load configs into temp MessagerContainer, and you should call LoopOnce() in you app's main loop,
   // in order to take the temp MessagerContainer into effect.
-  bool AsyncLoad(const std::string& dir, Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
+  bool AsyncLoad(const std::string& dir, Format fmt = Format::kJSON,
+                 std::shared_ptr<const LoadOptions> options = nullptr);
   int LoopOnce();
   // You'd better initialize the scheduler in the main thread.
   void InitScheduler();
@@ -55,12 +62,7 @@ class Hub {
 
   /***** MessagerContainer *****/
   // This function is exposed only for use in MessagerContainerProvider.
-  std::shared_ptr<MessagerContainer> GetMessagerContainer() const {
-    if (options_.provider != nullptr) {
-      return options_.provider();
-    }
-    return msger_container_;
-  }
+  std::shared_ptr<MessagerContainer> GetMessagerContainer() const { return msger_container_; }
 
   /***** Access APIs *****/
   template <typename T>
@@ -77,8 +79,9 @@ class Hub {
 
  private:
   std::shared_ptr<MessagerMap> InternalLoad(const std::string& dir, Format fmt = Format::kJSON,
-                                            const LoadOptions* options = nullptr) const;
+                                            std::shared_ptr<const LoadOptions> options = nullptr) const;
   std::shared_ptr<MessagerMap> NewMessagerMap() const;
+  std::shared_ptr<MessagerContainer> GetMessagerContainerWithProvider() const;
   const std::shared_ptr<Messager> GetMessager(const std::string& name) const;
 
   bool Postprocess(std::shared_ptr<MessagerMap> msger_map);
@@ -90,8 +93,10 @@ class Hub {
   std::shared_ptr<MessagerContainer> msger_container_;
   // Loading scheduler.
   internal::Scheduler* sched_ = nullptr;
+  // Init once
+  std::once_flag init_once_;
   // Hub options
-  const HubOptions options_;
+  std::shared_ptr<const HubOptions> options_;
 };
 
 template <typename T>
@@ -163,6 +168,7 @@ class MessagerContainer {
   std::time_t last_loaded_time_;
 
  private:
+  const std::shared_ptr<Messager> GetMessager(const std::string& name) const;
   void InitShard0();
   void InitShard1();
 
@@ -196,6 +202,7 @@ class Registry {
   static void InitShard1();
 
  private:
+  static std::once_flag once;
   static Registrar registrar;
 };
 

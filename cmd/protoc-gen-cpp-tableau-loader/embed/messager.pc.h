@@ -22,7 +22,7 @@ class Messager {
   static const std::string& Name() { return kEmpty; }
   const Stats& GetStats() { return stats_; }
   // Load fills message from file in the specified directory and format.
-  virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) = 0;
+  virtual bool Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options = nullptr) = 0;
   // Message returns the inner message data.
   virtual const google::protobuf::Message* Message() const { return nullptr; }
   // callback after all messagers loaded.

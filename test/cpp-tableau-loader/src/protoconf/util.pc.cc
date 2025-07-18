@@ -138,7 +138,8 @@ const std::string& Format2Ext(Format fmt) {
   }
 }
 
-bool JSON2Message(const std::string& json, google::protobuf::Message& msg, const LoadOptions* options /* = nullptr */) {
+bool JSON2Message(const std::string& json, google::protobuf::Message& msg,
+                  std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   google::protobuf::util::Status status;
   if (options != nullptr) {
     google::protobuf::util::JsonParseOptions parse_options;

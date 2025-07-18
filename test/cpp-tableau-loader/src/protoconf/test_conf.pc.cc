@@ -12,7 +12,7 @@
 namespace tableau {
 const std::string ActivityConf::kProtoName = "ActivityConf";
 
-bool ActivityConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
+bool ActivityConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessage(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
@@ -240,7 +240,7 @@ const protoconf::Section::SectionItem* ActivityConf::FindFirstAward(uint32_t id)
 
 const std::string ChapterConf::kProtoName = "ChapterConf";
 
-bool ChapterConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
+bool ChapterConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessage(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
@@ -258,7 +258,7 @@ const protoconf::ChapterConf::Chapter* ChapterConf::Get(uint64_t id) const {
 
 const std::string ThemeConf::kProtoName = "ThemeConf";
 
-bool ThemeConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
+bool ThemeConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessage(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
@@ -288,7 +288,7 @@ const std::string* ThemeConf::Get(const std::string& name, const std::string& pa
 
 const std::string TaskConf::kProtoName = "TaskConf";
 
-bool TaskConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
+bool TaskConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessage(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;

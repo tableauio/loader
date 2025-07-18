@@ -26,7 +26,7 @@ func generateHppFile(gen *protogen.Plugin, file *protogen.File) *protogen.Genera
 	g := gen.NewGeneratedFile(filename, "")
 	helper.GenerateFileHeader(gen, file, g, version)
 	g.P()
-	generateHppFileContent(gen, file, g)
+	generateHppFileContent(file, g)
 	return g
 }
 
@@ -36,12 +36,12 @@ func generateCppFile(gen *protogen.Plugin, file *protogen.File) *protogen.Genera
 	g := gen.NewGeneratedFile(filename, "")
 	helper.GenerateFileHeader(gen, file, g, version)
 	g.P()
-	generateCppFileContent(gen, file, g)
+	generateCppFileContent(file, g)
 	return g
 }
 
 // generateHppFileContent generates type definitions.
-func generateHppFileContent(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile) {
+func generateHppFileContent(file *protogen.File, g *protogen.GeneratedFile) {
 	g.P("#pragma once")
 	g.P("#include <string>")
 	g.P()
@@ -56,7 +56,7 @@ func generateHppFileContent(gen *protogen.Plugin, file *protogen.File, g *protog
 		opts := message.Desc.Options().(*descriptorpb.MessageOptions)
 		worksheet := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
 		if worksheet != nil {
-			genHppMessage(gen, file, g, message)
+			genHppMessage(file, g, message)
 			messagerName := string(message.Desc.Name())
 			fileMessagers = append(fileMessagers, messagerName)
 		}
@@ -76,7 +76,7 @@ func generateHppFileContent(gen *protogen.Plugin, file *protogen.File, g *protog
 }
 
 // genHppMessage generates a message definition.
-func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) {
+func genHppMessage(file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) {
 	pkg := string(file.Desc.Package())
 	cppFullName := strings.ReplaceAll(pkg, ".", "::") + "::" + string(message.Desc.Name())
 	messagerFullName := string(message.Desc.FullName())
@@ -85,7 +85,7 @@ func genHppMessage(gen *protogen.Plugin, file *protogen.File, g *protogen.Genera
 	g.P("class ", message.Desc.Name(), " : public Messager {")
 	g.P(" public:")
 	g.P(helper.Indent(1), "static const std::string& Name() { return kProtoName; }")
-	g.P(helper.Indent(1), "virtual bool Load(const std::string& dir, Format fmt, const LoadOptions* options = nullptr) override;")
+	g.P(helper.Indent(1), "virtual bool Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options = nullptr) override;")
 	g.P(helper.Indent(1), "const ", cppFullName, "& Data() const { return data_; }")
 	g.P(helper.Indent(1), "const google::protobuf::Message* Message() const override { return &data_; }")
 	g.P()
@@ -132,7 +132,7 @@ func genHppMapGetters(depth int, keys []helper.MapKey, g *protogen.GeneratedFile
 }
 
 // generateCppFileContent generates type implementations.
-func generateCppFileContent(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile) {
+func generateCppFileContent(file *protogen.File, g *protogen.GeneratedFile) {
 	g.P(`#include "`, file.GeneratedFilenamePrefix, ".", pcExt, `.h"`)
 	g.P()
 	g.P(`#include "hub.pc.h"`)
@@ -144,21 +144,21 @@ func generateCppFileContent(gen *protogen.Plugin, file *protogen.File, g *protog
 		opts := message.Desc.Options().(*descriptorpb.MessageOptions)
 		worksheet := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
 		if worksheet != nil {
-			genCppMessage(gen, g, message)
+			genCppMessage(g, message)
 		}
 	}
 	g.P("}  // namespace ", *namespace)
 }
 
 // genCppMessage generates a message implementation.
-func genCppMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message) {
+func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	messagerName := string(message.Desc.Name())
 	messagerFullName := string(message.Desc.FullName())
 	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
 	g.P("const std::string ", messagerName, "::kProtoName = ", `"`, messagerName, `";`)
 	g.P()
-	g.P("bool ", messagerName, "::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {")
+	g.P("bool ", messagerName, "::Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options /* = nullptr */) {")
 	g.P(helper.Indent(1), "tableau::util::TimeProfiler profiler;")
 	g.P(helper.Indent(1), "bool loaded = LoadMessage(data_, dir, fmt, options);")
 	g.P(helper.Indent(1), "bool ok = loaded ? ProcessAfterLoad() : false;")

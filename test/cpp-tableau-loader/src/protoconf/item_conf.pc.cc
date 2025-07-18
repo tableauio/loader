@@ -12,7 +12,7 @@
 namespace tableau {
 const std::string ItemConf::kProtoName = "ItemConf";
 
-bool ItemConf::Load(const std::string& dir, Format fmt, const LoadOptions* options /* = nullptr */) {
+bool ItemConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessage(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;

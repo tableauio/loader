@@ -10,9 +10,17 @@
 #include "util.pc.h"
 
 namespace tableau {
-Registrar Registry::registrar = Registrar();
+std::once_flag Registry::once;
+Registrar Registry::registrar;
 
-bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */, const LoadOptions* options /* = nullptr */) {
+Hub::Hub() { tableau::Registry::Init(); }
+
+void Hub::InitOnce(std::shared_ptr<const HubOptions> options) {
+  std::call_once(init_once_, [&]() { options_ = options; });
+}
+
+bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */,
+               std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   auto msger_map = InternalLoad(dir, fmt, options);
   if (!msger_map) {
     return false;
@@ -26,7 +34,7 @@ bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */, const L
 }
 
 bool Hub::AsyncLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
-                    const LoadOptions* options /* = nullptr */) {
+                    std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   auto msger_map = InternalLoad(dir, fmt, options);
   if (!msger_map) {
     return false;
@@ -47,7 +55,7 @@ void Hub::InitScheduler() {
 }
 
 std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
-                                               const LoadOptions* options /* = nullptr */) const {
+                                               std::shared_ptr<const LoadOptions> options /* = nullptr */) const {
   // intercept protobuf error logs
   auto old_handler = google::protobuf::SetLogHandler(util::ProtobufLogHandler);
   auto msger_map = NewMessagerMap();
@@ -72,14 +80,14 @@ std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::string& dir, Format fm
 std::shared_ptr<MessagerMap> Hub::NewMessagerMap() const {
   std::shared_ptr<MessagerMap> msger_map = std::make_shared<MessagerMap>();
   for (auto&& it : Registry::registrar) {
-    if (!options_.filter || options_.filter(it.first)) {
+    if (options_ == nullptr || options_->filter == nullptr || options_->filter(it.first)) {
       (*msger_map)[it.first] = it.second();
     }
   }
   return msger_map;
 }
 
-std::shared_ptr<MessagerMap> Hub::GetMessagerMap() const { return GetMessagerContainer()->msger_map_; }
+std::shared_ptr<MessagerMap> Hub::GetMessagerMap() const { return GetMessagerContainerWithProvider()->msger_map_; }
 
 void Hub::SetMessagerMap(std::shared_ptr<MessagerMap> msger_map) {
   // replace with thread-safe guarantee.
@@ -88,14 +96,14 @@ void Hub::SetMessagerMap(std::shared_ptr<MessagerMap> msger_map) {
 }
 
 const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const {
-  auto msger_map = GetMessagerMap();
-  if (msger_map) {
-    auto it = msger_map->find(name);
-    if (it != msger_map->end()) {
-      return it->second;
-    }
+  return GetMessagerContainerWithProvider()->GetMessager(name);
+}
+
+std::shared_ptr<MessagerContainer> Hub::GetMessagerContainerWithProvider() const {
+  if (options_ != nullptr && options_->provider != nullptr) {
+    return options_->provider(*this);
   }
-  return nullptr;
+  return msger_container_;
 }
 
 bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {
@@ -115,7 +123,7 @@ bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {
   return true;
 }
 
-std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainer()->last_loaded_time_; }
+std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainerWithProvider()->last_loaded_time_; }
 
 MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* = nullptr*/)
     : msger_map_(msger_map != nullptr ? msger_map : std::make_shared<MessagerMap>()),
@@ -124,8 +132,20 @@ MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* =
   InitShard1();
 }
 
+const std::shared_ptr<Messager> MessagerContainer::GetMessager(const std::string& name) const {
+  if (msger_map_) {
+    auto it = msger_map_->find(name);
+    if (it != msger_map_->end()) {
+      return it->second;
+    }
+  }
+  return nullptr;
+}
+
 void Registry::Init() {
-  InitShard0();
-  InitShard1();
+  std::call_once(once, []() {
+    InitShard0();
+    InitShard1();
+  });
 }
 }  // namespace tableau

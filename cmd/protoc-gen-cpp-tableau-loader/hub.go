@@ -59,9 +59,9 @@ func generateHub(gen *protogen.Plugin) {
 		helper.GenerateCommonHeader(gen, g1, version)
 		g1.P()
 		g1.P(hubHpp)
-		generateHubHppTplSpec(gen, g1, protofiles, fileMessagers)
+		generateHubHppTplSpec(g1, protofiles, fileMessagers)
 		g1.P(msgContainerHpp)
-		generateHubHppMsgContainerMembers(gen, g1, protofiles, fileMessagers)
+		generateHubHppMsgContainerMembers(g1, protofiles, fileMessagers)
 		g1.P(registryHpp)
 		g1.P(bottomHpp)
 
@@ -70,13 +70,13 @@ func generateHub(gen *protogen.Plugin) {
 		helper.GenerateCommonHeader(gen, g2, version)
 		g2.P()
 		g2.P(hubCppHeader)
-		generateHubCppHeader(gen, g2, protofiles, fileMessagers)
+		generateHubCppHeader(g2, protofiles)
 		g2.P(hubCpp)
-		generateHubCppTplSpec(gen, g2, protofiles, fileMessagers)
+		generateHubCppTplSpec(g2, protofiles, fileMessagers)
 		g2.P(msgContainerCpp)
-		generateHubCppMsgContainerCtor(gen, g2, protofiles, fileMessagers)
+		generateHubCppMsgContainerCtor(g2, protofiles, fileMessagers)
 		g2.P(registryCpp)
-		generateHubCppRegistry(gen, g2, protofiles, fileMessagers)
+		generateHubCppRegistry(g2, protofiles, fileMessagers)
 		g2.P(bottomCpp)
 	} else {
 		// sharding
@@ -84,7 +84,7 @@ func generateHub(gen *protogen.Plugin) {
 	}
 }
 
-func generateHubHppTplSpec(gen *protogen.Plugin, g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
+func generateHubHppTplSpec(g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
 			g.P("class ", messager, ";")
@@ -95,7 +95,7 @@ func generateHubHppTplSpec(gen *protogen.Plugin, g *protogen.GeneratedFile, prot
 	}
 }
 
-func generateHubHppMsgContainerMembers(gen *protogen.Plugin, g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
+func generateHubHppMsgContainerMembers(g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
 			g.P(helper.Indent(1), "std::shared_ptr<", messager, "> ", strcase.ToSnake(messager), "_;")
@@ -103,14 +103,14 @@ func generateHubHppMsgContainerMembers(gen *protogen.Plugin, g *protogen.Generat
 	}
 }
 
-func generateHubCppHeader(gen *protogen.Plugin, g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
+func generateHubCppHeader(g *protogen.GeneratedFile, protofiles []string) {
 	for _, proto := range protofiles {
 		g.P(`#include "`, proto, ".", pcExt, `.h"`)
 	}
 	g.P()
 }
 
-func generateHubCppTplSpec(gen *protogen.Plugin, g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
+func generateHubCppTplSpec(g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
 			g.P("template <>")
@@ -122,18 +122,18 @@ func generateHubCppTplSpec(gen *protogen.Plugin, g *protogen.GeneratedFile, prot
 	}
 }
 
-func generateHubCppMsgContainerCtor(gen *protogen.Plugin, g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
+func generateHubCppMsgContainerCtor(g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
-			g.P(helper.Indent(1), strcase.ToSnake(messager), "_ = std::dynamic_pointer_cast<", messager, `>((*msger_map_)["`, messager, `"]);`)
+			g.P(helper.Indent(1), strcase.ToSnake(messager), "_ = std::dynamic_pointer_cast<", messager, `>(GetMessager("`, messager, `"));`)
 		}
 	}
 }
 
-func generateHubCppRegistry(gen *protogen.Plugin, g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
+func generateHubCppRegistry(g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
-			g.P(helper.Indent(1), "Register<", messager, ">();")
+			g.P(helper.Indent(2), "Register<", messager, ">();")
 		}
 	}
 }
@@ -157,7 +157,10 @@ using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
 // FilterFunc filter in messagers if returned value is true.
 // NOTE: name is the protobuf message name, e.g.: "message ItemConf{...}".
 using Filter = std::function<bool(const std::string& name)>;
-using MessagerContainerProvider = std::function<std::shared_ptr<MessagerContainer>()>;
+// MessagerContainerProvider provides a custom MessagerContainer for hub.
+// If not specified, the hub's default MessagerContainer will be used.
+// NOTE: This func must return non-nil MessagerContainer.
+using MessagerContainerProvider = std::function<std::shared_ptr<MessagerContainer>(const Hub&)>;
 
 struct HubOptions {
   // Filter can only filter in certain specific messagers based on the
@@ -170,16 +173,20 @@ struct HubOptions {
 
 class Hub {
  public:
-  Hub(const HubOptions* options = nullptr)
-      : msger_container_(std::make_shared<MessagerContainer>()), options_(options ? *options : HubOptions{}) {}
+  Hub();
+
+  // InitOnce inits the hub only once, and the subsequent calls will not take effect.
+  void InitOnce(std::shared_ptr<const HubOptions> options);
+
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
-  bool Load(const std::string& dir, Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
+  bool Load(const std::string& dir, Format fmt = Format::kJSON, std::shared_ptr<const LoadOptions> options = nullptr);
 
   /***** Asynchronous Loading *****/
   // Load configs into temp MessagerContainer, and you should call LoopOnce() in you app's main loop,
   // in order to take the temp MessagerContainer into effect.
-  bool AsyncLoad(const std::string& dir, Format fmt = Format::kJSON, const LoadOptions* options = nullptr);
+  bool AsyncLoad(const std::string& dir, Format fmt = Format::kJSON,
+                 std::shared_ptr<const LoadOptions> options = nullptr);
   int LoopOnce();
   // You'd better initialize the scheduler in the main thread.
   void InitScheduler();
@@ -190,12 +197,7 @@ class Hub {
 
   /***** MessagerContainer *****/
   // This function is exposed only for use in MessagerContainerProvider.
-  std::shared_ptr<MessagerContainer> GetMessagerContainer() const {
-    if (options_.provider != nullptr) {
-      return options_.provider();
-    }
-    return msger_container_;
-  }
+  std::shared_ptr<MessagerContainer> GetMessagerContainer() const { return msger_container_; }
 
   /***** Access APIs *****/
   template <typename T>
@@ -212,8 +214,9 @@ class Hub {
 
  private:
   std::shared_ptr<MessagerMap> InternalLoad(const std::string& dir, Format fmt = Format::kJSON,
-                                            const LoadOptions* options = nullptr) const;
+                                            std::shared_ptr<const LoadOptions> options = nullptr) const;
   std::shared_ptr<MessagerMap> NewMessagerMap() const;
+  std::shared_ptr<MessagerContainer> GetMessagerContainerWithProvider() const;
   const std::shared_ptr<Messager> GetMessager(const std::string& name) const;
 
   bool Postprocess(std::shared_ptr<MessagerMap> msger_map);
@@ -225,8 +228,10 @@ class Hub {
   std::shared_ptr<MessagerContainer> msger_container_;
   // Loading scheduler.
   internal::Scheduler* sched_ = nullptr;
+  // Init once
+  std::once_flag init_once_;
   // Hub options
-  const HubOptions options_;
+  std::shared_ptr<const HubOptions> options_;
 };
 
 template <typename T>
@@ -258,7 +263,8 @@ const msgContainerHpp = `class MessagerContainer {
   std::shared_ptr<MessagerMap> msger_map_;
   std::time_t last_loaded_time_;
 
- private:`
+ private:
+  const std::shared_ptr<Messager> GetMessager(const std::string& name) const;`
 
 const registryHpp = `};
 
@@ -276,7 +282,8 @@ class Registry {
 
  private:`
 
-const bottomHpp = `  static Registrar registrar;
+const bottomHpp = `  static std::once_flag once;
+  static Registrar registrar;
 };
 
 template <typename T>
@@ -293,9 +300,17 @@ const hubCppHeader = `#include "hub.pc.h"
 
 const hubCpp = `
 namespace tableau {
-Registrar Registry::registrar = Registrar();
+std::once_flag Registry::once;
+Registrar Registry::registrar;
 
-bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */, const LoadOptions* options /* = nullptr */) {
+Hub::Hub() { tableau::Registry::Init(); }
+
+void Hub::InitOnce(std::shared_ptr<const HubOptions> options) {
+  std::call_once(init_once_, [&]() { options_ = options; });
+}
+
+bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */,
+               std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   auto msger_map = InternalLoad(dir, fmt, options);
   if (!msger_map) {
     return false;
@@ -309,7 +324,7 @@ bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */, const L
 }
 
 bool Hub::AsyncLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
-                    const LoadOptions* options /* = nullptr */) {
+                    std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   auto msger_map = InternalLoad(dir, fmt, options);
   if (!msger_map) {
     return false;
@@ -330,7 +345,7 @@ void Hub::InitScheduler() {
 }
 
 std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
-                                               const LoadOptions* options /* = nullptr */) const {
+                                               std::shared_ptr<const LoadOptions> options /* = nullptr */) const {
   // intercept protobuf error logs
   auto old_handler = google::protobuf::SetLogHandler(util::ProtobufLogHandler);
   auto msger_map = NewMessagerMap();
@@ -355,14 +370,14 @@ std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::string& dir, Format fm
 std::shared_ptr<MessagerMap> Hub::NewMessagerMap() const {
   std::shared_ptr<MessagerMap> msger_map = std::make_shared<MessagerMap>();
   for (auto&& it : Registry::registrar) {
-    if (!options_.filter || options_.filter(it.first)) {
+    if (options_ == nullptr || options_->filter == nullptr || options_->filter(it.first)) {
       (*msger_map)[it.first] = it.second();
     }
   }
   return msger_map;
 }
 
-std::shared_ptr<MessagerMap> Hub::GetMessagerMap() const { return GetMessagerContainer()->msger_map_; }
+std::shared_ptr<MessagerMap> Hub::GetMessagerMap() const { return GetMessagerContainerWithProvider()->msger_map_; }
 
 void Hub::SetMessagerMap(std::shared_ptr<MessagerMap> msger_map) {
   // replace with thread-safe guarantee.
@@ -371,14 +386,14 @@ void Hub::SetMessagerMap(std::shared_ptr<MessagerMap> msger_map) {
 }
 
 const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const {
-  auto msger_map = GetMessagerMap();
-  if (msger_map) {
-    auto it = msger_map->find(name);
-    if (it != msger_map->end()) {
-      return it->second;
-    }
+  return GetMessagerContainerWithProvider()->GetMessager(name);
+}
+
+std::shared_ptr<MessagerContainer> Hub::GetMessagerContainerWithProvider() const {
+  if (options_ != nullptr && options_->provider != nullptr) {
+    return options_->provider(*this);
   }
-  return nullptr;
+  return msger_container_;
 }
 
 bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {
@@ -398,7 +413,7 @@ bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {
   return true;
 }
 
-std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainer()->last_loaded_time_; }`
+std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainerWithProvider()->last_loaded_time_; }`
 
 const msgContainerCpp = `
 MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* = nullptr*/)
@@ -407,7 +422,19 @@ MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* =
 
 const registryCpp = `}
 
-void Registry::Init() {`
+const std::shared_ptr<Messager> MessagerContainer::GetMessager(const std::string& name) const {
+  if (msger_map_) {
+    auto it = msger_map_->find(name);
+    if (it != msger_map_->end()) {
+      return it->second;
+    }
+  }
+  return nullptr;
+}
 
-const bottomCpp = `}
+void Registry::Init() {
+  std::call_once(once, []() {`
+
+const bottomCpp = `  });
+}
 }  // namespace tableau`

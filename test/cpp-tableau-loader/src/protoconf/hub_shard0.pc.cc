@@ -11,23 +11,23 @@
 namespace tableau {
 template <>
 const std::shared_ptr<HeroBaseConf> Hub::Get<HeroBaseConf>() const {
-  return GetMessagerContainer()->hero_base_conf_;
+  return GetMessagerContainerWithProvider()->hero_base_conf_;
 }
 
 template <>
 const std::shared_ptr<HeroConf> Hub::Get<HeroConf>() const {
-  return GetMessagerContainer()->hero_conf_;
+  return GetMessagerContainerWithProvider()->hero_conf_;
 }
 
 template <>
 const std::shared_ptr<ItemConf> Hub::Get<ItemConf>() const {
-  return GetMessagerContainer()->item_conf_;
+  return GetMessagerContainerWithProvider()->item_conf_;
 }
 
 void MessagerContainer::InitShard0() {
-  hero_base_conf_ = std::dynamic_pointer_cast<HeroBaseConf>((*msger_map_)["HeroBaseConf"]);
-  hero_conf_ = std::dynamic_pointer_cast<HeroConf>((*msger_map_)["HeroConf"]);
-  item_conf_ = std::dynamic_pointer_cast<ItemConf>((*msger_map_)["ItemConf"]);
+  hero_base_conf_ = std::dynamic_pointer_cast<HeroBaseConf>(GetMessager("HeroBaseConf"));
+  hero_conf_ = std::dynamic_pointer_cast<HeroConf>(GetMessager("HeroConf"));
+  item_conf_ = std::dynamic_pointer_cast<ItemConf>(GetMessager("ItemConf"));
 }
 
 void Registry::InitShard0() {
