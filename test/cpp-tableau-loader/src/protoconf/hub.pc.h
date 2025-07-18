@@ -22,6 +22,9 @@ using MessagerMap = std::unordered_map<std::string, std::shared_ptr<Messager>>;
 // FilterFunc filter in messagers if returned value is true.
 // NOTE: name is the protobuf message name, e.g.: "message ItemConf{...}".
 using Filter = std::function<bool(const std::string& name)>;
+// MessagerContainerProvider provides a custom MessagerContainer for hub.
+// If not specified, the hub's default MessagerContainer will be used.
+// NOTE: This func must return non-nil MessagerContainer.
 using MessagerContainerProvider = std::function<std::shared_ptr<MessagerContainer>(const Hub&)>;
 
 struct HubOptions {
