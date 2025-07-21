@@ -147,20 +147,36 @@ func genOneOrderedIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, d
 	if field.FD.IsList() {
 		itemName := fmt.Sprintf("item%d", depth)
 		fieldName := ""
-		for _, leveledFd := range field.LeveledFDList {
+		suffix := ""
+		for i, leveledFd := range field.LeveledFDList {
 			fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
+			if i == len(field.LeveledFDList)-1 && leveledFd.Message() != nil {
+				switch leveledFd.Message().FullName() {
+				case "google.protobuf.Timestamp", "google.protobuf.Duration":
+					suffix = ".GetSeconds()"
+				default:
+				}
+			}
 		}
 		g.P("for _, ", itemName, " := range "+parentDataName+fieldName+" {")
-		g.P("key := ", itemName)
+		g.P("key := ", itemName, suffix)
 		g.P("value, _ := x.", indexContainerName, ".Get(key)")
 		g.P("x.", indexContainerName, ".Put(key, append(value, ", parentDataName, "))")
 		g.P("}")
 	} else {
 		fieldName := ""
-		for _, leveledFd := range field.LeveledFDList {
+		suffix := ""
+		for i, leveledFd := range field.LeveledFDList {
 			fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
+			if i == len(field.LeveledFDList)-1 && leveledFd.Message() != nil {
+				switch leveledFd.Message().FullName() {
+				case "google.protobuf.Timestamp", "google.protobuf.Duration":
+					suffix = ".GetSeconds()"
+				default:
+				}
+			}
 		}
-		g.P("key := ", parentDataName+fieldName)
+		g.P("key := ", parentDataName+fieldName, suffix)
 		g.P("value, _ := x.", indexContainerName, ".Get(key)")
 		g.P("x.", indexContainerName, ".Put(key, append(value, ", parentDataName, "))")
 	}

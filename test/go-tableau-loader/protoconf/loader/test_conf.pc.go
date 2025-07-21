@@ -567,6 +567,9 @@ type TaskConf_Index_TaskMap = map[int64][]*protoconf.TaskConf_Task
 // Ordered Index: Goal<ID>
 type TaskConf_OrderedIndex_TaskMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
 
+// Ordered Index: Expiry@TaskExpiry
+type TaskConf_OrderedIndex_TaskExpiryMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
+
 // TaskConf is a wrapper around protobuf message: protoconf.TaskConf.
 //
 // It is designed for three goals:
@@ -576,9 +579,10 @@ type TaskConf_OrderedIndex_TaskMap = treemap.TreeMap[int64, []*protoconf.TaskCon
 //  3. Extensibility: Map, OrdererdMap, Index...
 type TaskConf struct {
 	UnimplementedMessager
-	data, originalData  *protoconf.TaskConf
-	indexTaskMap        TaskConf_Index_TaskMap
-	orderedIndexTaskMap *TaskConf_OrderedIndex_TaskMap
+	data, originalData        *protoconf.TaskConf
+	indexTaskMap              TaskConf_Index_TaskMap
+	orderedIndexTaskMap       *TaskConf_OrderedIndex_TaskMap
+	orderedIndexTaskExpiryMap *TaskConf_OrderedIndex_TaskExpiryMap
 }
 
 // Name returns the TaskConf's message name.
@@ -643,6 +647,7 @@ func (x *TaskConf) processAfterLoad() error {
 	// Index init.
 	x.indexTaskMap = make(TaskConf_Index_TaskMap)
 	x.orderedIndexTaskMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
+	x.orderedIndexTaskExpiryMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
 	for _, item1 := range x.data.GetTaskMap() {
 		{
 			// Index: ActivityID<Goal,ID>
@@ -654,6 +659,12 @@ func (x *TaskConf) processAfterLoad() error {
 			key := item1.GetGoal()
 			value, _ := x.orderedIndexTaskMap.Get(key)
 			x.orderedIndexTaskMap.Put(key, append(value, item1))
+		}
+		{
+			// OrderedIndex: Expiry@TaskExpiry
+			key := item1.GetExpiry().GetSeconds()
+			value, _ := x.orderedIndexTaskExpiryMap.Get(key)
+			x.orderedIndexTaskExpiryMap.Put(key, append(value, item1))
 		}
 	}
 	// Index(sort): ActivityID<Goal,ID>
@@ -715,6 +726,14 @@ func (x *TaskConf) FindFirstTask(activityId int64) *protoconf.TaskConf_Task {
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *TaskConf) FindTaskOrderedMap() *TaskConf_OrderedIndex_TaskMap {
 	return x.orderedIndexTaskMap
+}
+
+// OrderedIndex: Expiry@TaskExpiry
+
+// FindTaskExpiryOrderedMap returns the index(Expiry@TaskExpiry) to value(protoconf.TaskConf_Task) treemap.
+// One key may correspond to multiple values, which are contained by a slice.
+func (x *TaskConf) FindTaskExpiryOrderedMap() *TaskConf_OrderedIndex_TaskExpiryMap {
+	return x.orderedIndexTaskExpiryMap
 }
 
 func init() {
