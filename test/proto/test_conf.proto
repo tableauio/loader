@@ -99,6 +99,7 @@ message TaskConf {
   option (tableau.worksheet) = {
     name: "TaskConf"
     index: "ActivityID<Goal,ID>"
+    ordered_index: "Goal<ID>"
   };
 
   map<int64, Task> task_map = 1 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];

@@ -199,7 +199,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message, depth int, keys []helper.MapKey, messagerName string) {
 	for _, field := range message.Fields {
 		fd := field.Desc
-		if field.Desc.IsMap() {
+		if fd.IsMap() {
 			keys = helper.AddMapKey(gen, fd, keys)
 			getter := fmt.Sprintf("Get%v", depth)
 			g.P("// ", getter, " finds value in the ", depth, "-level map. It will return")

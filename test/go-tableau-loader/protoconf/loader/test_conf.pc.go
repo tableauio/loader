@@ -564,6 +564,9 @@ func (x *ThemeConf) Get2(name string, param string) (string, error) {
 // Index: ActivityID<Goal,ID>
 type TaskConf_Index_TaskMap = map[int64][]*protoconf.TaskConf_Task
 
+// Ordered Index: Goal<ID>
+type TaskConf_OrderedIndex_TaskMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
+
 // TaskConf is a wrapper around protobuf message: protoconf.TaskConf.
 //
 // It is designed for three goals:
@@ -573,8 +576,9 @@ type TaskConf_Index_TaskMap = map[int64][]*protoconf.TaskConf_Task
 //  3. Extensibility: Map, OrdererdMap, Index...
 type TaskConf struct {
 	UnimplementedMessager
-	data, originalData *protoconf.TaskConf
-	indexTaskMap       TaskConf_Index_TaskMap
+	data, originalData  *protoconf.TaskConf
+	indexTaskMap        TaskConf_Index_TaskMap
+	orderedIndexTaskMap *TaskConf_OrderedIndex_TaskMap
 }
 
 // Name returns the TaskConf's message name.
@@ -638,11 +642,18 @@ func (x *TaskConf) originalMessage() proto.Message {
 func (x *TaskConf) processAfterLoad() error {
 	// Index init.
 	x.indexTaskMap = make(TaskConf_Index_TaskMap)
+	x.orderedIndexTaskMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
 	for _, item1 := range x.data.GetTaskMap() {
 		{
 			// Index: ActivityID<Goal,ID>
 			key := item1.GetActivityId()
 			x.indexTaskMap[key] = append(x.indexTaskMap[key], item1)
+		}
+		{
+			// OrderedIndex: Goal<ID>
+			key := item1.GetGoal()
+			value, _ := x.orderedIndexTaskMap.Get(key)
+			x.orderedIndexTaskMap.Put(key, append(value, item1))
 		}
 	}
 	// Index(sort): ActivityID<Goal,ID>
@@ -654,6 +665,13 @@ func (x *TaskConf) processAfterLoad() error {
 			return item[i].GetId() < item[j].GetId()
 		})
 	}
+	// OrderedIndex(sort): Goal<ID>
+	x.orderedIndexTaskMap.Range(func(key int64, item []*protoconf.TaskConf_Task) bool {
+		sort.Slice(item, func(i, j int) bool {
+			return item[i].GetId() < item[j].GetId()
+		})
+		return true
+	})
 	return nil
 }
 
@@ -689,6 +707,14 @@ func (x *TaskConf) FindFirstTask(activityId int64) *protoconf.TaskConf_Task {
 		return val[0]
 	}
 	return nil
+}
+
+// OrderedIndex: Goal<ID>
+
+// FindTaskOrderedMap returns the index(Goal<ID>) to value(protoconf.TaskConf_Task) treemap.
+// One key may correspond to multiple values, which are contained by a slice.
+func (x *TaskConf) FindTaskOrderedMap() *TaskConf_OrderedIndex_TaskMap {
+	return x.orderedIndexTaskMap
 }
 
 func init() {
