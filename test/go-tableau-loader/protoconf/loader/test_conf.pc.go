@@ -564,6 +564,7 @@ func (x *ThemeConf) Get2(name string, param string) (string, error) {
 // Index: ActivityID<Goal,ID>
 type TaskConf_Index_TaskMap = map[int64][]*protoconf.TaskConf_Task
 
+// OrderedIndex types.
 // Ordered Index: Goal<ID>
 type TaskConf_OrderedIndex_TaskMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
 
@@ -646,14 +647,26 @@ func (x *TaskConf) originalMessage() proto.Message {
 func (x *TaskConf) processAfterLoad() error {
 	// Index init.
 	x.indexTaskMap = make(TaskConf_Index_TaskMap)
-	x.orderedIndexTaskMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
-	x.orderedIndexTaskExpiryMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
 	for _, item1 := range x.data.GetTaskMap() {
 		{
 			// Index: ActivityID<Goal,ID>
 			key := item1.GetActivityId()
 			x.indexTaskMap[key] = append(x.indexTaskMap[key], item1)
 		}
+	}
+	// Index(sort): ActivityID<Goal,ID>
+	for _, item := range x.indexTaskMap {
+		sort.Slice(item, func(i, j int) bool {
+			if item[i].GetGoal() != item[j].GetGoal() {
+				return item[i].GetGoal() < item[j].GetGoal()
+			}
+			return item[i].GetId() < item[j].GetId()
+		})
+	}
+	// OrderedIndex init.
+	x.orderedIndexTaskMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
+	x.orderedIndexTaskExpiryMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
+	for _, item1 := range x.data.GetTaskMap() {
 		{
 			// OrderedIndex: Goal<ID>
 			key := item1.GetGoal()
@@ -666,15 +679,6 @@ func (x *TaskConf) processAfterLoad() error {
 			value, _ := x.orderedIndexTaskExpiryMap.Get(key)
 			x.orderedIndexTaskExpiryMap.Put(key, append(value, item1))
 		}
-	}
-	// Index(sort): ActivityID<Goal,ID>
-	for _, item := range x.indexTaskMap {
-		sort.Slice(item, func(i, j int) bool {
-			if item[i].GetGoal() != item[j].GetGoal() {
-				return item[i].GetGoal() < item[j].GetGoal()
-			}
-			return item[i].GetId() < item[j].GetId()
-		})
 	}
 	// OrderedIndex(sort): Goal<ID>
 	x.orderedIndexTaskMap.Range(func(key int64, item []*protoconf.TaskConf_Task) bool {
