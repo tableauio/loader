@@ -75,7 +75,7 @@ func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) any {
 
 // ParseMapKeyType converts a FieldDescriptor to its map key type.
 // fd must be an comparable type.
-func ParseMapKeyType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
+func ParseMapKeyType(fd protoreflect.FieldDescriptor) string {
 	switch fd.Kind() {
 	case protoreflect.BoolKind:
 		return "bool"
@@ -100,7 +100,7 @@ func ParseMapKeyType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) stri
 
 // ParseOrderedMapKeyType converts a FieldDescriptor to its treemap key type.
 // fd must be an ordered type, or a message which can be converted to an ordered type.
-func ParseOrderedMapKeyType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) string {
+func ParseOrderedMapKeyType(fd protoreflect.FieldDescriptor) string {
 	switch fd.Kind() {
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind, protoreflect.EnumKind:
 		return "int32"
@@ -246,7 +246,7 @@ func AddMapKey(gen *protogen.Plugin, fd protoreflect.FieldDescriptor, keys []Map
 			}
 		}
 	}
-	keys = append(keys, MapKey{ParseMapKeyType(gen, fd.MapKey()), name})
+	keys = append(keys, MapKey{ParseMapKeyType(fd.MapKey()), name})
 	return keys
 }
 

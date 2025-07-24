@@ -17,7 +17,7 @@ func genOrderedIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, des
 			field := index.ColFields[0] // just take first field
 			g.P("// Ordered Index: ", index.Index)
 			mapType := fmt.Sprintf("%s_OrderedIndex_%sMap", messagerName, index.Name())
-			keyType := helper.ParseOrderedMapKeyType(gen, field.FD)
+			keyType := helper.ParseOrderedMapKeyType(field.FD)
 			g.P("type ", mapType, " = ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", []*", helper.FindMessageGoIdent(gen, index.MD), "]")
 			g.P()
 		}
@@ -40,7 +40,7 @@ func genOrderedIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, desc
 		for _, index := range levelMessage.OrderedIndexes {
 			field := index.ColFields[0] // just take first field
 			indexContainerName := "orderedIndex" + strcase.ToCamel(index.Name()) + "Map"
-			keyType := helper.ParseOrderedMapKeyType(gen, field.FD)
+			keyType := helper.ParseOrderedMapKeyType(field.FD)
 			g.P("x.", indexContainerName, " = ", treeMapPackage.Ident("New"), "[", keyType, ", []*", helper.FindMessageGoIdent(gen, index.MD), "]()")
 		}
 	}
