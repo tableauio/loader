@@ -565,10 +565,10 @@ func (x *ThemeConf) Get2(name string, param string) (string, error) {
 type TaskConf_Index_TaskMap = map[int64][]*protoconf.TaskConf_Task
 
 // OrderedIndex types.
-// Ordered Index: Goal<ID>
+// OrderedIndex: Goal<ID>
 type TaskConf_OrderedIndex_TaskMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
 
-// Ordered Index: Expiry@TaskExpiry
+// OrderedIndex: Expiry@TaskExpiry
 type TaskConf_OrderedIndex_TaskExpiryMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
 
 // TaskConf is a wrapper around protobuf message: protoconf.TaskConf.

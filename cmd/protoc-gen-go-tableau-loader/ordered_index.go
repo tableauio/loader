@@ -15,7 +15,7 @@ func genOrderedIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, des
 		for _, index := range levelMessage.OrderedIndexes {
 			// single-column index
 			field := index.ColFields[0] // just take first field
-			g.P("// Ordered Index: ", index.Index)
+			g.P("// OrderedIndex: ", index.Index)
 			mapType := fmt.Sprintf("%s_OrderedIndex_%sMap", messagerName, index.Name())
 			keyType := helper.ParseOrderedMapKeyType(field.FD)
 			g.P("type ", mapType, " = ", treeMapPackage.Ident("TreeMap"), "[", keyType, ", []*", helper.FindMessageGoIdent(gen, index.MD), "]")
@@ -34,7 +34,7 @@ func genOrderedIndexField(g *protogen.GeneratedFile, descriptor *index.IndexDesc
 	}
 }
 
-func genOrderedIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, messagerName string) {
+func genOrderedIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor) {
 	g.P("// OrderedIndex init.")
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.OrderedIndexes {

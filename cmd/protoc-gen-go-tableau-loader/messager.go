@@ -188,7 +188,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 			genIndexLoader(gen, g, indexDescriptor, messagerName)
 		}
 		if options.NeedGenOrderedIndex(message.Desc, options.LangGO) {
-			genOrderedIndexLoader(gen, g, indexDescriptor, messagerName)
+			genOrderedIndexLoader(gen, g, indexDescriptor)
 		}
 		g.P("return nil")
 		g.P("}")
