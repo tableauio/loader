@@ -57,7 +57,7 @@ func genOrderedIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, desc
 		if !levelMessage.NextLevel.NeedGen() {
 			break
 		}
-		g.P("for _, ", itemName, " := range "+parentDataName+".Get"+helper.ParseIndexFieldName(gen, levelMessage.FD)+"() {")
+		g.P("for _, ", itemName, " := range ", parentDataName, ".Get", helper.ParseIndexFieldName(gen, levelMessage.FD), "() {")
 		parentDataName = itemName
 		depth++
 	}
@@ -88,7 +88,7 @@ func genOneOrderedIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, d
 				}
 			}
 		}
-		g.P("for _, ", itemName, " := range "+parentDataName+fieldName+" {")
+		g.P("for _, ", itemName, " := range ", parentDataName, fieldName, " {")
 		g.P("key := ", itemName, suffix)
 		g.P("value, _ := x.", indexContainerName, ".Get(key)")
 		g.P("x.", indexContainerName, ".Put(key, append(value, ", parentDataName, "))")
@@ -106,7 +106,7 @@ func genOneOrderedIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, d
 				}
 			}
 		}
-		g.P("key := ", parentDataName+fieldName, suffix)
+		g.P("key := ", parentDataName, fieldName, suffix)
 		g.P("value, _ := x.", indexContainerName, ".Get(key)")
 		g.P("x.", indexContainerName, ".Put(key, append(value, ", parentDataName, "))")
 	}
