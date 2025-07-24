@@ -145,6 +145,14 @@ int main() {
   }
   // std::cout << "item1: " << item_mgr->Data().DebugString() << std::endl;
 
+  std::cout << "-----ItemInfoMap: " << std::endl;
+  for (const auto& itemPair : item_mgr->FindItemInfo()) {
+    std::cout << "  - " << itemPair.first << ": " << std::endl;
+    for (const auto& element : itemPair.second) {
+      std::cout << "    - " << element->ShortDebugString() << std::endl;
+    }
+  }
+
   std::cout << "-----Index: multi-column index test" << std::endl;
   tableau::ItemConf::Index_AwardItemKey key{1, "apple"};
   auto item = item_mgr->FindFirstAwardItem(key);
