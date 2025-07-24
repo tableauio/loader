@@ -90,7 +90,7 @@ func genHppMessage(file *protogen.File, g *protogen.GeneratedFile, message *prot
 	g.P(helper.Indent(1), "const google::protobuf::Message* Message() const override { return &data_; }")
 	g.P()
 
-	if options.NeedGenOrderedMap(message.Desc, options.LangCPP) || options.NeedGenIndex(message.Desc, options.LangCPP) {
+	if options.NeedGenOrderedMap(message.Desc, options.LangCPP) || options.NeedGenIndex(message.Desc, options.LangCPP) || options.NeedGenOrderedIndex(message.Desc, options.LangCPP) {
 		g.P(" private:")
 		g.P(helper.Indent(1), "virtual bool ProcessAfterLoad() override final;")
 		g.P()
@@ -109,6 +109,9 @@ func genHppMessage(file *protogen.File, g *protogen.GeneratedFile, message *prot
 	if options.NeedGenIndex(message.Desc, options.LangCPP) {
 		g.P()
 		genHppIndexFinders(g, indexDescriptor)
+	}
+	if options.NeedGenOrderedIndex(message.Desc, options.LangCPP) {
+		genHppOrderedIndexFinders(g, indexDescriptor)
 	}
 	g.P("};")
 	g.P()
@@ -167,13 +170,16 @@ func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P("}")
 	g.P()
 
-	if options.NeedGenOrderedMap(message.Desc, options.LangCPP) || options.NeedGenIndex(message.Desc, options.LangCPP) {
+	if options.NeedGenOrderedMap(message.Desc, options.LangCPP) || options.NeedGenIndex(message.Desc, options.LangCPP) || options.NeedGenOrderedIndex(message.Desc, options.LangCPP) {
 		g.P("bool ", messagerName, "::ProcessAfterLoad() {")
 		if options.NeedGenOrderedMap(message.Desc, options.LangCPP) {
 			genCppOrderedMapLoader(g, message.Desc, 1, messagerFullName)
 		}
 		if options.NeedGenIndex(message.Desc, options.LangCPP) {
 			genCppIndexLoader(g, indexDescriptor)
+		}
+		if options.NeedGenOrderedIndex(message.Desc, options.LangCPP) {
+			genCppOrderedIndexLoader(g, indexDescriptor)
 		}
 		g.P(helper.Indent(1), "return true;")
 		g.P("}")
@@ -185,6 +191,10 @@ func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	genCppOrderedMapGetters(g, message.Desc, 1, nil, messagerName, messagerFullName)
 	if options.NeedGenIndex(message.Desc, options.LangCPP) {
 		genCppIndexFinders(g, indexDescriptor, messagerName)
+		g.P()
+	}
+	if options.NeedGenOrderedIndex(message.Desc, options.LangCPP) {
+		genCppOrderedIndexFinders(g, indexDescriptor, messagerName)
 		g.P()
 	}
 }

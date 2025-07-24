@@ -315,6 +315,26 @@ bool TaskConf::ProcessAfterLoad() {
                 return a->id() < b->id();
               });
   }
+  // OrderedIndex init.
+  ordered_index_task_map_.clear();
+  ordered_index_task_expiry_map_.clear();
+  for (auto&& item1 : data_.task_map()) {
+    {
+      // OrderedIndex: Goal<ID>
+      ordered_index_task_map_[item1.second.goal()].push_back(&item1.second);
+    }
+    {
+      // OrderedIndex: Expiry@TaskExpiry
+      ordered_index_task_expiry_map_[item1.second.expiry().seconds()].push_back(&item1.second);
+    }
+  }
+  // OrderedIndex(sort): Goal<ID>
+  for (auto&& item : ordered_index_task_map_) {
+    std::sort(item.second.begin(), item.second.end(),
+              [](const protoconf::TaskConf::Task* a, const protoconf::TaskConf::Task* b) {
+                return a->id() < b->id();
+              });
+  }
   return true;
 }
 
@@ -344,6 +364,13 @@ const protoconf::TaskConf::Task* TaskConf::FindFirstTask(int64_t activity_id) co
   }
   return (*conf)[0];
 }
+
+
+// OrderedIndex: Goal<ID>
+const TaskConf::OrderedIndex_TaskMap& TaskConf::FindTaskMap() const { return ordered_index_task_map_ ;}
+
+// OrderedIndex: Expiry@TaskExpiry
+const TaskConf::OrderedIndex_TaskExpiryMap& TaskConf::FindTaskExpiryMap() const { return ordered_index_task_expiry_map_ ;}
 
 
 }  // namespace tableau

@@ -71,7 +71,7 @@ func genIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor 
 		if !levelMessage.NextLevel.NeedGen() {
 			break
 		}
-		g.P("for _, ", itemName, " := range "+parentDataName+".Get"+helper.ParseIndexFieldName(gen, levelMessage.FD)+"() {")
+		g.P("for _, ", itemName, " := range ", parentDataName, ".Get", helper.ParseIndexFieldName(gen, levelMessage.FD), "() {")
 		parentDataName = itemName
 		depth++
 	}
@@ -95,7 +95,7 @@ func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth in
 			for _, leveledFd := range field.LeveledFDList {
 				fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
 			}
-			g.P("for _, ", itemName, " := range "+parentDataName+fieldName+" {")
+			g.P("for _, ", itemName, " := range ", parentDataName, fieldName, " {")
 			g.P("key := ", itemName)
 			g.P("x.", indexContainerName, "[key] = append(x.", indexContainerName, "[key], ", parentDataName, ")")
 			g.P("}")
@@ -104,7 +104,7 @@ func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth in
 			for _, leveledFd := range field.LeveledFDList {
 				fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
 			}
-			g.P("key := ", parentDataName+fieldName)
+			g.P("key := ", parentDataName, fieldName)
 			g.P("x.", indexContainerName, "[key] = append(x.", indexContainerName, "[key], ", parentDataName, ")")
 		}
 	} else {
@@ -166,7 +166,7 @@ func generateOneMulticolumnIndex(gen *protogen.Plugin, g *protogen.GeneratedFile
 		for _, leveledFd := range field.LeveledFDList {
 			fieldName += ".Get" + helper.ParseIndexFieldName(gen, leveledFd) + "()"
 		}
-		g.P("for _, " + itemName + " := range " + parentDataName + fieldName + " {")
+		g.P("for _, ", itemName, " := range ", parentDataName, fieldName, " {")
 		keys = append(keys, itemName)
 		keys = generateOneMulticolumnIndex(gen, g, depth+1, index, parentDataName, messagerName, keys)
 		g.P("}")

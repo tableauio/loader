@@ -88,6 +88,61 @@ func ParseCppType(fd protoreflect.FieldDescriptor) string {
 	}
 }
 
+// ParseMapKeyType converts a FieldDescriptor to its map key type.
+// fd must be an comparable type.
+func ParseMapKeyType(fd protoreflect.FieldDescriptor) string {
+	switch fd.Kind() {
+	case protoreflect.BoolKind:
+		return "bool"
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind, protoreflect.EnumKind:
+		return "int32_t"
+	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
+		return "uint32_t"
+	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
+		return "int64_t"
+	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		return "uint64_t"
+	case protoreflect.FloatKind:
+		return "float"
+	case protoreflect.DoubleKind:
+		return "double"
+	case protoreflect.StringKind:
+		return "std::string"
+	default:
+		panic(fmt.Sprintf("unsupported kind: %d", fd.Kind()))
+	}
+}
+
+// ParseOrderedMapKeyType converts a FieldDescriptor to its treemap key type.
+// fd must be an ordered type, or a message which can be converted to an ordered type.
+func ParseOrderedMapKeyType(fd protoreflect.FieldDescriptor) string {
+	switch fd.Kind() {
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind, protoreflect.EnumKind:
+		return "int32_t"
+	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
+		return "uint32_t"
+	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
+		return "int64_t"
+	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		return "uint64_t"
+	case protoreflect.FloatKind:
+		return "float"
+	case protoreflect.DoubleKind:
+		return "double"
+	case protoreflect.StringKind:
+		return "std::string"
+	case protoreflect.MessageKind:
+		switch fd.Message().FullName() {
+		case "google.protobuf.Timestamp", "google.protobuf.Duration":
+			return "int64_t"
+		default:
+		}
+		fallthrough
+	default:
+		panic(fmt.Sprintf("unsupported kind: %d", fd.Kind()))
+	}
+}
+
 func ToConstRefType(cpptype string) string {
 	if cpptype == "std::string" {
 		return "const std::string&"
@@ -125,7 +180,7 @@ func AddMapKey(fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
 			}
 		}
 	}
-	keys = append(keys, MapKey{ParseCppType(fd.MapKey()), name})
+	keys = append(keys, MapKey{ParseMapKeyType(fd.MapKey()), name})
 	return keys
 }
 

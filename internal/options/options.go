@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	optionOrderedMap = "OrderedMap"
-	optionIndex      = "Index"
+	optionOrderedMap   = "OrderedMap"
+	optionIndex        = "Index"
+	optionOrderedIndex = "OrderedIndex"
 )
 
 type Language = string
@@ -47,6 +48,22 @@ func NeedGenIndex(md protoreflect.MessageDescriptor, lang Language) bool {
 		return false
 	}
 	if languages, ok := wsOpts.GetLangOptions()[optionIndex]; ok {
+		if !slices.Contains(strings.Split(languages, " "), lang) {
+			// Do not generate index for curr language
+			return false
+		}
+	}
+	return true
+}
+
+func NeedGenOrderedIndex(md protoreflect.MessageDescriptor, lang Language) bool {
+	opts := md.Options().(*descriptorpb.MessageOptions)
+	wsOpts := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
+	if len(wsOpts.GetOrderedIndex()) == 0 {
+		// No index.
+		return false
+	}
+	if languages, ok := wsOpts.GetLangOptions()[optionOrderedIndex]; ok {
 		if !slices.Contains(strings.Split(languages, " "), lang) {
 			// Do not generate index for curr language
 			return false

@@ -73,6 +73,61 @@ func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) any {
 	}
 }
 
+// ParseMapKeyType converts a FieldDescriptor to its map key type.
+// fd must be an comparable type.
+func ParseMapKeyType(fd protoreflect.FieldDescriptor) string {
+	switch fd.Kind() {
+	case protoreflect.BoolKind:
+		return "bool"
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind, protoreflect.EnumKind:
+		return "int32"
+	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
+		return "uint32"
+	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
+		return "int64"
+	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		return "uint64"
+	case protoreflect.FloatKind:
+		return "float"
+	case protoreflect.DoubleKind:
+		return "double"
+	case protoreflect.StringKind:
+		return "string"
+	default:
+		panic(fmt.Sprintf("unsupported kind: %d", fd.Kind()))
+	}
+}
+
+// ParseOrderedMapKeyType converts a FieldDescriptor to its treemap key type.
+// fd must be an ordered type, or a message which can be converted to an ordered type.
+func ParseOrderedMapKeyType(fd protoreflect.FieldDescriptor) string {
+	switch fd.Kind() {
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind, protoreflect.EnumKind:
+		return "int32"
+	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
+		return "uint32"
+	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
+		return "int64"
+	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		return "uint64"
+	case protoreflect.FloatKind:
+		return "float"
+	case protoreflect.DoubleKind:
+		return "double"
+	case protoreflect.StringKind:
+		return "string"
+	case protoreflect.MessageKind:
+		switch fd.Message().FullName() {
+		case "google.protobuf.Timestamp", "google.protobuf.Duration":
+			return "int64"
+		default:
+		}
+		fallthrough
+	default:
+		panic(fmt.Sprintf("unsupported kind: %d", fd.Kind()))
+	}
+}
+
 func FindMessage(gen *protogen.Plugin, md protoreflect.MessageDescriptor) *protogen.Message {
 	if file, ok := gen.FilesByPath[md.ParentFile().Path()]; ok {
 		return FindMessageByDescriptor(file.Messages, md)
@@ -191,7 +246,7 @@ func AddMapKey(gen *protogen.Plugin, fd protoreflect.FieldDescriptor, keys []Map
 			}
 		}
 	}
-	keys = append(keys, MapKey{ParseGoType(gen, fd.MapKey()).(string), name})
+	keys = append(keys, MapKey{ParseMapKeyType(fd.MapKey()), name})
 	return keys
 }
 
