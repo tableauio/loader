@@ -2,10 +2,6 @@
 // versions:
 // - protoc-gen-csharp-tableau-loader v0.1.0
 // - protoc                           v3.19.3
-using System;
-using System.Collections.Generic;
-using Google.Protobuf;
-using System.IO;
 
 namespace Tableau
 {
@@ -19,6 +15,7 @@ namespace Tableau
     public class LoadOptions
     {
         public bool IgnoreUnknownFields { get; set; } = false;
+        public Func<string, byte[]> ReadFunc { get; set; } = File.ReadAllBytes;
     }
 
     public interface IMessagerName
@@ -33,7 +30,7 @@ namespace Tableau
             public TimeSpan Duration;
         }
 
-        protected Stats LoadStats = new Stats();
+        protected Stats LoadStats = new();
 
         public ref Stats GetStats() => ref LoadStats;
 
@@ -43,26 +40,26 @@ namespace Tableau
 
         public virtual bool ProcessAfterLoadAll(in Hub hub) => true;
 
-        internal bool LoadMessageByPath<T>(out T msg, string dir, Format fmt, in LoadOptions? options = null) where T : IMessage<T>, new()
+        internal static bool LoadMessageByPath<T>(out T msg, string dir, Format fmt, in LoadOptions? options = null) where T : Google.Protobuf.IMessage<T>, new()
         {
             msg = new T();
             string name = msg.Descriptor.Name;
             string path = Path.Combine(dir, name + Format2Ext(fmt));
             try
             {
+                var readFunc = options is null ? File.ReadAllBytes : options.ReadFunc;
+                byte[] content = readFunc(path);
                 switch (fmt)
                 {
                     case Format.JSON:
                         {
-                            string content = File.ReadAllText(path);
-                            var parser = options is null ? JsonParser.Default : new JsonParser(JsonParser.Settings.Default.WithIgnoreUnknownFields(options.IgnoreUnknownFields));
-                            msg = parser.Parse<T>(content);
+                            var parser = options is null ? Google.Protobuf.JsonParser.Default : new Google.Protobuf.JsonParser(Google.Protobuf.JsonParser.Settings.Default.WithIgnoreUnknownFields(options.IgnoreUnknownFields));
+                            msg = parser.Parse<T>(System.Text.Encoding.UTF8.GetString(content));
                             break;
                         }
                     case Format.Bin:
                         {
-                            byte[] content = File.ReadAllBytes(path);
-                            var parser = new MessageParser<T>(() => new T());
+                            var parser = new Google.Protobuf.MessageParser<T>(() => new T());
                             msg = parser.ParseFrom(content);
                             break;
                         }
@@ -77,14 +74,14 @@ namespace Tableau
             return true;
         }
 
-        internal string Format2Ext(Format fmt)
+        internal static string Format2Ext(Format fmt)
         {
-            switch (fmt)
+            return fmt switch
             {
-                case Format.JSON: return ".json";
-                case Format.Bin: return ".bin";
-                default: return ".unknown";
-            }
+                Format.JSON => ".json",
+                Format.Bin => ".bin",
+                _ => ".unknown",
+            };
         }
     }
 
@@ -105,7 +102,7 @@ namespace Tableau
 
         public MessagerContainer(in Dictionary<string, Messager>? messagerMap = null)
         {
-            MessagerMap = messagerMap ?? new Dictionary<string, Messager>();
+            MessagerMap = messagerMap ?? [];
             LastLoadedTime = DateTime.Now;
             if (messagerMap != null)
             {
@@ -130,12 +127,10 @@ namespace Tableau
         public Func<string, bool>? Filter { get; set; }
     }
 
-    public class Hub
+    public class Hub(HubOptions? options = null)
     {
-        private MessagerContainer MessagerContainer = new MessagerContainer();
-        private readonly HubOptions Options;
-
-        public Hub(HubOptions? options = null) => Options = options ?? new HubOptions();
+        private MessagerContainer MessagerContainer = new();
+        private readonly HubOptions Options = options ?? new HubOptions();
 
         public bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
@@ -204,22 +199,22 @@ namespace Tableau
 
     public class Registry
     {
-        internal static readonly Dictionary<string, Func<Messager>> Registrar = new Dictionary<string, Func<Messager>>();
+        internal static readonly Dictionary<string, Func<Messager>> Registrar = [];
 
         public static void Register<T>() where T : Messager, IMessagerName, new() => Registrar[T.Name()] = () => new T();
 
         public static void Init()
         {
-            Register<Tableau.HeroConf>();
-            Register<Tableau.HeroBaseConf>();
-            Register<Tableau.ItemConf>();
-            Register<Tableau.PatchReplaceConf>();
-            Register<Tableau.PatchMergeConf>();
-            Register<Tableau.RecursivePatchConf>();
-            Register<Tableau.ActivityConf>();
-            Register<Tableau.ChapterConf>();
-            Register<Tableau.ThemeConf>();
-            Register<Tableau.TaskConf>();
+            Register<HeroConf>();
+            Register<HeroBaseConf>();
+            Register<ItemConf>();
+            Register<PatchReplaceConf>();
+            Register<PatchMergeConf>();
+            Register<RecursivePatchConf>();
+            Register<ActivityConf>();
+            Register<ChapterConf>();
+            Register<ThemeConf>();
+            Register<TaskConf>();
         }
     }
 }

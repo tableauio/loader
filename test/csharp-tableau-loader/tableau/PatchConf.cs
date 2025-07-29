@@ -3,16 +3,12 @@
 // - protoc-gen-csharp-tableau-loader v0.1.0
 // - protoc                           v3.19.3
 // source: patch_conf.proto
-using System;
-using System.Collections.Generic;
-using Google.Protobuf;
-using Google.Protobuf.Collections;
 
 namespace Tableau
 {
     public class PatchReplaceConf : Messager, IMessagerName
     {
-        private Protoconf.PatchReplaceConf Data_ = new Protoconf.PatchReplaceConf();
+        private Protoconf.PatchReplaceConf Data_ = new();
 
         public static string Name() => Protoconf.PatchReplaceConf.Descriptor.Name;
 
@@ -21,7 +17,7 @@ namespace Tableau
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.PatchReplaceConf>(out var msg, dir, fmt, options);
             Data_ = msg;
-            bool ok = loaded ? ProcessAfterLoad() : false;
+            bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
         }
@@ -31,7 +27,7 @@ namespace Tableau
 
     public class PatchMergeConf : Messager, IMessagerName
     {
-        private Protoconf.PatchMergeConf Data_ = new Protoconf.PatchMergeConf();
+        private Protoconf.PatchMergeConf Data_ = new();
 
         public static string Name() => Protoconf.PatchMergeConf.Descriptor.Name;
 
@@ -40,7 +36,7 @@ namespace Tableau
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.PatchMergeConf>(out var msg, dir, fmt, options);
             Data_ = msg;
-            bool ok = loaded ? ProcessAfterLoad() : false;
+            bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
         }
@@ -52,7 +48,7 @@ namespace Tableau
 
     public class RecursivePatchConf : Messager, IMessagerName
     {
-        private Protoconf.RecursivePatchConf Data_ = new Protoconf.RecursivePatchConf();
+        private Protoconf.RecursivePatchConf Data_ = new();
 
         public static string Name() => Protoconf.RecursivePatchConf.Descriptor.Name;
 
@@ -61,7 +57,7 @@ namespace Tableau
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.RecursivePatchConf>(out var msg, dir, fmt, options);
             Data_ = msg;
-            bool ok = loaded ? ProcessAfterLoad() : false;
+            bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
         }

@@ -3,10 +3,6 @@
 // - protoc-gen-csharp-tableau-loader v0.1.0
 // - protoc                           v3.19.3
 // source: hero_conf.proto
-using System;
-using System.Collections.Generic;
-using Google.Protobuf;
-using Google.Protobuf.Collections;
 
 namespace Tableau
 {
@@ -15,15 +11,12 @@ namespace Tableau
         // OrderedMap types.
         public class Hero_Attr_OrderedMap : SortedDictionary<string, Protoconf.HeroConf.Types.Hero.Types.Attr> { }
 
-        public class Hero_OrderedMapValue : Tuple<Hero_Attr_OrderedMap, Protoconf.HeroConf.Types.Hero?>
-        {
-            public Hero_OrderedMapValue(Hero_Attr_OrderedMap item1, Protoconf.HeroConf.Types.Hero? item2) : base(item1, item2) { }
-        }
+        public class Hero_OrderedMapValue(Hero_Attr_OrderedMap item1, Protoconf.HeroConf.Types.Hero? item2) : Tuple<Hero_Attr_OrderedMap, Protoconf.HeroConf.Types.Hero?>(item1, item2) { }
         public class Hero_OrderedMap : SortedDictionary<string, Hero_OrderedMapValue> { }
 
-        private Hero_OrderedMap OrderedMap = new Hero_OrderedMap();
+        private readonly Hero_OrderedMap OrderedMap = [];
 
-        private Protoconf.HeroConf Data_ = new Protoconf.HeroConf();
+        private Protoconf.HeroConf Data_ = new();
 
         public static string Name() => Protoconf.HeroConf.Descriptor.Name;
 
@@ -32,7 +25,7 @@ namespace Tableau
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.HeroConf>(out var msg, dir, fmt, options);
             Data_ = msg;
-            bool ok = loaded ? ProcessAfterLoad() : false;
+            bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
         }
@@ -67,7 +60,7 @@ namespace Tableau
 
     public class HeroBaseConf : Messager, IMessagerName
     {
-        private Protoconf.HeroBaseConf Data_ = new Protoconf.HeroBaseConf();
+        private Protoconf.HeroBaseConf Data_ = new();
 
         public static string Name() => Protoconf.HeroBaseConf.Descriptor.Name;
 
@@ -76,7 +69,7 @@ namespace Tableau
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.HeroBaseConf>(out var msg, dir, fmt, options);
             Data_ = msg;
-            bool ok = loaded ? ProcessAfterLoad() : false;
+            bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
         }

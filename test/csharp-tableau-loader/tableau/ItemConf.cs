@@ -3,10 +3,6 @@
 // - protoc-gen-csharp-tableau-loader v0.1.0
 // - protoc                           v3.19.3
 // source: item_conf.proto
-using System;
-using System.Collections.Generic;
-using Google.Protobuf;
-using Google.Protobuf.Collections;
 
 namespace Tableau
 {
@@ -15,88 +11,74 @@ namespace Tableau
         // OrderedMap types.
         public class Item_OrderedMap : SortedDictionary<uint, Protoconf.ItemConf.Types.Item> { }
 
-        private Item_OrderedMap OrderedMap = new Item_OrderedMap();
+        private readonly Item_OrderedMap OrderedMap = [];
 
         // Index types.
         // Index: Type
         public class Index_ItemMap : Dictionary<Protoconf.FruitType, List<Protoconf.ItemConf.Types.Item>> { }
 
-        private Index_ItemMap IndexItemMap = new Index_ItemMap();
+        private readonly Index_ItemMap IndexItemMap = [];
 
         // Index: Param<ID>@ItemInfo
         public class Index_ItemInfoMap : Dictionary<int, List<Protoconf.ItemConf.Types.Item>> { }
 
-        private Index_ItemInfoMap IndexItemInfoMap = new Index_ItemInfoMap();
+        private readonly Index_ItemInfoMap IndexItemInfoMap = [];
 
         // Index: Default@ItemDefaultInfo
         public class Index_ItemDefaultInfoMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>> { }
 
-        private Index_ItemDefaultInfoMap IndexItemDefaultInfoMap = new Index_ItemDefaultInfoMap();
+        private readonly Index_ItemDefaultInfoMap IndexItemDefaultInfoMap = [];
 
         // Index: ExtType@ItemExtInfo
         public class Index_ItemExtInfoMap : Dictionary<Protoconf.FruitType, List<Protoconf.ItemConf.Types.Item>> { }
 
-        private Index_ItemExtInfoMap IndexItemExtInfoMap = new Index_ItemExtInfoMap();
+        private readonly Index_ItemExtInfoMap IndexItemExtInfoMap = [];
 
         // Index: (ID,Name)<Type,UseEffectType>@AwardItem
-        public struct ItemConf_Index_AwardItemKey
+        public struct ItemConf_Index_AwardItemKey(uint id, string name)
         {
-            public uint Id;
-            public string Name;
-
-            public ItemConf_Index_AwardItemKey(uint id, string name)
-            {
-                Id = id;
-                Name = name;
-            }
+            public uint Id = id;
+            public string Name = name;
         }
 
         public class Index_AwardItemMap : Dictionary<ItemConf_Index_AwardItemKey, List<Protoconf.ItemConf.Types.Item>> { }
 
-        private Index_AwardItemMap IndexAwardItemMap = new Index_AwardItemMap();
+        private readonly Index_AwardItemMap IndexAwardItemMap = [];
 
         // Index: (ID,Type,Param,ExtType)@SpecialItem
-        public struct ItemConf_Index_SpecialItemKey
+        public struct ItemConf_Index_SpecialItemKey(uint id, Protoconf.FruitType type, int param, Protoconf.FruitType extType)
         {
-            public uint Id;
-            public Protoconf.FruitType Type;
-            public int Param;
-            public Protoconf.FruitType ExtType;
-
-            public ItemConf_Index_SpecialItemKey(uint id, Protoconf.FruitType type, int param, Protoconf.FruitType extType)
-            {
-                Id = id;
-                Type = type;
-                Param = param;
-                ExtType = extType;
-            }
+            public uint Id = id;
+            public Protoconf.FruitType Type = type;
+            public int Param = param;
+            public Protoconf.FruitType ExtType = extType;
         }
 
         public class Index_SpecialItemMap : Dictionary<ItemConf_Index_SpecialItemKey, List<Protoconf.ItemConf.Types.Item>> { }
 
-        private Index_SpecialItemMap IndexSpecialItemMap = new Index_SpecialItemMap();
+        private readonly Index_SpecialItemMap IndexSpecialItemMap = [];
 
         // Index: PathDir@ItemPathDir
         public class Index_ItemPathDirMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>> { }
 
-        private Index_ItemPathDirMap IndexItemPathDirMap = new Index_ItemPathDirMap();
+        private readonly Index_ItemPathDirMap IndexItemPathDirMap = [];
 
         // Index: PathName@ItemPathName
         public class Index_ItemPathNameMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>> { }
 
-        private Index_ItemPathNameMap IndexItemPathNameMap = new Index_ItemPathNameMap();
+        private readonly Index_ItemPathNameMap IndexItemPathNameMap = [];
 
         // Index: PathFriendID@ItemPathFriendID
         public class Index_ItemPathFriendIDMap : Dictionary<uint, List<Protoconf.ItemConf.Types.Item>> { }
 
-        private Index_ItemPathFriendIDMap IndexItemPathFriendIdMap = new Index_ItemPathFriendIDMap();
+        private readonly Index_ItemPathFriendIDMap IndexItemPathFriendIdMap = [];
 
         // Index: UseEffectType@UseEffectType
         public class Index_UseEffectTypeMap : Dictionary<Protoconf.UseEffect.Types.Type, List<Protoconf.ItemConf.Types.Item>> { }
 
-        private Index_UseEffectTypeMap IndexUseEffectTypeMap = new Index_UseEffectTypeMap();
+        private readonly Index_UseEffectTypeMap IndexUseEffectTypeMap = [];
 
-        private Protoconf.ItemConf Data_ = new Protoconf.ItemConf();
+        private Protoconf.ItemConf Data_ = new();
 
         public static string Name() => Protoconf.ItemConf.Descriptor.Name;
 
@@ -105,7 +87,7 @@ namespace Tableau
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.ItemConf>(out var msg, dir, fmt, options);
             Data_ = msg;
-            bool ok = loaded ? ProcessAfterLoad() : false;
+            bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
         }
@@ -137,7 +119,7 @@ namespace Tableau
                     // Index: Type
                     var key = item1.Value.Type;
                     var list = IndexItemMap.TryGetValue(key, out var existingList) ?
-                    existingList : IndexItemMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                    existingList : IndexItemMap[key] = [];
                     list.Add(item1.Value);
                 }
                 {
@@ -146,7 +128,7 @@ namespace Tableau
                     {
                         var key = item2;
                         var list = IndexItemInfoMap.TryGetValue(key, out var existingList) ?
-                        existingList : IndexItemInfoMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                        existingList : IndexItemInfoMap[key] = [];
                         list.Add(item1.Value);
                     }
                 }
@@ -154,7 +136,7 @@ namespace Tableau
                     // Index: Default@ItemDefaultInfo
                     var key = item1.Value.Default;
                     var list = IndexItemDefaultInfoMap.TryGetValue(key, out var existingList) ?
-                    existingList : IndexItemDefaultInfoMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                    existingList : IndexItemDefaultInfoMap[key] = [];
                     list.Add(item1.Value);
                 }
                 {
@@ -163,7 +145,7 @@ namespace Tableau
                     {
                         var key = item2;
                         var list = IndexItemExtInfoMap.TryGetValue(key, out var existingList) ?
-                        existingList : IndexItemExtInfoMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                        existingList : IndexItemExtInfoMap[key] = [];
                         list.Add(item1.Value);
                     }
                 }
@@ -171,7 +153,7 @@ namespace Tableau
                     // Index: (ID,Name)<Type,UseEffectType>@AwardItem
                     var key = new ItemConf_Index_AwardItemKey(item1.Value.Id, item1.Value.Name);
                     var list = IndexAwardItemMap.TryGetValue(key, out var existingList) ?
-                    existingList : IndexAwardItemMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                    existingList : IndexAwardItemMap[key] = [];
                     list.Add(item1.Value);
                 }
                 {
@@ -182,7 +164,7 @@ namespace Tableau
                         {
                             var key = new ItemConf_Index_SpecialItemKey(item1.Value.Id, item1.Value.Type, indexItem2, indexItem3);
                             var list = IndexSpecialItemMap.TryGetValue(key, out var existingList) ?
-                            existingList : IndexSpecialItemMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                            existingList : IndexSpecialItemMap[key] = [];
                             list.Add(item1.Value);
                         }
                     }
@@ -191,7 +173,7 @@ namespace Tableau
                     // Index: PathDir@ItemPathDir
                     var key = item1.Value.Path?.Dir ?? "";
                     var list = IndexItemPathDirMap.TryGetValue(key, out var existingList) ?
-                    existingList : IndexItemPathDirMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                    existingList : IndexItemPathDirMap[key] = [];
                     list.Add(item1.Value);
                 }
                 {
@@ -200,7 +182,7 @@ namespace Tableau
                     {
                         var key = item2;
                         var list = IndexItemPathNameMap.TryGetValue(key, out var existingList) ?
-                        existingList : IndexItemPathNameMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                        existingList : IndexItemPathNameMap[key] = [];
                         list.Add(item1.Value);
                     }
                 }
@@ -208,14 +190,14 @@ namespace Tableau
                     // Index: PathFriendID@ItemPathFriendID
                     var key = item1.Value.Path?.Friend?.Id ?? 0;
                     var list = IndexItemPathFriendIdMap.TryGetValue(key, out var existingList) ?
-                    existingList : IndexItemPathFriendIdMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                    existingList : IndexItemPathFriendIdMap[key] = [];
                     list.Add(item1.Value);
                 }
                 {
                     // Index: UseEffectType@UseEffectType
                     var key = item1.Value.UseEffect?.Type ?? 0;
                     var list = IndexUseEffectTypeMap.TryGetValue(key, out var existingList) ?
-                    existingList : IndexUseEffectTypeMap[key] = new List<Protoconf.ItemConf.Types.Item>();
+                    existingList : IndexUseEffectTypeMap[key] = [];
                     list.Add(item1.Value);
                 }
             }

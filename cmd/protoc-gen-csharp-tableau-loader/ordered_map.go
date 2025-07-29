@@ -7,6 +7,8 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-csharp-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/options"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -40,10 +42,7 @@ func genOrderedMapTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md pr
 				currValueType := helper.ParseCsharpType(fd.MapValue())
 				nextPrefix := parseOrderedMapPrefix(nextMapFD, messagerFullName)
 				nextOrderedMap := nextPrefix + orderedMapSuffix
-				g.P(helper.Indent(2), "public class ", orderedMapValue, " : Tuple<", nextOrderedMap, ", ", currValueType, "?>")
-				g.P(helper.Indent(2), "{")
-				g.P(helper.Indent(3), "public ", orderedMapValue, "(", nextOrderedMap, " item1, ", currValueType, "? item2) : base(item1, item2) { }")
-				g.P(helper.Indent(2), "}")
+				g.P(helper.Indent(2), "public class ", orderedMapValue, "(", nextOrderedMap, " item1, ", currValueType, "? item2) : Tuple<", nextOrderedMap, ", ", currValueType, "?>(item1, item2) { }")
 				g.P(helper.Indent(2), "public class ", orderedMap, " : SortedDictionary<", keyType, ", ", orderedMapValue, "> { }")
 				g.P()
 			} else {
@@ -51,7 +50,7 @@ func genOrderedMapTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md pr
 				g.P()
 			}
 			if depth == 1 {
-				g.P(helper.Indent(2), "private ", orderedMap, " OrderedMap = new ", orderedMap, "();")
+				g.P(helper.Indent(2), "private readonly ", orderedMap, " OrderedMap = [];")
 				g.P()
 			}
 			break
@@ -150,10 +149,12 @@ func genOrderedMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md pr
 	}
 }
 
+var caser = cases.Title(language.Und, cases.NoLower)
+
 func parseOrderedMapPrefix(mapFd protoreflect.FieldDescriptor, messagerFullName string) string {
 	if mapFd.MapValue().Kind() == protoreflect.MessageKind {
 		localMsgProtoName := strings.TrimPrefix(string(mapFd.MapValue().Message().FullName()), messagerFullName+".")
-		return strings.ReplaceAll(localMsgProtoName, ".", "_")
+		return caser.String(strings.ReplaceAll(localMsgProtoName, ".", "_"))
 	}
-	return mapFd.MapValue().Kind().String()
+	return caser.String(mapFd.MapValue().Kind().String())
 }
