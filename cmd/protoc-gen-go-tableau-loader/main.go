@@ -17,7 +17,7 @@ func main() {
 	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
 	if *showVersion {
-		fmt.Printf("protoc-gen-cpp-tableau-loader %v\n", version)
+		fmt.Printf("protoc-gen-go-tableau-loader %v\n", version)
 		return
 	}
 
