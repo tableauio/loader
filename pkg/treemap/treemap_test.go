@@ -306,7 +306,7 @@ func TestMapLowerBound(t *testing.T) {
 	}
 }
 
-func TestMapFoorOrMin(t *testing.T) {
+func TestMapFloorOrMin(t *testing.T) {
 	m := New[int, string]()
 	m.Put(1, "a")
 	m.Put(3, "c")
@@ -326,7 +326,7 @@ func TestMapFoorOrMin(t *testing.T) {
 
 	for _, test := range tests1 {
 		// retrievals
-		actualKey, actualValue, ok := m.FoorOrMin(test.boundKey)
+		actualKey, actualValue, ok := m.FloorOrMin(test.boundKey)
 		if actualKey != test.Key || actualValue != test.Value || ok != test.Exist {
 			t.Errorf("Got %v, %v, %v, expected %v, %v, %v", actualKey, actualValue, ok, test.Key, test.Value, test.Exist)
 		}

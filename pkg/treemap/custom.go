@@ -49,14 +49,14 @@ func (m *TreeMap[K, V]) LowerBound(key K) *TreeMapIterator[K, V] {
 	return &TreeMapIterator[K, V]{iter}
 }
 
-// FoorOrMin finds the floor key-value pair for the input key.
+// FloorOrMin finds the floor key-value pair for the input key.
 // If no floor is found, returns the key-value pair for the least key.
 // In case that map is empty, then both returned values will be corresponding type's empty value.
 //
 // Floor key is defined as the greatest key that is less than or equal to the given key.
 // A floor key may not be found, either because the map is empty, or because
 // all keys in the map are greater than the given key.
-func (m *TreeMap[K, V]) FoorOrMin(key K) (foundKey K, foundValue V, ok bool) {
+func (m *TreeMap[K, V]) FloorOrMin(key K) (foundKey K, foundValue V, ok bool) {
 	node, found := m.tree.Floor(key)
 	if found {
 		return node.Key, node.Value, true
