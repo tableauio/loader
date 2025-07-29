@@ -1,8 +1,6 @@
 module github.com/tableauio/loader
 
-go 1.23.0
-
-toolchain go1.24.5
+go 1.20
 
 require (
 	github.com/iancoleman/strcase v0.3.0
@@ -10,7 +8,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tableauio/tableau v0.13.1-0.20250723123833-903afc285038
-	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792
+	golang.org/x/exp v0.0.0-20230418202329-0354be287a23
 	google.golang.org/protobuf v1.34.2
 )
 
