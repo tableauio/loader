@@ -66,7 +66,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	if options.NeedGenIndex(message.Desc, options.LangCS) {
 		genIndexTypeDef(gen, g, indexDescriptor, messagerName)
 	}
-	g.P(helper.Indent(2), "private Protoconf.", messagerName, " Data_ = new Protoconf.", messagerName, "();")
+	g.P(helper.Indent(2), "private Protoconf.", messagerName, " Data_ = new();")
 	g.P()
 	g.P(helper.Indent(2), "public static string Name() => Protoconf.", messagerName, ".Descriptor.Name;")
 	g.P()
@@ -75,7 +75,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P(helper.Indent(3), "var start = DateTime.Now;")
 	g.P(helper.Indent(3), "bool loaded = LoadMessageByPath<Protoconf.", messagerName, ">(out var msg, dir, fmt, options);")
 	g.P(helper.Indent(3), "Data_ = msg;")
-	g.P(helper.Indent(3), "bool ok = loaded ? ProcessAfterLoad() : false;")
+	g.P(helper.Indent(3), "bool ok = loaded && ProcessAfterLoad();")
 	g.P(helper.Indent(3), "LoadStats.Duration = DateTime.Now - start;")
 	g.P(helper.Indent(3), "return ok;")
 	g.P(helper.Indent(2), "}")
@@ -151,11 +151,7 @@ func parseMapValueType(fd protoreflect.FieldDescriptor) string {
 	return helper.ParseCsharpType(fd.MapValue())
 }
 
-const staticMessagerContent1 = `using System;
-using System.Collections.Generic;
-using Google.Protobuf;
-using Google.Protobuf.Collections;
-
+const staticMessagerContent1 = `
 namespace Tableau
 {`
 

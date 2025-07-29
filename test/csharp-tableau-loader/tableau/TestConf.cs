@@ -3,60 +3,47 @@
 // - protoc-gen-csharp-tableau-loader v0.1.0
 // - protoc                           v3.19.3
 // source: test_conf.proto
-using System;
-using System.Collections.Generic;
-using Google.Protobuf;
-using Google.Protobuf.Collections;
 
 namespace Tableau
 {
     public class ActivityConf : Messager, IMessagerName
     {
         // OrderedMap types.
-        public class int32_OrderedMap : SortedDictionary<uint, int> { }
+        public class Int32_OrderedMap : SortedDictionary<uint, int> { }
 
-        public class protoconf_Section_OrderedMapValue : Tuple<int32_OrderedMap, Protoconf.Section?>
-        {
-            public protoconf_Section_OrderedMapValue(int32_OrderedMap item1, Protoconf.Section? item2) : base(item1, item2) { }
-        }
-        public class protoconf_Section_OrderedMap : SortedDictionary<uint, protoconf_Section_OrderedMapValue> { }
+        public class Protoconf_Section_OrderedMapValue(Int32_OrderedMap item1, Protoconf.Section? item2) : Tuple<Int32_OrderedMap, Protoconf.Section?>(item1, item2) { }
+        public class Protoconf_Section_OrderedMap : SortedDictionary<uint, Protoconf_Section_OrderedMapValue> { }
 
-        public class Activity_Chapter_OrderedMapValue : Tuple<protoconf_Section_OrderedMap, Protoconf.ActivityConf.Types.Activity.Types.Chapter?>
-        {
-            public Activity_Chapter_OrderedMapValue(protoconf_Section_OrderedMap item1, Protoconf.ActivityConf.Types.Activity.Types.Chapter? item2) : base(item1, item2) { }
-        }
+        public class Activity_Chapter_OrderedMapValue(Protoconf_Section_OrderedMap item1, Protoconf.ActivityConf.Types.Activity.Types.Chapter? item2) : Tuple<Protoconf_Section_OrderedMap, Protoconf.ActivityConf.Types.Activity.Types.Chapter?>(item1, item2) { }
         public class Activity_Chapter_OrderedMap : SortedDictionary<uint, Activity_Chapter_OrderedMapValue> { }
 
-        public class Activity_OrderedMapValue : Tuple<Activity_Chapter_OrderedMap, Protoconf.ActivityConf.Types.Activity?>
-        {
-            public Activity_OrderedMapValue(Activity_Chapter_OrderedMap item1, Protoconf.ActivityConf.Types.Activity? item2) : base(item1, item2) { }
-        }
+        public class Activity_OrderedMapValue(Activity_Chapter_OrderedMap item1, Protoconf.ActivityConf.Types.Activity? item2) : Tuple<Activity_Chapter_OrderedMap, Protoconf.ActivityConf.Types.Activity?>(item1, item2) { }
         public class Activity_OrderedMap : SortedDictionary<ulong, Activity_OrderedMapValue> { }
 
-        private Activity_OrderedMap OrderedMap = new Activity_OrderedMap();
+        private readonly Activity_OrderedMap OrderedMap = [];
 
         // Index types.
         // Index: ActivityName
         public class Index_ActivityMap : Dictionary<string, List<Protoconf.ActivityConf.Types.Activity>> { }
 
-        private Index_ActivityMap IndexActivityMap = new Index_ActivityMap();
+        private readonly Index_ActivityMap IndexActivityMap = [];
 
         // Index: ChapterID
         public class Index_ChapterMap : Dictionary<uint, List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>> { }
 
-        private Index_ChapterMap IndexChapterMap = new Index_ChapterMap();
+        private readonly Index_ChapterMap IndexChapterMap = [];
 
         // Index: ChapterName<AwardID>@NamedChapter
         public class Index_NamedChapterMap : Dictionary<string, List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>> { }
 
-        private Index_NamedChapterMap IndexNamedChapterMap = new Index_NamedChapterMap();
+        private readonly Index_NamedChapterMap IndexNamedChapterMap = [];
 
         // Index: SectionItemID@Award
         public class Index_AwardMap : Dictionary<uint, List<Protoconf.Section.Types.SectionItem>> { }
 
-        private Index_AwardMap IndexAwardMap = new Index_AwardMap();
+        private readonly Index_AwardMap IndexAwardMap = [];
 
-        private Protoconf.ActivityConf Data_ = new Protoconf.ActivityConf();
+        private Protoconf.ActivityConf Data_ = new();
 
         public static string Name() => Protoconf.ActivityConf.Descriptor.Name;
 
@@ -65,7 +52,7 @@ namespace Tableau
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.ActivityConf>(out var msg, dir, fmt, options);
             Data_ = msg;
-            bool ok = loaded ? ProcessAfterLoad() : false;
+            bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
         }
@@ -81,15 +68,15 @@ namespace Tableau
                 var ordered_map1 = new Activity_Chapter_OrderedMap();
                 foreach (var (key2, value2) in value1.ChapterMap)
                 {
-                    var ordered_map2 = new protoconf_Section_OrderedMap();
+                    var ordered_map2 = new Protoconf_Section_OrderedMap();
                     foreach (var (key3, value3) in value2.SectionMap)
                     {
-                        var ordered_map3 = new int32_OrderedMap();
+                        var ordered_map3 = new Int32_OrderedMap();
                         foreach (var (key4, value4) in value3.SectionRankMap)
                         {
                             ordered_map3[key4] = value4;
                         }
-                        ordered_map2[key3] = new protoconf_Section_OrderedMapValue(ordered_map3, value3);
+                        ordered_map2[key3] = new Protoconf_Section_OrderedMapValue(ordered_map3, value3);
                     }
                     ordered_map1[key2] = new Activity_Chapter_OrderedMapValue(ordered_map2, value2);
                 }
@@ -106,7 +93,7 @@ namespace Tableau
                     // Index: ActivityName
                     var key = item1.Value.ActivityName;
                     var list = IndexActivityMap.TryGetValue(key, out var existingList) ?
-                    existingList : IndexActivityMap[key] = new List<Protoconf.ActivityConf.Types.Activity>();
+                    existingList : IndexActivityMap[key] = [];
                     list.Add(item1.Value);
                 }
                 foreach (var item2 in item1.Value.ChapterMap)
@@ -115,14 +102,14 @@ namespace Tableau
                         // Index: ChapterID
                         var key = item2.Value.ChapterId;
                         var list = IndexChapterMap.TryGetValue(key, out var existingList) ?
-                        existingList : IndexChapterMap[key] = new List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>();
+                        existingList : IndexChapterMap[key] = [];
                         list.Add(item2.Value);
                     }
                     {
                         // Index: ChapterName<AwardID>@NamedChapter
                         var key = item2.Value.ChapterName;
                         var list = IndexNamedChapterMap.TryGetValue(key, out var existingList) ?
-                        existingList : IndexNamedChapterMap[key] = new List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>();
+                        existingList : IndexNamedChapterMap[key] = [];
                         list.Add(item2.Value);
                     }
                     foreach (var item3 in item2.Value.SectionMap)
@@ -133,7 +120,7 @@ namespace Tableau
                                 // Index: SectionItemID@Award
                                 var key = item4.Id;
                                 var list = IndexAwardMap.TryGetValue(key, out var existingList) ?
-                                existingList : IndexAwardMap[key] = new List<Protoconf.Section.Types.SectionItem>();
+                                existingList : IndexAwardMap[key] = [];
                                 list.Add(item4);
                             }
                         }
@@ -164,9 +151,9 @@ namespace Tableau
 
         public Activity_Chapter_OrderedMap? GetOrderedMap1(ulong activityId) => OrderedMap.TryGetValue(activityId, out var value) ? value.Item1 : null;
 
-        public protoconf_Section_OrderedMap? GetOrderedMap2(ulong activityId, uint chapterId) => GetOrderedMap1(activityId)?.TryGetValue(chapterId, out var value) == true ? value.Item1 : null;
+        public Protoconf_Section_OrderedMap? GetOrderedMap2(ulong activityId, uint chapterId) => GetOrderedMap1(activityId)?.TryGetValue(chapterId, out var value) == true ? value.Item1 : null;
 
-        public int32_OrderedMap? GetOrderedMap3(ulong activityId, uint chapterId, uint sectionId) => GetOrderedMap2(activityId, chapterId)?.TryGetValue(sectionId, out var value) == true ? value.Item1 : null;
+        public Int32_OrderedMap? GetOrderedMap3(ulong activityId, uint chapterId, uint sectionId) => GetOrderedMap2(activityId, chapterId)?.TryGetValue(sectionId, out var value) == true ? value.Item1 : null;
 
         // Index: ActivityName
         public ref readonly Index_ActivityMap GetActivityMap() => ref IndexActivityMap;
@@ -199,7 +186,7 @@ namespace Tableau
 
     public class ChapterConf : Messager, IMessagerName
     {
-        private Protoconf.ChapterConf Data_ = new Protoconf.ChapterConf();
+        private Protoconf.ChapterConf Data_ = new();
 
         public static string Name() => Protoconf.ChapterConf.Descriptor.Name;
 
@@ -208,7 +195,7 @@ namespace Tableau
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.ChapterConf>(out var msg, dir, fmt, options);
             Data_ = msg;
-            bool ok = loaded ? ProcessAfterLoad() : false;
+            bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
         }
@@ -220,7 +207,7 @@ namespace Tableau
 
     public class ThemeConf : Messager, IMessagerName
     {
-        private Protoconf.ThemeConf Data_ = new Protoconf.ThemeConf();
+        private Protoconf.ThemeConf Data_ = new();
 
         public static string Name() => Protoconf.ThemeConf.Descriptor.Name;
 
@@ -229,7 +216,7 @@ namespace Tableau
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.ThemeConf>(out var msg, dir, fmt, options);
             Data_ = msg;
-            bool ok = loaded ? ProcessAfterLoad() : false;
+            bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
         }
@@ -247,9 +234,9 @@ namespace Tableau
         // Index: ActivityID<Goal,ID>
         public class Index_TaskMap : Dictionary<long, List<Protoconf.TaskConf.Types.Task>> { }
 
-        private Index_TaskMap IndexTaskMap = new Index_TaskMap();
+        private readonly Index_TaskMap IndexTaskMap = [];
 
-        private Protoconf.TaskConf Data_ = new Protoconf.TaskConf();
+        private Protoconf.TaskConf Data_ = new();
 
         public static string Name() => Protoconf.TaskConf.Descriptor.Name;
 
@@ -258,7 +245,7 @@ namespace Tableau
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.TaskConf>(out var msg, dir, fmt, options);
             Data_ = msg;
-            bool ok = loaded ? ProcessAfterLoad() : false;
+            bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
         }
@@ -275,7 +262,7 @@ namespace Tableau
                     // Index: ActivityID<Goal,ID>
                     var key = item1.Value.ActivityId;
                     var list = IndexTaskMap.TryGetValue(key, out var existingList) ?
-                    existingList : IndexTaskMap[key] = new List<Protoconf.TaskConf.Types.Task>();
+                    existingList : IndexTaskMap[key] = [];
                     list.Add(item1.Value);
                 }
             }

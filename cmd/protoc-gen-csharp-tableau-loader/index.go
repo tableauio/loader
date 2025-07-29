@@ -26,12 +26,6 @@ func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor
 				keyType := fmt.Sprintf("%s_Index_%sKey", messagerName, index.Name())
 
 				// generate key struct
-				g.P(helper.Indent(2), "public struct ", keyType)
-				g.P(helper.Indent(2), "{")
-				for _, field := range index.ColFields {
-					g.P(helper.Indent(3), "public ", helper.ParseCsharpType(field.FD), " ", helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD), ";")
-				}
-				g.P()
 				var keyParams string
 				for i, field := range index.ColFields {
 					keyParams += helper.ParseCsharpType(field.FD) + " " + strcase.ToLowerCamel(helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD))
@@ -39,19 +33,18 @@ func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor
 						keyParams += ", "
 					}
 				}
-				g.P(helper.Indent(3), "public ", keyType, "(", keyParams, ")")
-				g.P(helper.Indent(3), "{")
+				g.P(helper.Indent(2), "public struct ", keyType, "(", keyParams, ")")
+				g.P(helper.Indent(2), "{")
 				for _, field := range index.ColFields {
-					g.P(helper.Indent(4), helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD), " = ", strcase.ToLowerCamel(helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD)), ";")
+					g.P(helper.Indent(3), "public ", helper.ParseCsharpType(field.FD), " ", helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD), " = ", strcase.ToLowerCamel(helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD)), ";")
 				}
-				g.P(helper.Indent(3), "}")
 				g.P(helper.Indent(2), "}")
 				g.P()
 				g.P(helper.Indent(2), "public class ", mapType, " : Dictionary<", keyType, ", List<", helper.ParseCsharpClassType(index.MD), ">> { }")
 			}
 			g.P()
 			indexContainerName := "Index" + strcase.ToCamel(index.Name()) + "Map"
-			g.P(helper.Indent(2), "private ", mapType, " ", indexContainerName, " = new ", mapType, "();")
+			g.P(helper.Indent(2), "private readonly ", mapType, " ", indexContainerName, " = [];")
 			g.P()
 		}
 	}
@@ -112,7 +105,7 @@ func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth in
 			g.P(helper.Indent(depth+3), "{")
 			g.P(helper.Indent(depth+4), "var key = ", itemName, ";")
 			g.P(helper.Indent(depth+4), "var list = ", indexContainerName, ".TryGetValue(key, out var existingList) ?")
-			g.P(helper.Indent(depth+4), "existingList : ", indexContainerName, "[key] = new List<", helper.ParseCsharpClassType(index.MD), ">();")
+			g.P(helper.Indent(depth+4), "existingList : ", indexContainerName, "[key] = [];")
 			g.P(helper.Indent(depth+4), "list.Add(", parentDataName, ");")
 			g.P(helper.Indent(depth+3), "}")
 		} else {
@@ -129,7 +122,7 @@ func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth in
 			}
 			g.P(helper.Indent(depth+3), "var key = ", key, ";")
 			g.P(helper.Indent(depth+3), "var list = ", indexContainerName, ".TryGetValue(key, out var existingList) ?")
-			g.P(helper.Indent(depth+3), "existingList : ", indexContainerName, "[key] = new List<", helper.ParseCsharpClassType(index.MD), ">();")
+			g.P(helper.Indent(depth+3), "existingList : ", indexContainerName, "[key] = [];")
 			g.P(helper.Indent(depth+3), "list.Add(", parentDataName, ");")
 		}
 	} else {
@@ -198,7 +191,7 @@ func generateOneMulticolumnIndex(gen *protogen.Plugin, g *protogen.GeneratedFile
 		indexContainerName := "Index" + strcase.ToCamel(index.Name()) + "Map"
 		g.P(helper.Indent(depth+3), "var key = new ", keyType, "(", keyParams, ");")
 		g.P(helper.Indent(depth+3), "var list = ", indexContainerName, ".TryGetValue(key, out var existingList) ?")
-		g.P(helper.Indent(depth+3), "existingList : ", indexContainerName, "[key] = new List<", helper.ParseCsharpClassType(index.MD), ">();")
+		g.P(helper.Indent(depth+3), "existingList : ", indexContainerName, "[key] = [];")
 		g.P(helper.Indent(depth+3), "list.Add(", parentDataName, ");")
 		return keys
 	}
