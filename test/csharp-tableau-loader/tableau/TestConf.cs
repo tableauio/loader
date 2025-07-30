@@ -13,13 +13,13 @@ namespace Tableau
         // OrderedMap types.
         public class Int32_OrderedMap : SortedDictionary<uint, int>;
 
-        public class Protoconf_Section_OrderedMapValue(Int32_OrderedMap item1, Protoconf.Section? item2) : Tuple<Int32_OrderedMap, Protoconf.Section?>(item1, item2);
+        public class Protoconf_Section_OrderedMapValue(Int32_OrderedMap item1, Protoconf.Section item2) : Tuple<Int32_OrderedMap, Protoconf.Section>(item1, item2);
         public class Protoconf_Section_OrderedMap : SortedDictionary<uint, Protoconf_Section_OrderedMapValue>;
 
-        public class Activity_Chapter_OrderedMapValue(Protoconf_Section_OrderedMap item1, Protoconf.ActivityConf.Types.Activity.Types.Chapter? item2) : Tuple<Protoconf_Section_OrderedMap, Protoconf.ActivityConf.Types.Activity.Types.Chapter?>(item1, item2);
+        public class Activity_Chapter_OrderedMapValue(Protoconf_Section_OrderedMap item1, Protoconf.ActivityConf.Types.Activity.Types.Chapter item2) : Tuple<Protoconf_Section_OrderedMap, Protoconf.ActivityConf.Types.Activity.Types.Chapter>(item1, item2);
         public class Activity_Chapter_OrderedMap : SortedDictionary<uint, Activity_Chapter_OrderedMapValue>;
 
-        public class Activity_OrderedMapValue(Activity_Chapter_OrderedMap item1, Protoconf.ActivityConf.Types.Activity? item2) : Tuple<Activity_Chapter_OrderedMap, Protoconf.ActivityConf.Types.Activity?>(item1, item2);
+        public class Activity_OrderedMapValue(Activity_Chapter_OrderedMap item1, Protoconf.ActivityConf.Types.Activity item2) : Tuple<Activity_Chapter_OrderedMap, Protoconf.ActivityConf.Types.Activity>(item1, item2);
         public class Activity_OrderedMap : SortedDictionary<ulong, Activity_OrderedMapValue>;
 
         private readonly Activity_OrderedMap _orderedMap = [];
