@@ -66,7 +66,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	if options.NeedGenIndex(message.Desc, options.LangCS) {
 		genIndexTypeDef(g, indexDescriptor, messagerName)
 	}
-	g.P(helper.Indent(2), "private Protoconf.", messagerName, " Data_ = new();")
+	g.P(helper.Indent(2), "private Protoconf.", messagerName, " _data = new();")
 	g.P()
 	g.P(helper.Indent(2), "public static string Name() => Protoconf.", messagerName, ".Descriptor.Name;")
 	g.P()
@@ -74,13 +74,13 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P(helper.Indent(2), "{")
 	g.P(helper.Indent(3), "var start = DateTime.Now;")
 	g.P(helper.Indent(3), "bool loaded = LoadMessageByPath<Protoconf.", messagerName, ">(out var msg, dir, fmt, options);")
-	g.P(helper.Indent(3), "Data_ = msg;")
+	g.P(helper.Indent(3), "_data = msg;")
 	g.P(helper.Indent(3), "bool ok = loaded && ProcessAfterLoad();")
 	g.P(helper.Indent(3), "LoadStats.Duration = DateTime.Now - start;")
 	g.P(helper.Indent(3), "return ok;")
 	g.P(helper.Indent(2), "}")
 	g.P()
-	g.P(helper.Indent(2), "public ref readonly Protoconf.", messagerName, " Data() => ref Data_;")
+	g.P(helper.Indent(2), "public ref readonly Protoconf.", messagerName, " Data() => ref _data;")
 
 	if options.NeedGenOrderedMap(message.Desc, options.LangCS) || options.NeedGenIndex(message.Desc, options.LangCS) {
 		g.P()
@@ -118,7 +118,7 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md protorefl
 			lastKeyName := keys[len(keys)-1].Name
 			if depth == 1 {
 				g.P(helper.Indent(2), "public ", parseMapValueType(fd), "? ", getter, "(", helper.GenGetParams(keys), ") => ",
-					"Data_.", strcase.ToCamel(string(fd.Name())), "?.TryGetValue(", lastKeyName, ", out var val) == true ? val : null;")
+					"_data.", strcase.ToCamel(string(fd.Name())), "?.TryGetValue(", lastKeyName, ", out var val) == true ? val : null;")
 			} else {
 				prevKeys := keys[:len(keys)-1]
 				prevGetter := fmt.Sprintf("Get%v", depth-1)

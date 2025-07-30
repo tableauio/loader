@@ -23,7 +23,7 @@ func generateHub(gen *protogen.Plugin) {
 	g.P(staticHubContent3)
 	for _, messager := range messagers {
 		g.P()
-		g.P(helper.Indent(2), "public ", messager, "? Get", messager, "() => MessagerContainer.", messager, ";")
+		g.P(helper.Indent(2), "public ", messager, "? Get", messager, "() => _messagerContainer.", messager, ";")
 	}
 	g.P(staticHubContent4)
 	for _, messager := range messagers {
@@ -141,8 +141,8 @@ var staticHubContent3 = `            }
 
     public class Hub(HubOptions? options = null)
     {
-        private MessagerContainer MessagerContainer = new();
-        private readonly HubOptions Options = options ?? new HubOptions();
+        private MessagerContainer _messagerContainer = new();
+        private readonly HubOptions _options = options ?? new HubOptions();
 
         public bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
@@ -167,21 +167,21 @@ var staticHubContent3 = `            }
             return true;
         }
 
-        public ref Dictionary<string, Messager> GetMessagerMap() => ref MessagerContainer.MessagerMap;
+        public ref Dictionary<string, Messager> GetMessagerMap() => ref _messagerContainer.MessagerMap;
 
-        public void SetMessagerMap(in Dictionary<string, Messager> map) => MessagerContainer = new MessagerContainer(map);
+        public void SetMessagerMap(in Dictionary<string, Messager> map) => _messagerContainer = new MessagerContainer(map);
 
-        public T? Get<T>() where T : Messager, IMessagerName => MessagerContainer.Get<T>();`
+        public T? Get<T>() where T : Messager, IMessagerName => _messagerContainer.Get<T>();`
 
 const staticHubContent4 = `
-        public DateTime GetLastLoadedTime() => MessagerContainer.LastLoadedTime;
+        public DateTime GetLastLoadedTime() => _messagerContainer.LastLoadedTime;
 
         private Dictionary<string, Messager> NewMessagerMap()
         {
             var messagerMap = new Dictionary<string, Messager>();
             foreach (var kv in Registry.Registrar)
             {
-                if (Options.Filter?.Invoke(kv.Key) ?? true)
+                if (_options.Filter?.Invoke(kv.Key) ?? true)
                 {
                     messagerMap[kv.Key] = kv.Value();
                 }
