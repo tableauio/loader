@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
-func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, messagerName string) {
+func genIndexTypeDef(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, messagerName string) {
 	g.P(helper.Indent(2), "// Index types.")
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
@@ -50,7 +50,7 @@ func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor
 	}
 }
 
-func genIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, messagerName string) {
+func genIndexLoader(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, messagerName string) {
 	g.P(helper.Indent(3), "// Index init.")
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
@@ -62,7 +62,7 @@ func genIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor 
 	depth := 1
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
-			genOneIndexLoader(gen, g, depth, index, parentDataName, messagerName)
+			genOneIndexLoader(g, depth, index, parentDataName, messagerName)
 		}
 		itemName := fmt.Sprintf("item%d", depth)
 		if levelMessage.FD == nil {
@@ -82,10 +82,10 @@ func genIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor 
 	for i := depth - 1; i > 0; i-- {
 		g.P(helper.Indent(i+2), "}")
 	}
-	genIndexSorter(gen, g, descriptor)
+	genIndexSorter(g, descriptor)
 }
 
-func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth int, index *index.LevelIndex, parentDataName string, messagerName string) {
+func genOneIndexLoader(g *protogen.GeneratedFile, depth int, index *index.LevelIndex, parentDataName string, messagerName string) {
 	indexContainerName := "Index" + strcase.ToCamel(index.Name()) + "Map"
 	g.P(helper.Indent(depth+2), "{")
 	g.P(helper.Indent(depth+3), "// Index: ", index.Index)
@@ -127,12 +127,12 @@ func genOneIndexLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, depth in
 		}
 	} else {
 		// multi-column index
-		generateOneMulticolumnIndex(gen, g, depth, index, parentDataName, messagerName, nil)
+		generateOneMulticolumnIndex(g, depth, index, parentDataName, messagerName, nil)
 	}
 	g.P(helper.Indent(depth+2), "}")
 }
 
-func genIndexSorter(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor) {
+func genIndexSorter(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor) {
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
 			indexContainerName := "Index" + strcase.ToCamel(index.Name()) + "Map"
@@ -177,7 +177,7 @@ func genIndexSorter(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor 
 	}
 }
 
-func generateOneMulticolumnIndex(gen *protogen.Plugin, g *protogen.GeneratedFile, depth int, index *index.LevelIndex, parentDataName string, messagerName string, keys []string) []string {
+func generateOneMulticolumnIndex(g *protogen.GeneratedFile, depth int, index *index.LevelIndex, parentDataName string, messagerName string, keys []string) []string {
 	cursor := len(keys)
 	if cursor >= len(index.ColFields) {
 		var keyParams string
@@ -208,7 +208,7 @@ func generateOneMulticolumnIndex(gen *protogen.Plugin, g *protogen.GeneratedFile
 		g.P(helper.Indent(depth+3), "foreach (var ", itemName, " in ", parentDataName, fieldName, " ?? Enumerable.Empty<", helper.ParseCsharpType(field.FD), ">())")
 		g.P(helper.Indent(depth+3), "{")
 		keys = append(keys, itemName)
-		keys = generateOneMulticolumnIndex(gen, g, depth+1, index, parentDataName, messagerName, keys)
+		keys = generateOneMulticolumnIndex(g, depth+1, index, parentDataName, messagerName, keys)
 		g.P(helper.Indent(depth+3), "}")
 	} else {
 		fieldName := ""
@@ -223,12 +223,12 @@ func generateOneMulticolumnIndex(gen *protogen.Plugin, g *protogen.GeneratedFile
 			key += " ?? " + helper.GetTypeEmptyValue(field.FD)
 		}
 		keys = append(keys, key)
-		keys = generateOneMulticolumnIndex(gen, g, depth, index, parentDataName, messagerName, keys)
+		keys = generateOneMulticolumnIndex(g, depth, index, parentDataName, messagerName, keys)
 	}
 	return keys
 }
 
-func genIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, messagerName string) {
+func genIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, messagerName string) {
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
 			mapType := fmt.Sprintf("Index_%sMap", index.Name())
