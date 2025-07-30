@@ -132,8 +132,8 @@ namespace Tableau
 
     public class Hub(HubOptions? options = null)
     {
-        private MessagerContainer MessagerContainer = new();
-        private readonly HubOptions Options = options ?? new HubOptions();
+        private MessagerContainer _messagerContainer = new();
+        private readonly HubOptions _options = options ?? new HubOptions();
 
         public bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
@@ -158,40 +158,40 @@ namespace Tableau
             return true;
         }
 
-        public ref Dictionary<string, Messager> GetMessagerMap() => ref MessagerContainer.MessagerMap;
+        public ref Dictionary<string, Messager> GetMessagerMap() => ref _messagerContainer.MessagerMap;
 
-        public void SetMessagerMap(in Dictionary<string, Messager> map) => MessagerContainer = new MessagerContainer(map);
+        public void SetMessagerMap(in Dictionary<string, Messager> map) => _messagerContainer = new MessagerContainer(map);
 
-        public T? Get<T>() where T : Messager, IMessagerName => MessagerContainer.Get<T>();
+        public T? Get<T>() where T : Messager, IMessagerName => _messagerContainer.Get<T>();
 
-        public HeroConf? GetHeroConf() => MessagerContainer.HeroConf;
+        public HeroConf? GetHeroConf() => _messagerContainer.HeroConf;
 
-        public HeroBaseConf? GetHeroBaseConf() => MessagerContainer.HeroBaseConf;
+        public HeroBaseConf? GetHeroBaseConf() => _messagerContainer.HeroBaseConf;
 
-        public ItemConf? GetItemConf() => MessagerContainer.ItemConf;
+        public ItemConf? GetItemConf() => _messagerContainer.ItemConf;
 
-        public PatchReplaceConf? GetPatchReplaceConf() => MessagerContainer.PatchReplaceConf;
+        public PatchReplaceConf? GetPatchReplaceConf() => _messagerContainer.PatchReplaceConf;
 
-        public PatchMergeConf? GetPatchMergeConf() => MessagerContainer.PatchMergeConf;
+        public PatchMergeConf? GetPatchMergeConf() => _messagerContainer.PatchMergeConf;
 
-        public RecursivePatchConf? GetRecursivePatchConf() => MessagerContainer.RecursivePatchConf;
+        public RecursivePatchConf? GetRecursivePatchConf() => _messagerContainer.RecursivePatchConf;
 
-        public ActivityConf? GetActivityConf() => MessagerContainer.ActivityConf;
+        public ActivityConf? GetActivityConf() => _messagerContainer.ActivityConf;
 
-        public ChapterConf? GetChapterConf() => MessagerContainer.ChapterConf;
+        public ChapterConf? GetChapterConf() => _messagerContainer.ChapterConf;
 
-        public ThemeConf? GetThemeConf() => MessagerContainer.ThemeConf;
+        public ThemeConf? GetThemeConf() => _messagerContainer.ThemeConf;
 
-        public TaskConf? GetTaskConf() => MessagerContainer.TaskConf;
+        public TaskConf? GetTaskConf() => _messagerContainer.TaskConf;
 
-        public DateTime GetLastLoadedTime() => MessagerContainer.LastLoadedTime;
+        public DateTime GetLastLoadedTime() => _messagerContainer.LastLoadedTime;
 
         private Dictionary<string, Messager> NewMessagerMap()
         {
             var messagerMap = new Dictionary<string, Messager>();
             foreach (var kv in Registry.Registrar)
             {
-                if (Options.Filter?.Invoke(kv.Key) ?? true)
+                if (_options.Filter?.Invoke(kv.Key) ?? true)
                 {
                     messagerMap[kv.Key] = kv.Value();
                 }

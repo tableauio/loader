@@ -10,7 +10,7 @@ namespace Tableau
 {
     public class PatchReplaceConf : Messager, IMessagerName
     {
-        private Protoconf.PatchReplaceConf Data_ = new();
+        private Protoconf.PatchReplaceConf _data = new();
 
         public static string Name() => Protoconf.PatchReplaceConf.Descriptor.Name;
 
@@ -18,18 +18,18 @@ namespace Tableau
         {
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.PatchReplaceConf>(out var msg, dir, fmt, options);
-            Data_ = msg;
+            _data = msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
         }
 
-        public ref readonly Protoconf.PatchReplaceConf Data() => ref Data_;
+        public ref readonly Protoconf.PatchReplaceConf Data() => ref _data;
     }
 
     public class PatchMergeConf : Messager, IMessagerName
     {
-        private Protoconf.PatchMergeConf Data_ = new();
+        private Protoconf.PatchMergeConf _data = new();
 
         public static string Name() => Protoconf.PatchMergeConf.Descriptor.Name;
 
@@ -37,20 +37,20 @@ namespace Tableau
         {
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.PatchMergeConf>(out var msg, dir, fmt, options);
-            Data_ = msg;
+            _data = msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
         }
 
-        public ref readonly Protoconf.PatchMergeConf Data() => ref Data_;
+        public ref readonly Protoconf.PatchMergeConf Data() => ref _data;
 
-        public Protoconf.Item? Get1(uint id) => Data_.ItemMap?.TryGetValue(id, out var val) == true ? val : null;
+        public Protoconf.Item? Get1(uint id) => _data.ItemMap?.TryGetValue(id, out var val) == true ? val : null;
     }
 
     public class RecursivePatchConf : Messager, IMessagerName
     {
-        private Protoconf.RecursivePatchConf Data_ = new();
+        private Protoconf.RecursivePatchConf _data = new();
 
         public static string Name() => Protoconf.RecursivePatchConf.Descriptor.Name;
 
@@ -58,15 +58,15 @@ namespace Tableau
         {
             var start = DateTime.Now;
             bool loaded = LoadMessageByPath<Protoconf.RecursivePatchConf>(out var msg, dir, fmt, options);
-            Data_ = msg;
+            _data = msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
         }
 
-        public ref readonly Protoconf.RecursivePatchConf Data() => ref Data_;
+        public ref readonly Protoconf.RecursivePatchConf Data() => ref _data;
 
-        public Protoconf.RecursivePatchConf.Types.Shop? Get1(uint shopId) => Data_.ShopMap?.TryGetValue(shopId, out var val) == true ? val : null;
+        public Protoconf.RecursivePatchConf.Types.Shop? Get1(uint shopId) => _data.ShopMap?.TryGetValue(shopId, out var val) == true ? val : null;
 
         public Protoconf.RecursivePatchConf.Types.Shop.Types.Goods? Get2(uint shopId, uint goodsId) => Get1(shopId)?.GoodsMap?.TryGetValue(goodsId, out var val) == true ? val : null;
 
