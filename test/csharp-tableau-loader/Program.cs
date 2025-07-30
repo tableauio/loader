@@ -1,15 +1,10 @@
-﻿using System;
-using Google.Protobuf.WellKnownTypes;
-using Protoconf;
-using Tableau;
-
-class Program
+﻿class Program
 {
-    static void Main(string[] args)
+    static void Main(string[] _)
     {
         Tableau.Registry.Init();
 
-        var options = new HubOptions
+        var options = new Tableau.HubOptions
         {
             Filter = name => name != "TaskConf"
         };
