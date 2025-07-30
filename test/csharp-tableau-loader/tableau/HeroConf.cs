@@ -13,7 +13,7 @@ namespace Tableau
         // OrderedMap types.
         public class Hero_Attr_OrderedMap : SortedDictionary<string, Protoconf.HeroConf.Types.Hero.Types.Attr>;
 
-        public class Hero_OrderedMapValue(Hero_Attr_OrderedMap item1, Protoconf.HeroConf.Types.Hero? item2) : Tuple<Hero_Attr_OrderedMap, Protoconf.HeroConf.Types.Hero?>(item1, item2);
+        public class Hero_OrderedMapValue(Hero_Attr_OrderedMap item1, Protoconf.HeroConf.Types.Hero item2) : Tuple<Hero_Attr_OrderedMap, Protoconf.HeroConf.Types.Hero>(item1, item2);
         public class Hero_OrderedMap : SortedDictionary<string, Hero_OrderedMapValue>;
 
         private readonly Hero_OrderedMap _orderedMap = [];
