@@ -61,10 +61,10 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P(helper.Indent(1), "{")
 	// type definitions
 	if options.NeedGenOrderedMap(message.Desc, options.LangCS) {
-		genOrderedMapTypeDef(gen, g, message.Desc, 1, nil, messagerFullName)
+		genOrderedMapTypeDef(g, message.Desc, 1, nil, messagerFullName)
 	}
 	if options.NeedGenIndex(message.Desc, options.LangCS) {
-		genIndexTypeDef(gen, g, indexDescriptor, messagerName)
+		genIndexTypeDef(g, indexDescriptor, messagerName)
 	}
 	g.P(helper.Indent(2), "private Protoconf.", messagerName, " Data_ = new();")
 	g.P()
@@ -87,10 +87,10 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 		g.P(helper.Indent(2), "protected override bool ProcessAfterLoad()")
 		g.P(helper.Indent(2), "{")
 		if options.NeedGenOrderedMap(message.Desc, options.LangCS) {
-			genOrderedMapLoader(gen, g, message.Desc, 1, messagerFullName)
+			genOrderedMapLoader(g, message.Desc, 1, messagerFullName)
 		}
 		if options.NeedGenIndex(message.Desc, options.LangCS) {
-			genIndexLoader(gen, g, indexDescriptor, messagerName)
+			genIndexLoader(g, indexDescriptor, messagerName)
 		}
 		g.P(helper.Indent(3), "return true;")
 		g.P(helper.Indent(2), "}")
@@ -99,10 +99,10 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	// syntactic sugar for accessing map items
 	genMapGetters(gen, g, message.Desc, 1, nil, messagerName)
 	if options.NeedGenOrderedMap(message.Desc, options.LangCS) {
-		genOrderedMapGetters(gen, g, message.Desc, 1, nil, messagerFullName)
+		genOrderedMapGetters(g, message.Desc, 1, nil, messagerFullName)
 	}
 	if options.NeedGenIndex(message.Desc, options.LangCS) {
-		genIndexFinders(gen, g, indexDescriptor, messagerName)
+		genIndexFinders(g, indexDescriptor, messagerName)
 	}
 	g.P(helper.Indent(1), "}")
 }
@@ -111,7 +111,7 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md protorefl
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
-			keys = helper.AddMapKey(gen, fd, keys)
+			keys = helper.AddMapKey(fd, keys)
 			getter := fmt.Sprintf("Get%v", depth)
 			g.P()
 
@@ -151,8 +151,7 @@ func parseMapValueType(fd protoreflect.FieldDescriptor) string {
 	return helper.ParseCsharpType(fd.MapValue())
 }
 
-const staticMessagerContent1 = `
-namespace Tableau
+const staticMessagerContent1 = `namespace Tableau
 {`
 
 const staticMessagerContent2 = `}`

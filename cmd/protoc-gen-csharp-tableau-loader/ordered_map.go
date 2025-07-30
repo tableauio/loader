@@ -16,7 +16,7 @@ import (
 const orderedMapSuffix = "_OrderedMap"
 const orderedMapValueSuffix = "_OrderedMapValue"
 
-func genOrderedMapTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerFullName string) {
+func genOrderedMapTypeDef(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerFullName string) {
 	if depth == 1 && !options.NeedGenOrderedMap(md, options.LangCS) {
 		return
 	}
@@ -26,11 +26,11 @@ func genOrderedMapTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md pr
 			if depth == 1 {
 				g.P(helper.Indent(2), "// OrderedMap types.")
 			}
-			nextKeys := helper.AddMapKey(gen, fd, keys)
+			nextKeys := helper.AddMapKey(fd, keys)
 			keyType := nextKeys[len(nextKeys)-1].Type
 
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				genOrderedMapTypeDef(gen, g, fd.MapValue().Message(), depth+1, nextKeys, messagerFullName)
+				genOrderedMapTypeDef(g, fd.MapValue().Message(), depth+1, nextKeys, messagerFullName)
 			}
 
 			prefix := parseOrderedMapPrefix(fd, messagerFullName)
@@ -58,7 +58,7 @@ func genOrderedMapTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, md pr
 	}
 }
 
-func genOrderedMapLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, messagerFullName string) {
+func genOrderedMapLoader(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, messagerFullName string) {
 	if depth == 1 {
 		g.P(helper.Indent(3), "// OrderedMap init.")
 		g.P(helper.Indent(3), "OrderedMap.Clear();")
@@ -89,7 +89,7 @@ func genOrderedMapLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, md pro
 				g.P(helper.Indent(depth+3), "var ", tmpOrderedMapName, " = new ", nextOrderedMap, "();")
 			}
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				genOrderedMapLoader(gen, g, fd.MapValue().Message(), depth+1, messagerFullName)
+				genOrderedMapLoader(g, fd.MapValue().Message(), depth+1, messagerFullName)
 			}
 
 			if nextMapFD != nil {
@@ -103,7 +103,7 @@ func genOrderedMapLoader(gen *protogen.Plugin, g *protogen.GeneratedFile, md pro
 	}
 }
 
-func genOrderedMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerFullName string) {
+func genOrderedMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerFullName string) {
 	if depth == 1 && !options.NeedGenOrderedMap(md, options.LangCS) {
 		return
 	}
@@ -140,9 +140,9 @@ func genOrderedMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md pr
 				}
 			}
 
-			keys = helper.AddMapKey(gen, fd, keys)
+			keys = helper.AddMapKey(fd, keys)
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				genOrderedMapGetters(gen, g, fd.MapValue().Message(), depth+1, keys, messagerFullName)
+				genOrderedMapGetters(g, fd.MapValue().Message(), depth+1, keys, messagerFullName)
 			}
 			break
 		}
