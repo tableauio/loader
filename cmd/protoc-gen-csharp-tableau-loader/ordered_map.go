@@ -42,7 +42,7 @@ func genOrderedMapTypeDef(g *protogen.GeneratedFile, md protoreflect.MessageDesc
 				currValueType := helper.ParseCsharpType(fd.MapValue())
 				nextPrefix := parseOrderedMapPrefix(nextMapFD, messagerFullName)
 				nextOrderedMap := nextPrefix + orderedMapSuffix
-				g.P(helper.Indent(2), "public class ", orderedMapValue, "(", nextOrderedMap, " item1, ", currValueType, "? item2) : Tuple<", nextOrderedMap, ", ", currValueType, "?>(item1, item2);")
+				g.P(helper.Indent(2), "public class ", orderedMapValue, "(", nextOrderedMap, " item1, ", currValueType, " item2) : Tuple<", nextOrderedMap, ", ", currValueType, ">(item1, item2);")
 				g.P(helper.Indent(2), "public class ", orderedMap, " : SortedDictionary<", keyType, ", ", orderedMapValue, ">;")
 				g.P()
 			} else {
