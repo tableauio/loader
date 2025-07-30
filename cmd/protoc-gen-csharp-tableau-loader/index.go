@@ -19,7 +19,7 @@ func genIndexTypeDef(g *protogen.GeneratedFile, descriptor *index.IndexDescripto
 				field := index.ColFields[0] // just take first field
 				g.P(helper.Indent(2), "// Index: ", index.Index)
 				keyType := helper.ParseCsharpType(field.FD)
-				g.P(helper.Indent(2), "public class ", mapType, " : Dictionary<", keyType, ", List<", helper.ParseCsharpClassType(index.MD), ">> { }")
+				g.P(helper.Indent(2), "public class ", mapType, " : Dictionary<", keyType, ", List<", helper.ParseCsharpClassType(index.MD), ">>;")
 			} else {
 				// multi-column index
 				g.P(helper.Indent(2), "// Index: ", index.Index)
@@ -40,10 +40,10 @@ func genIndexTypeDef(g *protogen.GeneratedFile, descriptor *index.IndexDescripto
 				}
 				g.P(helper.Indent(2), "}")
 				g.P()
-				g.P(helper.Indent(2), "public class ", mapType, " : Dictionary<", keyType, ", List<", helper.ParseCsharpClassType(index.MD), ">> { }")
+				g.P(helper.Indent(2), "public class ", mapType, " : Dictionary<", keyType, ", List<", helper.ParseCsharpClassType(index.MD), ">>;")
 			}
 			g.P()
-			indexContainerName := "Index" + strcase.ToCamel(index.Name()) + "Map"
+			indexContainerName := "_index" + strcase.ToCamel(index.Name()) + "Map"
 			g.P(helper.Indent(2), "private readonly ", mapType, " ", indexContainerName, " = [];")
 			g.P()
 		}
@@ -54,11 +54,11 @@ func genIndexLoader(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor
 	g.P(helper.Indent(3), "// Index init.")
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
-			indexContainerName := "Index" + strcase.ToCamel(index.Name()) + "Map"
+			indexContainerName := "_index" + strcase.ToCamel(index.Name()) + "Map"
 			g.P(helper.Indent(3), indexContainerName, ".Clear();")
 		}
 	}
-	parentDataName := "Data_"
+	parentDataName := "_data"
 	depth := 1
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
@@ -86,7 +86,7 @@ func genIndexLoader(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor
 }
 
 func genOneIndexLoader(g *protogen.GeneratedFile, depth int, index *index.LevelIndex, parentDataName string, messagerName string) {
-	indexContainerName := "Index" + strcase.ToCamel(index.Name()) + "Map"
+	indexContainerName := "_index" + strcase.ToCamel(index.Name()) + "Map"
 	g.P(helper.Indent(depth+2), "{")
 	g.P(helper.Indent(depth+3), "// Index: ", index.Index)
 	if len(index.ColFields) == 1 {
@@ -135,7 +135,7 @@ func genOneIndexLoader(g *protogen.GeneratedFile, depth int, index *index.LevelI
 func genIndexSorter(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor) {
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
-			indexContainerName := "Index" + strcase.ToCamel(index.Name()) + "Map"
+			indexContainerName := "_index" + strcase.ToCamel(index.Name()) + "Map"
 			if len(index.SortedColFields) != 0 {
 				g.P(helper.Indent(3), "// Index(sort): ", index.Index)
 				g.P(helper.Indent(3), "foreach (var item in ", indexContainerName, ")")
@@ -188,7 +188,7 @@ func generateOneMulticolumnIndex(g *protogen.GeneratedFile, depth int, index *in
 			}
 		}
 		keyType := fmt.Sprintf("%s_Index_%sKey", messagerName, index.Name())
-		indexContainerName := "Index" + strcase.ToCamel(index.Name()) + "Map"
+		indexContainerName := "_index" + strcase.ToCamel(index.Name()) + "Map"
 		g.P(helper.Indent(depth+3), "var key = new ", keyType, "(", keyParams, ");")
 		g.P(helper.Indent(depth+3), "var list = ", indexContainerName, ".TryGetValue(key, out var existingList) ?")
 		g.P(helper.Indent(depth+3), "existingList : ", indexContainerName, "[key] = [];")
@@ -232,7 +232,7 @@ func genIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescripto
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
 			mapType := fmt.Sprintf("Index_%sMap", index.Name())
-			indexContainerName := "Index" + strcase.ToCamel(index.Name()) + "Map"
+			indexContainerName := "_index" + strcase.ToCamel(index.Name()) + "Map"
 			g.P()
 			g.P(helper.Indent(2), "// Index: ", index.Index)
 			g.P(helper.Indent(2), "public ref readonly ", mapType, " Get", index.Name(), "Map() => ref ", indexContainerName, ";")
