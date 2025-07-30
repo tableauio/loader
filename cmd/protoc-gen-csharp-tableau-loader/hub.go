@@ -11,7 +11,7 @@ import (
 func generateHub(gen *protogen.Plugin) {
 	filename := filepath.Join("Hub.cs")
 	g := gen.NewGeneratedFile(filename, "")
-	helper.GenerateCommonHeader(gen, g, version)
+	helper.GenerateFileHeader(gen, nil, g, version)
 	g.P(staticHubContent1)
 	for _, messager := range messagers {
 		g.P(helper.Indent(2), "public ", messager, "? ", messager, ";")
@@ -32,7 +32,7 @@ func generateHub(gen *protogen.Plugin) {
 	g.P(staticHubContent5)
 }
 
-const staticHubContent1 = `
+const staticHubContent1 = `using pb = global::Google.Protobuf;
 namespace Tableau
 {
     public enum Format
@@ -70,7 +70,7 @@ namespace Tableau
 
         public virtual bool ProcessAfterLoadAll(in Hub hub) => true;
 
-        internal static bool LoadMessageByPath<T>(out T msg, string dir, Format fmt, in LoadOptions? options = null) where T : Google.Protobuf.IMessage<T>, new()
+        internal static bool LoadMessageByPath<T>(out T msg, string dir, Format fmt, in LoadOptions? options = null) where T : pb::IMessage<T>, new()
         {
             msg = new T();
             string name = msg.Descriptor.Name;
@@ -83,13 +83,13 @@ namespace Tableau
                 {
                     case Format.JSON:
                         {
-                            var parser = options is null ? Google.Protobuf.JsonParser.Default : new Google.Protobuf.JsonParser(Google.Protobuf.JsonParser.Settings.Default.WithIgnoreUnknownFields(options.IgnoreUnknownFields));
+                            var parser = options is null ? pb::JsonParser.Default : new pb::JsonParser(pb::JsonParser.Settings.Default.WithIgnoreUnknownFields(options.IgnoreUnknownFields));
                             msg = parser.Parse<T>(System.Text.Encoding.UTF8.GetString(content));
                             break;
                         }
                     case Format.Bin:
                         {
-                            var parser = new Google.Protobuf.MessageParser<T>(() => new T());
+                            var parser = new pb::MessageParser<T>(() => new T());
                             msg = parser.ParseFrom(content);
                             break;
                         }
