@@ -5,10 +5,8 @@
 
 package loader
 
-var ErrNotFound *errNotFound
+import (
+	"errors"
+)
 
-type errNotFound struct{}
-
-func (e *errNotFound) Error() string {
-	return "not found"
-}
+var ErrNotFound = errors.New("not found")
