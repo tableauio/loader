@@ -7,10 +7,9 @@
 package loader
 
 import (
+	fmt "fmt"
 	treemap "github.com/tableauio/loader/pkg/treemap"
 	protoconf "github.com/tableauio/loader/test/go-tableau-loader/protoconf"
-	code "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
-	xerrors "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
 	store "github.com/tableauio/tableau/store"
@@ -247,7 +246,7 @@ func (x *ItemConf) processAfterLoad() error {
 func (x *ItemConf) Get1(id uint32) (*protoconf.ItemConf_Item, error) {
 	d := x.Data().GetItemMap()
 	if val, ok := d[id]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "id(%v) not found", id)
+		return nil, fmt.Errorf("id(%v) %w", id, ErrNotFound)
 	} else {
 		return val, nil
 	}
