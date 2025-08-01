@@ -37,7 +37,6 @@ func main() {
 		}
 		generateHub(gen)
 		generateError(gen)
-		generateCode(gen)
 		return nil
 	})
 }

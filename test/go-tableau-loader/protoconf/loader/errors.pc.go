@@ -3,12 +3,12 @@
 // - protoc-gen-go-tableau-loader v0.8.0
 // - protoc                       v3.19.3
 
-package code
+package loader
 
-type Code int
+var ErrNotFound *errNotFound
 
-const (
-	Success Code = iota
-	NotFound
-	Unknown
-)
+type errNotFound struct{}
+
+func (e *errNotFound) Error() string {
+	return "not found"
+}

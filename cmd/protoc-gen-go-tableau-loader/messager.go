@@ -23,20 +23,16 @@ const (
 	pairPackage    = protogen.GoImportPath("github.com/tableauio/loader/pkg/pair")
 	timePackage    = protogen.GoImportPath("time")
 	sortPackage    = protogen.GoImportPath("sort")
+	fmtPackage     = protogen.GoImportPath("fmt")
 	protoPackage   = protogen.GoImportPath("google.golang.org/protobuf/proto")
 )
 
 // golbal container for record all proto filenames and messager names
 var messagers []string
-var errorsPackage protogen.GoImportPath
-var codePackage protogen.GoImportPath
 
 // generateMessager generates a protoconf file corresponding to the protobuf file.
 // Each wrapped struct type implement the Messager interface.
 func generateMessager(gen *protogen.Plugin, file *protogen.File) {
-	errorsPackage = protogen.GoImportPath(string(file.GoImportPath) + "/" + *pkg + "/" + errPkg)
-	codePackage = protogen.GoImportPath(string(file.GoImportPath) + "/" + *pkg + "/" + codePkg)
-
 	filename := filepath.Join(file.GeneratedFilenamePrefix + "." + pcExt + ".go")
 	g := gen.NewGeneratedFile(filename, "")
 	generateFileHeader(gen, file, g)
@@ -224,7 +220,7 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 			g.P("d := ", container, ".Get", field.GoName, "()")
 			lastKeyName := keys[len(keys)-1].Name
 			g.P("if val, ok := d[", lastKeyName, "]; !ok {")
-			g.P(`return `, returnEmptyValue, `, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("NotFound"), `, "`, lastKeyName, `(%v) not found", `, lastKeyName, `)`)
+			g.P(`return `, returnEmptyValue, `, `, fmtPackage.Ident("Errorf"), `("`, lastKeyName, `(%v) %w", `, lastKeyName, `, ErrNotFound)`)
 			g.P("} else {")
 			g.P(`return val, nil`)
 			g.P("}")

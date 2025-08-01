@@ -7,9 +7,8 @@
 package loader
 
 import (
+	fmt "fmt"
 	protoconf "github.com/tableauio/loader/test/go-tableau-loader/protoconf"
-	code "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
-	xerrors "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
 	store "github.com/tableauio/tableau/store"
@@ -160,7 +159,7 @@ func (x *PatchMergeConf) originalMessage() proto.Message {
 func (x *PatchMergeConf) Get1(id uint32) (*protoconf.Item, error) {
 	d := x.Data().GetItemMap()
 	if val, ok := d[id]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "id(%v) not found", id)
+		return nil, fmt.Errorf("id(%v) %w", id, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -240,7 +239,7 @@ func (x *RecursivePatchConf) originalMessage() proto.Message {
 func (x *RecursivePatchConf) Get1(shopId uint32) (*protoconf.RecursivePatchConf_Shop, error) {
 	d := x.Data().GetShopMap()
 	if val, ok := d[shopId]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "shopId(%v) not found", shopId)
+		return nil, fmt.Errorf("shopId(%v) %w", shopId, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -255,7 +254,7 @@ func (x *RecursivePatchConf) Get2(shopId uint32, goodsId uint32) (*protoconf.Rec
 	}
 	d := conf.GetGoodsMap()
 	if val, ok := d[goodsId]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "goodsId(%v) not found", goodsId)
+		return nil, fmt.Errorf("goodsId(%v) %w", goodsId, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -270,7 +269,7 @@ func (x *RecursivePatchConf) Get3(shopId uint32, goodsId uint32, type_ uint32) (
 	}
 	d := conf.GetCurrencyMap()
 	if val, ok := d[type_]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "type_(%v) not found", type_)
+		return nil, fmt.Errorf("type_(%v) %w", type_, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -285,7 +284,7 @@ func (x *RecursivePatchConf) Get4(shopId uint32, goodsId uint32, type_ uint32, k
 	}
 	d := conf.GetValueList()
 	if val, ok := d[key4]; !ok {
-		return 0, xerrors.Errorf(code.NotFound, "key4(%v) not found", key4)
+		return 0, fmt.Errorf("key4(%v) %w", key4, ErrNotFound)
 	} else {
 		return val, nil
 	}
