@@ -3,12 +3,10 @@
 // - protoc-gen-go-tableau-loader v0.8.0
 // - protoc                       v3.19.3
 
-package code
+package loader
 
-type Code int
-
-const (
-	Success Code = iota
-	NotFound
-	Unknown
+import (
+	"errors"
 )
+
+var ErrNotFound = errors.New("not found")

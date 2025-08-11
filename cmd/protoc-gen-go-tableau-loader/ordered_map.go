@@ -179,7 +179,7 @@ func genOrderedMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md pr
 					keyName = fmt.Sprintf("BoolToInt(%s)", keyName)
 				}
 				g.P("if val, ok := conf.Get(", keyName, "); !ok {")
-				g.P(`return nil, `, errorsPackage.Ident("Errorf"), `(`, codePackage.Ident("NotFound"), `, "`, lastKeyName, `(%v) not found", `, lastKeyName, `)`)
+				g.P(`return nil, `, fmtPackage.Ident("Errorf"), `("`, lastKeyName, `(%v) %w", `, lastKeyName, `, ErrNotFound)`)
 				g.P("} else {")
 				g.P(`return val.First, nil`)
 				g.P("}")

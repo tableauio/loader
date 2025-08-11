@@ -7,11 +7,10 @@
 package loader
 
 import (
+	fmt "fmt"
 	pair "github.com/tableauio/loader/pkg/pair"
 	treemap "github.com/tableauio/loader/pkg/treemap"
 	protoconf "github.com/tableauio/loader/test/go-tableau-loader/protoconf"
-	code "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
-	xerrors "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
 	store "github.com/tableauio/tableau/store"
@@ -198,7 +197,7 @@ func (x *ActivityConf) processAfterLoad() error {
 func (x *ActivityConf) Get1(activityId uint64) (*protoconf.ActivityConf_Activity, error) {
 	d := x.Data().GetActivityMap()
 	if val, ok := d[activityId]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "activityId(%v) not found", activityId)
+		return nil, fmt.Errorf("activityId(%v) %w", activityId, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -213,7 +212,7 @@ func (x *ActivityConf) Get2(activityId uint64, chapterId uint32) (*protoconf.Act
 	}
 	d := conf.GetChapterMap()
 	if val, ok := d[chapterId]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "chapterId(%v) not found", chapterId)
+		return nil, fmt.Errorf("chapterId(%v) %w", chapterId, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -228,7 +227,7 @@ func (x *ActivityConf) Get3(activityId uint64, chapterId uint32, sectionId uint3
 	}
 	d := conf.GetSectionMap()
 	if val, ok := d[sectionId]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "sectionId(%v) not found", sectionId)
+		return nil, fmt.Errorf("sectionId(%v) %w", sectionId, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -243,7 +242,7 @@ func (x *ActivityConf) Get4(activityId uint64, chapterId uint32, sectionId uint3
 	}
 	d := conf.GetSectionRankMap()
 	if val, ok := d[key4]; !ok {
-		return 0, xerrors.Errorf(code.NotFound, "key4(%v) not found", key4)
+		return 0, fmt.Errorf("key4(%v) %w", key4, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -259,7 +258,7 @@ func (x *ActivityConf) GetOrderedMap() *ProtoconfActivityConfActivityMap_Ordered
 func (x *ActivityConf) GetOrderedMap1(activityId uint64) (*ProtoconfActivityConfActivityChapterMap_OrderedMap, error) {
 	conf := x.orderedMap
 	if val, ok := conf.Get(activityId); !ok {
-		return nil, xerrors.Errorf(code.NotFound, "activityId(%v) not found", activityId)
+		return nil, fmt.Errorf("activityId(%v) %w", activityId, ErrNotFound)
 	} else {
 		return val.First, nil
 	}
@@ -273,7 +272,7 @@ func (x *ActivityConf) GetOrderedMap2(activityId uint64, chapterId uint32) (*Pro
 		return nil, err
 	}
 	if val, ok := conf.Get(chapterId); !ok {
-		return nil, xerrors.Errorf(code.NotFound, "chapterId(%v) not found", chapterId)
+		return nil, fmt.Errorf("chapterId(%v) %w", chapterId, ErrNotFound)
 	} else {
 		return val.First, nil
 	}
@@ -287,7 +286,7 @@ func (x *ActivityConf) GetOrderedMap3(activityId uint64, chapterId uint32, secti
 		return nil, err
 	}
 	if val, ok := conf.Get(sectionId); !ok {
-		return nil, xerrors.Errorf(code.NotFound, "sectionId(%v) not found", sectionId)
+		return nil, fmt.Errorf("sectionId(%v) %w", sectionId, ErrNotFound)
 	} else {
 		return val.First, nil
 	}
@@ -459,7 +458,7 @@ func (x *ChapterConf) originalMessage() proto.Message {
 func (x *ChapterConf) Get1(id uint64) (*protoconf.ChapterConf_Chapter, error) {
 	d := x.Data().GetChapterMap()
 	if val, ok := d[id]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "id(%v) not found", id)
+		return nil, fmt.Errorf("id(%v) %w", id, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -539,7 +538,7 @@ func (x *ThemeConf) originalMessage() proto.Message {
 func (x *ThemeConf) Get1(name string) (*protoconf.ThemeConf_Theme, error) {
 	d := x.Data().GetThemeMap()
 	if val, ok := d[name]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
+		return nil, fmt.Errorf("name(%v) %w", name, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -554,7 +553,7 @@ func (x *ThemeConf) Get2(name string, param string) (string, error) {
 	}
 	d := conf.GetParamMap()
 	if val, ok := d[param]; !ok {
-		return "", xerrors.Errorf(code.NotFound, "param(%v) not found", param)
+		return "", fmt.Errorf("param(%v) %w", param, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -662,7 +661,7 @@ func (x *TaskConf) processAfterLoad() error {
 func (x *TaskConf) Get1(id int64) (*protoconf.TaskConf_Task, error) {
 	d := x.Data().GetTaskMap()
 	if val, ok := d[id]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "id(%v) not found", id)
+		return nil, fmt.Errorf("id(%v) %w", id, ErrNotFound)
 	} else {
 		return val, nil
 	}

@@ -1,12 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/tableauio/loader/test/go-tableau-loader/hub"
-	"github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
-	"github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
+	"github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader"
 	"github.com/tableauio/tableau/format"
 	"github.com/tableauio/tableau/load"
 	"github.com/tableauio/tableau/store"
@@ -33,7 +33,7 @@ func main() {
 
 	// error: not found
 	if _, err := conf.Get3(100001, 1, 999); err != nil {
-		if xerrors.Is(err, code.NotFound) {
+		if errors.Is(err, loader.ErrNotFound) {
 			fmt.Println("error: not found:", err)
 		}
 	}

@@ -7,12 +7,11 @@
 package loader
 
 import (
+	fmt "fmt"
 	pair "github.com/tableauio/loader/pkg/pair"
 	treemap "github.com/tableauio/loader/pkg/treemap"
 	protoconf "github.com/tableauio/loader/test/go-tableau-loader/protoconf"
 	base "github.com/tableauio/loader/test/go-tableau-loader/protoconf/base"
-	code "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/code"
-	xerrors "github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader/xerrors"
 	format "github.com/tableauio/tableau/format"
 	load "github.com/tableauio/tableau/load"
 	store "github.com/tableauio/tableau/store"
@@ -115,7 +114,7 @@ func (x *HeroConf) processAfterLoad() error {
 func (x *HeroConf) Get1(name string) (*protoconf.HeroConf_Hero, error) {
 	d := x.Data().GetHeroMap()
 	if val, ok := d[name]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
+		return nil, fmt.Errorf("name(%v) %w", name, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -130,7 +129,7 @@ func (x *HeroConf) Get2(name string, title string) (*protoconf.HeroConf_Hero_Att
 	}
 	d := conf.GetAttrMap()
 	if val, ok := d[title]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "title(%v) not found", title)
+		return nil, fmt.Errorf("title(%v) %w", title, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -259,7 +258,7 @@ func (x *HeroBaseConf) processAfterLoad() error {
 func (x *HeroBaseConf) Get1(name string) (*base.Hero, error) {
 	d := x.Data().GetHeroMap()
 	if val, ok := d[name]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
+		return nil, fmt.Errorf("name(%v) %w", name, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -274,7 +273,7 @@ func (x *HeroBaseConf) Get2(name string, id string) (*base.Item, error) {
 	}
 	d := conf.GetItemMap()
 	if val, ok := d[id]; !ok {
-		return nil, xerrors.Errorf(code.NotFound, "id(%v) not found", id)
+		return nil, fmt.Errorf("id(%v) %w", id, ErrNotFound)
 	} else {
 		return val, nil
 	}
@@ -290,7 +289,7 @@ func (x *HeroBaseConf) GetOrderedMap() *ProtoconfHeroBaseConfHeroMap_OrderedMap 
 func (x *HeroBaseConf) GetOrderedMap1(name string) (*BaseHeroItemMap_OrderedMap, error) {
 	conf := x.orderedMap
 	if val, ok := conf.Get(name); !ok {
-		return nil, xerrors.Errorf(code.NotFound, "name(%v) not found", name)
+		return nil, fmt.Errorf("name(%v) %w", name, ErrNotFound)
 	} else {
 		return val.First, nil
 	}
