@@ -5,8 +5,8 @@
 
 #include "hub.pc.h"
 
+#include "load.pc.h"
 #include "logger.pc.h"
-#include "messager.pc.h"
 #include "util.pc.h"
 
 namespace tableau {
@@ -58,11 +58,13 @@ std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::string& dir, Format fm
                                                std::shared_ptr<const LoadOptions> options /* = nullptr */) const {
   // intercept protobuf error logs
   auto old_handler = google::protobuf::SetLogHandler(util::ProtobufLogHandler);
+  auto opts = ParseLoadOptions(options);
   auto msger_map = NewMessagerMap();
   for (auto iter : *msger_map) {
     auto&& name = iter.first;
     ATOM_DEBUG("loading %s", name.c_str());
-    bool ok = iter.second->Load(dir, fmt, options);
+    auto mopts = ParseMessagerOptions(opts, name);
+    bool ok = iter.second->Load(dir, fmt, mopts);
     if (!ok) {
       ATOM_ERROR("load %s failed: %s", name.c_str(), GetErrMsg().c_str());
       // restore to old protobuf log handler

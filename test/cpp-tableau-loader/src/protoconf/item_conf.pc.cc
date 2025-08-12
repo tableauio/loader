@@ -12,9 +12,9 @@
 namespace tableau {
 const std::string ItemConf::kProtoName = "ItemConf";
 
-bool ItemConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options /* = nullptr */) {
+bool ItemConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
-  bool loaded = LoadMessage(data_, dir, fmt, options);
+  bool loaded = LoadMessageInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
   stats_.duration = profiler.Elapse();
   return ok;

@@ -58,8 +58,11 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 > [protobufjs: Reflection vs. static code](https://github.com/protobufjs/protobuf.js/blob/master/cli/README.md#reflection-vs-static-code) 
 
-If using reflection (`.proto` or `JSON`) but not static code, then [proto3-json-serializer](https://github.com/googleapis/proto3-json-serializer-nodejs) is a good option.
+If using reflection (`.proto` or `JSON`) but not static code, and for well-known types support, then [proto3-json-serializer](https://github.com/googleapis/proto3-json-serializer-nodejs) is a good option. This library implements proto3 JSON serialization and deserialization for
+[protobuf.js](https://www.npmjs.com/package/protobufjs) protobuf objects
+according to the [spec](https://protobuf.dev/programming-guides/proto3/#json).
 
 ### References:
 
 - [How to Setup a TypeScript + Node.js Project](https://khalilstemmler.com/blogs/typescript/node-starter-project/)
+- [proto3-json-serializer](https://github.com/googleapis/proto3-json-serializer-nodejs)

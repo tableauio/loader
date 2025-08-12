@@ -12,9 +12,9 @@
 namespace tableau {
 const std::string PatchReplaceConf::kProtoName = "PatchReplaceConf";
 
-bool PatchReplaceConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options /* = nullptr */) {
+bool PatchReplaceConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
-  bool loaded = LoadMessage(data_, dir, fmt, options);
+  bool loaded = LoadMessageInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
   stats_.duration = profiler.Elapse();
   return ok;
@@ -22,9 +22,9 @@ bool PatchReplaceConf::Load(const std::string& dir, Format fmt, std::shared_ptr<
 
 const std::string PatchMergeConf::kProtoName = "PatchMergeConf";
 
-bool PatchMergeConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options /* = nullptr */) {
+bool PatchMergeConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
-  bool loaded = LoadMessage(data_, dir, fmt, options);
+  bool loaded = LoadMessageInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
   stats_.duration = profiler.Elapse();
   return ok;
@@ -40,9 +40,9 @@ const protoconf::Item* PatchMergeConf::Get(uint32_t id) const {
 
 const std::string RecursivePatchConf::kProtoName = "RecursivePatchConf";
 
-bool RecursivePatchConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options /* = nullptr */) {
+bool RecursivePatchConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
-  bool loaded = LoadMessage(data_, dir, fmt, options);
+  bool loaded = LoadMessageInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
   stats_.duration = profiler.Elapse();
   return ok;

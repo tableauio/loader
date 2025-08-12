@@ -167,21 +167,68 @@ bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Messag
   return true;
 }
 
-bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& path, Format fmt, tableau::Patch patch,
-                          std::shared_ptr<const LoadOptions> options /* = nullptr*/) {
-  if (options == nullptr) {
-    return LoadMessageByPath(msg, path, fmt, nullptr);
+std::shared_ptr<const LoadOptions> ParseLoadOptions(std::shared_ptr<const LoadOptions> opts) {
+  std::shared_ptr<LoadOptions> new_opts = std::make_shared<LoadOptions>();
+  // set default values
+  new_opts->mode = LoadMode::kAll;
+  new_opts->read_func = util::ReadFile;
+  new_opts->load_func = LoadMessager;
+
+  if (opts == nullptr) {
+    return new_opts;
   }
-  if (options->mode == LoadMode::kModeOnlyMain) {
+  if (opts->mode != LoadMode::kNone) {
+    new_opts->mode = opts->mode;
+  }
+  if (opts->read_func != nullptr) {
+    new_opts->read_func = opts->read_func;
+  }
+  if (opts->load_func != nullptr) {
+    new_opts->load_func = opts->load_func;
+  }
+  return new_opts;
+}
+
+std::shared_ptr<const MessagerOptions> ParseMessagerOptions(std::shared_ptr<const LoadOptions> opts,
+                                                            const std::string& name) {
+  std::shared_ptr<MessagerOptions> mopts;
+  if (auto iter = opts->messager_options.find(name); iter != opts->messager_options.end()) {
+    mopts = iter->second;
+  } else {
+    mopts = std::make_shared<MessagerOptions>();
+  }
+  if (mopts->ignore_unknown_fields.has_value()) {
+    mopts->ignore_unknown_fields = opts->ignore_unknown_fields;
+  }
+  if (mopts->patch_dirs.empty()) {
+    mopts->patch_dirs = opts->patch_dirs;
+  }
+  if (mopts->mode == LoadMode::kNone) {
+    mopts->mode = opts->mode;
+  }
+  if (mopts->read_func == nullptr) {
+    mopts->read_func = opts->read_func;
+  }
+  if (mopts->load_func == nullptr) {
+    mopts->load_func = opts->load_func;
+  }
+  return mopts;
+}
+
+bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::string& path, Format fmt, tableau::Patch patch,
+                          std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
+  if (options == nullptr) {
+    return LoadMessager(msg, path, fmt, nullptr);
+  }
+  if (options->mode == LoadMode::kOnlyMain) {
     // ignore patch files when LoadMode::kModeOnlyMain specified
-    return LoadMessageByPath(msg, path, fmt, nullptr);
+    return options->load_func(msg, path, fmt, nullptr);
   }
   std::string name = util::GetProtoName(msg);
   std::vector<std::string> patch_paths;
-  auto iter = options->patch_paths.find(name);
-  if (iter != options->patch_paths.end()) {
+  if (!options->patch_paths.empty()) {
     // patch path specified in PatchPaths, then use it instead of PatchDirs.
-    patch_paths = iter->second;
+    patch_paths = options->patch_paths;
   } else {
     std::string filename = name + util::Format2Ext(fmt);
     for (auto&& patch_dir : options->patch_dirs) {
@@ -200,27 +247,27 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
     }
   }
   if (existed_patch_paths.empty()) {
-    if (options->mode == LoadMode::kModeOnlyPatch) {
+    if (options->mode == LoadMode::kOnlyPatch) {
       // just returns empty message when LoadMode::kModeOnlyPatch specified but no valid patch file provided.
       return true;
     }
     // no valid patch path provided, then just load from the "main" file.
-    return LoadMessageByPath(msg, path, fmt, options);
+    return options->load_func(msg, path, fmt, options);
   }
 
   switch (patch) {
     case tableau::PATCH_REPLACE: {
       // just use the last "patch" file
       std::string& patch_path = existed_patch_paths.back();
-      if (!LoadMessageByPath(msg, patch_path, util::Ext2Format(util::GetExt(patch_path)), options)) {
+      if (!options->load_func(msg, patch_path, util::Ext2Format(util::GetExt(patch_path)), options)) {
         return false;
       }
       break;
     }
     case tableau::PATCH_MERGE: {
-      if (options->mode != LoadMode::kModeOnlyPatch) {
+      if (options->mode != LoadMode::kOnlyPatch) {
         // load msg from the "main" file
-        if (!LoadMessageByPath(msg, path, fmt, options)) {
+        if (!options->load_func(msg, path, fmt, options)) {
           return false;
         }
       }
@@ -229,7 +276,7 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
       std::unique_ptr<google::protobuf::Message> _auto_release(msg.New());
       // load patch_msg from each "patch" file
       for (auto&& patch_path : existed_patch_paths) {
-        if (!LoadMessageByPath(*patch_msg_ptr, patch_path, util::Ext2Format(util::GetExt(patch_path)), options)) {
+        if (!options->load_func(*patch_msg_ptr, patch_path, util::Ext2Format(util::GetExt(patch_path)), options)) {
           return false;
         }
         if (!PatchMessage(msg, *patch_msg_ptr)) {
@@ -248,8 +295,8 @@ bool LoadMessageWithPatch(google::protobuf::Message& msg, const std::string& pat
   return true;
 }
 
-bool LoadMessageByPath(google::protobuf::Message& msg, const std::string& path, Format fmt,
-                       std::shared_ptr<const LoadOptions> options /* = nullptr*/) {
+bool LoadMessager(google::protobuf::Message& msg, const std::string& path, Format fmt,
+                 std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
   std::string content;
   ReadFunc read_func = util::ReadFile;
   if (options != nullptr && options->read_func) {
@@ -276,17 +323,14 @@ bool LoadMessageByPath(google::protobuf::Message& msg, const std::string& path, 
   }
 }
 
-bool LoadMessage(google::protobuf::Message& msg, const std::string& dir, Format fmt,
-                 std::shared_ptr<const LoadOptions> options /* = nullptr*/) {
+bool LoadMessageInDir(google::protobuf::Message& msg, const std::string& dir, Format fmt,
+                      std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
   std::string name = util::GetProtoName(msg);
   std::string path;
-  if (options) {
-    auto iter = options->paths.find(name);
-    if (iter != options->paths.end()) {
-      // path specified in Paths, then use it instead of dir.
-      path = iter->second;
-      fmt = util::Ext2Format(util::GetExt(iter->second));
-    }
+  if (options && !options->path.empty()) {
+    // path specified in Paths, then use it instead of dir.
+    path = options->path;
+    fmt = util::Ext2Format(util::GetExt(path));
   }
   if (path.empty()) {
     std::string filename = name + util::Format2Ext(fmt);
@@ -305,9 +349,11 @@ bool LoadMessage(google::protobuf::Message& msg, const std::string& dir, Format 
   // access the extension directly using the generated identifier
   const tableau::WorksheetOptions worksheet_options = descriptor->options().GetExtension(tableau::worksheet);
   if (worksheet_options.patch() != tableau::PATCH_NONE) {
-    return LoadMessageWithPatch(msg, path, fmt, worksheet_options.patch(), options);
+    return LoadMessagerWithPatch(msg, path, fmt, worksheet_options.patch(), options);
   }
-
-  return LoadMessageByPath(msg, path, fmt, options);
+  if (options) {
+    return options->load_func(msg, path, fmt, options);
+  }
+  return LoadMessager(msg, path, fmt);
 }
 }  // namespace tableau
