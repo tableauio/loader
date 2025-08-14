@@ -14,6 +14,9 @@
 
 namespace tableau {
 
+// Forward declaration of the PatchMessage function
+bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Message& src);
+
 std::shared_ptr<const LoadOptions> ParseLoadOptions(std::shared_ptr<const LoadOptions> opts) {
   std::shared_ptr<LoadOptions> new_opts = std::make_shared<LoadOptions>();
   // set default values
