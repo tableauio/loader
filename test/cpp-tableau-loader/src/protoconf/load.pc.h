@@ -104,7 +104,7 @@ std::shared_ptr<const LoadOptions> ParseLoadOptions(std::shared_ptr<const LoadOp
 std::shared_ptr<const MessagerOptions> ParseMessagerOptions(std::shared_ptr<const LoadOptions> opts,
                                                             const std::string& name);
 bool LoadMessager(google::protobuf::Message& msg, const std::string& path, Format fmt = Format::kJSON,
-                 std::shared_ptr<const MessagerOptions> options = nullptr);
+                  std::shared_ptr<const MessagerOptions> options = nullptr);
 bool LoadMessagerInDir(google::protobuf::Message& msg, const std::string& dir, Format fmt = Format::kJSON,
-                      std::shared_ptr<const MessagerOptions> options = nullptr);
+                       std::shared_ptr<const MessagerOptions> options = nullptr);
 }  // namespace tableau

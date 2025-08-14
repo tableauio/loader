@@ -20,7 +20,6 @@
 
 #include "load.pc.h"
 #include "logger.pc.h"
-#include "messager.pc.h"
 
 namespace tableau {
 #ifdef _WIN32
@@ -134,11 +133,11 @@ const std::string& Format2Ext(Format fmt) {
 }
 
 bool JSON2Message(const std::string& json, google::protobuf::Message& msg,
-                  std::shared_ptr<const LoadOptions> options /* = nullptr */) {
+                  std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   google::protobuf::util::Status status;
   if (options != nullptr) {
     google::protobuf::util::JsonParseOptions parse_options;
-    parse_options.ignore_unknown_fields = options->ignore_unknown_fields;
+    parse_options.ignore_unknown_fields = options->ignore_unknown_fields.value_or(false);
     status = google::protobuf::util::JsonStringToMessage(json, &msg, parse_options);
   } else {
     status = google::protobuf::util::JsonStringToMessage(json, &msg);

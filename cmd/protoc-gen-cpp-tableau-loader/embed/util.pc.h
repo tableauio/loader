@@ -33,7 +33,7 @@ extern const std::string kJSONExt;
 extern const std::string kTextExt;
 extern const std::string kBinExt;
 
-struct LoadOptions;
+struct MessagerOptions;
 
 namespace util {
 // Combine hash values
@@ -83,7 +83,7 @@ Format Ext2Format(const std::string& ext);
 const std::string& Format2Ext(Format fmt);
 
 bool JSON2Message(const std::string& json, google::protobuf::Message& msg,
-                  std::shared_ptr<const LoadOptions> options = nullptr);
+                  std::shared_ptr<const MessagerOptions> options = nullptr);
 bool Text2Message(const std::string& text, google::protobuf::Message& msg);
 bool Bin2Message(const std::string& bin, google::protobuf::Message& msg);
 
