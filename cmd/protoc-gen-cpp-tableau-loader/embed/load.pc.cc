@@ -1,8 +1,6 @@
 #include "load.pc.h"
 
-#if __cplusplus >= 201703L
 #include <filesystem>
-#endif
 
 #include "logger.pc.h"
 #include "util.pc.h"
@@ -83,11 +81,7 @@ bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::string& pa
   } else {
     std::string filename = name + util::Format2Ext(fmt);
     for (auto&& patch_dir : options->patch_dirs) {
-#if __cplusplus >= 201703L
       patch_paths.emplace_back((std::filesystem::path(patch_dir) / filename).make_preferred().string());
-#else
-      patch_paths.emplace_back(patch_dir + kPathSeperator + filename);
-#endif
     }
   }
 
@@ -185,11 +179,7 @@ bool LoadMessagerInDir(google::protobuf::Message& msg, const std::string& dir, F
   }
   if (path.empty()) {
     std::string filename = name + util::Format2Ext(fmt);
-#if __cplusplus >= 201703L
     path = (std::filesystem::path(dir) / filename).make_preferred().string();
-#else
-    path = dir + kPathSeperator + filename;
-#endif
   }
 
   const google::protobuf::Descriptor* descriptor = msg.GetDescriptor();
