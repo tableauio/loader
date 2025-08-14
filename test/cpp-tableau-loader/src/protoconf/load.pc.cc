@@ -177,6 +177,12 @@ std::shared_ptr<const LoadOptions> ParseLoadOptions(std::shared_ptr<const LoadOp
   if (opts == nullptr) {
     return new_opts;
   }
+  if (opts->ignore_unknown_fields.has_value()) {
+    new_opts->ignore_unknown_fields = opts->ignore_unknown_fields;
+  }
+  if (!opts->patch_dirs.empty()) {
+    new_opts->patch_dirs = opts->patch_dirs;
+  }
   if (opts->mode != LoadMode::kNone) {
     new_opts->mode = opts->mode;
   }
@@ -216,7 +222,7 @@ std::shared_ptr<const MessagerOptions> ParseMessagerOptions(std::shared_ptr<cons
 }
 
 bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::string& path, Format fmt, tableau::Patch patch,
-                          std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
+                           std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
   if (options == nullptr) {
     return LoadMessager(msg, path, fmt, nullptr);
   }
@@ -296,7 +302,7 @@ bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::string& pa
 }
 
 bool LoadMessager(google::protobuf::Message& msg, const std::string& path, Format fmt,
-                 std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
+                  std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
   std::string content;
   ReadFunc read_func = util::ReadFile;
   if (options != nullptr && options->read_func) {
@@ -323,8 +329,8 @@ bool LoadMessager(google::protobuf::Message& msg, const std::string& path, Forma
   }
 }
 
-bool LoadMessageInDir(google::protobuf::Message& msg, const std::string& dir, Format fmt,
-                      std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
+bool LoadMessagerInDir(google::protobuf::Message& msg, const std::string& dir, Format fmt,
+                       std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
   std::string name = util::GetProtoName(msg);
   std::string path;
   if (options && !options->path.empty()) {

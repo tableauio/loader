@@ -14,7 +14,7 @@ const std::string ActivityConf::kProtoName = "ActivityConf";
 
 bool ActivityConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
-  bool loaded = LoadMessageInDir(data_, dir, fmt, options);
+  bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
   stats_.duration = profiler.Elapse();
   return ok;
@@ -242,7 +242,7 @@ const std::string ChapterConf::kProtoName = "ChapterConf";
 
 bool ChapterConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
-  bool loaded = LoadMessageInDir(data_, dir, fmt, options);
+  bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
   stats_.duration = profiler.Elapse();
   return ok;
@@ -260,7 +260,7 @@ const std::string ThemeConf::kProtoName = "ThemeConf";
 
 bool ThemeConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
-  bool loaded = LoadMessageInDir(data_, dir, fmt, options);
+  bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
   stats_.duration = profiler.Elapse();
   return ok;
@@ -290,7 +290,7 @@ const std::string TaskConf::kProtoName = "TaskConf";
 
 bool TaskConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
-  bool loaded = LoadMessageInDir(data_, dir, fmt, options);
+  bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
   stats_.duration = profiler.Elapse();
   return ok;

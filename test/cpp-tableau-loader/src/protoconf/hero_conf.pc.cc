@@ -14,7 +14,7 @@ const std::string HeroConf::kProtoName = "HeroConf";
 
 bool HeroConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
-  bool loaded = LoadMessageInDir(data_, dir, fmt, options);
+  bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
   stats_.duration = profiler.Elapse();
   return ok;
@@ -73,7 +73,7 @@ const std::string HeroBaseConf::kProtoName = "HeroBaseConf";
 
 bool HeroBaseConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
-  bool loaded = LoadMessageInDir(data_, dir, fmt, options);
+  bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
   stats_.duration = profiler.Elapse();
   return ok;
