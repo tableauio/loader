@@ -21,6 +21,7 @@ type Language = string
 const (
 	LangCPP Language = "cpp"
 	LangGO  Language = "go"
+	LangCS  Language = "cs"
 )
 
 func NeedGenOrderedMap(md protoreflect.MessageDescriptor, lang Language) bool {
