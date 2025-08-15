@@ -37,7 +37,7 @@ namespace util {
 // References:
 //  - https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x
 //  - https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
-inline void HashCombine(std::size_t& seed) {}
+inline void HashCombine(std::size_t&) {}
 
 template <typename T, typename... O>
 inline void HashCombine(std::size_t& seed, const T& v, O... others) {
@@ -70,9 +70,9 @@ bool ReadFile(const std::string& filename, std::string& content);
 std::string GetExt(const std::string& path);
 // Convert file extension to Format type.
 // NOTE: ext includes dot ".", such as:
-//  - kJSONExt：".json"
-//  - kTextExt".txt"
-//  - kBinExt".bin"
+//  - kJSONExt: ".json"
+//  - kTextExt: ".txt"
+//  - kBinExt: ".bin"
 Format Ext2Format(const std::string& ext);
 // Empty string will be returned if an unsupported enum value has been passed,
 // and the error message can be obtained by GetErrMsg().

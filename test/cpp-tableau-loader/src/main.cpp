@@ -195,13 +195,13 @@ int main() {
 
   for (auto&& it : *chapter_ordered_map) {
     std::cout << "---" << it.first << "-----section_ordered_map" << std::endl;
-    for (auto&& item : it.second.first) {
-      std::cout << item.first << std::endl;
+    for (auto&& kv : it.second.first) {
+      std::cout << kv.first << std::endl;
     }
 
     std::cout << "---" << it.first << " -----section_map" << std::endl;
-    for (auto&& item : it.second.second->section_map()) {
-      std::cout << item.first << std::endl;
+    for (auto&& kv : it.second.second->section_map()) {
+      std::cout << kv.first << std::endl;
     }
 
     std::cout << "chapter_id: " << it.second.second->chapter_id() << std::endl;

@@ -89,7 +89,7 @@ class Messager {
   // Message returns the inner message data.
   virtual const google::protobuf::Message* Message() const { return nullptr; }
   // callback after all messagers loaded.
-  virtual bool ProcessAfterLoadAll(const Hub& hub) { return true; }
+  virtual bool ProcessAfterLoadAll(const Hub&) { return true; }
 
  protected:
   // callback after this messager loaded.
