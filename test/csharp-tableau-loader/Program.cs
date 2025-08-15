@@ -87,5 +87,17 @@
                 }
             }
         }
+
+        LoadBin();
+    }
+
+    static void LoadBin()
+    {
+        Console.WriteLine("LoadBin");
+        var heroConf = new Tableau.HeroConf();
+        if (heroConf.Load("../testdata/bin", Tableau.Format.Bin))
+        {
+            Console.WriteLine($"HeroConf: {heroConf.Data()}");
+        }
     }
 }
