@@ -5,18 +5,17 @@ project(loader)
 file(GLOB_RECURSE PROTO_SOURCE *.cc)
 file(GLOB_RECURSE SOURCE *.cpp)
 
-# Add option to switch between C++20 and C++17
-option(USE_CPP17 "Use C++17 standard (otherwise use C++20)" OFF)
-
-# specify the C++ standard
-if(USE_CPP17)
-    set(CMAKE_CXX_STANDARD 17)
-    message(STATUS "Using C++17 standard")
+# check C++ standard requirement
+set(MIN_CXX_STANDARD 17)
+if (NOT CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD ${MIN_CXX_STANDARD}) # default min C++ standard
 else()
-    set(CMAKE_CXX_STANDARD 20)
-    message(STATUS "Using C++20 standard")
+    if(CMAKE_CXX_STANDARD LESS ${MIN_CXX_STANDARD})
+        message(FATAL_ERROR "CMAKE_CXX_STANDARD is less than the minimum required standard: C++${MIN_CXX_STANDARD}.")
+    endif()
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+message(STATUS "Using C++${CMAKE_CXX_STANDARD} standard")
 
 if (MSVC)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /DNDEBUG")

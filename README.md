@@ -8,15 +8,20 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 - Supported OS: Windows, macOS, Linux
 - Init protobuf: `bash init.sh`
-- C++ compiler: at least C++17
+- C++ standard: at least C++17
 
 ## C++
+
+### Dev at Linux
 
 - Install: **CMake 3.22** or above
 - Change dir: `cd test/cpp-tableau-loader`
 - Generate protoconf: `bash ./gen.sh`
 - Create build dir: `mkdir build && cd build`
-- Run cmake: `cmake ../src/` (C++20) or `cmake -DUSE_CPP17=ON ../src/` (C++17)
+- Run cmake: 
+  - C++17: `cmake ../src/`
+  - C++20: `cmake ../src/ -DCMAKE_CXX_STANDARD=20`
+  - clang: `cmake ../src/ -DCMAKE_CXX_COMPILER=clang++`
 - Build: `make -j8`, then the **bin** dir will be generated at `test/cpp-tableau-loader/bin`.
 
 ### References
