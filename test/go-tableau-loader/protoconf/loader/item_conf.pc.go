@@ -102,13 +102,13 @@ func (x *ItemConf) Data() *protoconf.ItemConf {
 }
 
 // Load fills ItemConf's inner message from file in the specified directory and format.
-func (x *ItemConf) Load(dir string, format format.Format, options ...load.Option) error {
+func (x *ItemConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
 	x.data = &protoconf.ItemConf{}
-	err := load.Load(x.data, dir, format, options...)
+	err := load.LoadMessagerInDir(x.data, dir, format, opts)
 	if err != nil {
 		return err
 	}

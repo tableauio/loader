@@ -53,13 +53,13 @@ func (x *HeroConf) Data() *protoconf.HeroConf {
 }
 
 // Load fills HeroConf's inner message from file in the specified directory and format.
-func (x *HeroConf) Load(dir string, format format.Format, options ...load.Option) error {
+func (x *HeroConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
 	x.data = &protoconf.HeroConf{}
-	err := load.Load(x.data, dir, format, options...)
+	err := load.LoadMessagerInDir(x.data, dir, format, opts)
 	if err != nil {
 		return err
 	}
@@ -194,13 +194,13 @@ func (x *HeroBaseConf) Data() *protoconf.HeroBaseConf {
 }
 
 // Load fills HeroBaseConf's inner message from file in the specified directory and format.
-func (x *HeroBaseConf) Load(dir string, format format.Format, options ...load.Option) error {
+func (x *HeroBaseConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
 	x.data = &protoconf.HeroBaseConf{}
-	err := load.Load(x.data, dir, format, options...)
+	err := load.LoadMessagerInDir(x.data, dir, format, opts)
 	if err != nil {
 		return err
 	}
