@@ -16,7 +16,7 @@ enum class LoadMode {
   kOnlyPatch,  // Only load the patch files
 };
 
-class MessagerOptions;
+struct MessagerOptions;
 class Hub;
 
 // ReadFunc reads the config file and returns its content.
