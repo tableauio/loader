@@ -7,7 +7,7 @@
 #pragma once
 #include <string>
 
-#include "messager.pc.h"
+#include "load.pc.h"
 #include "util.pc.h"
 #include "hero_conf.pb.h"
 
@@ -15,7 +15,7 @@ namespace tableau {
 class HeroConf : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
-  virtual bool Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options = nullptr) override;
+  virtual bool Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options = nullptr) override;
   const protoconf::HeroConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
 
@@ -46,7 +46,7 @@ class HeroConf : public Messager {
 class HeroBaseConf : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
-  virtual bool Load(const std::string& dir, Format fmt, std::shared_ptr<const LoadOptions> options = nullptr) override;
+  virtual bool Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options = nullptr) override;
   const protoconf::HeroBaseConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
 

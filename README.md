@@ -6,16 +6,22 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 > TODO: [devcontainer](https://code.visualstudio.com/docs/devcontainers/containers)
 
-- Development OS: linux
+- Supported OS: Windows, macOS, Linux
 - Init protobuf: `bash init.sh`
+- C++ standard: at least C++17
 
 ## C++
+
+### Dev at Linux
 
 - Install: **CMake 3.22** or above
 - Change dir: `cd test/cpp-tableau-loader`
 - Generate protoconf: `bash ./gen.sh`
 - Create build dir: `mkdir build && cd build`
-- Run cmake: `cmake ../src/`(use c++11) or `cmake -DUSE_CPP17=ON ../src/`(use c++17)
+- Run cmake: 
+  - C++17: `cmake ../src/`
+  - C++20: `cmake ../src/ -DCMAKE_CXX_STANDARD=20`
+  - clang: `cmake ../src/ -DCMAKE_CXX_COMPILER=clang++`
 - Build: `make -j8`, then the **bin** dir will be generated at `test/cpp-tableau-loader/bin`.
 
 ### References
@@ -58,8 +64,11 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 > [protobufjs: Reflection vs. static code](https://github.com/protobufjs/protobuf.js/blob/master/cli/README.md#reflection-vs-static-code) 
 
-If using reflection (`.proto` or `JSON`) but not static code, then [proto3-json-serializer](https://github.com/googleapis/proto3-json-serializer-nodejs) is a good option.
+If using reflection (`.proto` or `JSON`) but not static code, and for well-known types support, then [proto3-json-serializer](https://github.com/googleapis/proto3-json-serializer-nodejs) is a good option. This library implements proto3 JSON serialization and deserialization for
+[protobuf.js](https://www.npmjs.com/package/protobufjs) protobuf objects
+according to the [spec](https://protobuf.dev/programming-guides/proto3/#json).
 
 ### References:
 
 - [How to Setup a TypeScript + Node.js Project](https://khalilstemmler.com/blogs/typescript/node-starter-project/)
+- [proto3-json-serializer](https://github.com/googleapis/proto3-json-serializer-nodejs)

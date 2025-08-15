@@ -26,7 +26,7 @@ int Scheduler::LoopOnce() {
   for (auto&& job : jobs) {
     job();
   }
-  count += jobs.size();
+  count += static_cast<int>(jobs.size());
   return count;
 }
 

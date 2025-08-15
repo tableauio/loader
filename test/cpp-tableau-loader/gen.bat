@@ -32,7 +32,7 @@ for /R %%f in (*.proto) do (
 popd
 "%PROTOC%" ^
     --cpp-tableau-loader_out="%PROTOCONF_OUT%" ^
-    --cpp-tableau-loader_opt=paths=source_relative,registry-shards=2 ^
+    --cpp-tableau-loader_opt=paths=source_relative,shards=2 ^
     --cpp_out="%PROTOCONF_OUT%" ^
     --proto_path="%PROTOBUF_PROTO%" ^
     --proto_path="%TABLEAU_PROTO%" ^

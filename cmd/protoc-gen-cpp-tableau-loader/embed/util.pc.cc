@@ -3,30 +3,15 @@
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/util/json_util.h>
 
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <string>
 
-#if __cplusplus >= 201703L
-#include <filesystem>
-#else
-#ifdef _WIN32
-#include <direct.h>
-#include <windows.h>
-#else
-#include <sys/stat.h>
-#endif
-#endif
-
 #include "load.pc.h"
 #include "logger.pc.h"
-#include "messager.pc.h"
 
 namespace tableau {
-#ifdef _WIN32
-#define mkdir(path, mode) _mkdir(path)
-#endif
-
 static thread_local std::string g_err_msg;
 const std::string& GetErrMsg() { return g_err_msg; }
 void SetErrMsg(const std::string& msg) { g_err_msg = msg; }
@@ -38,7 +23,6 @@ const std::string kBinExt = ".bin";
 
 namespace util {
 int Mkdir(const std::string& path) {
-#if __cplusplus >= 201703L
   std::error_code ec;
   if (!std::filesystem::create_directories(path, ec)) {
     if (ec) {
@@ -47,46 +31,11 @@ int Mkdir(const std::string& path) {
     }
   }
   return 0;
-#else
-  std::string path_ = path + kPathSeperator;
-  struct stat info;
-  for (size_t pos = path_.find(kPathSeperator, 0); pos != std::string::npos; pos = path_.find(kPathSeperator, pos)) {
-    ++pos;
-    auto sub_dir = path_.substr(0, pos);
-    if (stat(sub_dir.c_str(), &info) == 0 && info.st_mode & S_IFDIR) {
-      continue;
-    }
-    int status = mkdir(sub_dir.c_str(), 0755);
-    if (status != 0) {
-      std::cerr << "system error: " << strerror(errno) << std::endl;
-      return -1;
-    }
-  }
-  return 0;
-#endif
 }
 
-std::string GetDir(const std::string& path) {
-#if __cplusplus >= 201703L
-  return std::filesystem::path(path).parent_path().string();
-#else
-  size_t pos = path.find_last_of(kPathSeperator);
-  if (pos != std::string::npos) {
-    return path.substr(0, pos);
-  }
-  return kEmpty;
-#endif
-}
+std::string GetDir(const std::string& path) { return std::filesystem::path(path).parent_path().string(); }
 
-bool ExistsFile(const std::string& filename) {
-#if __cplusplus >= 201703L
-  return std::filesystem::exists(filename);
-#else
-  std::ifstream file(filename);
-  // returns true if the file exists and is accessible
-  return file.good();
-#endif
-}
+bool ExistsFile(const std::string& filename) { return std::filesystem::exists(filename); }
 
 bool ReadFile(const std::string& filename, std::string& content) {
   std::ifstream file(filename);
@@ -134,11 +83,11 @@ const std::string& Format2Ext(Format fmt) {
 }
 
 bool JSON2Message(const std::string& json, google::protobuf::Message& msg,
-                  std::shared_ptr<const LoadOptions> options /* = nullptr */) {
+                  std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   google::protobuf::util::Status status;
   if (options != nullptr) {
     google::protobuf::util::JsonParseOptions parse_options;
-    parse_options.ignore_unknown_fields = options->ignore_unknown_fields;
+    parse_options.ignore_unknown_fields = options->ignore_unknown_fields.value_or(false);
     status = google::protobuf::util::JsonStringToMessage(json, &msg, parse_options);
   } else {
     status = google::protobuf::util::JsonStringToMessage(json, &msg);

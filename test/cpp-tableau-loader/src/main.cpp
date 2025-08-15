@@ -73,7 +73,9 @@ bool TestPatch() {
   // patchconf2 different format
   std::cout << "-----TestPatch patchconf2 different format" << std::endl;
   options->patch_dirs = {"../../testdata/patchconf2/"};
-  options->patch_paths["PatchMergeConf"] = {"../../testdata/patchconf2/PatchMergeConf.txt"};
+  auto mopts = std::make_shared<tableau::MessagerOptions>();
+  mopts->patch_paths = {"../../testdata/patchconf2/PatchMergeConf.txt"};
+  options->messager_options["PatchMergeConf"] = mopts;
   ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     std::cout << "failed to load with patchconf2" << std::endl;
@@ -82,8 +84,10 @@ bool TestPatch() {
 
   // multiple patch files
   std::cout << "-----TestPatch multiple patch files" << std::endl;
-  options->patch_paths["PatchMergeConf"] = {"../../testdata/patchconf/PatchMergeConf.json",
-                                            "../../testdata/patchconf2/PatchMergeConf.json"};
+  mopts = std::make_shared<tableau::MessagerOptions>();
+  mopts->patch_paths = {"../../testdata/patchconf/PatchMergeConf.json",
+                        "../../testdata/patchconf2/PatchMergeConf.json"};
+  options->messager_options["PatchMergeConf"] = mopts;
   ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     std::cout << "failed to load with multiple patch files" << std::endl;
@@ -92,9 +96,11 @@ bool TestPatch() {
 
   // mode only main
   std::cout << "-----TestPatch ModeOnlyMain" << std::endl;
-  options->patch_paths["PatchMergeConf"] = {"../../testdata/patchconf/PatchMergeConf.json",
-                                            "../../testdata/patchconf2/PatchMergeConf.json"};
-  options->mode = tableau::LoadMode::kModeOnlyMain;
+  mopts = std::make_shared<tableau::MessagerOptions>();
+  mopts->patch_paths = {"../../testdata/patchconf/PatchMergeConf.json",
+                        "../../testdata/patchconf2/PatchMergeConf.json"};
+  options->messager_options["PatchMergeConf"] = mopts;
+  options->mode = tableau::LoadMode::kOnlyMain;
   ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     std::cout << "failed to load with mode only main" << std::endl;
@@ -109,9 +115,11 @@ bool TestPatch() {
 
   // mode only patch
   std::cout << "-----TestPatch ModeOnlyPatch" << std::endl;
-  options->patch_paths["PatchMergeConf"] = {"../../testdata/patchconf/PatchMergeConf.json",
-                                            "../../testdata/patchconf2/PatchMergeConf.json"};
-  options->mode = tableau::LoadMode::kModeOnlyPatch;
+  mopts = std::make_shared<tableau::MessagerOptions>();
+  mopts->patch_paths = {"../../testdata/patchconf/PatchMergeConf.json",
+                        "../../testdata/patchconf2/PatchMergeConf.json"};
+  options->messager_options["PatchMergeConf"] = mopts;
+  options->mode = tableau::LoadMode::kOnlyPatch;
   ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     std::cout << "failed to load with mode only patch" << std::endl;
@@ -125,7 +133,9 @@ int main() {
   auto options = std::make_shared<tableau::LoadOptions>();
   options->ignore_unknown_fields = true;
   options->patch_dirs = {"../../testdata/patchconf/"};
-  options->paths["ItemConf"] = "../../testdata/conf/ItemConf.json";
+  auto mopts = std::make_shared<tableau::MessagerOptions>();
+  mopts->path = "../../testdata/conf/ItemConf.json";
+  options->messager_options["ItemConf"] = mopts;
 
   bool ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
   if (!ok) {
@@ -185,13 +195,13 @@ int main() {
 
   for (auto&& it : *chapter_ordered_map) {
     std::cout << "---" << it.first << "-----section_ordered_map" << std::endl;
-    for (auto&& item : it.second.first) {
-      std::cout << item.first << std::endl;
+    for (auto&& kv : it.second.first) {
+      std::cout << kv.first << std::endl;
     }
 
     std::cout << "---" << it.first << " -----section_map" << std::endl;
-    for (auto&& item : it.second.second->section_map()) {
-      std::cout << item.first << std::endl;
+    for (auto&& kv : it.second.second->section_map()) {
+      std::cout << kv.first << std::endl;
     }
 
     std::cout << "chapter_id: " << it.second.second->chapter_id() << std::endl;

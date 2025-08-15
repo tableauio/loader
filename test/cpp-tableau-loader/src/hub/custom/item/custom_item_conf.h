@@ -4,8 +4,8 @@
 class CustomItemConf : public tableau::Messager {
  public:
   static const std::string& Name() { return kCustomName; };
-  virtual bool Load(const std::string& dir, tableau::Format fmt,
-                    std::shared_ptr<const tableau::LoadOptions> options = nullptr) override {
+  virtual bool Load(const std::string&, tableau::Format,
+                    std::shared_ptr<const tableau::MessagerOptions> options = nullptr) override {
     return true;
   }
   virtual bool ProcessAfterLoadAll(const tableau::Hub& hub) override;

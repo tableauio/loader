@@ -11,15 +11,6 @@ namespace tableau {
 const std::string& GetErrMsg();
 void SetErrMsg(const std::string& msg);
 
-#if __cplusplus < 201703L
-// Platform-specific path separator
-#ifdef _WIN32
-constexpr char kPathSeperator = '\\';
-#else
-constexpr char kPathSeperator = '/';
-#endif
-#endif
-
 enum class Format {
   kUnknown,
   kJSON,
@@ -33,7 +24,7 @@ extern const std::string kJSONExt;
 extern const std::string kTextExt;
 extern const std::string kBinExt;
 
-struct LoadOptions;
+struct MessagerOptions;
 
 namespace util {
 // Combine hash values
@@ -41,7 +32,7 @@ namespace util {
 // References:
 //  - https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x
 //  - https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
-inline void HashCombine(std::size_t& seed) {}
+inline void HashCombine(std::size_t&) {}
 
 template <typename T, typename... O>
 inline void HashCombine(std::size_t& seed, const T& v, O... others) {
@@ -74,16 +65,16 @@ bool ReadFile(const std::string& filename, std::string& content);
 std::string GetExt(const std::string& path);
 // Convert file extension to Format type.
 // NOTE: ext includes dot ".", such as:
-//  - kJSONExt：".json"
-//  - kTextExt".txt"
-//  - kBinExt".bin"
+//  - kJSONExt: ".json"
+//  - kTextExt: ".txt"
+//  - kBinExt: ".bin"
 Format Ext2Format(const std::string& ext);
 // Empty string will be returned if an unsupported enum value has been passed,
 // and the error message can be obtained by GetErrMsg().
 const std::string& Format2Ext(Format fmt);
 
 bool JSON2Message(const std::string& json, google::protobuf::Message& msg,
-                  std::shared_ptr<const LoadOptions> options = nullptr);
+                  std::shared_ptr<const MessagerOptions> options = nullptr);
 bool Text2Message(const std::string& text, google::protobuf::Message& msg);
 bool Bin2Message(const std::string& bin, google::protobuf::Message& msg);
 
