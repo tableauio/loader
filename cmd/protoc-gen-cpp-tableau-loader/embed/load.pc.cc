@@ -6,7 +6,6 @@
 #include "util.pc.h"
 
 namespace tableau {
-const std::string Messager::kProtoName = "";
 
 // Forward declaration of the PatchMessage function
 bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Message& src);

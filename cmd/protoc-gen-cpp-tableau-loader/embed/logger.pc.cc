@@ -58,8 +58,8 @@ int Logger::Init(const std::filesystem::path& path, Level level) {
   std::error_code ec;
   std::filesystem::create_directories(path.parent_path(), ec);
   if (ec) {
-    std::cerr << "system error: " << ec.message() << std::endl;
-    return -1;
+    SetErrMsg("failed to create log directory: " + ec.message());
+    return ec.value();
   }
   ofs_.open(path, std::ofstream::out | std::ofstream::app);
   os_ = &ofs_;  // use file stream as output stream

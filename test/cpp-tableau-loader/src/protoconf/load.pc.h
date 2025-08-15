@@ -83,7 +83,10 @@ class Messager {
 
  public:
   virtual ~Messager() = default;
-  static const std::string& Name() { return kProtoName; }
+  static const std::string& Name() {
+    static const std::string kEmpty = "";
+    return kEmpty;
+  }
   const Stats& GetStats() { return stats_; }
   // Load fills message from file in the specified directory and format.
   virtual bool Load(const std::filesystem::path& dir, Format fmt,
@@ -97,9 +100,6 @@ class Messager {
   // callback after this messager loaded.
   virtual bool ProcessAfterLoad() { return true; };
   Stats stats_;
-
- private:
-  static const std::string kProtoName;
 };
 
 // ParseLoadOptions parses load options with default global-level options.
