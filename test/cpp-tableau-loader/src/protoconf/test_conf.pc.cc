@@ -10,7 +10,7 @@
 #include "util.pc.h"
 
 namespace tableau {
-const std::string ActivityConf::kProtoName = "ActivityConf";
+const std::string ActivityConf::kProtoName = protoconf::ActivityConf::GetDescriptor()->name();
 
 bool ActivityConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
@@ -238,7 +238,7 @@ const protoconf::Section::SectionItem* ActivityConf::FindFirstAward(uint32_t id)
 }
 
 
-const std::string ChapterConf::kProtoName = "ChapterConf";
+const std::string ChapterConf::kProtoName = protoconf::ChapterConf::GetDescriptor()->name();
 
 bool ChapterConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
@@ -256,7 +256,7 @@ const protoconf::ChapterConf::Chapter* ChapterConf::Get(uint64_t id) const {
   return &iter->second;
 }
 
-const std::string ThemeConf::kProtoName = "ThemeConf";
+const std::string ThemeConf::kProtoName = protoconf::ThemeConf::GetDescriptor()->name();
 
 bool ThemeConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
@@ -286,7 +286,7 @@ const std::string* ThemeConf::Get(const std::string& name, const std::string& pa
   return &iter->second;
 }
 
-const std::string TaskConf::kProtoName = "TaskConf";
+const std::string TaskConf::kProtoName = protoconf::TaskConf::GetDescriptor()->name();
 
 bool TaskConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;

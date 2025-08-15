@@ -73,7 +73,7 @@ bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::string& pa
     // ignore patch files when LoadMode::kModeOnlyMain specified
     return options->load_func(msg, path, fmt, nullptr);
   }
-  std::string name = util::GetProtoName(msg);
+  const std::string& name = msg.GetDescriptor()->name();
   std::vector<std::string> patch_paths;
   if (!options->patch_paths.empty()) {
     // patch path specified in PatchPaths, then use it instead of PatchDirs.
@@ -81,13 +81,13 @@ bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::string& pa
   } else {
     std::string filename = name + util::Format2Ext(fmt);
     for (auto&& patch_dir : options->patch_dirs) {
-      patch_paths.emplace_back((std::filesystem::path(patch_dir) / filename).make_preferred().string());
+      patch_paths.emplace_back((std::filesystem::path(patch_dir) / filename).string());
     }
   }
 
   std::vector<std::string> existed_patch_paths;
   for (auto&& patch_path : patch_paths) {
-    if (util::ExistsFile(patch_path)) {
+    if (std::filesystem::exists(patch_path)) {
       existed_patch_paths.emplace_back(patch_path);
     }
   }
@@ -104,7 +104,7 @@ bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::string& pa
     case tableau::PATCH_REPLACE: {
       // just use the last "patch" file
       std::string& patch_path = existed_patch_paths.back();
-      if (!options->load_func(msg, patch_path, util::Ext2Format(util::GetExt(patch_path)), options)) {
+      if (!options->load_func(msg, patch_path, util::GetFormat(patch_path), options)) {
         return false;
       }
       break;
@@ -121,7 +121,7 @@ bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::string& pa
       std::unique_ptr<google::protobuf::Message> _auto_release(msg.New());
       // load patch_msg from each "patch" file
       for (auto&& patch_path : existed_patch_paths) {
-        if (!options->load_func(*patch_msg_ptr, patch_path, util::Ext2Format(util::GetExt(patch_path)), options)) {
+        if (!options->load_func(*patch_msg_ptr, patch_path, util::GetFormat(patch_path), options)) {
           return false;
         }
         if (!PatchMessage(msg, *patch_msg_ptr)) {
@@ -131,11 +131,11 @@ bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::string& pa
       break;
     }
     default: {
-      SetErrMsg("unknown patch type: " + util::GetPatchName(patch));
+      SetErrMsg("unknown patch type: " + tableau::Patch_Name(patch));
       return false;
     }
   }
-  ATOM_DEBUG("patched(%s) %s by %s: %s", util::GetPatchName(patch).c_str(), name.c_str(),
+  ATOM_DEBUG("patched(%s) %s by %s: %s", tableau::Patch_Name(patch).c_str(), name.c_str(),
              ATOM_VECTOR_STR(existed_patch_paths).c_str(), msg.ShortDebugString().c_str());
   return true;
 }
@@ -170,25 +170,21 @@ bool LoadMessager(google::protobuf::Message& msg, const std::string& path, Forma
 
 bool LoadMessagerInDir(google::protobuf::Message& msg, const std::string& dir, Format fmt,
                        std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
-  std::string name = util::GetProtoName(msg);
+  const std::string& name = msg.GetDescriptor()->name();
   std::string path;
   if (options && !options->path.empty()) {
     // path specified in Paths, then use it instead of dir.
     path = options->path;
-    fmt = util::Ext2Format(util::GetExt(path));
+    fmt = util::GetFormat(path);
   }
   if (path.empty()) {
     std::string filename = name + util::Format2Ext(fmt);
-    path = (std::filesystem::path(dir) / filename).make_preferred().string();
+    path = (std::filesystem::path(dir) / filename).string();
   }
 
   const google::protobuf::Descriptor* descriptor = msg.GetDescriptor();
-  if (!descriptor) {
-    SetErrMsg("failed to get descriptor of message: " + name);
-    return false;
-  }
   // access the extension directly using the generated identifier
-  const tableau::WorksheetOptions worksheet_options = descriptor->options().GetExtension(tableau::worksheet);
+  const tableau::WorksheetOptions& worksheet_options = descriptor->options().GetExtension(tableau::worksheet);
   if (worksheet_options.patch() != tableau::PATCH_NONE) {
     return LoadMessagerWithPatch(msg, path, fmt, worksheet_options.patch(), options);
   }

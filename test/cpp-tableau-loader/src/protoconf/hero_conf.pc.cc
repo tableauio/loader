@@ -10,7 +10,7 @@
 #include "util.pc.h"
 
 namespace tableau {
-const std::string HeroConf::kProtoName = "HeroConf";
+const std::string HeroConf::kProtoName = protoconf::HeroConf::GetDescriptor()->name();
 
 bool HeroConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
@@ -69,7 +69,7 @@ const HeroConf::Hero_Attr_OrderedMap* HeroConf::GetOrderedMap(const std::string&
   return &iter->second.first;
 }
 
-const std::string HeroBaseConf::kProtoName = "HeroBaseConf";
+const std::string HeroBaseConf::kProtoName = protoconf::HeroBaseConf::GetDescriptor()->name();
 
 bool HeroBaseConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;

@@ -4,6 +4,7 @@
 // - protoc                        v3.19.3
 
 #pragma once
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -54,7 +55,7 @@ class Logger {
   ~Logger() { ofs_.close(); }
   // Init the logger with the specified path.
   // NOTE: no guarantee of thread-safety.
-  int Init(const std::string& path, Level level);
+  int Init(const std::filesystem::path& path, Level level);
   // Set the writer for writing log.
   void SetWriter(Writer writer) { writer_ = writer; }
   // Log with guarantee of thread-safety.

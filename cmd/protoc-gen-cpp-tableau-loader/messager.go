@@ -56,7 +56,7 @@ func generateHppFileContent(file *protogen.File, g *protogen.GeneratedFile) {
 		opts := message.Desc.Options().(*descriptorpb.MessageOptions)
 		worksheet := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
 		if worksheet != nil {
-			genHppMessage(file, g, message)
+			genHppMessage(g, message)
 			messagerName := string(message.Desc.Name())
 			fileMessagers = append(fileMessagers, messagerName)
 		}
@@ -76,9 +76,8 @@ func generateHppFileContent(file *protogen.File, g *protogen.GeneratedFile) {
 }
 
 // genHppMessage generates a message definition.
-func genHppMessage(file *protogen.File, g *protogen.GeneratedFile, message *protogen.Message) {
-	pkg := string(file.Desc.Package())
-	cppFullName := strings.ReplaceAll(pkg, ".", "::") + "::" + string(message.Desc.Name())
+func genHppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
+	cppFullName := helper.ParseCppClassType(message.Desc)
 	messagerFullName := string(message.Desc.FullName())
 	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
@@ -154,9 +153,10 @@ func generateCppFileContent(file *protogen.File, g *protogen.GeneratedFile) {
 func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	messagerName := string(message.Desc.Name())
 	messagerFullName := string(message.Desc.FullName())
+	cppFullName := helper.ParseCppClassType(message.Desc)
 	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
-	g.P("const std::string ", messagerName, "::kProtoName = ", `"`, messagerName, `";`)
+	g.P("const std::string ", messagerName, "::kProtoName = ", cppFullName, `::GetDescriptor()->name();`)
 	g.P()
 	g.P("bool ", messagerName, "::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {")
 	g.P(helper.Indent(1), "tableau::util::TimeProfiler profiler;")

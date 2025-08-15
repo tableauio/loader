@@ -53,27 +53,11 @@ inline std::size_t SugaredHashCombine(const T& v, O... others) {
   return seed;
 }
 
-// Mkdir makes dir recursively.
-int Mkdir(const std::string& path);
-// GetDir returns all but the last element of path, typically the path's
-// directory.
-std::string GetDir(const std::string& path);
-// ExistsFile checks if a file exists.
-bool ExistsFile(const std::string& filename);
 // ReadFile reads the file named by filename and returns the contents.
 bool ReadFile(const std::string& filename, std::string& content);
 
-// GetExt returns the file name extension used by path.
-// The extension is the suffix beginning at the final dot
-// in the final element of path; it is empty if there is
-// no dot.
-std::string GetExt(const std::string& path);
-// Convert file extension to Format type.
-// NOTE: ext includes dot ".", such as:
-//  - kJSONExt: ".json"
-//  - kTextExt: ".txt"
-//  - kBinExt: ".bin"
-Format Ext2Format(const std::string& ext);
+// GetFormat returns the Format type used by path.
+Format GetFormat(const std::string& path);
 // Empty string will be returned if an unsupported enum value has been passed,
 // and the error message can be obtained by GetErrMsg().
 const std::string& Format2Ext(Format fmt);
@@ -82,9 +66,6 @@ bool JSON2Message(const std::string& json, google::protobuf::Message& msg,
                   std::shared_ptr<const MessagerOptions> options = nullptr);
 bool Text2Message(const std::string& text, google::protobuf::Message& msg);
 bool Bin2Message(const std::string& bin, google::protobuf::Message& msg);
-
-const std::string& GetProtoName(const google::protobuf::Message& msg);
-std::string GetPatchName(tableau::Patch patch);
 
 void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& msg);
 
