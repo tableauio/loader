@@ -100,8 +100,8 @@ github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOf
 github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/subchen/go-xmldom v1.1.2 h1:7evI2YqfYYOnuj+PBwyaOZZYjl3iWq35P6KfBUw9jeU=
 github.com/subchen/go-xmldom v1.1.2/go.mod h1:6Pg/HuX5/T4Jlj0IPJF1sRxKVoI/rrKP6LIMge9d5/8=
-github.com/tableauio/tableau v0.13.1-0.20250815080041-1ac1b4e6f943 h1:36NL5g7jmFx/e3F/98DVj2JdN5URuVvzRo+jniXct2s=
-github.com/tableauio/tableau v0.13.1-0.20250815080041-1ac1b4e6f943/go.mod h1:EitY0lyJa8gP6tBkzWhS2WvYhC8hyWPGXoR4QPQ+Qmw=
+github.com/tableauio/tableau v0.13.1-0.20250815085205-2917481cc73f h1:Nf0UX+/p5tzm9c2KyfdqM9oxMb3ZuP5sGr60zK8xmvk=
+github.com/tableauio/tableau v0.13.1-0.20250815085205-2917481cc73f/go.mod h1:EitY0lyJa8gP6tBkzWhS2WvYhC8hyWPGXoR4QPQ+Qmw=
 github.com/twitchyliquid64/golang-asm v0.15.1 h1:SU5vSMR7hnwNxj24w34ZyCi/FmDZTkS4MhqMhdFk5YI=
 github.com/twitchyliquid64/golang-asm v0.15.1/go.mod h1:a1lVb/DtPvCB8fslRZhAngC2+aY1QWCk3Cedj/Gdt08=
 github.com/xuri/efp v0.0.0-20220603152613-6918739fd470 h1:6932x8ltq1w4utjmfMPVj09jdMlkY0aiA6+Skbtl3/c=
