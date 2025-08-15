@@ -339,16 +339,16 @@ func newMessagerContainer(messagerMap MessagerMap) *messagerContainer {
 		messagerMap: messagerMap,
 		loadedTime:  time.Now(),
 	}
-	messagerContainer.heroConf, _ = messagerMap["HeroConf"].(*HeroConf)
-	messagerContainer.heroBaseConf, _ = messagerMap["HeroBaseConf"].(*HeroBaseConf)
-	messagerContainer.itemConf, _ = messagerMap["ItemConf"].(*ItemConf)
-	messagerContainer.patchReplaceConf, _ = messagerMap["PatchReplaceConf"].(*PatchReplaceConf)
-	messagerContainer.patchMergeConf, _ = messagerMap["PatchMergeConf"].(*PatchMergeConf)
-	messagerContainer.recursivePatchConf, _ = messagerMap["RecursivePatchConf"].(*RecursivePatchConf)
-	messagerContainer.activityConf, _ = messagerMap["ActivityConf"].(*ActivityConf)
-	messagerContainer.chapterConf, _ = messagerMap["ChapterConf"].(*ChapterConf)
-	messagerContainer.themeConf, _ = messagerMap["ThemeConf"].(*ThemeConf)
-	messagerContainer.taskConf, _ = messagerMap["TaskConf"].(*TaskConf)
+	messagerContainer.heroConf, _ = messagerMap[(&HeroConf{}).Name()].(*HeroConf)
+	messagerContainer.heroBaseConf, _ = messagerMap[(&HeroBaseConf{}).Name()].(*HeroBaseConf)
+	messagerContainer.itemConf, _ = messagerMap[(&ItemConf{}).Name()].(*ItemConf)
+	messagerContainer.patchReplaceConf, _ = messagerMap[(&PatchReplaceConf{}).Name()].(*PatchReplaceConf)
+	messagerContainer.patchMergeConf, _ = messagerMap[(&PatchMergeConf{}).Name()].(*PatchMergeConf)
+	messagerContainer.recursivePatchConf, _ = messagerMap[(&RecursivePatchConf{}).Name()].(*RecursivePatchConf)
+	messagerContainer.activityConf, _ = messagerMap[(&ActivityConf{}).Name()].(*ActivityConf)
+	messagerContainer.chapterConf, _ = messagerMap[(&ChapterConf{}).Name()].(*ChapterConf)
+	messagerContainer.themeConf, _ = messagerMap[(&ThemeConf{}).Name()].(*ThemeConf)
+	messagerContainer.taskConf, _ = messagerMap[(&TaskConf{}).Name()].(*TaskConf)
 	return messagerContainer
 }
 

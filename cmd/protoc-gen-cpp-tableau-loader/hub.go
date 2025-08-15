@@ -125,7 +125,7 @@ func generateHubCppTplSpec(g *protogen.GeneratedFile, protofiles []string, fileM
 func generateHubCppMsgContainerCtor(g *protogen.GeneratedFile, protofiles []string, fileMessagers map[string][]string) {
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
-			g.P(helper.Indent(1), strcase.ToSnake(messager), "_ = std::dynamic_pointer_cast<", messager, `>(GetMessager("`, messager, `"));`)
+			g.P(helper.Indent(1), strcase.ToSnake(messager), "_ = std::dynamic_pointer_cast<", messager, `>(GetMessager(`, messager, `::Name()));`)
 		}
 	}
 }

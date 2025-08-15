@@ -36,7 +36,7 @@ func generateHub(gen *protogen.Plugin) {
 	g.P("loadedTime: time.Now(),")
 	g.P("}")
 	for _, messager := range messagers {
-		g.P("messagerContainer.", strcase.ToLowerCamel(messager), `, _ = messagerMap["`, messager, `"].(*`, messager, ")")
+		g.P("messagerContainer.", strcase.ToLowerCamel(messager), `, _ = messagerMap[(&`, messager, `{}).Name()].(*`, messager, ")")
 	}
 	g.P("return messagerContainer")
 	g.P("}")
