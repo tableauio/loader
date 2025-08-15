@@ -19,7 +19,7 @@ void Hub::InitOnce(std::shared_ptr<const HubOptions> options) {
   std::call_once(init_once_, [&]() { options_ = options; });
 }
 
-bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */,
+bool Hub::Load(const std::filesystem::path& dir, Format fmt /* = Format::kJSON */,
                std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   auto msger_map = InternalLoad(dir, fmt, options);
   if (!msger_map) {
@@ -33,7 +33,7 @@ bool Hub::Load(const std::string& dir, Format fmt /* = Format::kJSON */,
   return true;
 }
 
-bool Hub::AsyncLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
+bool Hub::AsyncLoad(const std::filesystem::path& dir, Format fmt /* = Format::kJSON */,
                     std::shared_ptr<const LoadOptions> options /* = nullptr */) {
   auto msger_map = InternalLoad(dir, fmt, options);
   if (!msger_map) {
@@ -54,7 +54,7 @@ void Hub::InitScheduler() {
   sched_->Current();
 }
 
-std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
+std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::filesystem::path& dir, Format fmt /* = Format::kJSON */,
                                                std::shared_ptr<const LoadOptions> options /* = nullptr */) const {
   // intercept protobuf error logs
   auto old_handler = google::protobuf::SetLogHandler(util::ProtobufLogHandler);

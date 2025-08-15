@@ -10,9 +10,9 @@
 #include "util.pc.h"
 
 namespace tableau {
-const std::string HeroConf::kProtoName = "HeroConf";
+const std::string HeroConf::kProtoName = protoconf::HeroConf::GetDescriptor()->name();
 
-bool HeroConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
+bool HeroConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
@@ -69,9 +69,9 @@ const HeroConf::Hero_Attr_OrderedMap* HeroConf::GetOrderedMap(const std::string&
   return &iter->second.first;
 }
 
-const std::string HeroBaseConf::kProtoName = "HeroBaseConf";
+const std::string HeroBaseConf::kProtoName = protoconf::HeroBaseConf::GetDescriptor()->name();
 
-bool HeroBaseConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
+bool HeroBaseConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;

@@ -10,9 +10,9 @@
 #include "util.pc.h"
 
 namespace tableau {
-const std::string ItemConf::kProtoName = "ItemConf";
+const std::string ItemConf::kProtoName = protoconf::ItemConf::GetDescriptor()->name();
 
-bool ItemConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
+bool ItemConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;

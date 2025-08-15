@@ -22,42 +22,18 @@ const std::string kTextExt = ".txt";
 const std::string kBinExt = ".bin";
 
 namespace util {
-int Mkdir(const std::string& path) {
-  std::error_code ec;
-  if (!std::filesystem::create_directories(path, ec)) {
-    if (ec) {
-      std::cerr << "system error: " << ec.message() << std::endl;
-      return -1;
-    }
-  }
-  return 0;
-}
-
-std::string GetDir(const std::string& path) { return std::filesystem::path(path).parent_path().string(); }
-
-bool ExistsFile(const std::string& filename) { return std::filesystem::exists(filename); }
-
-bool ReadFile(const std::string& filename, std::string& content) {
+bool ReadFile(const std::filesystem::path& filename, std::string& content) {
   std::ifstream file(filename);
   if (!file.is_open()) {
-    SetErrMsg("failed to open " + filename + ": " + strerror(errno));
+    SetErrMsg("failed to open " + filename.string() + ": " + strerror(errno));
     return false;
   }
-  std::stringstream ss;
-  ss << file.rdbuf();
-  content = ss.str();
+  content.assign(std::istreambuf_iterator<char>(file), {});
   return true;
 }
 
-std::string GetExt(const std::string& path) {
-  std::size_t pos = path.find_last_of(".");
-  if (pos != std::string::npos) {
-    return path.substr(pos);
-  }
-  return kEmpty;
-}
-
-Format Ext2Format(const std::string& ext) {
+Format GetFormat(const std::filesystem::path& path) {
+  auto ext = path.extension();
   if (ext == kJSONExt) {
     return Format::kJSON;
   } else if (ext == kTextExt) {
@@ -93,7 +69,7 @@ bool JSON2Message(const std::string& json, google::protobuf::Message& msg,
     status = google::protobuf::util::JsonStringToMessage(json, &msg);
   }
   if (!status.ok()) {
-    SetErrMsg("failed to parse " + GetProtoName(msg) + kJSONExt + ": " + status.ToString());
+    SetErrMsg("failed to parse " + msg.GetDescriptor()->name() + kJSONExt + ": " + status.ToString());
     return false;
   }
   return true;
@@ -101,33 +77,18 @@ bool JSON2Message(const std::string& json, google::protobuf::Message& msg,
 
 bool Text2Message(const std::string& text, google::protobuf::Message& msg) {
   if (!google::protobuf::TextFormat::ParseFromString(text, &msg)) {
-    SetErrMsg("failed to parse " + GetProtoName(msg) + kTextExt);
+    SetErrMsg("failed to parse " + msg.GetDescriptor()->name() + kTextExt);
     return false;
   }
   return true;
 }
+
 bool Bin2Message(const std::string& bin, google::protobuf::Message& msg) {
   if (!msg.ParseFromString(bin)) {
-    SetErrMsg("failed to parse " + GetProtoName(msg) + kBinExt);
+    SetErrMsg("failed to parse " + msg.GetDescriptor()->name() + kBinExt);
     return false;
   }
   return true;
-}
-
-const std::string& GetProtoName(const google::protobuf::Message& msg) {
-  const auto* md = msg.GetDescriptor();
-  return md != nullptr ? md->name() : kEmpty;
-}
-
-std::string GetPatchName(tableau::Patch patch) {
-  auto* descriptor = tableau::Patch_descriptor();
-  if (descriptor) {
-    auto* value = descriptor->FindValueByNumber(patch);
-    if (value) {
-      return value->name();
-    }
-  }
-  return std::to_string(static_cast<int>(patch));
 }
 
 // refer: https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/stubs/logging.h

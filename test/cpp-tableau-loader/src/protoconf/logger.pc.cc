@@ -17,6 +17,7 @@
 #include <unistd.h>
 #endif
 
+#include <filesystem>
 #include <thread>
 #include <unordered_map>
 
@@ -58,14 +59,12 @@ void SetDefaultLogger(Logger* logger) {
   g_default_logger = logger;
 }
 
-int Logger::Init(const std::string& path, Level level) {
-  std::string dir = util::GetDir(path);
-  if (!dir.empty()) {
-    // prepare the specified directory
-    int status = util::Mkdir(dir);
-    if (status == -1) {
-      return status;
-    }
+int Logger::Init(const std::filesystem::path& path, Level level) {
+  std::error_code ec;
+  std::filesystem::create_directories(path.parent_path(), ec);
+  if (ec) {
+    SetErrMsg("failed to create log directory: " + ec.message());
+    return ec.value();
   }
   ofs_.open(path, std::ofstream::out | std::ofstream::app);
   os_ = &ofs_;  // use file stream as output stream

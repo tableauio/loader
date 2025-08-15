@@ -44,12 +44,13 @@ class Hub {
 
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
-  bool Load(const std::string& dir, Format fmt = Format::kJSON, std::shared_ptr<const LoadOptions> options = nullptr);
+  bool Load(const std::filesystem::path& dir, Format fmt = Format::kJSON,
+            std::shared_ptr<const LoadOptions> options = nullptr);
 
   /***** Asynchronous Loading *****/
   // Load configs into temp MessagerContainer, and you should call LoopOnce() in you app's main loop,
   // in order to take the temp MessagerContainer into effect.
-  bool AsyncLoad(const std::string& dir, Format fmt = Format::kJSON,
+  bool AsyncLoad(const std::filesystem::path& dir, Format fmt = Format::kJSON,
                  std::shared_ptr<const LoadOptions> options = nullptr);
   int LoopOnce();
   // You'd better initialize the scheduler in the main thread.
@@ -77,7 +78,7 @@ class Hub {
   inline std::time_t GetLastLoadedTime() const;
 
  private:
-  std::shared_ptr<MessagerMap> InternalLoad(const std::string& dir, Format fmt = Format::kJSON,
+  std::shared_ptr<MessagerMap> InternalLoad(const std::filesystem::path& dir, Format fmt = Format::kJSON,
                                             std::shared_ptr<const LoadOptions> options = nullptr) const;
   std::shared_ptr<MessagerMap> NewMessagerMap() const;
   std::shared_ptr<MessagerContainer> GetMessagerContainerWithProvider() const;

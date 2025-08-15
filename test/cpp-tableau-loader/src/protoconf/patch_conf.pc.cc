@@ -10,9 +10,9 @@
 #include "util.pc.h"
 
 namespace tableau {
-const std::string PatchReplaceConf::kProtoName = "PatchReplaceConf";
+const std::string PatchReplaceConf::kProtoName = protoconf::PatchReplaceConf::GetDescriptor()->name();
 
-bool PatchReplaceConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
+bool PatchReplaceConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
@@ -20,9 +20,9 @@ bool PatchReplaceConf::Load(const std::string& dir, Format fmt, std::shared_ptr<
   return ok;
 }
 
-const std::string PatchMergeConf::kProtoName = "PatchMergeConf";
+const std::string PatchMergeConf::kProtoName = protoconf::PatchMergeConf::GetDescriptor()->name();
 
-bool PatchMergeConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
+bool PatchMergeConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
@@ -38,9 +38,9 @@ const protoconf::Item* PatchMergeConf::Get(uint32_t id) const {
   return &iter->second;
 }
 
-const std::string RecursivePatchConf::kProtoName = "RecursivePatchConf";
+const std::string RecursivePatchConf::kProtoName = protoconf::RecursivePatchConf::GetDescriptor()->name();
 
-bool RecursivePatchConf::Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
+bool RecursivePatchConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;

@@ -17,15 +17,13 @@ bool LoadWithPatch(std::shared_ptr<const tableau::LoadOptions> options) {
   return Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
 }
 
-bool CustomReadFile(const std::string& filename, std::string& content) {
+bool CustomReadFile(const std::filesystem::path& filename, std::string& content) {
   std::ifstream file(filename);
   if (!file.is_open()) {
     return false;
   }
-  std::stringstream ss;
-  ss << file.rdbuf();
-  content = ss.str();
-  ATOM_DEBUG("custom read %s sussess", filename.c_str());
+  content.assign(std::istreambuf_iterator<char>(file), {});
+  ATOM_DEBUG("custom read %s success", filename.c_str());
   return true;
 }
 

@@ -25,9 +25,9 @@ const std::shared_ptr<ItemConf> Hub::Get<ItemConf>() const {
 }
 
 void MessagerContainer::InitShard0() {
-  hero_base_conf_ = std::dynamic_pointer_cast<HeroBaseConf>(GetMessager("HeroBaseConf"));
-  hero_conf_ = std::dynamic_pointer_cast<HeroConf>(GetMessager("HeroConf"));
-  item_conf_ = std::dynamic_pointer_cast<ItemConf>(GetMessager("ItemConf"));
+  hero_base_conf_ = std::dynamic_pointer_cast<HeroBaseConf>(GetMessager(HeroBaseConf::Name()));
+  hero_conf_ = std::dynamic_pointer_cast<HeroConf>(GetMessager(HeroConf::Name()));
+  item_conf_ = std::dynamic_pointer_cast<ItemConf>(GetMessager(ItemConf::Name()));
 }
 
 void Registry::InitShard0() {

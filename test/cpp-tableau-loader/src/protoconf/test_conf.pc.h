@@ -5,6 +5,7 @@
 // source: test_conf.proto
 
 #pragma once
+#include <filesystem>
 #include <string>
 
 #include "load.pc.h"
@@ -15,7 +16,7 @@ namespace tableau {
 class ActivityConf : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
-  virtual bool Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options = nullptr) override;
+  virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options = nullptr) override;
   const protoconf::ActivityConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
 
@@ -102,7 +103,7 @@ class ActivityConf : public Messager {
 class ChapterConf : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
-  virtual bool Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options = nullptr) override;
+  virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options = nullptr) override;
   const protoconf::ChapterConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
 
@@ -117,7 +118,7 @@ class ChapterConf : public Messager {
 class ThemeConf : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
-  virtual bool Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options = nullptr) override;
+  virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options = nullptr) override;
   const protoconf::ThemeConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
 
@@ -133,7 +134,7 @@ class ThemeConf : public Messager {
 class TaskConf : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
-  virtual bool Load(const std::string& dir, Format fmt, std::shared_ptr<const MessagerOptions> options = nullptr) override;
+  virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options = nullptr) override;
   const protoconf::TaskConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
 
