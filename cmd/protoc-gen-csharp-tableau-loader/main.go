@@ -32,6 +32,7 @@ func main() {
 			generateMessager(gen, f)
 		}
 		generateHub(gen)
+		generateLoad(gen)
 		return nil
 	})
 }

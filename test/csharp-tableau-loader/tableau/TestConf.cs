@@ -52,8 +52,8 @@ namespace Tableau
         public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = LoadMessageByPath<Protoconf.ActivityConf>(out var msg, dir, fmt, options);
-            _data = msg;
+            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.ActivityConf.Descriptor, dir, fmt, options);
+            _data = (Protoconf.ActivityConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
@@ -195,8 +195,8 @@ namespace Tableau
         public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = LoadMessageByPath<Protoconf.ChapterConf>(out var msg, dir, fmt, options);
-            _data = msg;
+            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.ChapterConf.Descriptor, dir, fmt, options);
+            _data = (Protoconf.ChapterConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
@@ -216,8 +216,8 @@ namespace Tableau
         public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = LoadMessageByPath<Protoconf.ThemeConf>(out var msg, dir, fmt, options);
-            _data = msg;
+            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.ThemeConf.Descriptor, dir, fmt, options);
+            _data = (Protoconf.ThemeConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
@@ -245,8 +245,8 @@ namespace Tableau
         public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = LoadMessageByPath<Protoconf.TaskConf>(out var msg, dir, fmt, options);
-            _data = msg;
+            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.TaskConf.Descriptor, dir, fmt, options);
+            _data = (Protoconf.TaskConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;

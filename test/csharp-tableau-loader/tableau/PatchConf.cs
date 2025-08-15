@@ -17,8 +17,8 @@ namespace Tableau
         public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = LoadMessageByPath<Protoconf.PatchReplaceConf>(out var msg, dir, fmt, options);
-            _data = msg;
+            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.PatchReplaceConf.Descriptor, dir, fmt, options);
+            _data = (Protoconf.PatchReplaceConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
@@ -36,8 +36,8 @@ namespace Tableau
         public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = LoadMessageByPath<Protoconf.PatchMergeConf>(out var msg, dir, fmt, options);
-            _data = msg;
+            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.PatchMergeConf.Descriptor, dir, fmt, options);
+            _data = (Protoconf.PatchMergeConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
@@ -57,8 +57,8 @@ namespace Tableau
         public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = LoadMessageByPath<Protoconf.RecursivePatchConf>(out var msg, dir, fmt, options);
-            _data = msg;
+            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.RecursivePatchConf.Descriptor, dir, fmt, options);
+            _data = (Protoconf.RecursivePatchConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
