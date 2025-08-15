@@ -54,7 +54,7 @@ void Hub::InitScheduler() {
   sched_->Current();
 }
 
-std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::string& dir, Format fmt /* = Format::kJSON */,
+std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::filesystem::path& dir, Format fmt /* = Format::kJSON */,
                                                std::shared_ptr<const LoadOptions> options /* = nullptr */) const {
   // intercept protobuf error logs
   auto old_handler = google::protobuf::SetLogHandler(util::ProtobufLogHandler);
