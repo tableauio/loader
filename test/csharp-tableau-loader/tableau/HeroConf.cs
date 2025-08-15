@@ -25,8 +25,8 @@ namespace Tableau
         public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = LoadMessageByPath<Protoconf.HeroConf>(out var msg, dir, fmt, options);
-            _data = msg;
+            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.HeroConf.Descriptor, dir, fmt, options);
+            _data = (Protoconf.HeroConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
@@ -69,8 +69,8 @@ namespace Tableau
         public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = LoadMessageByPath<Protoconf.HeroBaseConf>(out var msg, dir, fmt, options);
-            _data = msg;
+            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.HeroBaseConf.Descriptor, dir, fmt, options);
+            _data = (Protoconf.HeroBaseConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
             return ok;
