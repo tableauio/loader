@@ -69,18 +69,14 @@ namespace Tableau
                 switch (fmt)
                 {
                     case Format.JSON:
-                        {
-                            var parser = options is null
-                                ? pb::JsonParser.Default
-                                : new pb::JsonParser(pb::JsonParser.Settings.Default.WithIgnoreUnknownFields(options.IgnoreUnknownFields));
-                            msg = parser.Parse(System.Text.Encoding.UTF8.GetString(content), desc);
-                            return true;
-                        }
+                        var parser = options is null
+                            ? pb::JsonParser.Default
+                            : new pb::JsonParser(pb::JsonParser.Settings.Default.WithIgnoreUnknownFields(options.IgnoreUnknownFields));
+                        msg = parser.Parse(new StreamReader(new MemoryStream(content)), desc);
+                        return true;
                     case Format.Bin:
-                        {
-                            msg = desc.Parser.ParseFrom(content);
-                            return true;
-                        }
+                        msg = desc.Parser.ParseFrom(content);
+                        return true;
                     default:
                         msg = desc.Parser.ParseFrom(Array.Empty<byte>());
                         return false;
