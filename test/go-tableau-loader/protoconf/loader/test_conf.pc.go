@@ -78,13 +78,13 @@ func (x *ActivityConf) Data() *protoconf.ActivityConf {
 }
 
 // Load fills ActivityConf's inner message from file in the specified directory and format.
-func (x *ActivityConf) Load(dir string, format format.Format, options ...load.Option) error {
+func (x *ActivityConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
 	x.data = &protoconf.ActivityConf{}
-	err := load.Load(x.data, dir, format, options...)
+	err := load.LoadMessagerInDir(x.data, dir, format, opts)
 	if err != nil {
 		return err
 	}
@@ -413,13 +413,13 @@ func (x *ChapterConf) Data() *protoconf.ChapterConf {
 }
 
 // Load fills ChapterConf's inner message from file in the specified directory and format.
-func (x *ChapterConf) Load(dir string, format format.Format, options ...load.Option) error {
+func (x *ChapterConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
 	x.data = &protoconf.ChapterConf{}
-	err := load.Load(x.data, dir, format, options...)
+	err := load.LoadMessagerInDir(x.data, dir, format, opts)
 	if err != nil {
 		return err
 	}
@@ -493,13 +493,13 @@ func (x *ThemeConf) Data() *protoconf.ThemeConf {
 }
 
 // Load fills ThemeConf's inner message from file in the specified directory and format.
-func (x *ThemeConf) Load(dir string, format format.Format, options ...load.Option) error {
+func (x *ThemeConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
 	x.data = &protoconf.ThemeConf{}
-	err := load.Load(x.data, dir, format, options...)
+	err := load.LoadMessagerInDir(x.data, dir, format, opts)
 	if err != nil {
 		return err
 	}
@@ -593,13 +593,13 @@ func (x *TaskConf) Data() *protoconf.TaskConf {
 }
 
 // Load fills TaskConf's inner message from file in the specified directory and format.
-func (x *TaskConf) Load(dir string, format format.Format, options ...load.Option) error {
+func (x *TaskConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
 	x.data = &protoconf.TaskConf{}
-	err := load.Load(x.data, dir, format, options...)
+	err := load.LoadMessagerInDir(x.data, dir, format, opts)
 	if err != nil {
 		return err
 	}

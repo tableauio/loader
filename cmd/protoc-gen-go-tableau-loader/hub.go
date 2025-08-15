@@ -74,7 +74,7 @@ type Messager interface {
 	// GetStats returns stats info.
 	GetStats() *Stats
 	// Load fills message from file in the specified directory and format.
-	Load(dir string, fmt format.Format, options ...load.Option) error
+	Load(dir string, fmt format.Format, opts *load.MessagerOptions) error
 	// Store writes message to file in the specified directory and format.
 	Store(dir string, fmt format.Format, options ...store.Option) error
 	// processAfterLoad is invoked after this messager loaded.
@@ -169,7 +169,7 @@ func (x *UnimplementedMessager) GetStats() *Stats {
 	return &x.Stats
 }
 
-func (x *UnimplementedMessager) Load(dir string, format format.Format, options ...load.Option) error {
+func (x *UnimplementedMessager) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	return nil
 }
 
@@ -290,8 +290,10 @@ func (h *Hub) GetMessager(name string) Messager {
 // Load fills messages from files in the specified directory and format.
 func (h *Hub) Load(dir string, format format.Format, options ...load.Option) error {
 	messagerMap := h.NewMessagerMap()
+	opts := load.ParseOptions(options...)
 	for name, msger := range messagerMap {
-		if err := msger.Load(dir, format, options...); err != nil {
+		mopts := load.ParseMessagerOptionsFromOptions(opts, name)
+		if err := msger.Load(dir, format, mopts); err != nil {
 			return errors.WithMessagef(err, "failed to load: %v", name)
 		}
 	}

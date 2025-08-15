@@ -45,13 +45,13 @@ func (x *PatchReplaceConf) Data() *protoconf.PatchReplaceConf {
 }
 
 // Load fills PatchReplaceConf's inner message from file in the specified directory and format.
-func (x *PatchReplaceConf) Load(dir string, format format.Format, options ...load.Option) error {
+func (x *PatchReplaceConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
 	x.data = &protoconf.PatchReplaceConf{}
-	err := load.Load(x.data, dir, format, options...)
+	err := load.LoadMessagerInDir(x.data, dir, format, opts)
 	if err != nil {
 		return err
 	}
@@ -114,13 +114,13 @@ func (x *PatchMergeConf) Data() *protoconf.PatchMergeConf {
 }
 
 // Load fills PatchMergeConf's inner message from file in the specified directory and format.
-func (x *PatchMergeConf) Load(dir string, format format.Format, options ...load.Option) error {
+func (x *PatchMergeConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
 	x.data = &protoconf.PatchMergeConf{}
-	err := load.Load(x.data, dir, format, options...)
+	err := load.LoadMessagerInDir(x.data, dir, format, opts)
 	if err != nil {
 		return err
 	}
@@ -194,13 +194,13 @@ func (x *RecursivePatchConf) Data() *protoconf.RecursivePatchConf {
 }
 
 // Load fills RecursivePatchConf's inner message from file in the specified directory and format.
-func (x *RecursivePatchConf) Load(dir string, format format.Format, options ...load.Option) error {
+func (x *RecursivePatchConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
 		x.Stats.Duration = time.Since(start)
 	}()
 	x.data = &protoconf.RecursivePatchConf{}
-	err := load.Load(x.data, dir, format, options...)
+	err := load.LoadMessagerInDir(x.data, dir, format, opts)
 	if err != nil {
 		return err
 	}
