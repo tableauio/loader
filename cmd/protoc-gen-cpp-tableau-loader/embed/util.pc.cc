@@ -22,18 +22,18 @@ const std::string kTextExt = ".txt";
 const std::string kBinExt = ".bin";
 
 namespace util {
-bool ReadFile(const std::string& filename, std::string& content) {
+bool ReadFile(const std::filesystem::path& filename, std::string& content) {
   std::ifstream file(filename);
   if (!file.is_open()) {
-    SetErrMsg("failed to open " + filename + ": " + strerror(errno));
+    SetErrMsg("failed to open " + filename.string() + ": " + strerror(errno));
     return false;
   }
   content.assign(std::istreambuf_iterator<char>(file), {});
   return true;
 }
 
-Format GetFormat(const std::string& path) {
-  auto ext = std::filesystem::path(path).extension();
+Format GetFormat(const std::filesystem::path& path) {
+  auto ext = path.extension();
   if (ext == kJSONExt) {
     return Format::kJSON;
   } else if (ext == kTextExt) {

@@ -2,6 +2,7 @@
 #include <google/protobuf/message.h>
 
 #include <chrono>
+#include <filesystem>
 #include <functional>
 #include <string>
 
@@ -18,7 +19,6 @@ enum class Format {
   kBin,
 };
 
-static const std::string kEmpty = "";
 extern const std::string kUnknownExt;
 extern const std::string kJSONExt;
 extern const std::string kTextExt;
@@ -49,10 +49,10 @@ inline std::size_t SugaredHashCombine(const T& v, O... others) {
 }
 
 // ReadFile reads the file named by filename and returns the contents.
-bool ReadFile(const std::string& filename, std::string& content);
+bool ReadFile(const std::filesystem::path& filename, std::string& content);
 
 // GetFormat returns the Format type used by path.
-Format GetFormat(const std::string& path);
+Format GetFormat(const std::filesystem::path& path);
 // Empty string will be returned if an unsupported enum value has been passed,
 // and the error message can be obtained by GetErrMsg().
 const std::string& Format2Ext(Format fmt);

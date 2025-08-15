@@ -6,6 +6,7 @@
 #include "util.pc.h"
 
 namespace tableau {
+const std::string Messager::kProtoName = "";
 
 // Forward declaration of the PatchMessage function
 bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Message& src);
@@ -64,8 +65,8 @@ std::shared_ptr<const MessagerOptions> ParseMessagerOptions(std::shared_ptr<cons
   return mopts;
 }
 
-bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::string& path, Format fmt, tableau::Patch patch,
-                           std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
+bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::filesystem::path& path, Format fmt,
+                           tableau::Patch patch, std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
   if (options == nullptr) {
     return LoadMessager(msg, path, fmt, nullptr);
   }
@@ -74,18 +75,18 @@ bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::string& pa
     return options->load_func(msg, path, fmt, nullptr);
   }
   const std::string& name = msg.GetDescriptor()->name();
-  std::vector<std::string> patch_paths;
+  std::vector<std::filesystem::path> patch_paths;
   if (!options->patch_paths.empty()) {
     // patch path specified in PatchPaths, then use it instead of PatchDirs.
     patch_paths = options->patch_paths;
   } else {
-    std::string filename = name + util::Format2Ext(fmt);
+    std::filesystem::path filename = name + util::Format2Ext(fmt);
     for (auto&& patch_dir : options->patch_dirs) {
-      patch_paths.emplace_back((std::filesystem::path(patch_dir) / filename).string());
+      patch_paths.emplace_back(patch_dir / filename);
     }
   }
 
-  std::vector<std::string> existed_patch_paths;
+  std::vector<std::filesystem::path> existed_patch_paths;
   for (auto&& patch_path : patch_paths) {
     if (std::filesystem::exists(patch_path)) {
       existed_patch_paths.emplace_back(patch_path);
@@ -103,7 +104,7 @@ bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::string& pa
   switch (patch) {
     case tableau::PATCH_REPLACE: {
       // just use the last "patch" file
-      std::string& patch_path = existed_patch_paths.back();
+      std::filesystem::path& patch_path = existed_patch_paths.back();
       if (!options->load_func(msg, patch_path, util::GetFormat(patch_path), options)) {
         return false;
       }
@@ -140,7 +141,7 @@ bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::string& pa
   return true;
 }
 
-bool LoadMessager(google::protobuf::Message& msg, const std::string& path, Format fmt,
+bool LoadMessager(google::protobuf::Message& msg, const std::filesystem::path& path, Format fmt,
                   std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
   std::string content;
   ReadFunc read_func = util::ReadFile;
@@ -168,18 +169,18 @@ bool LoadMessager(google::protobuf::Message& msg, const std::string& path, Forma
   }
 }
 
-bool LoadMessagerInDir(google::protobuf::Message& msg, const std::string& dir, Format fmt,
+bool LoadMessagerInDir(google::protobuf::Message& msg, const std::filesystem::path& dir, Format fmt,
                        std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
   const std::string& name = msg.GetDescriptor()->name();
-  std::string path;
+  std::filesystem::path path;
   if (options && !options->path.empty()) {
     // path specified in Paths, then use it instead of dir.
     path = options->path;
     fmt = util::GetFormat(path);
   }
   if (path.empty()) {
-    std::string filename = name + util::Format2Ext(fmt);
-    path = (std::filesystem::path(dir) / filename).string();
+    std::filesystem::path filename = name + util::Format2Ext(fmt);
+    path = dir / filename;
   }
 
   const google::protobuf::Descriptor* descriptor = msg.GetDescriptor();
