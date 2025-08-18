@@ -7,7 +7,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/stretchr/testify v1.10.0
-	github.com/tableauio/tableau v0.13.1-0.20250815085205-2917481cc73f
+	github.com/tableauio/tableau v0.14.1
 	golang.org/x/exp v0.0.0-20230418202329-0354be287a23
 	google.golang.org/protobuf v1.34.2
 )
