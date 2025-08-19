@@ -8,14 +8,14 @@ cd /d "%repoRoot%"
 set "PROTOC=%repoRoot%\third_party\_submodules\protobuf\cmake\Debug\protoc.exe"
 set "PROTOBUF_PROTO=%repoRoot%\third_party\_submodules\protobuf\src"
 set "TABLEAU_PROTO=%repoRoot%\third_party\_submodules\tableau\proto"
-set "ROOTDIR=%repoRoot%\test\cpp-tableau-loader"
-set "PLGUIN_DIR=%repoRoot%\cmd\protoc-gen-cpp-tableau-loader"
+set "PLGUIN_DIR=%repoRoot%\cmd\protoc-gen-go-tableau-loader"
 set "PROTOCONF_IN=%repoRoot%\test\proto"
-set "PROTOCONF_OUT=%ROOTDIR%\src\protoconf"
+set "PROTOCONF_OUT=%repoRoot%\test\go-tableau-loader\protoconf"
+set "LOADER_OUT=%PROTOCONF_OUT%\loader"
 
 REM remove old generated files
-rmdir /s /q "%PROTOCONF_OUT%" 2>nul
-mkdir "%PROTOCONF_OUT%"
+rmdir /s /q "%PROTOCONF_OUT%" "%LOADER_OUT%" 2>nul
+mkdir "%PROTOCONF_OUT%" "%LOADER_OUT%"
 
 REM build
 pushd "%PLGUIN_DIR%"
@@ -31,25 +31,14 @@ for /R %%f in (*.proto) do (
 )
 popd
 "%PROTOC%" ^
---cpp-tableau-loader_out="%PROTOCONF_OUT%" ^
---cpp-tableau-loader_opt=paths=source_relative,shards=2 ^
---cpp_out="%PROTOCONF_OUT%" ^
+--go-tableau-loader_out="%LOADER_OUT%" ^
+--go-tableau-loader_opt=paths=source_relative,pkg=loader ^
+--go_out="%PROTOCONF_OUT%" ^
+--go_opt=paths=source_relative ^
 --proto_path="%PROTOBUF_PROTO%" ^
 --proto_path="%TABLEAU_PROTO%" ^
 --proto_path="%PROTOCONF_IN%" ^
 !protoFiles!
-
-set "TABLEAU_IN=%TABLEAU_PROTO%\tableau\protobuf"
-set "TABLEAU_OUT=%ROOTDIR%\src"
-REM remove old generated files
-if exist "%TABLEAU_OUT%\tableau" rmdir /s /q "%TABLEAU_OUT%\tableau"
-mkdir "%TABLEAU_OUT%\tableau"
-
-"%PROTOC%" ^
---cpp_out="%TABLEAU_OUT%" ^
---proto_path="%PROTOBUF_PROTO%" ^
---proto_path="%TABLEAU_PROTO%" ^
-"%TABLEAU_IN%\tableau.proto" "%TABLEAU_IN%\wellknown.proto"
 
 endlocal
 endlocal
