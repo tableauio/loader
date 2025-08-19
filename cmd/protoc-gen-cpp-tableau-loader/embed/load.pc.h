@@ -11,7 +11,6 @@
 
 namespace tableau {
 enum class LoadMode {
-  kNone,
   kAll,        // Load all related files
   kOnlyMain,   // Only load the main file
   kOnlyPatch,  // Only load the patch files
@@ -39,15 +38,21 @@ struct BaseOptions {
   // Specify the loading mode for config patching.
   // - For LoadOptions, default is LoadMode::kModeAll.
   // - For MessagerOptions, inherit from LoadOptions if not set.
-  LoadMode mode;
+  std::optional<LoadMode> mode;
   // You can specify custom read function to read a config file's content.
   // - For LoadOptions, default is util::ReadFile.
   // - For MessagerOptions, inherit from LoadOptions if not set.
   ReadFunc read_func;
   // You can specify custom load function to load a messager's content.
-  // - For LoadOptions, default is LoadMessage.
+  // - For LoadOptions, default is LoadMessager.
   // - For MessagerOptions, inherit from LoadOptions if not set.
   LoadFunc load_func;
+
+ public:
+  bool GetIgnoreUnknownFields() const;
+  LoadMode GetMode() const;
+  ReadFunc GetReadFunc() const;
+  LoadFunc GetLoadFunc() const;
 };
 
 // LoadOptionsOptions is the options struct, which contains both global-level and
@@ -56,7 +61,7 @@ struct LoadOptions : public BaseOptions {
   // messager_options maps each messager name to a MessageOptions.
   // If specified, then the messager will be parsed with the given options
   // directly.
-  std::unordered_map<std::string, std::shared_ptr<MessagerOptions>> messager_options;
+  std::unordered_map<std::string, std::shared_ptr<const MessagerOptions>> messager_options;
 };
 
 // MessagerOptions defines the options for loading a messager.
@@ -78,10 +83,7 @@ class Messager {
 
  public:
   virtual ~Messager() = default;
-  static const std::string& Name() {
-    static const std::string kEmpty = "";
-    return kEmpty;
-  }
+  static const std::string& Name() = delete;
   const Stats& GetStats() { return stats_; }
   // Load fills message from file in the specified directory and format.
   virtual bool Load(const std::filesystem::path& dir, Format fmt,
@@ -97,8 +99,6 @@ class Messager {
   Stats stats_;
 };
 
-// ParseLoadOptions parses load options with default global-level options.
-std::shared_ptr<const LoadOptions> ParseLoadOptions(std::shared_ptr<const LoadOptions> opts);
 // ParseMessagerOptions parses messager options with both global-level and
 // messager-level options taken into consideration.
 std::shared_ptr<const MessagerOptions> ParseMessagerOptions(std::shared_ptr<const LoadOptions> opts,

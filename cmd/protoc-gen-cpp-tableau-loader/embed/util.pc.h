@@ -57,8 +57,7 @@ Format GetFormat(const std::filesystem::path& path);
 // and the error message can be obtained by GetErrMsg().
 const std::string& Format2Ext(Format fmt);
 
-bool JSON2Message(const std::string& json, google::protobuf::Message& msg,
-                  std::shared_ptr<const MessagerOptions> options = nullptr);
+bool JSON2Message(const std::string& json, google::protobuf::Message& msg, bool ignore_unknown_fields);
 bool Text2Message(const std::string& text, google::protobuf::Message& msg);
 bool Bin2Message(const std::string& bin, google::protobuf::Message& msg);
 

@@ -288,11 +288,11 @@ func (h *Hub) GetMessager(name string) Messager {
 }
 
 // Load fills messages from files in the specified directory and format.
-func (h *Hub) Load(dir string, format format.Format, options ...load.Option) error {
+func (h *Hub) Load(dir string, format format.Format, options ...load.LoadOption) error {
 	messagerMap := h.NewMessagerMap()
 	opts := load.ParseOptions(options...)
 	for name, msger := range messagerMap {
-		mopts := load.ParseMessagerOptionsFromOptions(opts, name)
+		mopts := load.ParseMessagerOptions(opts, name)
 		if err := msger.Load(dir, format, mopts); err != nil {
 			return errors.WithMessagef(err, "failed to load: %v", name)
 		}

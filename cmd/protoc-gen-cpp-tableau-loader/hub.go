@@ -348,12 +348,11 @@ std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::filesystem::path& dir,
                                                std::shared_ptr<const LoadOptions> options /* = nullptr */) const {
   // intercept protobuf error logs
   auto old_handler = google::protobuf::SetLogHandler(util::ProtobufLogHandler);
-  auto opts = ParseLoadOptions(options);
   auto msger_map = NewMessagerMap();
   for (auto iter : *msger_map) {
     auto&& name = iter.first;
     ATOM_DEBUG("loading %s", name.c_str());
-    auto mopts = ParseMessagerOptions(opts, name);
+    auto mopts = ParseMessagerOptions(options, name);
     bool ok = iter.second->Load(dir, fmt, mopts);
     if (!ok) {
       ATOM_ERROR("load %s failed: %s", name.c_str(), GetErrMsg().c_str());
@@ -408,7 +407,7 @@ bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {
     auto msger = iter.second;
     bool ok = msger->ProcessAfterLoadAll(tmp_hub);
     if (!ok) {
-      SetErrMsg("hub call ProcessAfterLoadAll failed, messager: " + msger->Name());
+      SetErrMsg("hub call ProcessAfterLoadAll failed, messager: " + iter.first);
       return false;
     }
   }

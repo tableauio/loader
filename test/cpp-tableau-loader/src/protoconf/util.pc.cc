@@ -63,16 +63,10 @@ const std::string& Format2Ext(Format fmt) {
   }
 }
 
-bool JSON2Message(const std::string& json, google::protobuf::Message& msg,
-                  std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
-  google::protobuf::util::Status status;
-  if (options != nullptr) {
-    google::protobuf::util::JsonParseOptions parse_options;
-    parse_options.ignore_unknown_fields = options->ignore_unknown_fields.value_or(false);
-    status = google::protobuf::util::JsonStringToMessage(json, &msg, parse_options);
-  } else {
-    status = google::protobuf::util::JsonStringToMessage(json, &msg);
-  }
+bool JSON2Message(const std::string& json, google::protobuf::Message& msg, bool ignore_unknown_fields) {
+  google::protobuf::util::JsonParseOptions parse_options;
+  parse_options.ignore_unknown_fields = ignore_unknown_fields;
+  auto status = google::protobuf::util::JsonStringToMessage(json, &msg, parse_options);
   if (!status.ok()) {
     SetErrMsg("failed to parse " + msg.GetDescriptor()->name() + kJSONExt + ": " + status.ToString());
     return false;
