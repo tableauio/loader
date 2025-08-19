@@ -9,9 +9,13 @@
 #include <chrono>
 #include <filesystem>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
+#include "tableau/protobuf/tableau.pb.h"
 #include "util.pc.h"
 
 namespace tableau {
@@ -23,6 +27,15 @@ enum class LoadMode {
 
 struct MessagerOptions;
 class Hub;
+
+bool LoadMessager(google::protobuf::Message& msg, const std::filesystem::path& path, Format fmt = Format::kJSON,
+                  std::shared_ptr<const MessagerOptions> options = nullptr);
+bool LoadMessagerInDir(google::protobuf::Message& msg, const std::filesystem::path& dir, Format fmt = Format::kJSON,
+                       std::shared_ptr<const MessagerOptions> options = nullptr);
+bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::filesystem::path& path, Format fmt,
+                           tableau::Patch patch, std::shared_ptr<const MessagerOptions> options = nullptr);
+bool Unmarshal(const std::string& content, google::protobuf::Message& msg, Format fmt,
+               std::shared_ptr<const MessagerOptions> options = nullptr);
 
 // ReadFunc reads the config file and returns its content.
 using ReadFunc = std::function<bool(const std::filesystem::path& filename, std::string& content)>;
@@ -54,10 +67,10 @@ struct BaseOptions {
   LoadFunc load_func;
 
  public:
-  bool GetIgnoreUnknownFields() const;
-  LoadMode GetMode() const;
-  ReadFunc GetReadFunc() const;
-  LoadFunc GetLoadFunc() const;
+  inline bool GetIgnoreUnknownFields() const { return ignore_unknown_fields.value_or(false); }
+  inline LoadMode GetMode() const { return mode.value_or(LoadMode::kAll); }
+  inline ReadFunc GetReadFunc() const { return read_func ? read_func : util::ReadFile; }
+  inline LoadFunc GetLoadFunc() const { return load_func ? load_func : LoadMessager; }
 };
 
 // LoadOptionsOptions is the options struct, which contains both global-level and
@@ -67,6 +80,11 @@ struct LoadOptions : public BaseOptions {
   // If specified, then the messager will be parsed with the given options
   // directly.
   std::unordered_map<std::string, std::shared_ptr<const MessagerOptions>> messager_options;
+
+ public:
+  // ParseMessagerOptions parses messager options with both global-level and
+  // messager-level options taken into consideration.
+  std::shared_ptr<const MessagerOptions> ParseMessagerOptionsByName(const std::string& name) const;
 };
 
 // MessagerOptions defines the options for loading a messager.
@@ -103,13 +121,4 @@ class Messager {
   virtual bool ProcessAfterLoad() { return true; };
   Stats stats_;
 };
-
-// ParseMessagerOptions parses messager options with both global-level and
-// messager-level options taken into consideration.
-std::shared_ptr<const MessagerOptions> ParseMessagerOptions(std::shared_ptr<const LoadOptions> opts,
-                                                            const std::string& name);
-bool LoadMessager(google::protobuf::Message& msg, const std::filesystem::path& path, Format fmt = Format::kJSON,
-                  std::shared_ptr<const MessagerOptions> options = nullptr);
-bool LoadMessagerInDir(google::protobuf::Message& msg, const std::filesystem::path& dir, Format fmt = Format::kJSON,
-                       std::shared_ptr<const MessagerOptions> options = nullptr);
 }  // namespace tableau

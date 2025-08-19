@@ -292,7 +292,7 @@ func (h *Hub) Load(dir string, format format.Format, options ...load.LoadOption)
 	messagerMap := h.NewMessagerMap()
 	opts := load.ParseOptions(options...)
 	for name, msger := range messagerMap {
-		mopts := load.ParseMessagerOptions(opts, name)
+		mopts := opts.ParseMessagerOptionsByName(name)
 		if err := msger.Load(dir, format, mopts); err != nil {
 			return errors.WithMessagef(err, "failed to load: %v", name)
 		}

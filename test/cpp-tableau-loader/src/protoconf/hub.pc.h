@@ -6,6 +6,7 @@
 #pragma once
 #include <ctime>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>

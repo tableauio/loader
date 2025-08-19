@@ -141,6 +141,7 @@ func generateHubCppRegistry(g *protogen.GeneratedFile, protofiles []string, file
 const hubHpp = `#pragma once
 #include <ctime>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -349,10 +350,11 @@ std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::filesystem::path& dir,
   // intercept protobuf error logs
   auto old_handler = google::protobuf::SetLogHandler(util::ProtobufLogHandler);
   auto msger_map = NewMessagerMap();
+  options = options ? options : std::make_shared<LoadOptions>();
   for (auto iter : *msger_map) {
     auto&& name = iter.first;
     ATOM_DEBUG("loading %s", name.c_str());
-    auto mopts = ParseMessagerOptions(options, name);
+    auto mopts = options->ParseMessagerOptionsByName(name);
     bool ok = iter.second->Load(dir, fmt, mopts);
     if (!ok) {
       ATOM_ERROR("load %s failed: %s", name.c_str(), GetErrMsg().c_str());
@@ -371,7 +373,7 @@ std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::filesystem::path& dir,
 std::shared_ptr<MessagerMap> Hub::NewMessagerMap() const {
   std::shared_ptr<MessagerMap> msger_map = std::make_shared<MessagerMap>();
   for (auto&& it : Registry::registrar) {
-    if (options_ == nullptr || options_->filter == nullptr || options_->filter(it.first)) {
+    if (!options_ || !options_->filter || options_->filter(it.first)) {
       (*msger_map)[it.first] = it.second();
     }
   }
@@ -391,7 +393,7 @@ const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const 
 }
 
 std::shared_ptr<MessagerContainer> Hub::GetMessagerContainerWithProvider() const {
-  if (options_ != nullptr && options_->provider != nullptr) {
+  if (options_ && options_->provider ) {
     return options_->provider(*this);
   }
   return msger_container_;
@@ -418,8 +420,7 @@ std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainerWithProv
 
 const msgContainerCpp = `
 MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* = nullptr*/)
-    : msger_map_(msger_map != nullptr ? msger_map : std::make_shared<MessagerMap>()),
-      last_loaded_time_(std::time(nullptr)) {`
+    : msger_map_(msger_map ? msger_map : std::make_shared<MessagerMap>()), last_loaded_time_(std::time(nullptr)) {`
 
 const registryCpp = `}
 

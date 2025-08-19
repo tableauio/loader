@@ -1,15 +1,17 @@
 #include "hub/custom/item/custom_item_conf.h"
 
+#include "logger.pc.h"
+
 const std::string CustomItemConf::kCustomName = "CustomItemConf";
 
 bool CustomItemConf::ProcessAfterLoadAll(const tableau::Hub& hub) {
   auto conf = hub.Get<protoconf::ItemConfMgr, protoconf::ItemConf::Item>(1);
   if (!conf) {
-    std::cout << "hub get item 1 failed!" << std::endl;
+    ATOM_ERROR("hub get item 1 failed!");
     return false;
   }
   special_item_conf_ = *conf;  // value copy
-  std::cout << "custom item conf processed" << std::endl;
+  ATOM_DEBUG("custom item conf processed");
   return true;
 }
 
