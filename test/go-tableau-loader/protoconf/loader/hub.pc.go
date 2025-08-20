@@ -240,7 +240,7 @@ func (h *Hub) GetMessager(name string) Messager {
 }
 
 // Load fills messages from files in the specified directory and format.
-func (h *Hub) Load(dir string, format format.Format, options ...load.LoadOption) error {
+func (h *Hub) Load(dir string, format format.Format, options ...load.Option) error {
 	messagerMap := h.NewMessagerMap()
 	opts := load.ParseOptions(options...)
 	for name, msger := range messagerMap {

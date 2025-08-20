@@ -5,7 +5,7 @@ setlocal enabledelayedexpansion
 for /f "delims=" %%i in ('git rev-parse --show-toplevel') do set repoRoot=%%i
 cd /d "%repoRoot%"
 
-set "PROTOC=%repoRoot%\third_party\_submodules\protobuf\cmake\Debug\protoc.exe"
+set "PROTOC=%repoRoot%\third_party\_submodules\protobuf\cmake\build\Debug\protoc.exe"
 set "PROTOBUF_PROTO=%repoRoot%\third_party\_submodules\protobuf\src"
 set "TABLEAU_PROTO=%repoRoot%\third_party\_submodules\tableau\proto"
 set "PLGUIN_DIR=%repoRoot%\cmd\protoc-gen-go-tableau-loader"

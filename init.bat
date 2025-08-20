@@ -13,7 +13,9 @@ git submodule update --init --recursive
 
 REM Build and install the C++ Protocol Buffer runtime and the Protocol Buffer compiler (protoc)
 cd cmake
-cmake .
-cmake --build .
+mkdir build 2>nul
+cd build
+cmake .. -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
+cmake --build . --config Debug
 
 endlocal

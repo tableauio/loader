@@ -15,9 +15,12 @@ import (
 func main() {
 	err := hub.GetHub().Load("../testdata/conf/", format.JSON,
 		load.IgnoreUnknownFields(),
-		load.Paths(map[string]string{
-			"ItemConf": "../testdata/conf/ItemConf.json",
-		}))
+		load.WithMessagerOptions(map[string]*load.MessagerOptions{
+			"ItemConf": {
+				Path: "../testdata/conf/ItemConf.json",
+			},
+		}),
+	)
 	if err != nil {
 		panic(err)
 	}

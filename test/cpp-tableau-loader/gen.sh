@@ -33,7 +33,7 @@ ${PROTOC} \
     --proto_path="$PROTOCONF_IN" \
     "$PROTOCONF_IN"/**/*.proto
 
-TABLEAU_IN="./third_party/_submodules/tableau/proto/tableau/protobuf"
+TABLEAU_IN="$TABLEAU_PROTO/tableau/protobuf"
 TABLEAU_OUT="${ROOTDIR}/src"
 # remove old generated files
 rm -rfv "$TABLEAU_OUT/tableau"

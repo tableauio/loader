@@ -28,7 +28,6 @@
 *.app
 
 # custom files and directories
-third_party/_submodules
 _out/
 build/
 bin/

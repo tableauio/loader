@@ -24,6 +24,18 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
   - clang: `cmake ../src/ -DCMAKE_CXX_COMPILER=clang++`
 - Build: `make -j8`, then the **bin** dir will be generated at `test/cpp-tableau-loader/bin`.
 
+### Dev at Windows
+
+- Install: **CMake 3.22** or above
+- Change dir: `cd test\cpp-tableau-loader`
+- Generate protoconf: `.\gen.bat`
+- Create build dir: `mkdir build 2>nul` and `cd build`
+- Run cmake: 
+  - C++17: `cmake ..\src\`
+  - C++20: `cmake ..\src\ -DCMAKE_CXX_STANDARD=20`
+  - clang: `cmake ..\src\ -DCMAKE_CXX_COMPILER=clang++`
+- Build: `cmake --build .`, then the **bin** dir will be generated at `test\cpp-tableau-loader\bin\Debug`.
+
 ### References
 
 - [Protocol Buffers C++ Installation](https://github.com/protocolbuffers/protobuf/tree/master/src)
