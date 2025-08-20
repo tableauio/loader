@@ -27,8 +27,6 @@ bool LoadMessager(google::protobuf::Message& msg, const std::filesystem::path& p
                   std::shared_ptr<const MessagerOptions> options = nullptr);
 bool LoadMessagerInDir(google::protobuf::Message& msg, const std::filesystem::path& dir, Format fmt = Format::kJSON,
                        std::shared_ptr<const MessagerOptions> options = nullptr);
-bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::filesystem::path& path, Format fmt,
-                           tableau::Patch patch, std::shared_ptr<const MessagerOptions> options = nullptr);
 bool Unmarshal(const std::string& content, google::protobuf::Message& msg, Format fmt,
                std::shared_ptr<const MessagerOptions> options = nullptr);
 

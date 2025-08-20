@@ -36,6 +36,10 @@ std::shared_ptr<const MessagerOptions> Options::ParseMessagerOptionsByName(const
   return mopts;
 }
 
+// Forward declaration
+bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::filesystem::path& path, Format fmt,
+                           tableau::Patch patch, std::shared_ptr<const MessagerOptions> options = nullptr);
+
 bool LoadMessager(google::protobuf::Message& msg, const std::filesystem::path& path, Format fmt,
                   std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
   options = options ? options : std::make_shared<MessagerOptions>();
