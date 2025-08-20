@@ -5,6 +5,13 @@
 
 #include "logger.pc.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/syscall.h>
+#include <unistd.h>
+#endif
+
 #include <cstdarg>
 #include <filesystem>
 #include <iomanip>
@@ -13,6 +20,12 @@
 #include <unordered_map>
 
 #include "util.pc.h"
+
+#ifdef _WIN32
+#define gettid() GetCurrentThreadId()
+#else
+#define gettid() syscall(SYS_gettid)
+#endif
 
 namespace tableau {
 namespace log {
@@ -74,9 +87,16 @@ void Logger::Log(const SourceLocation& loc, Level level, const char* format, ...
 }
 
 void DefaultWrite(std::ostream* os, const SourceLocation& loc, const LevelInfo& lvl, const std::string& content) {
-  *os << NowStr() << "|" << lvl.name << "|" << loc.filename << ":" << loc.line << "|" << loc.funcname << "|" << content
-      << std::endl
-      << std::flush;
+  // clang-format off
+  *os << NowStr() << "|"
+    // << std::this_thread::get_id() << "|"
+    << gettid() << "|"
+    << lvl.name << "|" 
+    << loc.filename << ":" << loc.line << "|" 
+    << loc.funcname << "|" 
+    << content
+    << std::endl << std::flush;
+  // clang-format on
 }
 
 std::ostream& operator<<(std::ostream& os, const NowStr&) {

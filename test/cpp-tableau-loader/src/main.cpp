@@ -13,7 +13,7 @@
 #include "protoconf/patch_conf.pc.h"
 #include "protoconf/test_conf.pc.h"
 
-bool LoadWithPatch(std::shared_ptr<const tableau::LoadOptions> options) {
+bool LoadWithPatch(std::shared_ptr<const tableau::load::Options> options) {
   return Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
 }
 
@@ -28,7 +28,7 @@ bool CustomReadFile(const std::filesystem::path& filename, std::string& content)
 }
 
 bool TestPatch() {
-  auto options = std::make_shared<tableau::LoadOptions>();
+  auto options = std::make_shared<tableau::load::Options>();
   options->read_func = CustomReadFile;
 
   // patchconf
@@ -71,7 +71,7 @@ bool TestPatch() {
   // patchconf2 different format
   ATOM_DEBUG("-----TestPatch patchconf2 different format");
   options->patch_dirs = {"../../testdata/patchconf2/"};
-  auto mopts = std::make_shared<tableau::MessagerOptions>();
+  auto mopts = std::make_shared<tableau::load::MessagerOptions>();
   mopts->patch_paths = {"../../testdata/patchconf2/PatchMergeConf.txt"};
   options->messager_options["PatchMergeConf"] = mopts;
   ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
@@ -82,7 +82,7 @@ bool TestPatch() {
 
   // multiple patch files
   ATOM_DEBUG("-----TestPatch multiple patch files");
-  mopts = std::make_shared<tableau::MessagerOptions>();
+  mopts = std::make_shared<tableau::load::MessagerOptions>();
   mopts->patch_paths = {"../../testdata/patchconf/PatchMergeConf.json",
                         "../../testdata/patchconf2/PatchMergeConf.json"};
   options->messager_options["PatchMergeConf"] = mopts;
@@ -94,11 +94,11 @@ bool TestPatch() {
 
   // mode only main
   ATOM_DEBUG("-----TestPatch ModeOnlyMain");
-  mopts = std::make_shared<tableau::MessagerOptions>();
+  mopts = std::make_shared<tableau::load::MessagerOptions>();
   mopts->patch_paths = {"../../testdata/patchconf/PatchMergeConf.json",
                         "../../testdata/patchconf2/PatchMergeConf.json"};
   options->messager_options["PatchMergeConf"] = mopts;
-  options->mode = tableau::LoadMode::kOnlyMain;
+  options->mode = tableau::load::LoadMode::kOnlyMain;
   ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     ATOM_ERROR("failed to load with mode only main");
@@ -113,11 +113,11 @@ bool TestPatch() {
 
   // mode only patch
   ATOM_DEBUG("-----TestPatch ModeOnlyPatch");
-  mopts = std::make_shared<tableau::MessagerOptions>();
+  mopts = std::make_shared<tableau::load::MessagerOptions>();
   mopts->patch_paths = {"../../testdata/patchconf/PatchMergeConf.json",
                         "../../testdata/patchconf2/PatchMergeConf.json"};
   options->messager_options["PatchMergeConf"] = mopts;
-  options->mode = tableau::LoadMode::kOnlyPatch;
+  options->mode = tableau::load::LoadMode::kOnlyPatch;
   ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     ATOM_ERROR("failed to load with mode only patch");
@@ -128,10 +128,10 @@ bool TestPatch() {
 
 int main() {
   Hub::Instance().InitOnce();
-  auto options = std::make_shared<tableau::LoadOptions>();
+  auto options = std::make_shared<tableau::load::Options>();
   options->ignore_unknown_fields = true;
   options->patch_dirs = {"../../testdata/patchconf/"};
-  auto mopts = std::make_shared<tableau::MessagerOptions>();
+  auto mopts = std::make_shared<tableau::load::MessagerOptions>();
   mopts->path = "../../testdata/conf/ItemConf.json";
   options->messager_options["ItemConf"] = mopts;
 

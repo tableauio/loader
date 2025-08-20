@@ -14,6 +14,7 @@
 #include "util.pc.h"
 
 namespace tableau {
+namespace load {
 enum class LoadMode {
   kAll,        // Load all related files
   kOnlyMain,   // Only load the main file
@@ -21,7 +22,6 @@ enum class LoadMode {
 };
 
 struct MessagerOptions;
-class Hub;
 
 bool LoadMessager(google::protobuf::Message& msg, const std::filesystem::path& path, Format fmt = Format::kJSON,
                   std::shared_ptr<const MessagerOptions> options = nullptr);
@@ -49,16 +49,13 @@ struct BaseOptions {
   // Specify the directory paths for config patching.
   std::vector<std::filesystem::path> patch_dirs;
   // Specify the loading mode for config patching.
-  // - For LoadOptions, default is LoadMode::kModeAll.
-  // - For MessagerOptions, inherit from LoadOptions if not set.
+  // Default is LoadMode::kModeAll.
   std::optional<LoadMode> mode;
   // You can specify custom read function to read a config file's content.
-  // - For LoadOptions, default is util::ReadFile.
-  // - For MessagerOptions, inherit from LoadOptions if not set.
+  // Default is util::ReadFile.
   ReadFunc read_func;
   // You can specify custom load function to load a messager's content.
-  // - For LoadOptions, default is LoadMessager.
-  // - For MessagerOptions, inherit from LoadOptions if not set.
+  // Default is LoadMessager.
   LoadFunc load_func;
 
  public:
@@ -68,9 +65,9 @@ struct BaseOptions {
   inline LoadFunc GetLoadFunc() const { return load_func ? load_func : LoadMessager; }
 };
 
-// LoadOptionsOptions is the options struct, which contains both global-level and
+// Options is the options struct, which contains both global-level and
 // messager-level options.
-struct LoadOptions : public BaseOptions {
+struct Options : public BaseOptions {
   // messager_options maps each messager name to a MessageOptions.
   // If specified, then the messager will be parsed with the given options
   // directly.
@@ -92,6 +89,9 @@ struct MessagerOptions : public BaseOptions {
   // If specified, then main messager will be patched.
   std::vector<std::filesystem::path> patch_paths;
 };
+}  // namespace load
+
+class Hub;
 
 class Messager {
  public:
@@ -105,7 +105,7 @@ class Messager {
   const Stats& GetStats() { return stats_; }
   // Load fills message from file in the specified directory and format.
   virtual bool Load(const std::filesystem::path& dir, Format fmt,
-                    std::shared_ptr<const MessagerOptions> options = nullptr) = 0;
+                    std::shared_ptr<const load::MessagerOptions> options = nullptr) = 0;
   // Message returns the inner message data.
   virtual const google::protobuf::Message* Message() const { return nullptr; }
   // callback after all messagers loaded.

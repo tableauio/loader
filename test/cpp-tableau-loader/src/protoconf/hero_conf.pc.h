@@ -16,7 +16,7 @@ namespace tableau {
 class HeroConf : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
-  virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options = nullptr) override;
+  virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::HeroConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
 
@@ -47,7 +47,7 @@ class HeroConf : public Messager {
 class HeroBaseConf : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
-  virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options = nullptr) override;
+  virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::HeroBaseConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
 

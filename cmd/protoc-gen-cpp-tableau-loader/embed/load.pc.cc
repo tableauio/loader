@@ -7,7 +7,8 @@
 #include "util.pc.h"
 
 namespace tableau {
-std::shared_ptr<const MessagerOptions> LoadOptions::ParseMessagerOptionsByName(const std::string& name) const {
+namespace load {
+std::shared_ptr<const MessagerOptions> Options::ParseMessagerOptionsByName(const std::string& name) const {
   std::shared_ptr<MessagerOptions> mopts = std::make_shared<MessagerOptions>();
   if (auto iter = messager_options.find(name); iter != messager_options.end() && iter->second) {
     mopts = std::make_shared<MessagerOptions>(*iter->second);
@@ -175,4 +176,5 @@ bool Unmarshal(const std::string& content, google::protobuf::Message& msg, Forma
     }
   }
 }
+}  // namespace load
 }  // namespace tableau

@@ -181,13 +181,13 @@ class Hub {
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
   bool Load(const std::filesystem::path& dir, Format fmt = Format::kJSON,
-            std::shared_ptr<const LoadOptions> options = nullptr);
+            std::shared_ptr<const load::Options> options = nullptr);
 
   /***** Asynchronous Loading *****/
   // Load configs into temp MessagerContainer, and you should call LoopOnce() in you app's main loop,
   // in order to take the temp MessagerContainer into effect.
   bool AsyncLoad(const std::filesystem::path& dir, Format fmt = Format::kJSON,
-                 std::shared_ptr<const LoadOptions> options = nullptr);
+                 std::shared_ptr<const load::Options> options = nullptr);
   int LoopOnce();
   // You'd better initialize the scheduler in the main thread.
   void InitScheduler();
@@ -215,7 +215,7 @@ class Hub {
 
  private:
   std::shared_ptr<MessagerMap> InternalLoad(const std::filesystem::path& dir, Format fmt = Format::kJSON,
-                                            std::shared_ptr<const LoadOptions> options = nullptr) const;
+                                            std::shared_ptr<const load::Options> options = nullptr) const;
   std::shared_ptr<MessagerMap> NewMessagerMap() const;
   std::shared_ptr<MessagerContainer> GetMessagerContainerWithProvider() const;
   const std::shared_ptr<Messager> GetMessager(const std::string& name) const;
@@ -311,7 +311,7 @@ void Hub::InitOnce(std::shared_ptr<const HubOptions> options) {
 }
 
 bool Hub::Load(const std::filesystem::path& dir, Format fmt /* = Format::kJSON */,
-               std::shared_ptr<const LoadOptions> options /* = nullptr */) {
+               std::shared_ptr<const load::Options> options /* = nullptr */) {
   auto msger_map = InternalLoad(dir, fmt, options);
   if (!msger_map) {
     return false;
@@ -325,7 +325,7 @@ bool Hub::Load(const std::filesystem::path& dir, Format fmt /* = Format::kJSON *
 }
 
 bool Hub::AsyncLoad(const std::filesystem::path& dir, Format fmt /* = Format::kJSON */,
-                    std::shared_ptr<const LoadOptions> options /* = nullptr */) {
+                    std::shared_ptr<const load::Options> options /* = nullptr */) {
   auto msger_map = InternalLoad(dir, fmt, options);
   if (!msger_map) {
     return false;
@@ -346,11 +346,11 @@ void Hub::InitScheduler() {
 }
 
 std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::filesystem::path& dir, Format fmt /* = Format::kJSON */,
-                                               std::shared_ptr<const LoadOptions> options /* = nullptr */) const {
+                                               std::shared_ptr<const load::Options> options /* = nullptr */) const {
   // intercept protobuf error logs
   auto old_handler = google::protobuf::SetLogHandler(util::ProtobufLogHandler);
   auto msger_map = NewMessagerMap();
-  options = options ? options : std::make_shared<LoadOptions>();
+  options = options ? options : std::make_shared<load::Options>();
   for (auto iter : *msger_map) {
     auto&& name = iter.first;
     ATOM_DEBUG("loading %s", name.c_str());
@@ -393,7 +393,7 @@ const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const 
 }
 
 std::shared_ptr<MessagerContainer> Hub::GetMessagerContainerWithProvider() const {
-  if (options_ && options_->provider ) {
+  if (options_ && options_->provider) {
     return options_->provider(*this);
   }
   return msger_container_;
