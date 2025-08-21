@@ -67,9 +67,11 @@ var staticHubContent3 = `            }
         public bool Load(string dir, Format fmt, in Load.Options? options = null)
         {
             var messagerMap = NewMessagerMap();
-            foreach (var messager in messagerMap.Values)
+            var opts = options ?? new Load.Options();
+            foreach (var kvs in messagerMap)
             {
-                if (!messager.Load(dir, fmt, options))
+                string name = kvs.Key;
+                if (!kvs.Value.Load(dir, fmt, opts.ParseMessagerOptionsByName(name)))
                 {
                     return false;
                 }

@@ -70,17 +70,27 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P()
 	g.P(helper.Indent(2), "public static string Name() => Protoconf.", messagerName, ".Descriptor.Name;")
 	g.P()
-	g.P(helper.Indent(2), "public override bool Load(string dir, Format fmt, in Load.Options? options = null)")
+	g.P(helper.Indent(2), "public override bool Load(string dir, Format fmt, in Load.MessagerOptions? options = null)")
 	g.P(helper.Indent(2), "{")
 	g.P(helper.Indent(3), "var start = DateTime.Now;")
-	g.P(helper.Indent(3), "bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.", messagerName, ".Descriptor, dir, fmt, options);")
-	g.P(helper.Indent(3), "_data = (Protoconf.", messagerName, ")msg;")
-	g.P(helper.Indent(3), "bool ok = loaded && ProcessAfterLoad();")
+	g.P(helper.Indent(3), "try")
+	g.P(helper.Indent(3), "{")
+	g.P(helper.Indent(4), "_data = (Protoconf.", messagerName, ")(")
+	g.P(helper.Indent(5), "Tableau.Load.LoadMessagerInDir(Protoconf.", messagerName, ".Descriptor, dir, fmt, options)")
+	g.P(helper.Indent(5), "?? throw new InvalidOperationException()")
+	g.P(helper.Indent(4), ");")
+	g.P(helper.Indent(3), "}")
+	g.P(helper.Indent(3), "catch (Exception)")
+	g.P(helper.Indent(3), "{")
+	g.P(helper.Indent(4), "return false;")
+	g.P(helper.Indent(3), "}")
 	g.P(helper.Indent(3), "LoadStats.Duration = DateTime.Now - start;")
-	g.P(helper.Indent(3), "return ok;")
+	g.P(helper.Indent(3), "return ProcessAfterLoad();")
 	g.P(helper.Indent(2), "}")
 	g.P()
 	g.P(helper.Indent(2), "public ref readonly Protoconf.", messagerName, " Data() => ref _data;")
+	g.P()
+	g.P(helper.Indent(2), "public override pb::IMessage? Message() => _data;")
 
 	if options.NeedGenOrderedMap(message.Desc, options.LangCS) || options.NeedGenIndex(message.Desc, options.LangCS) {
 		g.P()
@@ -117,13 +127,13 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md protorefl
 
 			lastKeyName := keys[len(keys)-1].Name
 			if depth == 1 {
-				g.P(helper.Indent(2), "public ", parseMapValueType(fd), "? ", getter, "(", helper.GenGetParams(keys), ") => ",
-					"_data.", strcase.ToCamel(string(fd.Name())), "?.TryGetValue(", lastKeyName, ", out var val) == true ? val : null;")
+				g.P(helper.Indent(2), "public ", parseMapValueType(fd), "? ", getter, "(", helper.GenGetParams(keys), ") =>")
+				g.P(helper.Indent(3), "_data.", strcase.ToCamel(string(fd.Name())), "?.TryGetValue(", lastKeyName, ", out var val) == true ? val : null;")
 			} else {
 				prevKeys := keys[:len(keys)-1]
 				prevGetter := fmt.Sprintf("Get%v", depth-1)
-				g.P(helper.Indent(2), "public ", parseMapValueType(fd), "? ", getter, "(", helper.GenGetParams(keys), ") => ",
-					prevGetter, "(", helper.GenGetArguments(prevKeys), ")?.", strcase.ToCamel(string(fd.Name())), "?.TryGetValue(", lastKeyName, ", out var val) == true ? val : null;")
+				g.P(helper.Indent(2), "public ", parseMapValueType(fd), "? ", getter, "(", helper.GenGetParams(keys), ") =>")
+				g.P(helper.Indent(3), prevGetter, "(", helper.GenGetArguments(prevKeys), ")?.", strcase.ToCamel(string(fd.Name())), "?.TryGetValue(", lastKeyName, ", out var val) == true ? val : null;")
 			}
 
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
@@ -151,7 +161,8 @@ func parseMapValueType(fd protoreflect.FieldDescriptor) string {
 	return helper.ParseCsharpType(fd.MapValue())
 }
 
-const staticMessagerContent1 = `namespace Tableau
+const staticMessagerContent1 = `using pb = global::Google.Protobuf;
+namespace Tableau
 {`
 
 const staticMessagerContent2 = `}`

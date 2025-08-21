@@ -99,5 +99,9 @@
         {
             Console.WriteLine($"HeroConf: {heroConf.Data()}");
         }
+        if (!heroConf.Load("../testdata/notexist", Tableau.Format.Bin))
+        {
+            Console.WriteLine("HeroConf not exist");
+        }
     }
 }
