@@ -9,7 +9,7 @@
             Filter = name => name != "TaskConf"
         };
         var hub = new Tableau.Hub(options);
-        var loadOptions = new Tableau.LoadOptions
+        var loadOptions = new Tableau.Load.Options
         {
             IgnoreUnknownFields = true
         };

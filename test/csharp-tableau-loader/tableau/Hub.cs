@@ -55,7 +55,7 @@ namespace Tableau
         private MessagerContainer _messagerContainer = new();
         private readonly HubOptions _options = options ?? new HubOptions();
 
-        public bool Load(string dir, Format fmt, in LoadOptions? options = null)
+        public bool Load(string dir, Format fmt, in Load.Options? options = null)
         {
             var messagerMap = NewMessagerMap();
             foreach (var messager in messagerMap.Values)
