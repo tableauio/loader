@@ -4,10 +4,14 @@ setlocal enabledelayedexpansion
 
 for /f "delims=" %%i in ('git rev-parse --show-toplevel') do set repoRoot=%%i
 cd /d "%repoRoot%"
+go mod tidy
 
 set "PROTOC=%repoRoot%\third_party\_submodules\protobuf\cmake\build\protoc.exe"
 set "PROTOBUF_PROTO=%repoRoot%\third_party\_submodules\protobuf\src"
-set "TABLEAU_PROTO=%repoRoot%\third_party\_submodules\tableau\proto"
+set "TABLEAU_GOPATH=github.com/tableauio/tableau"
+for /f "delims=" %%G in ('go env GOPATH') do set "GOPATH=%%G"
+for /f "tokens=2" %%V in ('findstr /c:"%TABLEAU_GOPATH%" go.mod') do set "VERSION=%%V"
+set "TABLEAU_PROTO=%GOPATH%\pkg\mod\%TABLEAU_GOPATH%@%VERSION%\proto"
 set "ROOTDIR=%repoRoot%\test\cpp-tableau-loader"
 set "PLGUIN_DIR=%repoRoot%\cmd\protoc-gen-cpp-tableau-loader"
 set "PROTOCONF_IN=%repoRoot%\test\proto"

@@ -7,9 +7,12 @@ set -o pipefail
 shopt -s globstar
 
 cd "$(git rev-parse --show-toplevel)"
+go mod tidy
+
 PROTOC="./third_party/_submodules/protobuf/cmake/build/protoc"
 PROTOBUF_PROTO="./third_party/_submodules/protobuf/src"
-TABLEAU_PROTO="./third_party/_submodules/tableau/proto"
+TABLEAU_GOPATH="github.com/tableauio/tableau"
+TABLEAU_PROTO="$(go env GOPATH)/pkg/mod/$TABLEAU_GOPATH@$(grep $TABLEAU_GOPATH go.mod | awk '{print $2}')/proto"
 PLGUIN_DIR="./cmd/protoc-gen-go-tableau-loader"
 PROTOCONF_IN="./test/proto"
 PROTOCONF_OUT="./test/go-tableau-loader/protoconf"
