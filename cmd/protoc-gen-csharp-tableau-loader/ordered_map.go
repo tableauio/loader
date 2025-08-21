@@ -42,7 +42,8 @@ func genOrderedMapTypeDef(g *protogen.GeneratedFile, md protoreflect.MessageDesc
 				currValueType := helper.ParseCsharpType(fd.MapValue())
 				nextPrefix := parseOrderedMapPrefix(nextMapFD, messagerFullName)
 				nextOrderedMap := nextPrefix + orderedMapSuffix
-				g.P(helper.Indent(2), "public class ", orderedMapValue, "(", nextOrderedMap, " item1, ", currValueType, " item2) : Tuple<", nextOrderedMap, ", ", currValueType, ">(item1, item2);")
+				g.P(helper.Indent(2), "public class ", orderedMapValue, "(", nextOrderedMap, " item1, ", currValueType, " item2)")
+				g.P(helper.Indent(3), ": Tuple<", nextOrderedMap, ", ", currValueType, ">(item1, item2);")
 				g.P(helper.Indent(2), "public class ", orderedMap, " : SortedDictionary<", keyType, ", ", orderedMapValue, ">;")
 				g.P()
 			} else {
@@ -130,13 +131,13 @@ func genOrderedMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDesc
 			} else {
 				lastKeyName := keys[len(keys)-1].Name
 				if depth == 2 {
-					g.P(helper.Indent(2), "public ", orderedMap, "? ", getter, "(", helper.GenGetParams(keys), ") => ",
-						"_orderedMap.TryGetValue(", lastKeyName, ", out var value) ? value.Item1 : null;")
+					g.P(helper.Indent(2), "public ", orderedMap, "? ", getter, "(", helper.GenGetParams(keys), ") =>")
+					g.P(helper.Indent(3), "_orderedMap.TryGetValue(", lastKeyName, ", out var value) ? value.Item1 : null;")
 				} else {
 					prevKeys := keys[:len(keys)-1]
 					prevGetter := genGetterName(depth - 1)
-					g.P(helper.Indent(2), "public ", orderedMap, "? ", getter, "(", helper.GenGetParams(keys), ") => ",
-						prevGetter, "(", helper.GenGetArguments(prevKeys), ")?.TryGetValue(", lastKeyName, ", out var value) == true ? value.Item1 : null;")
+					g.P(helper.Indent(2), "public ", orderedMap, "? ", getter, "(", helper.GenGetParams(keys), ") =>")
+					g.P(helper.Indent(3), prevGetter, "(", helper.GenGetArguments(prevKeys), ")?.TryGetValue(", lastKeyName, ", out var value) == true ? value.Item1 : null;")
 				}
 			}
 

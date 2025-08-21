@@ -6,6 +6,7 @@
 // source: patch_conf.proto
 // </auto-generated>
 #nullable enable
+using pb = global::Google.Protobuf;
 namespace Tableau
 {
     public class PatchReplaceConf : Messager, IMessagerName
@@ -14,17 +15,27 @@ namespace Tableau
 
         public static string Name() => Protoconf.PatchReplaceConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
+        public override bool Load(string dir, Format fmt, in Load.MessagerOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.PatchReplaceConf.Descriptor, dir, fmt, options);
-            _data = (Protoconf.PatchReplaceConf)msg;
-            bool ok = loaded && ProcessAfterLoad();
+            try
+            {
+                _data = (Protoconf.PatchReplaceConf)(
+                    Tableau.Load.LoadMessagerInDir(Protoconf.PatchReplaceConf.Descriptor, dir, fmt, options)
+                    ?? throw new InvalidOperationException()
+                );
+            }
+            catch (Exception)
+            {
+                return false;
+            }
             LoadStats.Duration = DateTime.Now - start;
-            return ok;
+            return ProcessAfterLoad();
         }
 
         public ref readonly Protoconf.PatchReplaceConf Data() => ref _data;
+
+        public override pb::IMessage? Message() => _data;
     }
 
     public class PatchMergeConf : Messager, IMessagerName
@@ -33,19 +44,30 @@ namespace Tableau
 
         public static string Name() => Protoconf.PatchMergeConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
+        public override bool Load(string dir, Format fmt, in Load.MessagerOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.PatchMergeConf.Descriptor, dir, fmt, options);
-            _data = (Protoconf.PatchMergeConf)msg;
-            bool ok = loaded && ProcessAfterLoad();
+            try
+            {
+                _data = (Protoconf.PatchMergeConf)(
+                    Tableau.Load.LoadMessagerInDir(Protoconf.PatchMergeConf.Descriptor, dir, fmt, options)
+                    ?? throw new InvalidOperationException()
+                );
+            }
+            catch (Exception)
+            {
+                return false;
+            }
             LoadStats.Duration = DateTime.Now - start;
-            return ok;
+            return ProcessAfterLoad();
         }
 
         public ref readonly Protoconf.PatchMergeConf Data() => ref _data;
 
-        public Protoconf.Item? Get1(uint id) => _data.ItemMap?.TryGetValue(id, out var val) == true ? val : null;
+        public override pb::IMessage? Message() => _data;
+
+        public Protoconf.Item? Get1(uint id) =>
+            _data.ItemMap?.TryGetValue(id, out var val) == true ? val : null;
     }
 
     public class RecursivePatchConf : Messager, IMessagerName
@@ -54,24 +76,38 @@ namespace Tableau
 
         public static string Name() => Protoconf.RecursivePatchConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
+        public override bool Load(string dir, Format fmt, in Load.MessagerOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.RecursivePatchConf.Descriptor, dir, fmt, options);
-            _data = (Protoconf.RecursivePatchConf)msg;
-            bool ok = loaded && ProcessAfterLoad();
+            try
+            {
+                _data = (Protoconf.RecursivePatchConf)(
+                    Tableau.Load.LoadMessagerInDir(Protoconf.RecursivePatchConf.Descriptor, dir, fmt, options)
+                    ?? throw new InvalidOperationException()
+                );
+            }
+            catch (Exception)
+            {
+                return false;
+            }
             LoadStats.Duration = DateTime.Now - start;
-            return ok;
+            return ProcessAfterLoad();
         }
 
         public ref readonly Protoconf.RecursivePatchConf Data() => ref _data;
 
-        public Protoconf.RecursivePatchConf.Types.Shop? Get1(uint shopId) => _data.ShopMap?.TryGetValue(shopId, out var val) == true ? val : null;
+        public override pb::IMessage? Message() => _data;
 
-        public Protoconf.RecursivePatchConf.Types.Shop.Types.Goods? Get2(uint shopId, uint goodsId) => Get1(shopId)?.GoodsMap?.TryGetValue(goodsId, out var val) == true ? val : null;
+        public Protoconf.RecursivePatchConf.Types.Shop? Get1(uint shopId) =>
+            _data.ShopMap?.TryGetValue(shopId, out var val) == true ? val : null;
 
-        public Protoconf.RecursivePatchConf.Types.Shop.Types.Goods.Types.Currency? Get3(uint shopId, uint goodsId, uint type) => Get2(shopId, goodsId)?.CurrencyMap?.TryGetValue(type, out var val) == true ? val : null;
+        public Protoconf.RecursivePatchConf.Types.Shop.Types.Goods? Get2(uint shopId, uint goodsId) =>
+            Get1(shopId)?.GoodsMap?.TryGetValue(goodsId, out var val) == true ? val : null;
 
-        public int? Get4(uint shopId, uint goodsId, uint type, int key4) => Get3(shopId, goodsId, type)?.ValueList?.TryGetValue(key4, out var val) == true ? val : null;
+        public Protoconf.RecursivePatchConf.Types.Shop.Types.Goods.Types.Currency? Get3(uint shopId, uint goodsId, uint type) =>
+            Get2(shopId, goodsId)?.CurrencyMap?.TryGetValue(type, out var val) == true ? val : null;
+
+        public int? Get4(uint shopId, uint goodsId, uint type, int key4) =>
+            Get3(shopId, goodsId, type)?.ValueList?.TryGetValue(key4, out var val) == true ? val : null;
     }
 }

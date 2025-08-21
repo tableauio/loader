@@ -6,6 +6,7 @@
 // source: test_conf.proto
 // </auto-generated>
 #nullable enable
+using pb = global::Google.Protobuf;
 namespace Tableau
 {
     public class ActivityConf : Messager, IMessagerName
@@ -13,13 +14,16 @@ namespace Tableau
         // OrderedMap types.
         public class Int32_OrderedMap : SortedDictionary<uint, int>;
 
-        public class Protoconf_Section_OrderedMapValue(Int32_OrderedMap item1, Protoconf.Section item2) : Tuple<Int32_OrderedMap, Protoconf.Section>(item1, item2);
+        public class Protoconf_Section_OrderedMapValue(Int32_OrderedMap item1, Protoconf.Section item2)
+            : Tuple<Int32_OrderedMap, Protoconf.Section>(item1, item2);
         public class Protoconf_Section_OrderedMap : SortedDictionary<uint, Protoconf_Section_OrderedMapValue>;
 
-        public class Activity_Chapter_OrderedMapValue(Protoconf_Section_OrderedMap item1, Protoconf.ActivityConf.Types.Activity.Types.Chapter item2) : Tuple<Protoconf_Section_OrderedMap, Protoconf.ActivityConf.Types.Activity.Types.Chapter>(item1, item2);
+        public class Activity_Chapter_OrderedMapValue(Protoconf_Section_OrderedMap item1, Protoconf.ActivityConf.Types.Activity.Types.Chapter item2)
+            : Tuple<Protoconf_Section_OrderedMap, Protoconf.ActivityConf.Types.Activity.Types.Chapter>(item1, item2);
         public class Activity_Chapter_OrderedMap : SortedDictionary<uint, Activity_Chapter_OrderedMapValue>;
 
-        public class Activity_OrderedMapValue(Activity_Chapter_OrderedMap item1, Protoconf.ActivityConf.Types.Activity item2) : Tuple<Activity_Chapter_OrderedMap, Protoconf.ActivityConf.Types.Activity>(item1, item2);
+        public class Activity_OrderedMapValue(Activity_Chapter_OrderedMap item1, Protoconf.ActivityConf.Types.Activity item2)
+            : Tuple<Activity_Chapter_OrderedMap, Protoconf.ActivityConf.Types.Activity>(item1, item2);
         public class Activity_OrderedMap : SortedDictionary<ulong, Activity_OrderedMapValue>;
 
         private readonly Activity_OrderedMap _orderedMap = [];
@@ -49,17 +53,27 @@ namespace Tableau
 
         public static string Name() => Protoconf.ActivityConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
+        public override bool Load(string dir, Format fmt, in Load.MessagerOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.ActivityConf.Descriptor, dir, fmt, options);
-            _data = (Protoconf.ActivityConf)msg;
-            bool ok = loaded && ProcessAfterLoad();
+            try
+            {
+                _data = (Protoconf.ActivityConf)(
+                    Tableau.Load.LoadMessagerInDir(Protoconf.ActivityConf.Descriptor, dir, fmt, options)
+                    ?? throw new InvalidOperationException()
+                );
+            }
+            catch (Exception)
+            {
+                return false;
+            }
             LoadStats.Duration = DateTime.Now - start;
-            return ok;
+            return ProcessAfterLoad();
         }
 
         public ref readonly Protoconf.ActivityConf Data() => ref _data;
+
+        public override pb::IMessage? Message() => _data;
 
         protected override bool ProcessAfterLoad()
         {
@@ -140,50 +154,65 @@ namespace Tableau
             return true;
         }
 
-        public Protoconf.ActivityConf.Types.Activity? Get1(ulong activityId) => _data.ActivityMap?.TryGetValue(activityId, out var val) == true ? val : null;
+        public Protoconf.ActivityConf.Types.Activity? Get1(ulong activityId) =>
+            _data.ActivityMap?.TryGetValue(activityId, out var val) == true ? val : null;
 
-        public Protoconf.ActivityConf.Types.Activity.Types.Chapter? Get2(ulong activityId, uint chapterId) => Get1(activityId)?.ChapterMap?.TryGetValue(chapterId, out var val) == true ? val : null;
+        public Protoconf.ActivityConf.Types.Activity.Types.Chapter? Get2(ulong activityId, uint chapterId) =>
+            Get1(activityId)?.ChapterMap?.TryGetValue(chapterId, out var val) == true ? val : null;
 
-        public Protoconf.Section? Get3(ulong activityId, uint chapterId, uint sectionId) => Get2(activityId, chapterId)?.SectionMap?.TryGetValue(sectionId, out var val) == true ? val : null;
+        public Protoconf.Section? Get3(ulong activityId, uint chapterId, uint sectionId) =>
+            Get2(activityId, chapterId)?.SectionMap?.TryGetValue(sectionId, out var val) == true ? val : null;
 
-        public int? Get4(ulong activityId, uint chapterId, uint sectionId, uint key4) => Get3(activityId, chapterId, sectionId)?.SectionRankMap?.TryGetValue(key4, out var val) == true ? val : null;
+        public int? Get4(ulong activityId, uint chapterId, uint sectionId, uint key4) =>
+            Get3(activityId, chapterId, sectionId)?.SectionRankMap?.TryGetValue(key4, out var val) == true ? val : null;
 
         // OrderedMap accessors.
         public ref readonly Activity_OrderedMap GetOrderedMap() => ref _orderedMap;
 
-        public Activity_Chapter_OrderedMap? GetOrderedMap1(ulong activityId) => _orderedMap.TryGetValue(activityId, out var value) ? value.Item1 : null;
+        public Activity_Chapter_OrderedMap? GetOrderedMap1(ulong activityId) =>
+            _orderedMap.TryGetValue(activityId, out var value) ? value.Item1 : null;
 
-        public Protoconf_Section_OrderedMap? GetOrderedMap2(ulong activityId, uint chapterId) => GetOrderedMap1(activityId)?.TryGetValue(chapterId, out var value) == true ? value.Item1 : null;
+        public Protoconf_Section_OrderedMap? GetOrderedMap2(ulong activityId, uint chapterId) =>
+            GetOrderedMap1(activityId)?.TryGetValue(chapterId, out var value) == true ? value.Item1 : null;
 
-        public Int32_OrderedMap? GetOrderedMap3(ulong activityId, uint chapterId, uint sectionId) => GetOrderedMap2(activityId, chapterId)?.TryGetValue(sectionId, out var value) == true ? value.Item1 : null;
+        public Int32_OrderedMap? GetOrderedMap3(ulong activityId, uint chapterId, uint sectionId) =>
+            GetOrderedMap2(activityId, chapterId)?.TryGetValue(sectionId, out var value) == true ? value.Item1 : null;
 
         // Index: ActivityName
         public ref readonly Index_ActivityMap GetActivityMap() => ref _indexActivityMap;
 
-        public List<Protoconf.ActivityConf.Types.Activity>? GetActivity(string ActivityName) => _indexActivityMap.TryGetValue(ActivityName, out var value) ? value : null;
+        public List<Protoconf.ActivityConf.Types.Activity>? GetActivity(string ActivityName) =>
+            _indexActivityMap.TryGetValue(ActivityName, out var value) ? value : null;
 
-        public Protoconf.ActivityConf.Types.Activity? GetFirstActivity(string ActivityName) => GetActivity(ActivityName)?.FirstOrDefault();
+        public Protoconf.ActivityConf.Types.Activity? GetFirstActivity(string ActivityName) =>
+            GetActivity(ActivityName)?.FirstOrDefault();
 
         // Index: ChapterID
         public ref readonly Index_ChapterMap GetChapterMap() => ref _indexChapterMap;
 
-        public List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>? GetChapter(uint ChapterId) => _indexChapterMap.TryGetValue(ChapterId, out var value) ? value : null;
+        public List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>? GetChapter(uint ChapterId) =>
+            _indexChapterMap.TryGetValue(ChapterId, out var value) ? value : null;
 
-        public Protoconf.ActivityConf.Types.Activity.Types.Chapter? GetFirstChapter(uint ChapterId) => GetChapter(ChapterId)?.FirstOrDefault();
+        public Protoconf.ActivityConf.Types.Activity.Types.Chapter? GetFirstChapter(uint ChapterId) =>
+            GetChapter(ChapterId)?.FirstOrDefault();
 
         // Index: ChapterName<AwardID>@NamedChapter
         public ref readonly Index_NamedChapterMap GetNamedChapterMap() => ref _indexNamedChapterMap;
 
-        public List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>? GetNamedChapter(string ChapterName) => _indexNamedChapterMap.TryGetValue(ChapterName, out var value) ? value : null;
+        public List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>? GetNamedChapter(string ChapterName) =>
+            _indexNamedChapterMap.TryGetValue(ChapterName, out var value) ? value : null;
 
-        public Protoconf.ActivityConf.Types.Activity.Types.Chapter? GetFirstNamedChapter(string ChapterName) => GetNamedChapter(ChapterName)?.FirstOrDefault();
+        public Protoconf.ActivityConf.Types.Activity.Types.Chapter? GetFirstNamedChapter(string ChapterName) =>
+            GetNamedChapter(ChapterName)?.FirstOrDefault();
 
         // Index: SectionItemID@Award
         public ref readonly Index_AwardMap GetAwardMap() => ref _indexAwardMap;
 
-        public List<Protoconf.Section.Types.SectionItem>? GetAward(uint Id) => _indexAwardMap.TryGetValue(Id, out var value) ? value : null;
+        public List<Protoconf.Section.Types.SectionItem>? GetAward(uint Id) =>
+            _indexAwardMap.TryGetValue(Id, out var value) ? value : null;
 
-        public Protoconf.Section.Types.SectionItem? GetFirstAward(uint Id) => GetAward(Id)?.FirstOrDefault();
+        public Protoconf.Section.Types.SectionItem? GetFirstAward(uint Id) =>
+            GetAward(Id)?.FirstOrDefault();
     }
 
     public class ChapterConf : Messager, IMessagerName
@@ -192,19 +221,30 @@ namespace Tableau
 
         public static string Name() => Protoconf.ChapterConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
+        public override bool Load(string dir, Format fmt, in Load.MessagerOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.ChapterConf.Descriptor, dir, fmt, options);
-            _data = (Protoconf.ChapterConf)msg;
-            bool ok = loaded && ProcessAfterLoad();
+            try
+            {
+                _data = (Protoconf.ChapterConf)(
+                    Tableau.Load.LoadMessagerInDir(Protoconf.ChapterConf.Descriptor, dir, fmt, options)
+                    ?? throw new InvalidOperationException()
+                );
+            }
+            catch (Exception)
+            {
+                return false;
+            }
             LoadStats.Duration = DateTime.Now - start;
-            return ok;
+            return ProcessAfterLoad();
         }
 
         public ref readonly Protoconf.ChapterConf Data() => ref _data;
 
-        public Protoconf.ChapterConf.Types.Chapter? Get1(ulong id) => _data.ChapterMap?.TryGetValue(id, out var val) == true ? val : null;
+        public override pb::IMessage? Message() => _data;
+
+        public Protoconf.ChapterConf.Types.Chapter? Get1(ulong id) =>
+            _data.ChapterMap?.TryGetValue(id, out var val) == true ? val : null;
     }
 
     public class ThemeConf : Messager, IMessagerName
@@ -213,21 +253,33 @@ namespace Tableau
 
         public static string Name() => Protoconf.ThemeConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
+        public override bool Load(string dir, Format fmt, in Load.MessagerOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.ThemeConf.Descriptor, dir, fmt, options);
-            _data = (Protoconf.ThemeConf)msg;
-            bool ok = loaded && ProcessAfterLoad();
+            try
+            {
+                _data = (Protoconf.ThemeConf)(
+                    Tableau.Load.LoadMessagerInDir(Protoconf.ThemeConf.Descriptor, dir, fmt, options)
+                    ?? throw new InvalidOperationException()
+                );
+            }
+            catch (Exception)
+            {
+                return false;
+            }
             LoadStats.Duration = DateTime.Now - start;
-            return ok;
+            return ProcessAfterLoad();
         }
 
         public ref readonly Protoconf.ThemeConf Data() => ref _data;
 
-        public Protoconf.ThemeConf.Types.Theme? Get1(string name) => _data.ThemeMap?.TryGetValue(name, out var val) == true ? val : null;
+        public override pb::IMessage? Message() => _data;
 
-        public string? Get2(string name, string param) => Get1(name)?.ParamMap?.TryGetValue(param, out var val) == true ? val : null;
+        public Protoconf.ThemeConf.Types.Theme? Get1(string name) =>
+            _data.ThemeMap?.TryGetValue(name, out var val) == true ? val : null;
+
+        public string? Get2(string name, string param) =>
+            Get1(name)?.ParamMap?.TryGetValue(param, out var val) == true ? val : null;
     }
 
     public class TaskConf : Messager, IMessagerName
@@ -242,17 +294,27 @@ namespace Tableau
 
         public static string Name() => Protoconf.TaskConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
+        public override bool Load(string dir, Format fmt, in Load.MessagerOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.TaskConf.Descriptor, dir, fmt, options);
-            _data = (Protoconf.TaskConf)msg;
-            bool ok = loaded && ProcessAfterLoad();
+            try
+            {
+                _data = (Protoconf.TaskConf)(
+                    Tableau.Load.LoadMessagerInDir(Protoconf.TaskConf.Descriptor, dir, fmt, options)
+                    ?? throw new InvalidOperationException()
+                );
+            }
+            catch (Exception)
+            {
+                return false;
+            }
             LoadStats.Duration = DateTime.Now - start;
-            return ok;
+            return ProcessAfterLoad();
         }
 
         public ref readonly Protoconf.TaskConf Data() => ref _data;
+
+        public override pb::IMessage? Message() => _data;
 
         protected override bool ProcessAfterLoad()
         {
@@ -283,13 +345,16 @@ namespace Tableau
             return true;
         }
 
-        public Protoconf.TaskConf.Types.Task? Get1(long id) => _data.TaskMap?.TryGetValue(id, out var val) == true ? val : null;
+        public Protoconf.TaskConf.Types.Task? Get1(long id) =>
+            _data.TaskMap?.TryGetValue(id, out var val) == true ? val : null;
 
         // Index: ActivityID<Goal,ID>
         public ref readonly Index_TaskMap GetTaskMap() => ref _indexTaskMap;
 
-        public List<Protoconf.TaskConf.Types.Task>? GetTask(long ActivityId) => _indexTaskMap.TryGetValue(ActivityId, out var value) ? value : null;
+        public List<Protoconf.TaskConf.Types.Task>? GetTask(long ActivityId) =>
+            _indexTaskMap.TryGetValue(ActivityId, out var value) ? value : null;
 
-        public Protoconf.TaskConf.Types.Task? GetFirstTask(long ActivityId) => GetTask(ActivityId)?.FirstOrDefault();
+        public Protoconf.TaskConf.Types.Task? GetFirstTask(long ActivityId) =>
+            GetTask(ActivityId)?.FirstOrDefault();
     }
 }

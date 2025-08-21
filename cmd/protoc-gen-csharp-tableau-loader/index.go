@@ -250,10 +250,12 @@ func genIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescripto
 				keyName = "key"
 			}
 
-			g.P(helper.Indent(2), "public List<", helper.ParseCsharpClassType(index.MD), ">? Get", index.Name(), "(", keyType, " ", keyName, ") => ", indexContainerName, ".TryGetValue(", keyName, ", out var value) ? value : null;")
+			g.P(helper.Indent(2), "public List<", helper.ParseCsharpClassType(index.MD), ">? Get", index.Name(), "(", keyType, " ", keyName, ") =>")
+			g.P(helper.Indent(3), indexContainerName, ".TryGetValue(", keyName, ", out var value) ? value : null;")
 			g.P()
 
-			g.P(helper.Indent(2), "public ", helper.ParseCsharpClassType(index.MD), "? GetFirst", index.Name(), "(", keyType, " ", keyName, ") => Get", index.Name(), "(", keyName, ")?.FirstOrDefault();")
+			g.P(helper.Indent(2), "public ", helper.ParseCsharpClassType(index.MD), "? GetFirst", index.Name(), "(", keyType, " ", keyName, ") =>")
+			g.P(helper.Indent(3), "Get", index.Name(), "(", keyName, ")?.FirstOrDefault();")
 		}
 	}
 }

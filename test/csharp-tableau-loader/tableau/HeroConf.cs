@@ -6,6 +6,7 @@
 // source: hero_conf.proto
 // </auto-generated>
 #nullable enable
+using pb = global::Google.Protobuf;
 namespace Tableau
 {
     public class HeroConf : Messager, IMessagerName
@@ -13,7 +14,8 @@ namespace Tableau
         // OrderedMap types.
         public class Hero_Attr_OrderedMap : SortedDictionary<string, Protoconf.HeroConf.Types.Hero.Types.Attr>;
 
-        public class Hero_OrderedMapValue(Hero_Attr_OrderedMap item1, Protoconf.HeroConf.Types.Hero item2) : Tuple<Hero_Attr_OrderedMap, Protoconf.HeroConf.Types.Hero>(item1, item2);
+        public class Hero_OrderedMapValue(Hero_Attr_OrderedMap item1, Protoconf.HeroConf.Types.Hero item2)
+            : Tuple<Hero_Attr_OrderedMap, Protoconf.HeroConf.Types.Hero>(item1, item2);
         public class Hero_OrderedMap : SortedDictionary<string, Hero_OrderedMapValue>;
 
         private readonly Hero_OrderedMap _orderedMap = [];
@@ -22,17 +24,27 @@ namespace Tableau
 
         public static string Name() => Protoconf.HeroConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
+        public override bool Load(string dir, Format fmt, in Load.MessagerOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.HeroConf.Descriptor, dir, fmt, options);
-            _data = (Protoconf.HeroConf)msg;
-            bool ok = loaded && ProcessAfterLoad();
+            try
+            {
+                _data = (Protoconf.HeroConf)(
+                    Tableau.Load.LoadMessagerInDir(Protoconf.HeroConf.Descriptor, dir, fmt, options)
+                    ?? throw new InvalidOperationException()
+                );
+            }
+            catch (Exception)
+            {
+                return false;
+            }
             LoadStats.Duration = DateTime.Now - start;
-            return ok;
+            return ProcessAfterLoad();
         }
 
         public ref readonly Protoconf.HeroConf Data() => ref _data;
+
+        public override pb::IMessage? Message() => _data;
 
         protected override bool ProcessAfterLoad()
         {
@@ -50,14 +62,17 @@ namespace Tableau
             return true;
         }
 
-        public Protoconf.HeroConf.Types.Hero? Get1(string name) => _data.HeroMap?.TryGetValue(name, out var val) == true ? val : null;
+        public Protoconf.HeroConf.Types.Hero? Get1(string name) =>
+            _data.HeroMap?.TryGetValue(name, out var val) == true ? val : null;
 
-        public Protoconf.HeroConf.Types.Hero.Types.Attr? Get2(string name, string title) => Get1(name)?.AttrMap?.TryGetValue(title, out var val) == true ? val : null;
+        public Protoconf.HeroConf.Types.Hero.Types.Attr? Get2(string name, string title) =>
+            Get1(name)?.AttrMap?.TryGetValue(title, out var val) == true ? val : null;
 
         // OrderedMap accessors.
         public ref readonly Hero_OrderedMap GetOrderedMap() => ref _orderedMap;
 
-        public Hero_Attr_OrderedMap? GetOrderedMap1(string name) => _orderedMap.TryGetValue(name, out var value) ? value.Item1 : null;
+        public Hero_Attr_OrderedMap? GetOrderedMap1(string name) =>
+            _orderedMap.TryGetValue(name, out var value) ? value.Item1 : null;
     }
 
     public class HeroBaseConf : Messager, IMessagerName
@@ -66,20 +81,32 @@ namespace Tableau
 
         public static string Name() => Protoconf.HeroBaseConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
+        public override bool Load(string dir, Format fmt, in Load.MessagerOptions? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.HeroBaseConf.Descriptor, dir, fmt, options);
-            _data = (Protoconf.HeroBaseConf)msg;
-            bool ok = loaded && ProcessAfterLoad();
+            try
+            {
+                _data = (Protoconf.HeroBaseConf)(
+                    Tableau.Load.LoadMessagerInDir(Protoconf.HeroBaseConf.Descriptor, dir, fmt, options)
+                    ?? throw new InvalidOperationException()
+                );
+            }
+            catch (Exception)
+            {
+                return false;
+            }
             LoadStats.Duration = DateTime.Now - start;
-            return ok;
+            return ProcessAfterLoad();
         }
 
         public ref readonly Protoconf.HeroBaseConf Data() => ref _data;
 
-        public Base.Hero? Get1(string name) => _data.HeroMap?.TryGetValue(name, out var val) == true ? val : null;
+        public override pb::IMessage? Message() => _data;
 
-        public Base.Item? Get2(string name, string id) => Get1(name)?.ItemMap?.TryGetValue(id, out var val) == true ? val : null;
+        public Base.Hero? Get1(string name) =>
+            _data.HeroMap?.TryGetValue(name, out var val) == true ? val : null;
+
+        public Base.Item? Get2(string name, string id) =>
+            Get1(name)?.ItemMap?.TryGetValue(id, out var val) == true ? val : null;
     }
 }
