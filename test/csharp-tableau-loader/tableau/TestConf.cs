@@ -49,10 +49,10 @@ namespace Tableau
 
         public static string Name() => Protoconf.ActivityConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
+        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.ActivityConf.Descriptor, dir, fmt, options);
+            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.ActivityConf.Descriptor, dir, fmt, options);
             _data = (Protoconf.ActivityConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
@@ -192,10 +192,10 @@ namespace Tableau
 
         public static string Name() => Protoconf.ChapterConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
+        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.ChapterConf.Descriptor, dir, fmt, options);
+            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.ChapterConf.Descriptor, dir, fmt, options);
             _data = (Protoconf.ChapterConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
@@ -213,10 +213,10 @@ namespace Tableau
 
         public static string Name() => Protoconf.ThemeConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
+        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.ThemeConf.Descriptor, dir, fmt, options);
+            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.ThemeConf.Descriptor, dir, fmt, options);
             _data = (Protoconf.ThemeConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
@@ -242,10 +242,10 @@ namespace Tableau
 
         public static string Name() => Protoconf.TaskConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
+        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.TaskConf.Descriptor, dir, fmt, options);
+            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.TaskConf.Descriptor, dir, fmt, options);
             _data = (Protoconf.TaskConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;

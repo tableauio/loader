@@ -32,7 +32,7 @@ func main() {
 			generateMessager(gen, f)
 		}
 		generateHub(gen)
-		generateLoad(gen)
+		generateEmbed(gen)
 		return nil
 	})
 }

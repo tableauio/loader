@@ -22,10 +22,10 @@ namespace Tableau
 
         public static string Name() => Protoconf.HeroConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
+        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.HeroConf.Descriptor, dir, fmt, options);
+            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.HeroConf.Descriptor, dir, fmt, options);
             _data = (Protoconf.HeroConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
@@ -66,10 +66,10 @@ namespace Tableau
 
         public static string Name() => Protoconf.HeroBaseConf.Descriptor.Name;
 
-        public override bool Load(string dir, Format fmt, in LoadOptions? options = null)
+        public override bool Load(string dir, Format fmt, in Load.Options? options = null)
         {
             var start = DateTime.Now;
-            bool loaded = MessageParser.LoadMessageByPath(out var msg, Protoconf.HeroBaseConf.Descriptor, dir, fmt, options);
+            bool loaded = Tableau.Load.LoadMessager(out var msg, Protoconf.HeroBaseConf.Descriptor, dir, fmt, options);
             _data = (Protoconf.HeroBaseConf)msg;
             bool ok = loaded && ProcessAfterLoad();
             LoadStats.Duration = DateTime.Now - start;
