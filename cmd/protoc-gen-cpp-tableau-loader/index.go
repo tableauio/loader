@@ -108,7 +108,7 @@ func genCppIndexLoader(g *protogen.GeneratedFile, descriptor *index.IndexDescrip
 		if !levelMessage.NextLevel.NeedGen() {
 			break
 		}
-		g.P(helper.Indent(depth), "for (auto&& "+itemName+" : "+parentDataName+"."+helper.ParseIndexFieldName(levelMessage.FD)+"()) {")
+		g.P(helper.Indent(depth), "for (auto&& ", itemName, " : ", parentDataName, ".", helper.ParseIndexFieldName(levelMessage.FD), "()) {")
 		parentDataName = itemName
 		if levelMessage.FD.IsMap() {
 			parentDataName = itemName + ".second"
@@ -134,12 +134,12 @@ func genOneCppIndexLoader(g *protogen.GeneratedFile, depth int, index *index.Lev
 			for _, leveledFd := range field.LeveledFDList {
 				fieldName += "." + helper.ParseIndexFieldName(leveledFd) + "()"
 			}
-			g.P(helper.Indent(depth+1), "for (auto&& "+itemName+" : "+parentDataName+fieldName+") {")
+			g.P(helper.Indent(depth+1), "for (auto&& ", itemName, " : ", parentDataName, fieldName, ") {")
 			key := itemName
 			if field.FD.Enum() != nil {
 				key = "static_cast<" + helper.ParseCppType(field.FD) + ">(" + key + ")"
 			}
-			g.P(helper.Indent(depth+2), indexContainerName, "["+key+"].push_back(&"+parentDataName+");")
+			g.P(helper.Indent(depth+2), indexContainerName, "[", key, "].push_back(&", parentDataName, ");")
 			g.P(helper.Indent(depth+1), "}")
 		} else {
 			fieldName := ""
@@ -147,7 +147,7 @@ func genOneCppIndexLoader(g *protogen.GeneratedFile, depth int, index *index.Lev
 				fieldName += "." + helper.ParseIndexFieldName(leveledFd) + "()"
 			}
 			key := parentDataName + fieldName
-			g.P(helper.Indent(depth+1), indexContainerName, "["+key+"].push_back(&"+parentDataName+");")
+			g.P(helper.Indent(depth+1), indexContainerName, "[", key, "].push_back(&", parentDataName, ");")
 		}
 	} else {
 		// multi-column index
@@ -202,7 +202,7 @@ func generateOneCppMulticolumnIndex(g *protogen.GeneratedFile, depth int, index 
 		keyType := fmt.Sprintf("Index_%sKey", index.Name())
 		indexContainerName := "index_" + strcase.ToSnake(index.Name()) + "_map_"
 		g.P(helper.Indent(depth+1), keyType, " key{", keyParams, "};")
-		g.P(helper.Indent(depth+1), indexContainerName, "[key].push_back(&"+parentDataName+");")
+		g.P(helper.Indent(depth+1), indexContainerName, "[key].push_back(&", parentDataName, ");")
 		return keys
 	}
 	field := index.ColFields[cursor]
@@ -212,7 +212,7 @@ func generateOneCppMulticolumnIndex(g *protogen.GeneratedFile, depth int, index 
 		for _, leveledFd := range field.LeveledFDList {
 			fieldName += "." + helper.ParseIndexFieldName(leveledFd) + "()"
 		}
-		g.P(helper.Indent(depth+1), "for (auto&& "+itemName+" : "+parentDataName+fieldName+") {")
+		g.P(helper.Indent(depth+1), "for (auto&& ", itemName, " : ", parentDataName, fieldName, ") {")
 		key := itemName
 		if field.FD.Enum() != nil {
 			key = "static_cast<" + helper.ParseCppType(field.FD) + ">(" + key + ")"
@@ -240,7 +240,7 @@ func genCppIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescri
 			indexContainerName := "index_" + strcase.ToSnake(index.Name()) + "_map_"
 
 			g.P("// Index: ", index.Index)
-			g.P("const ", messagerName, "::", mapType, "& "+messagerName+"::Find", index.Name(), "() const { return "+indexContainerName+" ;}")
+			g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Find", index.Name(), "() const { return ", indexContainerName, " ;}")
 			g.P()
 
 			var keyType, keyName string
@@ -255,7 +255,7 @@ func genCppIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescri
 				keyName = "key"
 			}
 
-			g.P("const ", messagerName, "::", vectorType, "* "+messagerName+"::Find", index.Name(), "(", helper.ToConstRefType(keyType), " ", keyName, ") const {")
+			g.P("const ", messagerName, "::", vectorType, "* ", messagerName, "::Find", index.Name(), "(", helper.ToConstRefType(keyType), " ", keyName, ") const {")
 			g.P(helper.Indent(1), "auto iter = ", indexContainerName, ".find(", keyName, ");")
 			g.P(helper.Indent(1), "if (iter == ", indexContainerName, ".end()) {")
 			g.P(helper.Indent(2), "return nullptr;")
@@ -264,7 +264,7 @@ func genCppIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescri
 			g.P("}")
 			g.P()
 
-			g.P("const ", helper.ParseCppClassType(index.MD), "* "+messagerName+"::FindFirst", index.Name(), "(", helper.ToConstRefType(keyType), " ", keyName, ") const {")
+			g.P("const ", helper.ParseCppClassType(index.MD), "* ", messagerName, "::FindFirst", index.Name(), "(", helper.ToConstRefType(keyType), " ", keyName, ") const {")
 			g.P(helper.Indent(1), "auto conf = Find", index.Name(), "(", keyName, ");")
 			g.P(helper.Indent(1), "if (conf == nullptr || conf->size() == 0) {")
 			g.P(helper.Indent(2), "return nullptr;")

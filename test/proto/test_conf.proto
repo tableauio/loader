@@ -3,6 +3,7 @@ syntax = "proto3";
 package protoconf;
 
 import "tableau/protobuf/tableau.proto";
+import "google/protobuf/timestamp.proto";
 import "common_conf.proto";
 
 option go_package = "github.com/tableauio/loader/test/go-tableau-loader/protoconf";
@@ -99,6 +100,8 @@ message TaskConf {
   option (tableau.worksheet) = {
     name: "TaskConf"
     index: "ActivityID<Goal,ID>"
+    ordered_index: "Goal<ID>"
+    ordered_index: "Expiry@TaskExpiry"
   };
 
   map<int64, Task> task_map = 1 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
@@ -107,5 +110,6 @@ message TaskConf {
     int64 activity_id = 2 [(tableau.field) = { name: "ActivityID" }];
     int64 goal = 3 [(tableau.field) = { name: "Goal" }];
     protoconf.Item reward = 4 [(tableau.field) = { name: "Reward" }];
+    google.protobuf.Timestamp expiry = 5 [(tableau.field) = { name: "Expiry" }];
   }
 }

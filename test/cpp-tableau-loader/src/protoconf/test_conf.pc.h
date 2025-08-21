@@ -160,6 +160,25 @@ class TaskConf : public Messager {
  private:
   Index_TaskMap index_task_map_;
 
+  // OrderedIndex accessers.
+  // OrderedIndex: Goal<ID>
+ public:
+  using OrderedIndex_TaskVector = std::vector<const protoconf::TaskConf::Task*>;
+  using OrderedIndex_TaskMap = std::map<int64_t, OrderedIndex_TaskVector>;
+  const OrderedIndex_TaskMap& FindTaskMap() const;
+
+ private:
+  OrderedIndex_TaskMap ordered_index_task_map_;
+
+  // OrderedIndex: Expiry@TaskExpiry
+ public:
+  using OrderedIndex_TaskExpiryVector = std::vector<const protoconf::TaskConf::Task*>;
+  using OrderedIndex_TaskExpiryMap = std::map<int64_t, OrderedIndex_TaskExpiryVector>;
+  const OrderedIndex_TaskExpiryMap& FindTaskExpiryMap() const;
+
+ private:
+  OrderedIndex_TaskExpiryMap ordered_index_task_expiry_map_;
+
 };
 
 }  // namespace tableau

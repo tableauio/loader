@@ -82,6 +82,9 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	if options.NeedGenIndex(message.Desc, options.LangGO) {
 		genIndexTypeDef(gen, g, indexDescriptor, messagerName)
 	}
+	if options.NeedGenOrderedIndex(message.Desc, options.LangGO) {
+		genOrderedIndexTypeDef(gen, g, indexDescriptor, messagerName)
+	}
 
 	g.P("// ", messagerName, " is a wrapper around protobuf message: ", message.GoIdent, ".")
 	g.P("//")
@@ -99,6 +102,9 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	}
 	if options.NeedGenIndex(message.Desc, options.LangGO) {
 		genIndexField(g, indexDescriptor, messagerName)
+	}
+	if options.NeedGenOrderedIndex(message.Desc, options.LangGO) {
+		genOrderedIndexField(g, indexDescriptor, messagerName)
 	}
 	g.P("}")
 	g.P()
@@ -168,7 +174,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("}")
 	g.P()
 
-	if options.NeedGenOrderedMap(message.Desc, options.LangGO) || options.NeedGenIndex(message.Desc, options.LangGO) {
+	if options.NeedGenOrderedMap(message.Desc, options.LangGO) || options.NeedGenIndex(message.Desc, options.LangGO) || options.NeedGenOrderedIndex(message.Desc, options.LangGO) {
 		g.P("// processAfterLoad runs after this messager is loaded.")
 		g.P("func (x *", messagerName, ") processAfterLoad() error {")
 		if options.NeedGenOrderedMap(message.Desc, options.LangGO) {
@@ -176,6 +182,9 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 		}
 		if options.NeedGenIndex(message.Desc, options.LangGO) {
 			genIndexLoader(gen, g, indexDescriptor, messagerName)
+		}
+		if options.NeedGenOrderedIndex(message.Desc, options.LangGO) {
+			genOrderedIndexLoader(gen, g, indexDescriptor)
 		}
 		g.P("return nil")
 		g.P("}")
@@ -190,12 +199,15 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	if options.NeedGenIndex(message.Desc, options.LangGO) {
 		genIndexFinders(gen, g, indexDescriptor, messagerName)
 	}
+	if options.NeedGenOrderedIndex(message.Desc, options.LangGO) {
+		genOrderedIndexFinders(gen, g, indexDescriptor, messagerName)
+	}
 }
 
 func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message, depth int, keys []helper.MapKey, messagerName string) {
 	for _, field := range message.Fields {
 		fd := field.Desc
-		if field.Desc.IsMap() {
+		if fd.IsMap() {
 			keys = helper.AddMapKey(gen, fd, keys)
 			getter := fmt.Sprintf("Get%v", depth)
 			g.P("// ", getter, " finds value in the ", depth, "-level map. It will return")
