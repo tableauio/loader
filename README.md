@@ -6,23 +6,38 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 > TODO: [devcontainer](https://code.visualstudio.com/docs/devcontainers/containers)
 
-- Supported OS: Windows, macOS, Linux
-- Init protobuf: `bash init.sh`
 - C++ standard: at least C++17
+- Install: [CMake 3.22](https://github.com/Kitware/CMake/releases/tag/v3.31.8) or above
+- Init protobuf:
+  - macOS or Linux: `bash init.sh`
+  - Windows: 
+    - Install [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/)
+    - Environment Setup: Open the appropriate `Developer Command Prompt for VS 2022` from the *Start* menu to ensure `cl.exe` and other build tools are in your `PATH`.
+    - Change dir to **loader** repo
+    - Run: `.\init.bat`
 
 ## C++
 
 ### Dev at Linux
 
-- Install: **CMake 3.22** or above
 - Change dir: `cd test/cpp-tableau-loader`
 - Generate protoconf: `bash ./gen.sh`
-- Create build dir: `mkdir build && cd build`
-- Run cmake: 
-  - C++17: `cmake ../src/`
-  - C++20: `cmake ../src/ -DCMAKE_CXX_STANDARD=20`
-  - clang: `cmake ../src/ -DCMAKE_CXX_COMPILER=clang++`
-- Build: `make -j8`, then the **bin** dir will be generated at `test/cpp-tableau-loader/bin`.
+- CMake:
+  - C++17: `cmake -S . -B build`
+  - C++20: `cmake -S . -B build -DCMAKE_CXX_STANDARD=20`
+  - clang: `cmake -S . -B build -DCMAKE_CXX_COMPILER=clang++`
+- Build: `cmake --build build --parallel 10`
+- Run: `./bin/loader`
+
+### Dev at Windows
+
+- Change dir: `cd test\cpp-tableau-loader`
+- Generate protoconf: `.\gen.bat`
+- CMake:
+  - C++17: `cmake -S . -B build -G "NMake Makefiles"`
+  - C++20: `cmake -S . -B build -G "NMake Makefiles" -DCMAKE_CXX_STANDARD=20`
+- Build: `cmake --build build --parallel 10`
+- Run: `.\bin\loader.exe`
 
 ### References
 

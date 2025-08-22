@@ -6,6 +6,7 @@
 #pragma once
 #include <ctime>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -45,13 +46,13 @@ class Hub {
   /***** Synchronous Loading *****/
   // Load fills messages (in MessagerContainer) from files in the specified directory and format.
   bool Load(const std::filesystem::path& dir, Format fmt = Format::kJSON,
-            std::shared_ptr<const LoadOptions> options = nullptr);
+            std::shared_ptr<const load::Options> options = nullptr);
 
   /***** Asynchronous Loading *****/
   // Load configs into temp MessagerContainer, and you should call LoopOnce() in you app's main loop,
   // in order to take the temp MessagerContainer into effect.
   bool AsyncLoad(const std::filesystem::path& dir, Format fmt = Format::kJSON,
-                 std::shared_ptr<const LoadOptions> options = nullptr);
+                 std::shared_ptr<const load::Options> options = nullptr);
   int LoopOnce();
   // You'd better initialize the scheduler in the main thread.
   void InitScheduler();
@@ -79,7 +80,7 @@ class Hub {
 
  private:
   std::shared_ptr<MessagerMap> InternalLoad(const std::filesystem::path& dir, Format fmt = Format::kJSON,
-                                            std::shared_ptr<const LoadOptions> options = nullptr) const;
+                                            std::shared_ptr<const load::Options> options = nullptr) const;
   std::shared_ptr<MessagerMap> NewMessagerMap() const;
   std::shared_ptr<MessagerContainer> GetMessagerContainerWithProvider() const;
   const std::shared_ptr<Messager> GetMessager(const std::string& name) const;

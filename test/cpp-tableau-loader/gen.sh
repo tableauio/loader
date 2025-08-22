@@ -7,7 +7,7 @@ set -o pipefail
 shopt -s globstar
 
 cd "$(git rev-parse --show-toplevel)"
-PROTOC="./third_party/_submodules/protobuf/src/protoc"
+PROTOC="./third_party/_submodules/protobuf/cmake/build/protoc"
 PROTOBUF_PROTO="./third_party/_submodules/protobuf/src"
 TABLEAU_PROTO="./third_party/_submodules/tableau/proto"
 ROOTDIR="./test/cpp-tableau-loader"
@@ -19,7 +19,7 @@ PROTOCONF_OUT="${ROOTDIR}/src/protoconf"
 rm -rfv "$PROTOCONF_OUT"
 mkdir -p "$PROTOCONF_OUT"
 
-# build
+# build protoc plugin of loader
 cd "${PLGUIN_DIR}" && go build && cd -
 
 export PATH="${PATH}:${PLGUIN_DIR}"
@@ -33,7 +33,7 @@ ${PROTOC} \
     --proto_path="$PROTOCONF_IN" \
     "$PROTOCONF_IN"/**/*.proto
 
-TABLEAU_IN="./third_party/_submodules/tableau/proto/tableau/protobuf"
+TABLEAU_IN="$TABLEAU_PROTO/tableau/protobuf"
 TABLEAU_OUT="${ROOTDIR}/src"
 # remove old generated files
 rm -rfv "$TABLEAU_OUT/tableau"

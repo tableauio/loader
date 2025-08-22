@@ -12,7 +12,7 @@
 namespace tableau {
 const std::string PatchReplaceConf::kProtoName = protoconf::PatchReplaceConf::GetDescriptor()->name();
 
-bool PatchReplaceConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
+bool PatchReplaceConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
@@ -22,7 +22,7 @@ bool PatchReplaceConf::Load(const std::filesystem::path& dir, Format fmt, std::s
 
 const std::string PatchMergeConf::kProtoName = protoconf::PatchMergeConf::GetDescriptor()->name();
 
-bool PatchMergeConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
+bool PatchMergeConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;
@@ -40,7 +40,7 @@ const protoconf::Item* PatchMergeConf::Get(uint32_t id) const {
 
 const std::string RecursivePatchConf::kProtoName = protoconf::RecursivePatchConf::GetDescriptor()->name();
 
-bool RecursivePatchConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const MessagerOptions> options /* = nullptr */) {
+bool RecursivePatchConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
   bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
   bool ok = loaded ? ProcessAfterLoad() : false;

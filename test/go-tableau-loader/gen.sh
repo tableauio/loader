@@ -7,7 +7,7 @@ set -o pipefail
 shopt -s globstar
 
 cd "$(git rev-parse --show-toplevel)"
-PROTOC="./third_party/_submodules/protobuf/src/protoc"
+PROTOC="./third_party/_submodules/protobuf/cmake/build/protoc"
 PROTOBUF_PROTO="./third_party/_submodules/protobuf/src"
 TABLEAU_PROTO="./third_party/_submodules/tableau/proto"
 PLGUIN_DIR="./cmd/protoc-gen-go-tableau-loader"

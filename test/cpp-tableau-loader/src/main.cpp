@@ -13,8 +13,10 @@
 #include "protoconf/patch_conf.pc.h"
 #include "protoconf/test_conf.pc.h"
 
-bool LoadWithPatch(std::shared_ptr<const tableau::LoadOptions> options) {
-  return Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+const std::string kTestdataDir = "../testdata";
+
+bool LoadWithPatch(std::shared_ptr<const tableau::load::Options> options) {
+  return Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
 }
 
 bool CustomReadFile(const std::filesystem::path& filename, std::string& content) {
@@ -28,99 +30,99 @@ bool CustomReadFile(const std::filesystem::path& filename, std::string& content)
 }
 
 bool TestPatch() {
-  auto options = std::make_shared<tableau::LoadOptions>();
+  auto options = std::make_shared<tableau::load::Options>();
   options->read_func = CustomReadFile;
 
   // patchconf
-  std::cout << "-----TestPatch patchconf" << std::endl;
-  options->patch_dirs = {"../../testdata/patchconf/"};
-  bool ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  ATOM_DEBUG("-----TestPatch patchconf");
+  options->patch_dirs = {kTestdataDir + "/patchconf/"};
+  bool ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
-    std::cout << "failed to load with patchconf" << std::endl;
+    ATOM_ERROR("failed to load with patchconf");
     return false;
   }
 
   // print recursive patch conf
   auto mgr = Hub::Instance().Get<protoconf::RecursivePatchConfMgr>();
   if (!mgr) {
-    std::cout << "protobuf hub get RecursivePatchConf failed!" << std::endl;
+    ATOM_ERROR("protobuf hub get RecursivePatchConf failed!");
     return false;
   }
-  std::cout << "RecursivePatchConf: " << std::endl << mgr->Data().ShortDebugString() << std::endl;
+  ATOM_DEBUG("RecursivePatchConf: %s", mgr->Data().ShortDebugString().c_str());
   tableau::RecursivePatchConf result;
-  ok = result.Load("../../testdata/patchresult/", tableau::Format::kJSON);
+  ok = result.Load(kTestdataDir + "/patchresult/", tableau::Format::kJSON);
   if (!ok) {
-    std::cout << "failed to load with patch result" << std::endl;
+    ATOM_ERROR("failed to load with patch result");
     return false;
   }
-  std::cout << "Expected patch result: " << std::endl << result.Data().ShortDebugString() << std::endl;
+  ATOM_DEBUG("Expected patch result: %s", result.Data().ShortDebugString().c_str());
   if (!google::protobuf::util::MessageDifferencer::Equals(mgr->Data(), result.Data())) {
-    std::cout << "patch result not correct" << std::endl;
+    ATOM_ERROR("patch result not correct");
     return false;
   }
 
   // patchconf2
-  std::cout << "-----TestPatch patchconf2" << std::endl;
-  options->patch_dirs = {"../../testdata/patchconf2/"};
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  ATOM_DEBUG("-----TestPatch patchconf2");
+  options->patch_dirs = {kTestdataDir + "/patchconf2/"};
+  ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
-    std::cout << "failed to load with patchconf2" << std::endl;
+    ATOM_ERROR("failed to load with patchconf2");
     return false;
   }
 
   // patchconf2 different format
-  std::cout << "-----TestPatch patchconf2 different format" << std::endl;
-  options->patch_dirs = {"../../testdata/patchconf2/"};
-  auto mopts = std::make_shared<tableau::MessagerOptions>();
-  mopts->patch_paths = {"../../testdata/patchconf2/PatchMergeConf.txt"};
+  ATOM_DEBUG("-----TestPatch patchconf2 different format");
+  options->patch_dirs = {kTestdataDir + "/patchconf2/"};
+  auto mopts = std::make_shared<tableau::load::MessagerOptions>();
+  mopts->patch_paths = {kTestdataDir + "/patchconf2/PatchMergeConf.txt"};
   options->messager_options["PatchMergeConf"] = mopts;
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
-    std::cout << "failed to load with patchconf2" << std::endl;
+    ATOM_ERROR("failed to load with patchconf2");
     return false;
   }
 
   // multiple patch files
-  std::cout << "-----TestPatch multiple patch files" << std::endl;
-  mopts = std::make_shared<tableau::MessagerOptions>();
-  mopts->patch_paths = {"../../testdata/patchconf/PatchMergeConf.json",
-                        "../../testdata/patchconf2/PatchMergeConf.json"};
+  ATOM_DEBUG("-----TestPatch multiple patch files");
+  mopts = std::make_shared<tableau::load::MessagerOptions>();
+  mopts->patch_paths = {kTestdataDir + "/patchconf/PatchMergeConf.json",
+                        kTestdataDir + "/patchconf2/PatchMergeConf.json"};
   options->messager_options["PatchMergeConf"] = mopts;
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
-    std::cout << "failed to load with multiple patch files" << std::endl;
+    ATOM_ERROR("failed to load with multiple patch files");
     return false;
   }
 
   // mode only main
-  std::cout << "-----TestPatch ModeOnlyMain" << std::endl;
-  mopts = std::make_shared<tableau::MessagerOptions>();
-  mopts->patch_paths = {"../../testdata/patchconf/PatchMergeConf.json",
-                        "../../testdata/patchconf2/PatchMergeConf.json"};
+  ATOM_DEBUG("-----TestPatch ModeOnlyMain");
+  mopts = std::make_shared<tableau::load::MessagerOptions>();
+  mopts->patch_paths = {kTestdataDir + "/patchconf/PatchMergeConf.json",
+                        kTestdataDir + "/patchconf2/PatchMergeConf.json"};
   options->messager_options["PatchMergeConf"] = mopts;
-  options->mode = tableau::LoadMode::kOnlyMain;
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  options->mode = tableau::load::LoadMode::kOnlyMain;
+  ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
-    std::cout << "failed to load with mode only main" << std::endl;
+    ATOM_ERROR("failed to load with mode only main");
     return false;
   }
   auto patch_mgr = Hub::Instance().Get<protoconf::PatchMergeConfMgr>();
   if (!patch_mgr) {
-    std::cout << "protobuf hub get PatchMergeConf failed!" << std::endl;
-    return 1;
+    ATOM_ERROR("protobuf hub get PatchMergeConf failed!");
+    return false;
   }
-  std::cout << "PatchMergeConf: " << patch_mgr->Data().ShortDebugString() << std::endl;
+  ATOM_DEBUG("PatchMergeConf: %s", patch_mgr->Data().ShortDebugString().c_str());
 
   // mode only patch
-  std::cout << "-----TestPatch ModeOnlyPatch" << std::endl;
-  mopts = std::make_shared<tableau::MessagerOptions>();
-  mopts->patch_paths = {"../../testdata/patchconf/PatchMergeConf.json",
-                        "../../testdata/patchconf2/PatchMergeConf.json"};
+  ATOM_DEBUG("-----TestPatch ModeOnlyPatch");
+  mopts = std::make_shared<tableau::load::MessagerOptions>();
+  mopts->patch_paths = {kTestdataDir + "/patchconf/PatchMergeConf.json",
+                        kTestdataDir + "/patchconf2/PatchMergeConf.json"};
   options->messager_options["PatchMergeConf"] = mopts;
-  options->mode = tableau::LoadMode::kOnlyPatch;
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  options->mode = tableau::load::LoadMode::kOnlyPatch;
+  ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
-    std::cout << "failed to load with mode only patch" << std::endl;
+    ATOM_ERROR("failed to load with mode only patch");
     return false;
   }
   return true;
@@ -128,16 +130,16 @@ bool TestPatch() {
 
 int main() {
   Hub::Instance().InitOnce();
-  auto options = std::make_shared<tableau::LoadOptions>();
+  auto options = std::make_shared<tableau::load::Options>();
   options->ignore_unknown_fields = true;
-  options->patch_dirs = {"../../testdata/patchconf/"};
-  auto mopts = std::make_shared<tableau::MessagerOptions>();
-  mopts->path = "../../testdata/conf/ItemConf.json";
+  options->patch_dirs = {kTestdataDir + "/patchconf/"};
+  auto mopts = std::make_shared<tableau::load::MessagerOptions>();
+  mopts->path = kTestdataDir + "/conf/ItemConf.json";
   options->messager_options["ItemConf"] = mopts;
 
-  bool ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  bool ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
-    std::cout << "protobuf hub load failed: " << tableau::GetErrMsg() << std::endl;
+    ATOM_ERROR("protobuf hub load failed: %s", tableau::GetErrMsg().c_str());
     return 1;
   }
   auto msger_map = Hub::Instance().GetMessagerMap();
@@ -148,19 +150,19 @@ int main() {
 
   auto item_mgr = Hub::Instance().Get<protoconf::ItemConfMgr>();
   if (!item_mgr) {
-    std::cout << "protobuf hub get Item failed!" << std::endl;
+    ATOM_ERROR("protobuf hub get Item failed!");
     return 1;
   }
   // std::cout << "item1: " << item_mgr->Data().DebugString() << std::endl;
 
-  std::cout << "-----Index: multi-column index test" << std::endl;
+  ATOM_DEBUG("-----Index: multi-column index test");
   tableau::ItemConf::Index_AwardItemKey key{1, "apple"};
   auto item = item_mgr->FindFirstAwardItem(key);
   if (!item) {
-    std::cout << "ItemConf FindFirstAwardItem failed!" << std::endl;
+    ATOM_ERROR("ItemConf FindFirstAwardItem failed!");
     return 1;
   }
-  std::cout << "item: " << item->ShortDebugString() << std::endl;
+  ATOM_DEBUG("item: %s", item->ShortDebugString().c_str());
 
   //   auto activity_conf = Hub::Instance().Get<tableau::ActivityConf>();
   //   if (!activity_conf) {
@@ -187,67 +189,67 @@ int main() {
       Hub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::Activity_Chapter_OrderedMap>(
           100001);
   if (!chapter_ordered_map) {
-    std::cout << "ActivityConf GetOrderedMap chapter failed!" << std::endl;
+    ATOM_ERROR("ActivityConf GetOrderedMap chapter failed!");
     return 1;
   }
 
   for (auto&& it : *chapter_ordered_map) {
-    std::cout << "---" << it.first << "-----section_ordered_map" << std::endl;
+    ATOM_DEBUG("---%d-----section_ordered_map", it.first);
     for (auto&& kv : it.second.first) {
-      std::cout << kv.first << std::endl;
+      ATOM_DEBUG("%d", kv.first);
     }
 
-    std::cout << "---" << it.first << " -----section_map" << std::endl;
+    ATOM_DEBUG("---%d-----section_map", it.first);
     for (auto&& kv : it.second.second->section_map()) {
-      std::cout << kv.first << std::endl;
+      ATOM_DEBUG("%d", kv.first);
     }
 
-    std::cout << "chapter_id: " << it.second.second->chapter_id() << std::endl;
-    std::cout << "chapter_name: " << it.second.second->chapter_name() << std::endl;
-    std::cout << "award_id:" << it.second.second->award_id() << std::endl;
+    ATOM_DEBUG("chapter_id: %d", it.second.second->chapter_id());
+    ATOM_DEBUG("chapter_name: %s", it.second.second->chapter_name().c_str());
+    ATOM_DEBUG("award_id: %d", it.second.second->award_id());
   }
 
   const auto* rank_ordered_map =
       Hub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::int32_OrderedMap>(100001, 1, 2);
   if (!rank_ordered_map) {
-    std::cout << "ActivityConf GetOrderedMap rank failed!" << std::endl;
+    ATOM_ERROR("ActivityConf GetOrderedMap rank failed!");
     return 1;
   }
-  std::cout << "-----rank_ordered_map" << std::endl;
+  ATOM_DEBUG("-----rank_ordered_map");
   for (auto&& it : *rank_ordered_map) {
-    std::cout << it.first << std::endl;
+    ATOM_DEBUG("%d", it.first);
   }
 
   auto activity_conf = Hub::Instance().Get<tableau::ActivityConf>();
   if (!activity_conf) {
-    std::cout << "protobuf hub get ActivityConf failed!" << std::endl;
+    ATOM_ERROR("protobuf hub get ActivityConf failed!");
     return 1;
   }
 
-  std::cout << "-----Index accessers test" << std::endl;
+  ATOM_DEBUG("-----Index accessers test");
   auto index_chapters = activity_conf->FindChapter(1);
   if (!index_chapters) {
-    std::cout << "ActivityConf FindChapter failed!" << std::endl;
+    ATOM_ERROR("ActivityConf FindChapter failed!");
     return 1;
   }
-  std::cout << "-----FindChapter" << std::endl;
+  ATOM_DEBUG("-----FindChapter");
   for (auto&& chapter : *index_chapters) {
-    std::cout << chapter->ShortDebugString() << std::endl;
+    ATOM_DEBUG("%s", chapter->ShortDebugString().c_str());
   }
 
   auto index_first_chapter = activity_conf->FindFirstChapter(1);
   if (!index_first_chapter) {
-    std::cout << "ActivityConf FindFirstChapter failed!" << std::endl;
+    ATOM_ERROR("ActivityConf FindFirstChapter failed!");
     return 1;
   }
 
-  std::cout << "-----FindFirstChapter" << std::endl;
-  std::cout << index_first_chapter->ShortDebugString() << std::endl;
+  ATOM_DEBUG("-----FindFirstChapter");
+  ATOM_DEBUG("%s", index_first_chapter->ShortDebugString().c_str());
 
-  std::cout << "specialItemName: " << Hub::Instance().Get<CustomItemConf>()->GetSpecialItemName() << std::endl;
+  ATOM_DEBUG("specialItemName: %s", Hub::Instance().Get<CustomItemConf>()->GetSpecialItemName().c_str());
 
   if (!TestPatch()) {
-    std::cerr << "TestPatch failed!" << std::endl;
+    ATOM_ERROR("TestPatch failed!");
     return 1;
   }
   return 0;

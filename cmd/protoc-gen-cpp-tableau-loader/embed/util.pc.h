@@ -3,10 +3,7 @@
 
 #include <chrono>
 #include <filesystem>
-#include <functional>
 #include <string>
-
-#include "tableau/protobuf/tableau.pb.h"
 
 namespace tableau {
 const std::string& GetErrMsg();
@@ -57,10 +54,8 @@ Format GetFormat(const std::filesystem::path& path);
 // and the error message can be obtained by GetErrMsg().
 const std::string& Format2Ext(Format fmt);
 
-bool JSON2Message(const std::string& json, google::protobuf::Message& msg,
-                  std::shared_ptr<const MessagerOptions> options = nullptr);
-bool Text2Message(const std::string& text, google::protobuf::Message& msg);
-bool Bin2Message(const std::string& bin, google::protobuf::Message& msg);
+// PatchMessage patches src into dst, which must be a message with the same descriptor.
+bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Message& src);
 
 void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& msg);
 

@@ -17,10 +17,13 @@ git submodule update --init --recursive
 cd third_party/_submodules/protobuf
 git checkout v3.19.3
 git submodule update --init --recursive
-./autogen.sh
+
 # Build and install the C++ Protocol Buffer runtime and the Protocol Buffer compiler (protoc)
-./configure
-make -j"$(nproc)"
-make check -j"$(nproc)"
-# sudo make install
-# sudo ldconfig # refresh shared library cache.
+# Refer: https://github.com/protocolbuffers/protobuf/blob/3.19.x/cmake/README.md#cmake-configuration
+cd cmake
+# use Debug version
+cmake -S . -B build \
+    -DCMAKE_BUILD_TYPE=Debug
+
+# Compile the code
+cmake --build build --parallel 10

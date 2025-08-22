@@ -5,19 +5,17 @@
 
 #include "logger.pc.h"
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
 #ifdef _WIN32
-#include <direct.h>
 #include <windows.h>
 #else
 #include <sys/syscall.h>
-#include <sys/time.h>
 #include <unistd.h>
 #endif
 
+#include <cstdarg>
 #include <filesystem>
+#include <iomanip>
+#include <system_error>
 #include <thread>
 #include <unordered_map>
 
@@ -90,7 +88,7 @@ void Logger::Log(const SourceLocation& loc, Level level, const char* format, ...
 
 void DefaultWrite(std::ostream* os, const SourceLocation& loc, const LevelInfo& lvl, const std::string& content) {
   // clang-format off
-  *os << NowStr() << "|"
+  *os << Now() << "|"
     // << std::this_thread::get_id() << "|"
     << gettid() << "|"
     << lvl.name << "|" 
@@ -101,30 +99,12 @@ void DefaultWrite(std::ostream* os, const SourceLocation& loc, const LevelInfo& 
   // clang-format on
 }
 
-const char* NowStr() {
-  static char fmt[64], buf[64];
-  struct tm tm;
-
-#ifdef _WIN32
-  SYSTEMTIME wtm;
-  GetLocalTime(&wtm);
-  tm.tm_year = wtm.wYear - 1900;
-  tm.tm_mon = wtm.wMonth - 1;
-  tm.tm_mday = wtm.wDay;
-  tm.tm_hour = wtm.wHour;
-  tm.tm_min = wtm.wMinute;
-  tm.tm_sec = wtm.wSecond;
-  unsigned int usec = wtm.wMilliseconds * 1000;
-#else
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  localtime_r(&tv.tv_sec, &tm);
-  unsigned int usec = tv.tv_usec;
-#endif
-
-  strftime(fmt, sizeof fmt, "%Y-%m-%d %H:%M:%S.%%06u", &tm);
-  snprintf(buf, sizeof buf, fmt, usec);
-  return buf;
+std::ostream& operator<<(std::ostream& os, const Now&) {
+  auto now = std::chrono::system_clock::now();
+  auto now_time_t = std::chrono::system_clock::to_time_t(now);
+  auto now_us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()) % 1000000;
+  return os << std::put_time(std::localtime(&now_time_t), "%F %T") << "." << std::setw(6) << std::setfill('0')
+            << now_us.count();
 }
 
 }  // namespace log
