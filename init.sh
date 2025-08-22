@@ -27,4 +27,4 @@ cmake -S . -B build \
  -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
 
 # Compile the code
-cmake --build build
+cmake --build build --parallel 10

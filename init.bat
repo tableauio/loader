@@ -18,9 +18,9 @@ REM use Debug version
 cmake -S . -B build ^
  -G "NMake Makefiles" ^
  -DCMAKE_BUILD_TYPE=Debug ^
- -DCMAKE_POLICY_VERSION_MINIMUM="3.5" ^
+ -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
 
 REM Compile the code
-cmake --build build
+cmake --build build --parallel 10
 
 endlocal
