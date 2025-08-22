@@ -16,9 +16,9 @@ REM Refer: https://github.com/protocolbuffers/protobuf/blob/3.19.x/cmake/README.
 cd cmake
 REM use Debug version
 cmake -S . -B build ^
- -G "NMake Makefiles" ^
- -DCMAKE_BUILD_TYPE=Debug ^
- -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
+-G "NMake Makefiles" ^
+-DCMAKE_BUILD_TYPE=Debug ^
+-DCMAKE_POLICY_VERSION_MINIMUM="3.5"
 
 REM Compile the code
 cmake --build build --parallel 10

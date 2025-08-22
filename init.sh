@@ -23,8 +23,7 @@ git submodule update --init --recursive
 cd cmake
 # use Debug version
 cmake -S . -B build \
- -DCMAKE_BUILD_TYPE=Debug \
- -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
+    -DCMAKE_BUILD_TYPE=Debug
 
 # Compile the code
 cmake --build build --parallel 10
