@@ -18,7 +18,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 - Change dir: `cd test/cpp-tableau-loader`
 - Generate protoconf: `bash ./gen.sh`
 - Create build dir: `mkdir build && cd build`
-- Run cmake: 
+- Run cmake:
   - C++17: `cmake ../src/`
   - C++20: `cmake ../src/ -DCMAKE_CXX_STANDARD=20`
   - clang: `cmake ../src/ -DCMAKE_CXX_COMPILER=clang++`
@@ -30,11 +30,10 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 - Change dir: `cd test\cpp-tableau-loader`
 - Generate protoconf: `.\gen.bat`
 - Create build dir: `mkdir build 2>nul` and `cd build`
-- Run cmake: 
-  - C++17: `cmake ..\src\`
-  - C++20: `cmake ..\src\ -DCMAKE_CXX_STANDARD=20`
-  - clang: `cmake ..\src\ -DCMAKE_CXX_COMPILER=clang++`
-- Build: `cmake --build .`, then the **bin** dir will be generated at `test\cpp-tableau-loader\bin\Debug`.
+- Run cmake:
+  - C++17: `cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Debug ..\src\`
+  - C++20: `cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Debug ..\src\ -DCMAKE_CXX_STANDARD=20`
+- Build: `nmake`, then the **bin** dir will be generated at `test\cpp-tableau-loader\bin`.
 
 ### References
 
