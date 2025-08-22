@@ -5,7 +5,7 @@ setlocal enabledelayedexpansion
 for /f "delims=" %%i in ('git rev-parse --show-toplevel') do set repoRoot=%%i
 cd /d "%repoRoot%"
 
-set "PROTOC=%repoRoot%\third_party\_submodules\protobuf\cmake\build\debug\protoc.exe"
+set "PROTOC=%repoRoot%\third_party\_submodules\protobuf\cmake\build\protoc.exe"
 set "PROTOBUF_PROTO=%repoRoot%\third_party\_submodules\protobuf\src"
 set "TABLEAU_PROTO=%repoRoot%\third_party\_submodules\tableau\proto"
 set "ROOTDIR=%repoRoot%\test\cpp-tableau-loader"

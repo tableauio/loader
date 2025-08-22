@@ -45,7 +45,7 @@ SET(COMMON_INCLUDE_DIR
 # common lib
 if(MSVC)
     SET(COMMON_LIB
-        ${PROTOBUF_ROOT_DIR}/cmake/build/debug/libprotobufd.lib
+        ${PROTOBUF_ROOT_DIR}/cmake/build/libprotobufd.lib
         )
     SET(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
 else()
