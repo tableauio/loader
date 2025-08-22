@@ -69,8 +69,8 @@ class Logger {
   Writer writer_;
 };
 
-class NowStr {};
-std::ostream& operator<<(std::ostream&, const NowStr&);
+class Now {};
+std::ostream& operator<<(std::ostream&, const Now&);
 
 Logger* DefaultLogger();
 void SetDefaultLogger(Logger* logger);

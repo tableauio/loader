@@ -5,7 +5,7 @@
 
 void LogWrite(std::ostream* os, const tableau::log::SourceLocation& loc, const tableau::log::LevelInfo& lvl,
               const std::string& content) {
-  *os << tableau::log::NowStr() << " " << lvl.name << " [" << loc.filename << ":" << loc.line << "][" << loc.funcname
+  *os << tableau::log::Now() << " " << lvl.name << " [" << loc.filename << ":" << loc.line << "][" << loc.funcname
       << "]" << content << std::endl
       << std::flush;
 }

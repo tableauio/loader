@@ -88,7 +88,7 @@ void Logger::Log(const SourceLocation& loc, Level level, const char* format, ...
 
 void DefaultWrite(std::ostream* os, const SourceLocation& loc, const LevelInfo& lvl, const std::string& content) {
   // clang-format off
-  *os << NowStr() << "|"
+  *os << Now() << "|"
     // << std::this_thread::get_id() << "|"
     << gettid() << "|"
     << lvl.name << "|" 
@@ -99,7 +99,7 @@ void DefaultWrite(std::ostream* os, const SourceLocation& loc, const LevelInfo& 
   // clang-format on
 }
 
-std::ostream& operator<<(std::ostream& os, const NowStr&) {
+std::ostream& operator<<(std::ostream& os, const Now&) {
   auto now = std::chrono::system_clock::now();
   auto now_time_t = std::chrono::system_clock::to_time_t(now);
   auto now_us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()) % 1000000;
