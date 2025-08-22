@@ -98,7 +98,7 @@ std::ostream& operator<<(std::ostream& os, const Now&) {
   auto now = std::chrono::system_clock::now();
   auto now_time_t = std::chrono::system_clock::to_time_t(now);
   auto now_us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()) % 1000000;
-  return os << std::put_time(std::localtime(&now_time_t), "%F %T") << "." << std::setw(6) << std::setfill('0')
+  return os << std::put_time(std::localtime_s(&now_time_t), "%F %T") << "." << std::setw(6) << std::setfill('0')
             << now_us.count();
 }
 
