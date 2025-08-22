@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.22)
 
 # set the project name
 project(loader)
-file(GLOB_RECURSE PROTO_SOURCE *.cc)
-file(GLOB_RECURSE SOURCE *.cpp)
+file(GLOB_RECURSE PROTO_SOURCE ${PROJECT_SOURCE_DIR}/src/*.cc)
+file(GLOB_RECURSE SOURCE ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 # check C++ standard requirement
 set(MIN_CXX_STANDARD 17)
@@ -25,13 +25,14 @@ endif()
 
 # root dir define
 SET(CMAKE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-SET(THRID_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party)
+SET(THRID_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../third_party)
 
 # google protobuf
 SET(PROTOBUF_ROOT_DIR ${THRID_PARTY_DIR}/_submodules/protobuf/)
-SET(PROTOBUF_DIR ${PROTOBUF_ROOT_DIR}/src/)
-# SET(PROTOBUF_INCLUDE ${PROTOBUF_DIR}/google/protobuf)
-SET(PROTOBUF_LIB ${PROTOBUF_DIR}/.libs/)
+SET(PROTOBUF_SRC_DIR ${PROTOBUF_ROOT_DIR}/src/)
+SET(PROTOBUF_BUILD_DIR ${PROTOBUF_ROOT_DIR}/cmake/build/)
+# loader
+SET(LOADER_SRC_DIR ${PROJECT_SOURCE_DIR}/src/)
 
 # protoconf
 SET(PROTOCONF_DIR ${TOOLS_DIR}/protoconf)
@@ -39,27 +40,28 @@ SET(PROTOCONF_TOOL ${PROTOCONF_DIR}/protoconf)
 
 # common include
 SET(COMMON_INCLUDE_DIR
-    ${PROTOBUF_DIR}
+    ${PROTOBUF_SRC_DIR}
+    ${LOADER_SRC_DIR}
     )
 
 # common lib
 if(MSVC)
     SET(COMMON_LIB
-        ${PROTOBUF_ROOT_DIR}/cmake/build/libprotobufd.lib
+        ${PROTOBUF_BUILD_DIR}/libprotobufd.lib
         )
     SET(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
 else()
     SET(COMMON_LIB
-        ${PROTOBUF_LIB}/libprotobuf.a
+        ${PROTOBUF_BUILD_DIR}/libprotobufd.a
         pthread
         stdc++fs
         )
 endif()
 
 # include
-include_directories(${PROJECT_SOURCE_DIR} ${COMMON_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/protoconf)
+include_directories(${COMMON_INCLUDE_DIR} ${LOADER_SRC_DIR}/protoconf)
 
 # add the executable
 add_executable(${PROJECT_NAME} ${PROTO_SOURCE} ${SOURCE})
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../bin)
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 target_link_libraries(${PROJECT_NAME} ${COMMON_LIB})

@@ -17,7 +17,7 @@ REM remove old generated files
 rmdir /s /q "%PROTOCONF_OUT%" 2>nul
 mkdir "%PROTOCONF_OUT%"
 
-REM build
+REM build protoc plugin of loader
 pushd "%PLGUIN_DIR%"
 go build
 popd

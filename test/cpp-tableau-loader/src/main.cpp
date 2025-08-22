@@ -13,8 +13,10 @@
 #include "protoconf/patch_conf.pc.h"
 #include "protoconf/test_conf.pc.h"
 
+const std::string kTestdataDir = "../testdata";
+
 bool LoadWithPatch(std::shared_ptr<const tableau::load::Options> options) {
-  return Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  return Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
 }
 
 bool CustomReadFile(const std::filesystem::path& filename, std::string& content) {
@@ -33,8 +35,8 @@ bool TestPatch() {
 
   // patchconf
   ATOM_DEBUG("-----TestPatch patchconf");
-  options->patch_dirs = {"../../testdata/patchconf/"};
-  bool ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  options->patch_dirs = {kTestdataDir + "/patchconf/"};
+  bool ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     ATOM_ERROR("failed to load with patchconf");
     return false;
@@ -48,7 +50,7 @@ bool TestPatch() {
   }
   ATOM_DEBUG("RecursivePatchConf: %s", mgr->Data().ShortDebugString().c_str());
   tableau::RecursivePatchConf result;
-  ok = result.Load("../../testdata/patchresult/", tableau::Format::kJSON);
+  ok = result.Load(kTestdataDir + "/patchresult/", tableau::Format::kJSON);
   if (!ok) {
     ATOM_ERROR("failed to load with patch result");
     return false;
@@ -61,8 +63,8 @@ bool TestPatch() {
 
   // patchconf2
   ATOM_DEBUG("-----TestPatch patchconf2");
-  options->patch_dirs = {"../../testdata/patchconf2/"};
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  options->patch_dirs = {kTestdataDir + "/patchconf2/"};
+  ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     ATOM_ERROR("failed to load with patchconf2");
     return false;
@@ -70,11 +72,11 @@ bool TestPatch() {
 
   // patchconf2 different format
   ATOM_DEBUG("-----TestPatch patchconf2 different format");
-  options->patch_dirs = {"../../testdata/patchconf2/"};
+  options->patch_dirs = {kTestdataDir + "/patchconf2/"};
   auto mopts = std::make_shared<tableau::load::MessagerOptions>();
-  mopts->patch_paths = {"../../testdata/patchconf2/PatchMergeConf.txt"};
+  mopts->patch_paths = {kTestdataDir + "/patchconf2/PatchMergeConf.txt"};
   options->messager_options["PatchMergeConf"] = mopts;
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     ATOM_ERROR("failed to load with patchconf2");
     return false;
@@ -83,10 +85,10 @@ bool TestPatch() {
   // multiple patch files
   ATOM_DEBUG("-----TestPatch multiple patch files");
   mopts = std::make_shared<tableau::load::MessagerOptions>();
-  mopts->patch_paths = {"../../testdata/patchconf/PatchMergeConf.json",
-                        "../../testdata/patchconf2/PatchMergeConf.json"};
+  mopts->patch_paths = {kTestdataDir + "/patchconf/PatchMergeConf.json",
+                        kTestdataDir + "/patchconf2/PatchMergeConf.json"};
   options->messager_options["PatchMergeConf"] = mopts;
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     ATOM_ERROR("failed to load with multiple patch files");
     return false;
@@ -95,11 +97,11 @@ bool TestPatch() {
   // mode only main
   ATOM_DEBUG("-----TestPatch ModeOnlyMain");
   mopts = std::make_shared<tableau::load::MessagerOptions>();
-  mopts->patch_paths = {"../../testdata/patchconf/PatchMergeConf.json",
-                        "../../testdata/patchconf2/PatchMergeConf.json"};
+  mopts->patch_paths = {kTestdataDir + "/patchconf/PatchMergeConf.json",
+                        kTestdataDir + "/patchconf2/PatchMergeConf.json"};
   options->messager_options["PatchMergeConf"] = mopts;
   options->mode = tableau::load::LoadMode::kOnlyMain;
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     ATOM_ERROR("failed to load with mode only main");
     return false;
@@ -114,11 +116,11 @@ bool TestPatch() {
   // mode only patch
   ATOM_DEBUG("-----TestPatch ModeOnlyPatch");
   mopts = std::make_shared<tableau::load::MessagerOptions>();
-  mopts->patch_paths = {"../../testdata/patchconf/PatchMergeConf.json",
-                        "../../testdata/patchconf2/PatchMergeConf.json"};
+  mopts->patch_paths = {kTestdataDir + "/patchconf/PatchMergeConf.json",
+                        kTestdataDir + "/patchconf2/PatchMergeConf.json"};
   options->messager_options["PatchMergeConf"] = mopts;
   options->mode = tableau::load::LoadMode::kOnlyPatch;
-  ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     ATOM_ERROR("failed to load with mode only patch");
     return false;
@@ -130,12 +132,12 @@ int main() {
   Hub::Instance().InitOnce();
   auto options = std::make_shared<tableau::load::Options>();
   options->ignore_unknown_fields = true;
-  options->patch_dirs = {"../../testdata/patchconf/"};
+  options->patch_dirs = {kTestdataDir + "/patchconf/"};
   auto mopts = std::make_shared<tableau::load::MessagerOptions>();
-  mopts->path = "../../testdata/conf/ItemConf.json";
+  mopts->path = kTestdataDir + "/conf/ItemConf.json";
   options->messager_options["ItemConf"] = mopts;
 
-  bool ok = Hub::Instance().Load("../../testdata/conf/", tableau::Format::kJSON, options);
+  bool ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
     ATOM_ERROR("protobuf hub load failed: %s", tableau::GetErrMsg().c_str());
     return 1;
