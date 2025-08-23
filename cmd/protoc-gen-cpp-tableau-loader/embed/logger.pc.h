@@ -64,7 +64,10 @@ class Logger {
   Writer writer_;
 };
 
-class Now {};
+class Now {
+ public:
+  std::tm* LocalTime(std::time_t time, std::tm* tm) const;
+};
 std::ostream& operator<<(std::ostream&, const Now&);
 
 Logger* DefaultLogger();
