@@ -152,10 +152,33 @@ func genOrderedIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, des
 			g.P("// OrderedIndex: ", index.Index)
 			g.P()
 
-			g.P("// Find", index.Name(), "OrderedMap returns the index(", index.Index, ") to value(", helper.FindMessageGoIdent(gen, index.MD), ") treemap.")
+			g.P("// Search", index.Name(), "Map returns the index(", index.Index, ") to value(", helper.FindMessageGoIdent(gen, index.MD), ") treemap.")
 			g.P("// One key may correspond to multiple values, which are contained by a slice.")
-			g.P("func (x *", messagerName, ") Find", index.Name(), "OrderedMap() *", mapType, " {")
+			g.P("func (x *", messagerName, ") Search", index.Name(), "Map() *", mapType, " {")
 			g.P("return x.", indexContainerName)
+			g.P("}")
+			g.P()
+
+			// single-column index
+			field := index.ColFields[0] // just take first field
+			keyType := helper.ParseOrderedMapKeyType(field.FD)
+			keyName := helper.ParseIndexFieldNameAsFuncParam(gen, field.FD)
+
+			g.P("// Search", index.Name(), " returns a slice of all values of the given key.")
+			g.P("func (x *", messagerName, ") Search", index.Name(), "(", keyName, " ", keyType, ") []*", helper.FindMessageGoIdent(gen, index.MD), " {")
+			g.P("val, _ := x.", indexContainerName, ".Get(", keyName, ")")
+			g.P("return val")
+			g.P("}")
+			g.P()
+
+			g.P("// SearchFirst", index.Name(), " returns the first value of the given key,")
+			g.P("// or nil if the key correspond to no value.")
+			g.P("func (x *", messagerName, ") SearchFirst", index.Name(), "(", keyName, " ", keyType, ") *", helper.FindMessageGoIdent(gen, index.MD), " {")
+			g.P("val := x.Search", index.Name(), "(", keyName, ")")
+			g.P("if len(val) > 0 {")
+			g.P("return val[0]")
+			g.P("}")
+			g.P("return nil")
 			g.P("}")
 			g.P()
 		}

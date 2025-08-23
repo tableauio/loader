@@ -22,7 +22,9 @@ func genHppOrderedIndexFinders(g *protogen.GeneratedFile, descriptor *index.Inde
 			g.P(helper.Indent(1), "using ", vectorType, " = std::vector<const ", helper.ParseCppClassType(index.MD), "*>;")
 			keyType := helper.ParseOrderedMapKeyType(field.FD)
 			g.P(helper.Indent(1), "using ", mapType, " = std::map<", keyType, ", ", vectorType, ">;")
-			g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "Map() const;")
+			g.P(helper.Indent(1), "const ", mapType, "& Search", index.Name(), "() const;")
+			g.P(helper.Indent(1), "const ", vectorType, "* Search", index.Name(), "(", helper.ToConstRefType(keyType), " ", helper.ParseIndexFieldNameAsFuncParam(field.FD), ") const;")
+			g.P(helper.Indent(1), "const ", helper.ParseCppClassType(index.MD), "* SearchFirst", index.Name(), "(", helper.ToConstRefType(keyType), " ", helper.ParseIndexFieldNameAsFuncParam(field.FD), ") const;")
 			g.P()
 
 			g.P(" private:")
@@ -149,11 +151,35 @@ func genOrderedIndexSorter(g *protogen.GeneratedFile, descriptor *index.IndexDes
 func genCppOrderedIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, messagerName string) {
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.OrderedIndexes {
+			vectorType := "OrderedIndex_" + index.Name() + "Vector"
 			mapType := "OrderedIndex_" + index.Name() + "Map"
 			indexContainerName := "ordered_index_" + strcase.ToSnake(index.Name()) + "_map_"
 
 			g.P("// OrderedIndex: ", index.Index)
-			g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Find", index.Name(), "Map() const { return ", indexContainerName, " ;}")
+			g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Search", index.Name(), "() const { return ", indexContainerName, " ;}")
+			g.P()
+
+			// single-column index
+			field := index.ColFields[0] // just take first field
+			keyType := helper.ParseOrderedMapKeyType(field.FD)
+			keyName := helper.ParseIndexFieldNameAsFuncParam(field.FD)
+
+			g.P("const ", messagerName, "::", vectorType, "* ", messagerName, "::Search", index.Name(), "(", helper.ToConstRefType(keyType), " ", keyName, ") const {")
+			g.P(helper.Indent(1), "auto iter = ", indexContainerName, ".find(", keyName, ");")
+			g.P(helper.Indent(1), "if (iter == ", indexContainerName, ".end()) {")
+			g.P(helper.Indent(2), "return nullptr;")
+			g.P(helper.Indent(1), "}")
+			g.P(helper.Indent(1), "return &iter->second;")
+			g.P("}")
+			g.P()
+
+			g.P("const ", helper.ParseCppClassType(index.MD), "* ", messagerName, "::SearchFirst", index.Name(), "(", helper.ToConstRefType(keyType), " ", keyName, ") const {")
+			g.P(helper.Indent(1), "auto conf = Search", index.Name(), "(", keyName, ");")
+			g.P(helper.Indent(1), "if (conf == nullptr || conf->empty()) {")
+			g.P(helper.Indent(2), "return nullptr;")
+			g.P(helper.Indent(1), "}")
+			g.P(helper.Indent(1), "return conf->front();")
+			g.P("}")
 			g.P()
 		}
 	}

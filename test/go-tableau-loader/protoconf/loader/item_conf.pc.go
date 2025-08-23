@@ -68,7 +68,7 @@ type ItemConf_Index_UseEffectTypeMap = map[protoconf.UseEffect_Type][]*protoconf
 //
 //  1. Easy use: simple yet powerful accessers.
 //  2. Elegant API: concise and clean functions.
-//  3. Extensibility: Map, OrdererdMap, Index...
+//  3. Extensibility: Map, OrdererdMap, Index, OrderedIndex...
 type ItemConf struct {
 	UnimplementedMessager
 	data, originalData       *protoconf.ItemConf

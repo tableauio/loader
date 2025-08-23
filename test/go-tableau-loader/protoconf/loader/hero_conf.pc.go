@@ -29,7 +29,7 @@ type HeroConf_Index_AttrMap = map[string][]*protoconf.HeroConf_Hero_Attr
 //
 //  1. Easy use: simple yet powerful accessers.
 //  2. Elegant API: concise and clean functions.
-//  3. Extensibility: Map, OrdererdMap, Index...
+//  3. Extensibility: Map, OrdererdMap, Index, OrderedIndex...
 type HeroConf struct {
 	UnimplementedMessager
 	data, originalData *protoconf.HeroConf
@@ -170,7 +170,7 @@ type ProtoconfHeroBaseConfHeroMap_OrderedMap = treemap.TreeMap[string, *Protocon
 //
 //  1. Easy use: simple yet powerful accessers.
 //  2. Elegant API: concise and clean functions.
-//  3. Extensibility: Map, OrdererdMap, Index...
+//  3. Extensibility: Map, OrdererdMap, Index, OrderedIndex...
 type HeroBaseConf struct {
 	UnimplementedMessager
 	data, originalData *protoconf.HeroBaseConf

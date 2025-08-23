@@ -92,7 +92,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("//")
 	g.P("//  1. Easy use: simple yet powerful accessers.")
 	g.P("//  2. Elegant API: concise and clean functions.")
-	g.P("//  3. Extensibility: Map, OrdererdMap, Index...")
+	g.P("//  3. Extensibility: Map, OrdererdMap, Index, OrderedIndex...")
 	// messager definition
 	g.P("type ", messagerName, " struct {")
 	g.P("UnimplementedMessager")

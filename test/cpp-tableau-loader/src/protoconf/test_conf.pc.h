@@ -165,7 +165,9 @@ class TaskConf : public Messager {
  public:
   using OrderedIndex_TaskVector = std::vector<const protoconf::TaskConf::Task*>;
   using OrderedIndex_TaskMap = std::map<int64_t, OrderedIndex_TaskVector>;
-  const OrderedIndex_TaskMap& FindTaskMap() const;
+  const OrderedIndex_TaskMap& SearchTask() const;
+  const OrderedIndex_TaskVector* SearchTask(int64_t goal) const;
+  const protoconf::TaskConf::Task* SearchFirstTask(int64_t goal) const;
 
  private:
   OrderedIndex_TaskMap ordered_index_task_map_;
@@ -174,10 +176,23 @@ class TaskConf : public Messager {
  public:
   using OrderedIndex_TaskExpiryVector = std::vector<const protoconf::TaskConf::Task*>;
   using OrderedIndex_TaskExpiryMap = std::map<int64_t, OrderedIndex_TaskExpiryVector>;
-  const OrderedIndex_TaskExpiryMap& FindTaskExpiryMap() const;
+  const OrderedIndex_TaskExpiryMap& SearchTaskExpiry() const;
+  const OrderedIndex_TaskExpiryVector* SearchTaskExpiry(int64_t expiry) const;
+  const protoconf::TaskConf::Task* SearchFirstTaskExpiry(int64_t expiry) const;
 
  private:
   OrderedIndex_TaskExpiryMap ordered_index_task_expiry_map_;
+
+  // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
+ public:
+  using OrderedIndex_SortedTaskExpiryVector = std::vector<const protoconf::TaskConf::Task*>;
+  using OrderedIndex_SortedTaskExpiryMap = std::map<int64_t, OrderedIndex_SortedTaskExpiryVector>;
+  const OrderedIndex_SortedTaskExpiryMap& SearchSortedTaskExpiry() const;
+  const OrderedIndex_SortedTaskExpiryVector* SearchSortedTaskExpiry(int64_t expiry) const;
+  const protoconf::TaskConf::Task* SearchFirstSortedTaskExpiry(int64_t expiry) const;
+
+ private:
+  OrderedIndex_SortedTaskExpiryMap ordered_index_sorted_task_expiry_map_;
 
 };
 

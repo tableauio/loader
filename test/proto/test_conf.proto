@@ -102,6 +102,7 @@ message TaskConf {
     index: "ActivityID<Goal,ID>"
     ordered_index: "Goal<ID>"
     ordered_index: "Expiry@TaskExpiry"
+    ordered_index: "Expiry<Goal,ID>@SortedTaskExpiry"
   };
 
   map<int64, Task> task_map = 1 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];

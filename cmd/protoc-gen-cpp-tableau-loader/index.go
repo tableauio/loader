@@ -266,10 +266,10 @@ func genCppIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescri
 
 			g.P("const ", helper.ParseCppClassType(index.MD), "* ", messagerName, "::FindFirst", index.Name(), "(", helper.ToConstRefType(keyType), " ", keyName, ") const {")
 			g.P(helper.Indent(1), "auto conf = Find", index.Name(), "(", keyName, ");")
-			g.P(helper.Indent(1), "if (conf == nullptr || conf->size() == 0) {")
+			g.P(helper.Indent(1), "if (conf == nullptr || conf->empty()) {")
 			g.P(helper.Indent(2), "return nullptr;")
 			g.P(helper.Indent(1), "}")
-			g.P(helper.Indent(1), "return (*conf)[0];")
+			g.P(helper.Indent(1), "return conf->front();")
 			g.P("}")
 			g.P()
 		}
