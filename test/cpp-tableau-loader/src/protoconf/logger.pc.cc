@@ -110,12 +110,18 @@ std::tm* Now::LocalTime(std::time_t time, std::tm* tm) const {
 
 std::ostream& operator<<(std::ostream& os, const Now& n) {
   using namespace std::chrono;
+  auto now = system_clock::now();
+#if __cplusplus >= 202002L
+  auto zt = zoned_time(std::chrono::current_zone(), floor<microseconds>(now));
+  return os << std::format("{:%F %T}", zt);
+#else
   static thread_local std::tm tm;
-  auto duration = system_clock::now().time_since_epoch();
+  auto duration = now.time_since_epoch();
   auto secs = duration_cast<seconds>(duration);
   auto micros = duration_cast<microseconds>(duration - secs);
   return os << std::put_time(n.LocalTime(static_cast<std::time_t>(secs.count()), &tm), "%F %T") << "." << std::setw(6)
             << std::setfill('0') << micros.count();
+#endif
 }
 
 }  // namespace log
