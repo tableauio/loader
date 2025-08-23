@@ -107,7 +107,7 @@ std::ostream& operator<<(std::ostream& os, const Now& n) {
   using namespace std::chrono;
   auto now = system_clock::now();
 #if __cplusplus >= 202002L
-  auto zt = zoned_time(std::chrono::current_zone(), floor<microseconds>(now));
+  auto zt = zoned_time(current_zone(), floor<microseconds>(now));
   return os << std::format("{:%F %T}", zt);
 #else
   static thread_local std::tm tm;
