@@ -99,16 +99,7 @@ void DefaultWrite(std::ostream* os, const SourceLocation& loc, const LevelInfo& 
   // clang-format on
 }
 
-std::tm* Now::LocalTime(std::time_t time, std::tm* tm) const {
-#ifdef _WIN32
-  localtime_s(tm, &time);
-#else
-  localtime_r(&time, tm);
-#endif
-  return tm;
-}
-
-std::ostream& operator<<(std::ostream& os, const Now& n) {
+std::ostream& operator<<(std::ostream& os, const Now&) {
   using namespace std::chrono;
   auto now = system_clock::now();
 #if __cplusplus >= 202002L
@@ -116,11 +107,16 @@ std::ostream& operator<<(std::ostream& os, const Now& n) {
   return os << std::format("{:%F %T}", zt);
 #else
   static thread_local std::tm tm;
+  auto now_t = system_clock::to_time_t(now);
+#ifdef _WIN32
+  localtime_s(&tm, &now_t);
+#else
+  localtime_r(&now_t, &tm);
+#endif
   auto duration = now.time_since_epoch();
   auto secs = duration_cast<seconds>(duration);
   auto micros = duration_cast<microseconds>(duration - secs);
-  return os << std::put_time(n.LocalTime(static_cast<std::time_t>(secs.count()), &tm), "%F %T") << "." << std::setw(6)
-            << std::setfill('0') << micros.count();
+  return os << std::put_time(&tm, "%F %T") << "." << std::setw(6) << std::setfill('0') << micros.count();
 #endif
 }
 
