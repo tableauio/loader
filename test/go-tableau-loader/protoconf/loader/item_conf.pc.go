@@ -259,19 +259,19 @@ func (x *ItemConf) GetOrderedMap() *ProtoconfItemConfItemMap_OrderedMap {
 
 // Index: Type
 
-// FindItemMap returns the index(Type) to value(protoconf.ItemConf_Item) map.
+// FindItemMap finds the index (Type) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ItemConf) FindItemMap() ItemConf_Index_ItemMap {
 	return x.indexItemMap
 }
 
-// FindItem returns a slice of all values of the given key.
+// FindItem finds a slice of all values of the given key.
 func (x *ItemConf) FindItem(type_ protoconf.FruitType) []*protoconf.ItemConf_Item {
 	return x.indexItemMap[type_]
 }
 
-// FindFirstItem returns the first value of the given key,
-// or nil if the key correspond to no value.
+// FindFirstItem finds the first value of the given key,
+// or nil if no value found.
 func (x *ItemConf) FindFirstItem(type_ protoconf.FruitType) *protoconf.ItemConf_Item {
 	val := x.indexItemMap[type_]
 	if len(val) > 0 {
@@ -282,19 +282,19 @@ func (x *ItemConf) FindFirstItem(type_ protoconf.FruitType) *protoconf.ItemConf_
 
 // Index: Param<ID>@ItemInfo
 
-// FindItemInfoMap returns the index(Param<ID>@ItemInfo) to value(protoconf.ItemConf_Item) map.
+// FindItemInfoMap finds the index (Param<ID>@ItemInfo) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ItemConf) FindItemInfoMap() ItemConf_Index_ItemInfoMap {
 	return x.indexItemInfoMap
 }
 
-// FindItemInfo returns a slice of all values of the given key.
+// FindItemInfo finds a slice of all values of the given key.
 func (x *ItemConf) FindItemInfo(param int32) []*protoconf.ItemConf_Item {
 	return x.indexItemInfoMap[param]
 }
 
-// FindFirstItemInfo returns the first value of the given key,
-// or nil if the key correspond to no value.
+// FindFirstItemInfo finds the first value of the given key,
+// or nil if no value found.
 func (x *ItemConf) FindFirstItemInfo(param int32) *protoconf.ItemConf_Item {
 	val := x.indexItemInfoMap[param]
 	if len(val) > 0 {
@@ -305,19 +305,19 @@ func (x *ItemConf) FindFirstItemInfo(param int32) *protoconf.ItemConf_Item {
 
 // Index: Default@ItemDefaultInfo
 
-// FindItemDefaultInfoMap returns the index(Default@ItemDefaultInfo) to value(protoconf.ItemConf_Item) map.
+// FindItemDefaultInfoMap finds the index (Default@ItemDefaultInfo) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ItemConf) FindItemDefaultInfoMap() ItemConf_Index_ItemDefaultInfoMap {
 	return x.indexItemDefaultInfoMap
 }
 
-// FindItemDefaultInfo returns a slice of all values of the given key.
+// FindItemDefaultInfo finds a slice of all values of the given key.
 func (x *ItemConf) FindItemDefaultInfo(default_ string) []*protoconf.ItemConf_Item {
 	return x.indexItemDefaultInfoMap[default_]
 }
 
-// FindFirstItemDefaultInfo returns the first value of the given key,
-// or nil if the key correspond to no value.
+// FindFirstItemDefaultInfo finds the first value of the given key,
+// or nil if no value found.
 func (x *ItemConf) FindFirstItemDefaultInfo(default_ string) *protoconf.ItemConf_Item {
 	val := x.indexItemDefaultInfoMap[default_]
 	if len(val) > 0 {
@@ -328,19 +328,19 @@ func (x *ItemConf) FindFirstItemDefaultInfo(default_ string) *protoconf.ItemConf
 
 // Index: ExtType@ItemExtInfo
 
-// FindItemExtInfoMap returns the index(ExtType@ItemExtInfo) to value(protoconf.ItemConf_Item) map.
+// FindItemExtInfoMap finds the index (ExtType@ItemExtInfo) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ItemConf) FindItemExtInfoMap() ItemConf_Index_ItemExtInfoMap {
 	return x.indexItemExtInfoMap
 }
 
-// FindItemExtInfo returns a slice of all values of the given key.
+// FindItemExtInfo finds a slice of all values of the given key.
 func (x *ItemConf) FindItemExtInfo(extType protoconf.FruitType) []*protoconf.ItemConf_Item {
 	return x.indexItemExtInfoMap[extType]
 }
 
-// FindFirstItemExtInfo returns the first value of the given key,
-// or nil if the key correspond to no value.
+// FindFirstItemExtInfo finds the first value of the given key,
+// or nil if no value found.
 func (x *ItemConf) FindFirstItemExtInfo(extType protoconf.FruitType) *protoconf.ItemConf_Item {
 	val := x.indexItemExtInfoMap[extType]
 	if len(val) > 0 {
@@ -351,19 +351,19 @@ func (x *ItemConf) FindFirstItemExtInfo(extType protoconf.FruitType) *protoconf.
 
 // Index: (ID,Name)<Type,UseEffectType>@AwardItem
 
-// FindAwardItemMap returns the index((ID,Name)<Type,UseEffectType>@AwardItem) to value(protoconf.ItemConf_Item) map.
+// FindAwardItemMap finds the index ((ID,Name)<Type,UseEffectType>@AwardItem) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ItemConf) FindAwardItemMap() ItemConf_Index_AwardItemMap {
 	return x.indexAwardItemMap
 }
 
-// FindAwardItem returns a slice of all values of the given key.
+// FindAwardItem finds a slice of all values of the given key.
 func (x *ItemConf) FindAwardItem(key ItemConf_Index_AwardItemKey) []*protoconf.ItemConf_Item {
 	return x.indexAwardItemMap[key]
 }
 
-// FindFirstAwardItem returns the first value of the given key,
-// or nil if the key correspond to no value.
+// FindFirstAwardItem finds the first value of the given key,
+// or nil if no value found.
 func (x *ItemConf) FindFirstAwardItem(key ItemConf_Index_AwardItemKey) *protoconf.ItemConf_Item {
 	val := x.indexAwardItemMap[key]
 	if len(val) > 0 {
@@ -374,19 +374,19 @@ func (x *ItemConf) FindFirstAwardItem(key ItemConf_Index_AwardItemKey) *protocon
 
 // Index: (ID,Type,Param,ExtType)@SpecialItem
 
-// FindSpecialItemMap returns the index((ID,Type,Param,ExtType)@SpecialItem) to value(protoconf.ItemConf_Item) map.
+// FindSpecialItemMap finds the index ((ID,Type,Param,ExtType)@SpecialItem) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ItemConf) FindSpecialItemMap() ItemConf_Index_SpecialItemMap {
 	return x.indexSpecialItemMap
 }
 
-// FindSpecialItem returns a slice of all values of the given key.
+// FindSpecialItem finds a slice of all values of the given key.
 func (x *ItemConf) FindSpecialItem(key ItemConf_Index_SpecialItemKey) []*protoconf.ItemConf_Item {
 	return x.indexSpecialItemMap[key]
 }
 
-// FindFirstSpecialItem returns the first value of the given key,
-// or nil if the key correspond to no value.
+// FindFirstSpecialItem finds the first value of the given key,
+// or nil if no value found.
 func (x *ItemConf) FindFirstSpecialItem(key ItemConf_Index_SpecialItemKey) *protoconf.ItemConf_Item {
 	val := x.indexSpecialItemMap[key]
 	if len(val) > 0 {
@@ -397,19 +397,19 @@ func (x *ItemConf) FindFirstSpecialItem(key ItemConf_Index_SpecialItemKey) *prot
 
 // Index: PathDir@ItemPathDir
 
-// FindItemPathDirMap returns the index(PathDir@ItemPathDir) to value(protoconf.ItemConf_Item) map.
+// FindItemPathDirMap finds the index (PathDir@ItemPathDir) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ItemConf) FindItemPathDirMap() ItemConf_Index_ItemPathDirMap {
 	return x.indexItemPathDirMap
 }
 
-// FindItemPathDir returns a slice of all values of the given key.
+// FindItemPathDir finds a slice of all values of the given key.
 func (x *ItemConf) FindItemPathDir(dir string) []*protoconf.ItemConf_Item {
 	return x.indexItemPathDirMap[dir]
 }
 
-// FindFirstItemPathDir returns the first value of the given key,
-// or nil if the key correspond to no value.
+// FindFirstItemPathDir finds the first value of the given key,
+// or nil if no value found.
 func (x *ItemConf) FindFirstItemPathDir(dir string) *protoconf.ItemConf_Item {
 	val := x.indexItemPathDirMap[dir]
 	if len(val) > 0 {
@@ -420,19 +420,19 @@ func (x *ItemConf) FindFirstItemPathDir(dir string) *protoconf.ItemConf_Item {
 
 // Index: PathName@ItemPathName
 
-// FindItemPathNameMap returns the index(PathName@ItemPathName) to value(protoconf.ItemConf_Item) map.
+// FindItemPathNameMap finds the index (PathName@ItemPathName) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ItemConf) FindItemPathNameMap() ItemConf_Index_ItemPathNameMap {
 	return x.indexItemPathNameMap
 }
 
-// FindItemPathName returns a slice of all values of the given key.
+// FindItemPathName finds a slice of all values of the given key.
 func (x *ItemConf) FindItemPathName(name string) []*protoconf.ItemConf_Item {
 	return x.indexItemPathNameMap[name]
 }
 
-// FindFirstItemPathName returns the first value of the given key,
-// or nil if the key correspond to no value.
+// FindFirstItemPathName finds the first value of the given key,
+// or nil if no value found.
 func (x *ItemConf) FindFirstItemPathName(name string) *protoconf.ItemConf_Item {
 	val := x.indexItemPathNameMap[name]
 	if len(val) > 0 {
@@ -443,19 +443,19 @@ func (x *ItemConf) FindFirstItemPathName(name string) *protoconf.ItemConf_Item {
 
 // Index: PathFriendID@ItemPathFriendID
 
-// FindItemPathFriendIDMap returns the index(PathFriendID@ItemPathFriendID) to value(protoconf.ItemConf_Item) map.
+// FindItemPathFriendIDMap finds the index (PathFriendID@ItemPathFriendID) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ItemConf) FindItemPathFriendIDMap() ItemConf_Index_ItemPathFriendIDMap {
 	return x.indexItemPathFriendIdMap
 }
 
-// FindItemPathFriendID returns a slice of all values of the given key.
+// FindItemPathFriendID finds a slice of all values of the given key.
 func (x *ItemConf) FindItemPathFriendID(id uint32) []*protoconf.ItemConf_Item {
 	return x.indexItemPathFriendIdMap[id]
 }
 
-// FindFirstItemPathFriendID returns the first value of the given key,
-// or nil if the key correspond to no value.
+// FindFirstItemPathFriendID finds the first value of the given key,
+// or nil if no value found.
 func (x *ItemConf) FindFirstItemPathFriendID(id uint32) *protoconf.ItemConf_Item {
 	val := x.indexItemPathFriendIdMap[id]
 	if len(val) > 0 {
@@ -466,19 +466,19 @@ func (x *ItemConf) FindFirstItemPathFriendID(id uint32) *protoconf.ItemConf_Item
 
 // Index: UseEffectType@UseEffectType
 
-// FindUseEffectTypeMap returns the index(UseEffectType@UseEffectType) to value(protoconf.ItemConf_Item) map.
+// FindUseEffectTypeMap finds the index (UseEffectType@UseEffectType) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ItemConf) FindUseEffectTypeMap() ItemConf_Index_UseEffectTypeMap {
 	return x.indexUseEffectTypeMap
 }
 
-// FindUseEffectType returns a slice of all values of the given key.
+// FindUseEffectType finds a slice of all values of the given key.
 func (x *ItemConf) FindUseEffectType(type_ protoconf.UseEffect_Type) []*protoconf.ItemConf_Item {
 	return x.indexUseEffectTypeMap[type_]
 }
 
-// FindFirstUseEffectType returns the first value of the given key,
-// or nil if the key correspond to no value.
+// FindFirstUseEffectType finds the first value of the given key,
+// or nil if no value found.
 func (x *ItemConf) FindFirstUseEffectType(type_ protoconf.UseEffect_Type) *protoconf.ItemConf_Item {
 	val := x.indexUseEffectTypeMap[type_]
 	if len(val) > 0 {

@@ -152,7 +152,7 @@ func genOrderedIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, des
 			g.P("// OrderedIndex: ", index.Index)
 			g.P()
 
-			g.P("// Find", index.Name(), "Map returns the index(", index.Index, ") to value(", helper.FindMessageGoIdent(gen, index.MD), ") treemap.")
+			g.P("// Find", index.Name(), "Map finds the ordered index (", index.Index, ") to value (", helper.FindMessageGoIdent(gen, index.MD), ") treemap.")
 			g.P("// One key may correspond to multiple values, which are contained by a slice.")
 			g.P("func (x *", messagerName, ") Find", index.Name(), "Map() *", mapType, " {")
 			g.P("return x.", indexContainerName)
@@ -164,15 +164,15 @@ func genOrderedIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, des
 			keyType := helper.ParseOrderedMapKeyType(field.FD)
 			keyName := helper.ParseIndexFieldNameAsFuncParam(gen, field.FD)
 
-			g.P("// Find", index.Name(), " returns a slice of all values of the given key.")
+			g.P("// Find", index.Name(), " finds a slice of all values of the given key.")
 			g.P("func (x *", messagerName, ") Find", index.Name(), "(", keyName, " ", keyType, ") []*", helper.FindMessageGoIdent(gen, index.MD), " {")
 			g.P("val, _ := x.", indexContainerName, ".Get(", keyName, ")")
 			g.P("return val")
 			g.P("}")
 			g.P()
 
-			g.P("// FindFirst", index.Name(), " returns the first value of the given key,")
-			g.P("// or nil if the key correspond to no value.")
+			g.P("// FindFirst", index.Name(), " finds the first value of the given key,")
+			g.P("// or nil if no value found.")
 			g.P("func (x *", messagerName, ") FindFirst", index.Name(), "(", keyName, " ", keyType, ") *", helper.FindMessageGoIdent(gen, index.MD), " {")
 			g.P("val := x.Find", index.Name(), "(", keyName, ")")
 			g.P("if len(val) > 0 {")

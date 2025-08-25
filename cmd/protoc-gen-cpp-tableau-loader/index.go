@@ -23,8 +23,12 @@ func genHppIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescri
 				g.P(helper.Indent(1), "using ", vectorType, " = std::vector<const ", helper.ParseCppClassType(index.MD), "*>;")
 				keyType := helper.ParseCppType(field.FD)
 				g.P(helper.Indent(1), "using ", mapType, " = std::unordered_map<", keyType, ", ", vectorType, ">;")
+				g.P("// Finds the index (", index.Index, ") to value (", vectorType, ") hash map.")
+				g.P("// One key may correspond to multiple values, which are contained by a vector.")
 				g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "() const;")
+				g.P("// Finds a vector of all values of the given key.")
 				g.P(helper.Indent(1), "const ", vectorType, "* Find", index.Name(), "(", helper.ToConstRefType(keyType), " ", helper.ParseIndexFieldNameAsFuncParam(field.FD), ") const;")
+				g.P("// Finds the first value of the given key.")
 				g.P(helper.Indent(1), "const ", helper.ParseCppClassType(index.MD), "* FindFirst", index.Name(), "(", helper.ToConstRefType(keyType), " ", helper.ParseIndexFieldNameAsFuncParam(field.FD), ") const;")
 				g.P()
 

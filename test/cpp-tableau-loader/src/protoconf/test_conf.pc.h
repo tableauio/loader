@@ -58,8 +58,12 @@ class ActivityConf : public Messager {
  public:
   using Index_ActivityVector = std::vector<const protoconf::ActivityConf::Activity*>;
   using Index_ActivityMap = std::unordered_map<std::string, Index_ActivityVector>;
+// Finds the index (ActivityName) to value (Index_ActivityVector) hash map.
+// One key may correspond to multiple values, which are contained by a vector.
   const Index_ActivityMap& FindActivity() const;
+// Finds a vector of all values of the given key.
   const Index_ActivityVector* FindActivity(const std::string& activity_name) const;
+// Finds the first value of the given key.
   const protoconf::ActivityConf::Activity* FindFirstActivity(const std::string& activity_name) const;
 
  private:
@@ -69,8 +73,12 @@ class ActivityConf : public Messager {
  public:
   using Index_ChapterVector = std::vector<const protoconf::ActivityConf::Activity::Chapter*>;
   using Index_ChapterMap = std::unordered_map<uint32_t, Index_ChapterVector>;
+// Finds the index (ChapterID) to value (Index_ChapterVector) hash map.
+// One key may correspond to multiple values, which are contained by a vector.
   const Index_ChapterMap& FindChapter() const;
+// Finds a vector of all values of the given key.
   const Index_ChapterVector* FindChapter(uint32_t chapter_id) const;
+// Finds the first value of the given key.
   const protoconf::ActivityConf::Activity::Chapter* FindFirstChapter(uint32_t chapter_id) const;
 
  private:
@@ -80,8 +88,12 @@ class ActivityConf : public Messager {
  public:
   using Index_NamedChapterVector = std::vector<const protoconf::ActivityConf::Activity::Chapter*>;
   using Index_NamedChapterMap = std::unordered_map<std::string, Index_NamedChapterVector>;
+// Finds the index (ChapterName<AwardID>@NamedChapter) to value (Index_NamedChapterVector) hash map.
+// One key may correspond to multiple values, which are contained by a vector.
   const Index_NamedChapterMap& FindNamedChapter() const;
+// Finds a vector of all values of the given key.
   const Index_NamedChapterVector* FindNamedChapter(const std::string& chapter_name) const;
+// Finds the first value of the given key.
   const protoconf::ActivityConf::Activity::Chapter* FindFirstNamedChapter(const std::string& chapter_name) const;
 
  private:
@@ -91,8 +103,12 @@ class ActivityConf : public Messager {
  public:
   using Index_AwardVector = std::vector<const protoconf::Section::SectionItem*>;
   using Index_AwardMap = std::unordered_map<uint32_t, Index_AwardVector>;
+// Finds the index (SectionItemID@Award) to value (Index_AwardVector) hash map.
+// One key may correspond to multiple values, which are contained by a vector.
   const Index_AwardMap& FindAward() const;
+// Finds a vector of all values of the given key.
   const Index_AwardVector* FindAward(uint32_t id) const;
+// Finds the first value of the given key.
   const protoconf::Section::SectionItem* FindFirstAward(uint32_t id) const;
 
  private:
@@ -153,8 +169,12 @@ class TaskConf : public Messager {
  public:
   using Index_TaskVector = std::vector<const protoconf::TaskConf::Task*>;
   using Index_TaskMap = std::unordered_map<int64_t, Index_TaskVector>;
+// Finds the index (ActivityID<Goal,ID>) to value (Index_TaskVector) hash map.
+// One key may correspond to multiple values, which are contained by a vector.
   const Index_TaskMap& FindTask() const;
+// Finds a vector of all values of the given key.
   const Index_TaskVector* FindTask(int64_t activity_id) const;
+// Finds the first value of the given key.
   const protoconf::TaskConf::Task* FindFirstTask(int64_t activity_id) const;
 
  private:
@@ -165,8 +185,12 @@ class TaskConf : public Messager {
  public:
   using OrderedIndex_OrderedTaskVector = std::vector<const protoconf::TaskConf::Task*>;
   using OrderedIndex_OrderedTaskMap = std::map<int64_t, OrderedIndex_OrderedTaskVector>;
+// Finds the ordered index (Goal<ID>@OrderedTask) to value (OrderedIndex_OrderedTaskVector) hash map.
+// One key may correspond to multiple values, which are contained by a vector.
   const OrderedIndex_OrderedTaskMap& FindOrderedTask() const;
+// Finds a vector of all values of the given key.
   const OrderedIndex_OrderedTaskVector* FindOrderedTask(int64_t goal) const;
+// Finds the first value of the given key.
   const protoconf::TaskConf::Task* FindFirstOrderedTask(int64_t goal) const;
 
  private:
@@ -176,8 +200,12 @@ class TaskConf : public Messager {
  public:
   using OrderedIndex_TaskExpiryVector = std::vector<const protoconf::TaskConf::Task*>;
   using OrderedIndex_TaskExpiryMap = std::map<int64_t, OrderedIndex_TaskExpiryVector>;
+// Finds the ordered index (Expiry@TaskExpiry) to value (OrderedIndex_TaskExpiryVector) hash map.
+// One key may correspond to multiple values, which are contained by a vector.
   const OrderedIndex_TaskExpiryMap& FindTaskExpiry() const;
+// Finds a vector of all values of the given key.
   const OrderedIndex_TaskExpiryVector* FindTaskExpiry(int64_t expiry) const;
+// Finds the first value of the given key.
   const protoconf::TaskConf::Task* FindFirstTaskExpiry(int64_t expiry) const;
 
  private:
@@ -187,8 +215,12 @@ class TaskConf : public Messager {
  public:
   using OrderedIndex_SortedTaskExpiryVector = std::vector<const protoconf::TaskConf::Task*>;
   using OrderedIndex_SortedTaskExpiryMap = std::map<int64_t, OrderedIndex_SortedTaskExpiryVector>;
+// Finds the ordered index (Expiry<Goal,ID>@SortedTaskExpiry) to value (OrderedIndex_SortedTaskExpiryVector) hash map.
+// One key may correspond to multiple values, which are contained by a vector.
   const OrderedIndex_SortedTaskExpiryMap& FindSortedTaskExpiry() const;
+// Finds a vector of all values of the given key.
   const OrderedIndex_SortedTaskExpiryVector* FindSortedTaskExpiry(int64_t expiry) const;
+// Finds the first value of the given key.
   const protoconf::TaskConf::Task* FindFirstSortedTaskExpiry(int64_t expiry) const;
 
  private:

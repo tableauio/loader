@@ -191,7 +191,7 @@ func genIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor
 			g.P("// Index: ", index.Index)
 			g.P()
 
-			g.P("// Find", index.Name(), "Map returns the index(", index.Index, ") to value(", helper.FindMessageGoIdent(gen, index.MD), ") map.")
+			g.P("// Find", index.Name(), "Map finds the index (", index.Index, ") to value (", helper.FindMessageGoIdent(gen, index.MD), ") map.")
 			g.P("// One key may correspond to multiple values, which are contained by a slice.")
 			g.P("func (x *", messagerName, ") Find", index.Name(), "Map() ", mapType, " {")
 			g.P("return x.", indexContainerName)
@@ -211,14 +211,14 @@ func genIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor
 				keyName = "key"
 			}
 
-			g.P("// Find", index.Name(), " returns a slice of all values of the given key.")
+			g.P("// Find", index.Name(), " finds a slice of all values of the given key.")
 			g.P("func (x *", messagerName, ") Find", index.Name(), "(", keyName, " ", keyType, ") []*", helper.FindMessageGoIdent(gen, index.MD), " {")
 			g.P("return x.", indexContainerName, "[", keyName, "]")
 			g.P("}")
 			g.P()
 
-			g.P("// FindFirst", index.Name(), " returns the first value of the given key,")
-			g.P("// or nil if the key correspond to no value.")
+			g.P("// FindFirst", index.Name(), " finds the first value of the given key,")
+			g.P("// or nil if no value found.")
 			g.P("func (x *", messagerName, ") FindFirst", index.Name(), "(", keyName, " ", keyType, ") *", helper.FindMessageGoIdent(gen, index.MD), " {")
 			g.P("val := x.", indexContainerName, "[", keyName, "]")
 			g.P("if len(val) > 0 {")
