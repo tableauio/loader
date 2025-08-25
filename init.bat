@@ -21,6 +21,6 @@ cmake -S . -B build ^
 -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
 
 REM Compile the code
-cmake --build build --parallel 10
+cmake --build build
 
 endlocal

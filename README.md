@@ -26,7 +26,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
   - C++17: `cmake -S . -B build`
   - C++20: `cmake -S . -B build -DCMAKE_CXX_STANDARD=20`
   - clang: `cmake -S . -B build -DCMAKE_CXX_COMPILER=clang++`
-- Build: `cmake --build build --parallel 10`
+- Build: `cmake --build build -j16`
 - Run: `./bin/loader`
 
 ### Dev at Windows
@@ -36,7 +36,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 - CMake:
   - C++17: `cmake -S . -B build -G "NMake Makefiles"`
   - C++20: `cmake -S . -B build -G "NMake Makefiles" -DCMAKE_CXX_STANDARD=20`
-- Build: `cmake --build build --parallel 10`
+- Build: `cmake --build build`
 - Run: `.\bin\loader.exe`
 
 ### References
