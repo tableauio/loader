@@ -22,7 +22,7 @@ import (
 //
 //  1. Easy use: simple yet powerful accessers.
 //  2. Elegant API: concise and clean functions.
-//  3. Extensibility: Map, OrdererdMap, Index...
+//  3. Extensibility: Map, OrdererdMap, Index, OrderedIndex...
 type PatchReplaceConf struct {
 	UnimplementedMessager
 	data, originalData *protoconf.PatchReplaceConf
@@ -91,7 +91,7 @@ func (x *PatchReplaceConf) originalMessage() proto.Message {
 //
 //  1. Easy use: simple yet powerful accessers.
 //  2. Elegant API: concise and clean functions.
-//  3. Extensibility: Map, OrdererdMap, Index...
+//  3. Extensibility: Map, OrdererdMap, Index, OrderedIndex...
 type PatchMergeConf struct {
 	UnimplementedMessager
 	data, originalData *protoconf.PatchMergeConf
@@ -171,7 +171,7 @@ func (x *PatchMergeConf) Get1(id uint32) (*protoconf.Item, error) {
 //
 //  1. Easy use: simple yet powerful accessers.
 //  2. Elegant API: concise and clean functions.
-//  3. Extensibility: Map, OrdererdMap, Index...
+//  3. Extensibility: Map, OrdererdMap, Index, OrderedIndex...
 type RecursivePatchConf struct {
 	UnimplementedMessager
 	data, originalData *protoconf.RecursivePatchConf

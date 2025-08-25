@@ -99,7 +99,7 @@ func generateShardedHubCppFileContent(g *protogen.GeneratedFile, shardIndex int,
 	for _, proto := range protofiles {
 		for _, messager := range fileMessagers[proto] {
 			g.P("template <>")
-			g.P("const std::shared_ptr<" + messager + "> Hub::Get<" + messager + ">() const {")
+			g.P("const std::shared_ptr<", messager, "> Hub::Get<", messager, ">() const {")
 			g.P(helper.Indent(1), "return GetMessagerContainerWithProvider()->", strcase.ToSnake(messager), "_;")
 			g.P("}")
 			g.P()

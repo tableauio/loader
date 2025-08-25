@@ -29,7 +29,7 @@ type HeroConf_Index_AttrMap = map[string][]*protoconf.HeroConf_Hero_Attr
 //
 //  1. Easy use: simple yet powerful accessers.
 //  2. Elegant API: concise and clean functions.
-//  3. Extensibility: Map, OrdererdMap, Index...
+//  3. Extensibility: Map, OrdererdMap, Index, OrderedIndex...
 type HeroConf struct {
 	UnimplementedMessager
 	data, originalData *protoconf.HeroConf
@@ -137,19 +137,19 @@ func (x *HeroConf) Get2(name string, title string) (*protoconf.HeroConf_Hero_Att
 
 // Index: Title
 
-// FindAttrMap returns the index(Title) to value(protoconf.HeroConf_Hero_Attr) map.
+// FindAttrMap finds the index (Title) to value (protoconf.HeroConf_Hero_Attr) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *HeroConf) FindAttrMap() HeroConf_Index_AttrMap {
 	return x.indexAttrMap
 }
 
-// FindAttr returns a slice of all values of the given key.
+// FindAttr finds a slice of all values of the given key.
 func (x *HeroConf) FindAttr(title string) []*protoconf.HeroConf_Hero_Attr {
 	return x.indexAttrMap[title]
 }
 
-// FindFirstAttr returns the first value of the given key,
-// or nil if the key correspond to no value.
+// FindFirstAttr finds the first value of the given key,
+// or nil if no value found.
 func (x *HeroConf) FindFirstAttr(title string) *protoconf.HeroConf_Hero_Attr {
 	val := x.indexAttrMap[title]
 	if len(val) > 0 {
@@ -170,7 +170,7 @@ type ProtoconfHeroBaseConfHeroMap_OrderedMap = treemap.TreeMap[string, *Protocon
 //
 //  1. Easy use: simple yet powerful accessers.
 //  2. Elegant API: concise and clean functions.
-//  3. Extensibility: Map, OrdererdMap, Index...
+//  3. Extensibility: Map, OrdererdMap, Index, OrderedIndex...
 type HeroBaseConf struct {
 	UnimplementedMessager
 	data, originalData *protoconf.HeroBaseConf

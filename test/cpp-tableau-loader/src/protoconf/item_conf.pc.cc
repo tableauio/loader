@@ -136,10 +136,10 @@ const ItemConf::Index_ItemVector* ItemConf::FindItem(protoconf::FruitType type) 
 
 const protoconf::ItemConf::Item* ItemConf::FindFirstItem(protoconf::FruitType type) const {
   auto conf = FindItem(type);
-  if (conf == nullptr || conf->size() == 0) {
+  if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
-  return (*conf)[0];
+  return conf->front();
 }
 
 // Index: Param<ID>@ItemInfo
@@ -155,10 +155,10 @@ const ItemConf::Index_ItemInfoVector* ItemConf::FindItemInfo(int32_t param) cons
 
 const protoconf::ItemConf::Item* ItemConf::FindFirstItemInfo(int32_t param) const {
   auto conf = FindItemInfo(param);
-  if (conf == nullptr || conf->size() == 0) {
+  if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
-  return (*conf)[0];
+  return conf->front();
 }
 
 // Index: Default@ItemDefaultInfo
@@ -174,10 +174,10 @@ const ItemConf::Index_ItemDefaultInfoVector* ItemConf::FindItemDefaultInfo(const
 
 const protoconf::ItemConf::Item* ItemConf::FindFirstItemDefaultInfo(const std::string& default_) const {
   auto conf = FindItemDefaultInfo(default_);
-  if (conf == nullptr || conf->size() == 0) {
+  if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
-  return (*conf)[0];
+  return conf->front();
 }
 
 // Index: ExtType@ItemExtInfo
@@ -193,10 +193,10 @@ const ItemConf::Index_ItemExtInfoVector* ItemConf::FindItemExtInfo(protoconf::Fr
 
 const protoconf::ItemConf::Item* ItemConf::FindFirstItemExtInfo(protoconf::FruitType ext_type) const {
   auto conf = FindItemExtInfo(ext_type);
-  if (conf == nullptr || conf->size() == 0) {
+  if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
-  return (*conf)[0];
+  return conf->front();
 }
 
 // Index: (ID,Name)<Type,UseEffectType>@AwardItem
@@ -212,10 +212,10 @@ const ItemConf::Index_AwardItemVector* ItemConf::FindAwardItem(const Index_Award
 
 const protoconf::ItemConf::Item* ItemConf::FindFirstAwardItem(const Index_AwardItemKey& key) const {
   auto conf = FindAwardItem(key);
-  if (conf == nullptr || conf->size() == 0) {
+  if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
-  return (*conf)[0];
+  return conf->front();
 }
 
 // Index: (ID,Type,Param,ExtType)@SpecialItem
@@ -231,10 +231,10 @@ const ItemConf::Index_SpecialItemVector* ItemConf::FindSpecialItem(const Index_S
 
 const protoconf::ItemConf::Item* ItemConf::FindFirstSpecialItem(const Index_SpecialItemKey& key) const {
   auto conf = FindSpecialItem(key);
-  if (conf == nullptr || conf->size() == 0) {
+  if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
-  return (*conf)[0];
+  return conf->front();
 }
 
 // Index: PathDir@ItemPathDir
@@ -250,10 +250,10 @@ const ItemConf::Index_ItemPathDirVector* ItemConf::FindItemPathDir(const std::st
 
 const protoconf::ItemConf::Item* ItemConf::FindFirstItemPathDir(const std::string& dir) const {
   auto conf = FindItemPathDir(dir);
-  if (conf == nullptr || conf->size() == 0) {
+  if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
-  return (*conf)[0];
+  return conf->front();
 }
 
 // Index: PathName@ItemPathName
@@ -269,10 +269,10 @@ const ItemConf::Index_ItemPathNameVector* ItemConf::FindItemPathName(const std::
 
 const protoconf::ItemConf::Item* ItemConf::FindFirstItemPathName(const std::string& name) const {
   auto conf = FindItemPathName(name);
-  if (conf == nullptr || conf->size() == 0) {
+  if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
-  return (*conf)[0];
+  return conf->front();
 }
 
 // Index: PathFriendID@ItemPathFriendID
@@ -288,10 +288,10 @@ const ItemConf::Index_ItemPathFriendIDVector* ItemConf::FindItemPathFriendID(uin
 
 const protoconf::ItemConf::Item* ItemConf::FindFirstItemPathFriendID(uint32_t id) const {
   auto conf = FindItemPathFriendID(id);
-  if (conf == nullptr || conf->size() == 0) {
+  if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
-  return (*conf)[0];
+  return conf->front();
 }
 
 // Index: UseEffectType@UseEffectType
@@ -307,10 +307,10 @@ const ItemConf::Index_UseEffectTypeVector* ItemConf::FindUseEffectType(protoconf
 
 const protoconf::ItemConf::Item* ItemConf::FindFirstUseEffectType(protoconf::UseEffect::Type type) const {
   auto conf = FindUseEffectType(type);
-  if (conf == nullptr || conf->size() == 0) {
+  if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
-  return (*conf)[0];
+  return conf->front();
 }
 
 
