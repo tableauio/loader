@@ -564,8 +564,8 @@ func (x *ThemeConf) Get2(name string, param string) (string, error) {
 type TaskConf_Index_TaskMap = map[int64][]*protoconf.TaskConf_Task
 
 // OrderedIndex types.
-// OrderedIndex: Goal<ID>
-type TaskConf_OrderedIndex_TaskMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
+// OrderedIndex: Goal<ID>@OrderedTask
+type TaskConf_OrderedIndex_OrderedTaskMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
 
 // OrderedIndex: Expiry@TaskExpiry
 type TaskConf_OrderedIndex_TaskExpiryMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
@@ -584,7 +584,7 @@ type TaskConf struct {
 	UnimplementedMessager
 	data, originalData              *protoconf.TaskConf
 	indexTaskMap                    TaskConf_Index_TaskMap
-	orderedIndexTaskMap             *TaskConf_OrderedIndex_TaskMap
+	orderedIndexOrderedTaskMap      *TaskConf_OrderedIndex_OrderedTaskMap
 	orderedIndexTaskExpiryMap       *TaskConf_OrderedIndex_TaskExpiryMap
 	orderedIndexSortedTaskExpiryMap *TaskConf_OrderedIndex_SortedTaskExpiryMap
 }
@@ -667,15 +667,15 @@ func (x *TaskConf) processAfterLoad() error {
 		})
 	}
 	// OrderedIndex init.
-	x.orderedIndexTaskMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
+	x.orderedIndexOrderedTaskMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
 	x.orderedIndexTaskExpiryMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
 	x.orderedIndexSortedTaskExpiryMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
 	for _, item1 := range x.data.GetTaskMap() {
 		{
-			// OrderedIndex: Goal<ID>
+			// OrderedIndex: Goal<ID>@OrderedTask
 			key := item1.GetGoal()
-			value, _ := x.orderedIndexTaskMap.Get(key)
-			x.orderedIndexTaskMap.Put(key, append(value, item1))
+			value, _ := x.orderedIndexOrderedTaskMap.Get(key)
+			x.orderedIndexOrderedTaskMap.Put(key, append(value, item1))
 		}
 		{
 			// OrderedIndex: Expiry@TaskExpiry
@@ -690,8 +690,8 @@ func (x *TaskConf) processAfterLoad() error {
 			x.orderedIndexSortedTaskExpiryMap.Put(key, append(value, item1))
 		}
 	}
-	// OrderedIndex(sort): Goal<ID>
-	x.orderedIndexTaskMap.Range(func(key int64, item []*protoconf.TaskConf_Task) bool {
+	// OrderedIndex(sort): Goal<ID>@OrderedTask
+	x.orderedIndexOrderedTaskMap.Range(func(key int64, item []*protoconf.TaskConf_Task) bool {
 		sort.Slice(item, func(i, j int) bool {
 			return item[i].GetId() < item[j].GetId()
 		})
@@ -744,24 +744,24 @@ func (x *TaskConf) FindFirstTask(activityId int64) *protoconf.TaskConf_Task {
 	return nil
 }
 
-// OrderedIndex: Goal<ID>
+// OrderedIndex: Goal<ID>@OrderedTask
 
-// SearchTaskMap returns the index(Goal<ID>) to value(protoconf.TaskConf_Task) treemap.
+// FindOrderedTaskMap returns the index(Goal<ID>@OrderedTask) to value(protoconf.TaskConf_Task) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *TaskConf) SearchTaskMap() *TaskConf_OrderedIndex_TaskMap {
-	return x.orderedIndexTaskMap
+func (x *TaskConf) FindOrderedTaskMap() *TaskConf_OrderedIndex_OrderedTaskMap {
+	return x.orderedIndexOrderedTaskMap
 }
 
-// SearchTask returns a slice of all values of the given key.
-func (x *TaskConf) SearchTask(goal int64) []*protoconf.TaskConf_Task {
-	val, _ := x.orderedIndexTaskMap.Get(goal)
+// FindOrderedTask returns a slice of all values of the given key.
+func (x *TaskConf) FindOrderedTask(goal int64) []*protoconf.TaskConf_Task {
+	val, _ := x.orderedIndexOrderedTaskMap.Get(goal)
 	return val
 }
 
-// SearchFirstTask returns the first value of the given key,
+// FindFirstOrderedTask returns the first value of the given key,
 // or nil if the key correspond to no value.
-func (x *TaskConf) SearchFirstTask(goal int64) *protoconf.TaskConf_Task {
-	val := x.SearchTask(goal)
+func (x *TaskConf) FindFirstOrderedTask(goal int64) *protoconf.TaskConf_Task {
+	val := x.FindOrderedTask(goal)
 	if len(val) > 0 {
 		return val[0]
 	}
@@ -770,22 +770,22 @@ func (x *TaskConf) SearchFirstTask(goal int64) *protoconf.TaskConf_Task {
 
 // OrderedIndex: Expiry@TaskExpiry
 
-// SearchTaskExpiryMap returns the index(Expiry@TaskExpiry) to value(protoconf.TaskConf_Task) treemap.
+// FindTaskExpiryMap returns the index(Expiry@TaskExpiry) to value(protoconf.TaskConf_Task) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *TaskConf) SearchTaskExpiryMap() *TaskConf_OrderedIndex_TaskExpiryMap {
+func (x *TaskConf) FindTaskExpiryMap() *TaskConf_OrderedIndex_TaskExpiryMap {
 	return x.orderedIndexTaskExpiryMap
 }
 
-// SearchTaskExpiry returns a slice of all values of the given key.
-func (x *TaskConf) SearchTaskExpiry(expiry int64) []*protoconf.TaskConf_Task {
+// FindTaskExpiry returns a slice of all values of the given key.
+func (x *TaskConf) FindTaskExpiry(expiry int64) []*protoconf.TaskConf_Task {
 	val, _ := x.orderedIndexTaskExpiryMap.Get(expiry)
 	return val
 }
 
-// SearchFirstTaskExpiry returns the first value of the given key,
+// FindFirstTaskExpiry returns the first value of the given key,
 // or nil if the key correspond to no value.
-func (x *TaskConf) SearchFirstTaskExpiry(expiry int64) *protoconf.TaskConf_Task {
-	val := x.SearchTaskExpiry(expiry)
+func (x *TaskConf) FindFirstTaskExpiry(expiry int64) *protoconf.TaskConf_Task {
+	val := x.FindTaskExpiry(expiry)
 	if len(val) > 0 {
 		return val[0]
 	}
@@ -794,22 +794,22 @@ func (x *TaskConf) SearchFirstTaskExpiry(expiry int64) *protoconf.TaskConf_Task 
 
 // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
 
-// SearchSortedTaskExpiryMap returns the index(Expiry<Goal,ID>@SortedTaskExpiry) to value(protoconf.TaskConf_Task) treemap.
+// FindSortedTaskExpiryMap returns the index(Expiry<Goal,ID>@SortedTaskExpiry) to value(protoconf.TaskConf_Task) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *TaskConf) SearchSortedTaskExpiryMap() *TaskConf_OrderedIndex_SortedTaskExpiryMap {
+func (x *TaskConf) FindSortedTaskExpiryMap() *TaskConf_OrderedIndex_SortedTaskExpiryMap {
 	return x.orderedIndexSortedTaskExpiryMap
 }
 
-// SearchSortedTaskExpiry returns a slice of all values of the given key.
-func (x *TaskConf) SearchSortedTaskExpiry(expiry int64) []*protoconf.TaskConf_Task {
+// FindSortedTaskExpiry returns a slice of all values of the given key.
+func (x *TaskConf) FindSortedTaskExpiry(expiry int64) []*protoconf.TaskConf_Task {
 	val, _ := x.orderedIndexSortedTaskExpiryMap.Get(expiry)
 	return val
 }
 
-// SearchFirstSortedTaskExpiry returns the first value of the given key,
+// FindFirstSortedTaskExpiry returns the first value of the given key,
 // or nil if the key correspond to no value.
-func (x *TaskConf) SearchFirstSortedTaskExpiry(expiry int64) *protoconf.TaskConf_Task {
-	val := x.SearchSortedTaskExpiry(expiry)
+func (x *TaskConf) FindFirstSortedTaskExpiry(expiry int64) *protoconf.TaskConf_Task {
+	val := x.FindSortedTaskExpiry(expiry)
 	if len(val) > 0 {
 		return val[0]
 	}

@@ -100,7 +100,7 @@ message TaskConf {
   option (tableau.worksheet) = {
     name: "TaskConf"
     index: "ActivityID<Goal,ID>"
-    ordered_index: "Goal<ID>"
+    ordered_index: "Goal<ID>@OrderedTask"
     ordered_index: "Expiry@TaskExpiry"
     ordered_index: "Expiry<Goal,ID>@SortedTaskExpiry"
   };

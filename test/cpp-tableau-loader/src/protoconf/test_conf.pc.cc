@@ -316,13 +316,13 @@ bool TaskConf::ProcessAfterLoad() {
               });
   }
   // OrderedIndex init.
-  ordered_index_task_map_.clear();
+  ordered_index_ordered_task_map_.clear();
   ordered_index_task_expiry_map_.clear();
   ordered_index_sorted_task_expiry_map_.clear();
   for (auto&& item1 : data_.task_map()) {
     {
-      // OrderedIndex: Goal<ID>
-      ordered_index_task_map_[item1.second.goal()].push_back(&item1.second);
+      // OrderedIndex: Goal<ID>@OrderedTask
+      ordered_index_ordered_task_map_[item1.second.goal()].push_back(&item1.second);
     }
     {
       // OrderedIndex: Expiry@TaskExpiry
@@ -333,8 +333,8 @@ bool TaskConf::ProcessAfterLoad() {
       ordered_index_sorted_task_expiry_map_[item1.second.expiry().seconds()].push_back(&item1.second);
     }
   }
-  // OrderedIndex(sort): Goal<ID>
-  for (auto&& item : ordered_index_task_map_) {
+  // OrderedIndex(sort): Goal<ID>@OrderedTask
+  for (auto&& item : ordered_index_ordered_task_map_) {
     std::sort(item.second.begin(), item.second.end(),
               [](const protoconf::TaskConf::Task* a, const protoconf::TaskConf::Task* b) {
                 return a->id() < b->id();
@@ -381,19 +381,19 @@ const protoconf::TaskConf::Task* TaskConf::FindFirstTask(int64_t activity_id) co
 }
 
 
-// OrderedIndex: Goal<ID>
-const TaskConf::OrderedIndex_TaskMap& TaskConf::SearchTask() const { return ordered_index_task_map_ ;}
+// OrderedIndex: Goal<ID>@OrderedTask
+const TaskConf::OrderedIndex_OrderedTaskMap& TaskConf::FindOrderedTask() const { return ordered_index_ordered_task_map_ ;}
 
-const TaskConf::OrderedIndex_TaskVector* TaskConf::SearchTask(int64_t goal) const {
-  auto iter = ordered_index_task_map_.find(goal);
-  if (iter == ordered_index_task_map_.end()) {
+const TaskConf::OrderedIndex_OrderedTaskVector* TaskConf::FindOrderedTask(int64_t goal) const {
+  auto iter = ordered_index_ordered_task_map_.find(goal);
+  if (iter == ordered_index_ordered_task_map_.end()) {
     return nullptr;
   }
   return &iter->second;
 }
 
-const protoconf::TaskConf::Task* TaskConf::SearchFirstTask(int64_t goal) const {
-  auto conf = SearchTask(goal);
+const protoconf::TaskConf::Task* TaskConf::FindFirstOrderedTask(int64_t goal) const {
+  auto conf = FindOrderedTask(goal);
   if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
@@ -401,9 +401,9 @@ const protoconf::TaskConf::Task* TaskConf::SearchFirstTask(int64_t goal) const {
 }
 
 // OrderedIndex: Expiry@TaskExpiry
-const TaskConf::OrderedIndex_TaskExpiryMap& TaskConf::SearchTaskExpiry() const { return ordered_index_task_expiry_map_ ;}
+const TaskConf::OrderedIndex_TaskExpiryMap& TaskConf::FindTaskExpiry() const { return ordered_index_task_expiry_map_ ;}
 
-const TaskConf::OrderedIndex_TaskExpiryVector* TaskConf::SearchTaskExpiry(int64_t expiry) const {
+const TaskConf::OrderedIndex_TaskExpiryVector* TaskConf::FindTaskExpiry(int64_t expiry) const {
   auto iter = ordered_index_task_expiry_map_.find(expiry);
   if (iter == ordered_index_task_expiry_map_.end()) {
     return nullptr;
@@ -411,8 +411,8 @@ const TaskConf::OrderedIndex_TaskExpiryVector* TaskConf::SearchTaskExpiry(int64_
   return &iter->second;
 }
 
-const protoconf::TaskConf::Task* TaskConf::SearchFirstTaskExpiry(int64_t expiry) const {
-  auto conf = SearchTaskExpiry(expiry);
+const protoconf::TaskConf::Task* TaskConf::FindFirstTaskExpiry(int64_t expiry) const {
+  auto conf = FindTaskExpiry(expiry);
   if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
@@ -420,9 +420,9 @@ const protoconf::TaskConf::Task* TaskConf::SearchFirstTaskExpiry(int64_t expiry)
 }
 
 // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
-const TaskConf::OrderedIndex_SortedTaskExpiryMap& TaskConf::SearchSortedTaskExpiry() const { return ordered_index_sorted_task_expiry_map_ ;}
+const TaskConf::OrderedIndex_SortedTaskExpiryMap& TaskConf::FindSortedTaskExpiry() const { return ordered_index_sorted_task_expiry_map_ ;}
 
-const TaskConf::OrderedIndex_SortedTaskExpiryVector* TaskConf::SearchSortedTaskExpiry(int64_t expiry) const {
+const TaskConf::OrderedIndex_SortedTaskExpiryVector* TaskConf::FindSortedTaskExpiry(int64_t expiry) const {
   auto iter = ordered_index_sorted_task_expiry_map_.find(expiry);
   if (iter == ordered_index_sorted_task_expiry_map_.end()) {
     return nullptr;
@@ -430,8 +430,8 @@ const TaskConf::OrderedIndex_SortedTaskExpiryVector* TaskConf::SearchSortedTaskE
   return &iter->second;
 }
 
-const protoconf::TaskConf::Task* TaskConf::SearchFirstSortedTaskExpiry(int64_t expiry) const {
-  auto conf = SearchSortedTaskExpiry(expiry);
+const protoconf::TaskConf::Task* TaskConf::FindFirstSortedTaskExpiry(int64_t expiry) const {
+  auto conf = FindSortedTaskExpiry(expiry);
   if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
