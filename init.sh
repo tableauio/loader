@@ -26,4 +26,4 @@ cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Debug
 
 # Compile the code
-cmake --build build --parallel 10
+cmake --build build -j16
