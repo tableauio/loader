@@ -11,7 +11,7 @@ set "TABLEAU_PROTO=%repoRoot%\third_party\_submodules\tableau\proto"
 set "ROOTDIR=%repoRoot%\test\csharp-tableau-loader"
 set "PLGUIN_DIR=%repoRoot%\cmd\protoc-gen-csharp-tableau-loader"
 set "PROTOCONF_IN=%repoRoot%\test\proto"
-set "PROTOCONF_OUT=%ROOTDIR%\src\protoconf"
+set "PROTOCONF_OUT=%ROOTDIR%\protoconf"
 
 REM remove old generated files
 rmdir /s /q "%PROTOCONF_OUT%" 2>nul
