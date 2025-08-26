@@ -19,7 +19,7 @@ namespace Tableau
 
         private const string _unknownExt = ".unknown";
         private const string _jsonExt = ".json";
-        private const string _binExt = ".bin";
+        private const string _binExt = ".binpb";
 
         public static Format GetFormat(string path)
         {
