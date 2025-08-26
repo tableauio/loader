@@ -74,7 +74,7 @@ bool TestPatch() {
   ATOM_DEBUG("-----TestPatch patchconf2 different format");
   options->patch_dirs = {kTestdataDir + "/patchconf2/"};
   auto mopts = std::make_shared<tableau::load::MessagerOptions>();
-  mopts->patch_paths = {kTestdataDir + "/patchconf2/PatchMergeConf.txt"};
+  mopts->patch_paths = {kTestdataDir + "/patchconf2/PatchMergeConf.txtpb"};
   options->messager_options["PatchMergeConf"] = mopts;
   ok = Hub::Instance().Load(kTestdataDir + "/conf/", tableau::Format::kJSON, options);
   if (!ok) {
