@@ -66,6 +66,7 @@ type LevelIndex struct {
 	MD              protoreflect.MessageDescriptor
 	ColFields       []*LevelField
 	SortedColFields []*LevelField
+	NameConflict    *Index
 }
 
 func (l *LevelIndex) Name() string {
@@ -190,7 +191,8 @@ func ParseIndexDescriptor(md protoreflect.MessageDescriptor) *IndexDescriptor {
 	// check duplicate index name
 	indexNameMap := map[string]*Index{}
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		for _, index := range levelMessage.Indexes {
+		allIndexes := append(levelMessage.Indexes, levelMessage.OrderedIndexes...)
+		for _, index := range allIndexes {
 			name := index.Name()
 			if existingIndex, ok := indexNameMap[name]; ok {
 				panic(fmt.Sprintf("duplicate index name on %v in %v: %v and %v", md.Name(), md.ParentFile().Path(), index, existingIndex))

@@ -54,9 +54,9 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 							},
 							{
 								Index: &Index{
-									Cols: []string{"Param"},
+									Cols:       []string{"Param"},
 									SortedCols: []string{"ID"},
-									Name: "ItemInfo",
+									Name:       "ItemInfo",
 								},
 								MD: md[*protoconf.ItemConf_Item](),
 								ColFields: []*LevelField{
@@ -108,9 +108,9 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 							},
 							{
 								Index: &Index{
-									Cols: []string{"ID", "Name"},
+									Cols:       []string{"ID", "Name"},
 									SortedCols: []string{"Type", "UseEffectType"},
-									Name: "AwardItem",
+									Name:       "AwardItem",
 								},
 								MD: md[*protoconf.ItemConf_Item](),
 								ColFields: []*LevelField{
@@ -326,9 +326,9 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								},
 								{
 									Index: &Index{
-										Cols: []string{"ChapterName"},
+										Cols:       []string{"ChapterName"},
 										SortedCols: []string{"AwardID"},
-										Name: "NamedChapter",
+										Name:       "NamedChapter",
 									},
 									MD: md[*protoconf.ActivityConf_Activity_Chapter](),
 									ColFields: []*LevelField{
@@ -390,9 +390,9 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 						Indexes: []*LevelIndex{
 							{
 								Index: &Index{
-									Cols: []string{"ActivityID"},
+									Cols:       []string{"ActivityID"},
 									SortedCols: []string{"Goal", "ID"},
-									Name: "",
+									Name:       "",
 								},
 								MD: md[*protoconf.TaskConf_Task](),
 								ColFields: []*LevelField{
@@ -400,6 +400,77 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 										FD: fd[*protoconf.TaskConf_Task]("activity_id"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
 											fd[*protoconf.TaskConf_Task]("activity_id"),
+										},
+									},
+								},
+								SortedColFields: []*LevelField{
+									{
+										FD: fd[*protoconf.TaskConf_Task]("goal"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											fd[*protoconf.TaskConf_Task]("goal"),
+										},
+									},
+									{
+										FD: fd[*protoconf.TaskConf_Task]("id"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											fd[*protoconf.TaskConf_Task]("id"),
+										},
+									},
+								},
+							},
+						},
+						OrderedIndexes: []*LevelIndex{
+							{
+								Index: &Index{
+									Cols:       []string{"Goal"},
+									SortedCols: []string{"ID"},
+									Name:       "OrderedTask",
+								},
+								MD: md[*protoconf.TaskConf_Task](),
+								ColFields: []*LevelField{
+									{
+										FD: fd[*protoconf.TaskConf_Task]("goal"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											fd[*protoconf.TaskConf_Task]("goal"),
+										},
+									},
+								},
+								SortedColFields: []*LevelField{
+									{
+										FD: fd[*protoconf.TaskConf_Task]("id"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											fd[*protoconf.TaskConf_Task]("id"),
+										},
+									},
+								},
+							},
+							{
+								Index: &Index{
+									Cols: []string{"Expiry"},
+									Name: "TaskExpiry",
+								},
+								MD: md[*protoconf.TaskConf_Task](),
+								ColFields: []*LevelField{
+									{
+										FD: fd[*protoconf.TaskConf_Task]("expiry"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											fd[*protoconf.TaskConf_Task]("expiry"),
+										},
+									},
+								},
+							},
+							{
+								Index: &Index{
+									Cols:       []string{"Expiry"},
+									SortedCols: []string{"Goal", "ID"},
+									Name:       "SortedTaskExpiry",
+								},
+								MD: md[*protoconf.TaskConf_Task](),
+								ColFields: []*LevelField{
+									{
+										FD: fd[*protoconf.TaskConf_Task]("expiry"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											fd[*protoconf.TaskConf_Task]("expiry"),
 										},
 									},
 								},
