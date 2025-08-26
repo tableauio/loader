@@ -55,7 +55,7 @@ func ParseIndexFieldNameAsKeyStructFieldName(fd protoreflect.FieldDescriptor) st
 }
 
 func ParseIndexFieldNameAsFuncParam(fd protoreflect.FieldDescriptor) string {
-	return ParseIndexFieldNameAsKeyStructFieldName(fd)
+	return escapeIdentifier(strcase.ToLowerCamel(ParseIndexFieldNameAsKeyStructFieldName(fd)))
 }
 
 // ParseCsharpType converts a FieldDescriptor to C# type string.
@@ -102,6 +102,36 @@ func ParseCsharpClassType(md protoreflect.MessageDescriptor) string {
 		seps[i] = "Types." + seps[i]
 	}
 	return strings.Join(seps, ".")
+}
+
+// ParseOrderedMapKeyType converts a FieldDescriptor to its treemap key type.
+// fd must be an ordered type, or a message which can be converted to an ordered type.
+func ParseOrderedMapKeyType(fd protoreflect.FieldDescriptor) string {
+	switch fd.Kind() {
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind, protoreflect.EnumKind:
+		return "int"
+	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
+		return "uint"
+	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
+		return "long"
+	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		return "ulong"
+	case protoreflect.FloatKind:
+		return "float"
+	case protoreflect.DoubleKind:
+		return "double"
+	case protoreflect.StringKind:
+		return "string"
+	case protoreflect.MessageKind:
+		switch fd.Message().FullName() {
+		case "google.protobuf.Timestamp", "google.protobuf.Duration":
+			return "long"
+		default:
+		}
+		fallthrough
+	default:
+		panic(fmt.Sprintf("unsupported kind: %d", fd.Kind()))
+	}
 }
 
 func GetTypeEmptyValue(fd protoreflect.FieldDescriptor) string {

@@ -179,40 +179,40 @@ namespace Tableau
             GetOrderedMap2(activityId, chapterId)?.TryGetValue(sectionId, out var value) == true ? value.Item1 : null;
 
         // Index: ActivityName
-        public ref readonly Index_ActivityMap GetActivityMap() => ref _indexActivityMap;
+        public ref readonly Index_ActivityMap FindActivityMap() => ref _indexActivityMap;
 
-        public List<Protoconf.ActivityConf.Types.Activity>? GetActivity(string ActivityName) =>
-            _indexActivityMap.TryGetValue(ActivityName, out var value) ? value : null;
+        public List<Protoconf.ActivityConf.Types.Activity>? FindActivity(string activityName) =>
+            _indexActivityMap.TryGetValue(activityName, out var value) ? value : null;
 
-        public Protoconf.ActivityConf.Types.Activity? GetFirstActivity(string ActivityName) =>
-            GetActivity(ActivityName)?.FirstOrDefault();
+        public Protoconf.ActivityConf.Types.Activity? FindFirstActivity(string activityName) =>
+            FindActivity(activityName)?.FirstOrDefault();
 
         // Index: ChapterID
-        public ref readonly Index_ChapterMap GetChapterMap() => ref _indexChapterMap;
+        public ref readonly Index_ChapterMap FindChapterMap() => ref _indexChapterMap;
 
-        public List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>? GetChapter(uint ChapterId) =>
-            _indexChapterMap.TryGetValue(ChapterId, out var value) ? value : null;
+        public List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>? FindChapter(uint chapterId) =>
+            _indexChapterMap.TryGetValue(chapterId, out var value) ? value : null;
 
-        public Protoconf.ActivityConf.Types.Activity.Types.Chapter? GetFirstChapter(uint ChapterId) =>
-            GetChapter(ChapterId)?.FirstOrDefault();
+        public Protoconf.ActivityConf.Types.Activity.Types.Chapter? FindFirstChapter(uint chapterId) =>
+            FindChapter(chapterId)?.FirstOrDefault();
 
         // Index: ChapterName<AwardID>@NamedChapter
-        public ref readonly Index_NamedChapterMap GetNamedChapterMap() => ref _indexNamedChapterMap;
+        public ref readonly Index_NamedChapterMap FindNamedChapterMap() => ref _indexNamedChapterMap;
 
-        public List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>? GetNamedChapter(string ChapterName) =>
-            _indexNamedChapterMap.TryGetValue(ChapterName, out var value) ? value : null;
+        public List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>? FindNamedChapter(string chapterName) =>
+            _indexNamedChapterMap.TryGetValue(chapterName, out var value) ? value : null;
 
-        public Protoconf.ActivityConf.Types.Activity.Types.Chapter? GetFirstNamedChapter(string ChapterName) =>
-            GetNamedChapter(ChapterName)?.FirstOrDefault();
+        public Protoconf.ActivityConf.Types.Activity.Types.Chapter? FindFirstNamedChapter(string chapterName) =>
+            FindNamedChapter(chapterName)?.FirstOrDefault();
 
         // Index: SectionItemID@Award
-        public ref readonly Index_AwardMap GetAwardMap() => ref _indexAwardMap;
+        public ref readonly Index_AwardMap FindAwardMap() => ref _indexAwardMap;
 
-        public List<Protoconf.Section.Types.SectionItem>? GetAward(uint Id) =>
-            _indexAwardMap.TryGetValue(Id, out var value) ? value : null;
+        public List<Protoconf.Section.Types.SectionItem>? FindAward(uint id) =>
+            _indexAwardMap.TryGetValue(id, out var value) ? value : null;
 
-        public Protoconf.Section.Types.SectionItem? GetFirstAward(uint Id) =>
-            GetAward(Id)?.FirstOrDefault();
+        public Protoconf.Section.Types.SectionItem? FindFirstAward(uint id) =>
+            FindAward(id)?.FirstOrDefault();
     }
 
     public class ChapterConf : Messager, IMessagerName
@@ -290,6 +290,22 @@ namespace Tableau
 
         private readonly Index_TaskMap _indexTaskMap = [];
 
+        // OrderedIndex types.
+        // OrderedIndex: Goal<ID>@OrderedTask
+        public class OrderedIndex_OrderedTaskMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>>;
+
+        private readonly OrderedIndex_OrderedTaskMap _orderedIndexOrderedTaskMap = [];
+
+        // OrderedIndex: Expiry@TaskExpiry
+        public class OrderedIndex_TaskExpiryMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>>;
+
+        private readonly OrderedIndex_TaskExpiryMap _orderedIndexTaskExpiryMap = [];
+
+        // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
+        public class OrderedIndex_SortedTaskExpiryMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>>;
+
+        private readonly OrderedIndex_SortedTaskExpiryMap _orderedIndexSortedTaskExpiryMap = [];
+
         private Protoconf.TaskConf _data = new();
 
         public static string Name() => Protoconf.TaskConf.Descriptor.Name;
@@ -342,6 +358,54 @@ namespace Tableau
                     return a.Id.CompareTo(b.Id);
                 });
             }
+            // OrderedIndex init.
+            _orderedIndexOrderedTaskMap.Clear();
+            _orderedIndexTaskExpiryMap.Clear();
+            _orderedIndexSortedTaskExpiryMap.Clear();
+            foreach (var item1 in _data.TaskMap)
+            {
+                {
+                    // OrderedIndex: Goal<ID>@OrderedTask
+                    var key = item1.Value.Goal;
+                    var list = _orderedIndexOrderedTaskMap.TryGetValue(key, out var existingList) ?
+                    existingList : _orderedIndexOrderedTaskMap[key] = [];
+                    list.Add(item1.Value);
+                }
+                {
+                    // OrderedIndex: Expiry@TaskExpiry
+                    var key = item1.Value.Expiry.Seconds;
+                    var list = _orderedIndexTaskExpiryMap.TryGetValue(key, out var existingList) ?
+                    existingList : _orderedIndexTaskExpiryMap[key] = [];
+                    list.Add(item1.Value);
+                }
+                {
+                    // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
+                    var key = item1.Value.Expiry.Seconds;
+                    var list = _orderedIndexSortedTaskExpiryMap.TryGetValue(key, out var existingList) ?
+                    existingList : _orderedIndexSortedTaskExpiryMap[key] = [];
+                    list.Add(item1.Value);
+                }
+            }
+            // Index(sort): Goal<ID>@OrderedTask
+            foreach (var item in _orderedIndexOrderedTaskMap)
+            {
+                item.Value.Sort((a, b) =>
+                {
+                    return a.Id.CompareTo(b.Id);
+                });
+            }
+            // Index(sort): Expiry<Goal,ID>@SortedTaskExpiry
+            foreach (var item in _orderedIndexSortedTaskExpiryMap)
+            {
+                item.Value.Sort((a, b) =>
+                {
+                    if (a.Goal != b.Goal)
+                    {
+                        return a.Goal.CompareTo(b.Goal);
+                    }
+                    return a.Id.CompareTo(b.Id);
+                });
+            }
             return true;
         }
 
@@ -349,12 +413,39 @@ namespace Tableau
             _data.TaskMap?.TryGetValue(id, out var val) == true ? val : null;
 
         // Index: ActivityID<Goal,ID>
-        public ref readonly Index_TaskMap GetTaskMap() => ref _indexTaskMap;
+        public ref readonly Index_TaskMap FindTaskMap() => ref _indexTaskMap;
 
-        public List<Protoconf.TaskConf.Types.Task>? GetTask(long ActivityId) =>
-            _indexTaskMap.TryGetValue(ActivityId, out var value) ? value : null;
+        public List<Protoconf.TaskConf.Types.Task>? FindTask(long activityId) =>
+            _indexTaskMap.TryGetValue(activityId, out var value) ? value : null;
 
-        public Protoconf.TaskConf.Types.Task? GetFirstTask(long ActivityId) =>
-            GetTask(ActivityId)?.FirstOrDefault();
+        public Protoconf.TaskConf.Types.Task? FindFirstTask(long activityId) =>
+            FindTask(activityId)?.FirstOrDefault();
+
+        // OrderedIndex: Goal<ID>@OrderedTask
+        public ref readonly OrderedIndex_OrderedTaskMap FindOrderedTaskMap() => ref _orderedIndexOrderedTaskMap;
+
+        public List<Protoconf.TaskConf.Types.Task>? FindOrderedTask(long goal) =>
+            _orderedIndexOrderedTaskMap.TryGetValue(goal, out var value) ? value : null;
+
+        public Protoconf.TaskConf.Types.Task? FindFirstOrderedTask(long goal) =>
+            FindOrderedTask(goal)?.FirstOrDefault();
+
+        // OrderedIndex: Expiry@TaskExpiry
+        public ref readonly OrderedIndex_TaskExpiryMap FindTaskExpiryMap() => ref _orderedIndexTaskExpiryMap;
+
+        public List<Protoconf.TaskConf.Types.Task>? FindTaskExpiry(long expiry) =>
+            _orderedIndexTaskExpiryMap.TryGetValue(expiry, out var value) ? value : null;
+
+        public Protoconf.TaskConf.Types.Task? FindFirstTaskExpiry(long expiry) =>
+            FindTaskExpiry(expiry)?.FirstOrDefault();
+
+        // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
+        public ref readonly OrderedIndex_SortedTaskExpiryMap FindSortedTaskExpiryMap() => ref _orderedIndexSortedTaskExpiryMap;
+
+        public List<Protoconf.TaskConf.Types.Task>? FindSortedTaskExpiry(long expiry) =>
+            _orderedIndexSortedTaskExpiryMap.TryGetValue(expiry, out var value) ? value : null;
+
+        public Protoconf.TaskConf.Types.Task? FindFirstSortedTaskExpiry(long expiry) =>
+            FindSortedTaskExpiry(expiry)?.FirstOrDefault();
     }
 }
