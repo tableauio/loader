@@ -235,7 +235,7 @@ func genIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescripto
 			indexContainerName := "_index" + strcase.ToCamel(index.Name()) + "Map"
 			g.P()
 			g.P(helper.Indent(2), "// Index: ", index.Index)
-			g.P(helper.Indent(2), "public ref readonly ", mapType, " Get", index.Name(), "Map() => ref ", indexContainerName, ";")
+			g.P(helper.Indent(2), "public ref readonly ", mapType, " Find", index.Name(), "Map() => ref ", indexContainerName, ";")
 			g.P()
 
 			var keyType, keyName string
@@ -250,12 +250,12 @@ func genIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescripto
 				keyName = "key"
 			}
 
-			g.P(helper.Indent(2), "public List<", helper.ParseCsharpClassType(index.MD), ">? Get", index.Name(), "(", keyType, " ", keyName, ") =>")
+			g.P(helper.Indent(2), "public List<", helper.ParseCsharpClassType(index.MD), ">? Find", index.Name(), "(", keyType, " ", keyName, ") =>")
 			g.P(helper.Indent(3), indexContainerName, ".TryGetValue(", keyName, ", out var value) ? value : null;")
 			g.P()
 
-			g.P(helper.Indent(2), "public ", helper.ParseCsharpClassType(index.MD), "? GetFirst", index.Name(), "(", keyType, " ", keyName, ") =>")
-			g.P(helper.Indent(3), "Get", index.Name(), "(", keyName, ")?.FirstOrDefault();")
+			g.P(helper.Indent(2), "public ", helper.ParseCsharpClassType(index.MD), "? FindFirst", index.Name(), "(", keyType, " ", keyName, ") =>")
+			g.P(helper.Indent(3), "Find", index.Name(), "(", keyName, ")?.FirstOrDefault();")
 		}
 	}
 }

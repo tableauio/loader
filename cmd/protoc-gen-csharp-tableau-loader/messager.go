@@ -66,6 +66,9 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	if options.NeedGenIndex(message.Desc, options.LangCS) {
 		genIndexTypeDef(g, indexDescriptor, messagerName)
 	}
+	if options.NeedGenOrderedIndex(message.Desc, options.LangCS) {
+		genOrderedIndexTypeDef(g, indexDescriptor)
+	}
 	g.P(helper.Indent(2), "private Protoconf.", messagerName, " _data = new();")
 	g.P()
 	g.P(helper.Indent(2), "public static string Name() => Protoconf.", messagerName, ".Descriptor.Name;")
@@ -102,6 +105,9 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 		if options.NeedGenIndex(message.Desc, options.LangCS) {
 			genIndexLoader(g, indexDescriptor, messagerName)
 		}
+		if options.NeedGenOrderedIndex(message.Desc, options.LangCS) {
+			genOrderedIndexLoader(g, indexDescriptor)
+		}
 		g.P(helper.Indent(3), "return true;")
 		g.P(helper.Indent(2), "}")
 	}
@@ -113,6 +119,9 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	}
 	if options.NeedGenIndex(message.Desc, options.LangCS) {
 		genIndexFinders(g, indexDescriptor, messagerName)
+	}
+	if options.NeedGenOrderedIndex(message.Desc, options.LangCS) {
+		genOrderedIndexFinders(g, indexDescriptor)
 	}
 	g.P(helper.Indent(1), "}")
 }

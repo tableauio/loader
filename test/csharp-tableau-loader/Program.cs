@@ -73,7 +73,7 @@
             Console.WriteLine($"ItemConf Load duration: {itemConf.GetStats().Duration.TotalMilliseconds} ms");
             var itemConf2 = hub.GetItemConf();
             Console.WriteLine($"hub.Get<Tableau.ItemConf>() returns same instance with hub.GetItemConf(): {ReferenceEquals(itemConf, itemConf2)}");
-            var itemInfoMap = itemConf.GetItemInfoMap();
+            var itemInfoMap = itemConf.FindItemInfoMap();
             if (itemInfoMap != null)
             {
                 Console.WriteLine("ItemInfoMap Contents:");

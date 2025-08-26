@@ -244,93 +244,93 @@ namespace Tableau
         public ref readonly Item_OrderedMap GetOrderedMap() => ref _orderedMap;
 
         // Index: Type
-        public ref readonly Index_ItemMap GetItemMap() => ref _indexItemMap;
+        public ref readonly Index_ItemMap FindItemMap() => ref _indexItemMap;
 
-        public List<Protoconf.ItemConf.Types.Item>? GetItem(Protoconf.FruitType Type) =>
-            _indexItemMap.TryGetValue(Type, out var value) ? value : null;
+        public List<Protoconf.ItemConf.Types.Item>? FindItem(Protoconf.FruitType type) =>
+            _indexItemMap.TryGetValue(type, out var value) ? value : null;
 
-        public Protoconf.ItemConf.Types.Item? GetFirstItem(Protoconf.FruitType Type) =>
-            GetItem(Type)?.FirstOrDefault();
+        public Protoconf.ItemConf.Types.Item? FindFirstItem(Protoconf.FruitType type) =>
+            FindItem(type)?.FirstOrDefault();
 
         // Index: Param<ID>@ItemInfo
-        public ref readonly Index_ItemInfoMap GetItemInfoMap() => ref _indexItemInfoMap;
+        public ref readonly Index_ItemInfoMap FindItemInfoMap() => ref _indexItemInfoMap;
 
-        public List<Protoconf.ItemConf.Types.Item>? GetItemInfo(int Param) =>
-            _indexItemInfoMap.TryGetValue(Param, out var value) ? value : null;
+        public List<Protoconf.ItemConf.Types.Item>? FindItemInfo(int param) =>
+            _indexItemInfoMap.TryGetValue(param, out var value) ? value : null;
 
-        public Protoconf.ItemConf.Types.Item? GetFirstItemInfo(int Param) =>
-            GetItemInfo(Param)?.FirstOrDefault();
+        public Protoconf.ItemConf.Types.Item? FindFirstItemInfo(int param) =>
+            FindItemInfo(param)?.FirstOrDefault();
 
         // Index: Default@ItemDefaultInfo
-        public ref readonly Index_ItemDefaultInfoMap GetItemDefaultInfoMap() => ref _indexItemDefaultInfoMap;
+        public ref readonly Index_ItemDefaultInfoMap FindItemDefaultInfoMap() => ref _indexItemDefaultInfoMap;
 
-        public List<Protoconf.ItemConf.Types.Item>? GetItemDefaultInfo(string Default) =>
-            _indexItemDefaultInfoMap.TryGetValue(Default, out var value) ? value : null;
+        public List<Protoconf.ItemConf.Types.Item>? FindItemDefaultInfo(string default_) =>
+            _indexItemDefaultInfoMap.TryGetValue(default_, out var value) ? value : null;
 
-        public Protoconf.ItemConf.Types.Item? GetFirstItemDefaultInfo(string Default) =>
-            GetItemDefaultInfo(Default)?.FirstOrDefault();
+        public Protoconf.ItemConf.Types.Item? FindFirstItemDefaultInfo(string default_) =>
+            FindItemDefaultInfo(default_)?.FirstOrDefault();
 
         // Index: ExtType@ItemExtInfo
-        public ref readonly Index_ItemExtInfoMap GetItemExtInfoMap() => ref _indexItemExtInfoMap;
+        public ref readonly Index_ItemExtInfoMap FindItemExtInfoMap() => ref _indexItemExtInfoMap;
 
-        public List<Protoconf.ItemConf.Types.Item>? GetItemExtInfo(Protoconf.FruitType ExtType) =>
-            _indexItemExtInfoMap.TryGetValue(ExtType, out var value) ? value : null;
+        public List<Protoconf.ItemConf.Types.Item>? FindItemExtInfo(Protoconf.FruitType extType) =>
+            _indexItemExtInfoMap.TryGetValue(extType, out var value) ? value : null;
 
-        public Protoconf.ItemConf.Types.Item? GetFirstItemExtInfo(Protoconf.FruitType ExtType) =>
-            GetItemExtInfo(ExtType)?.FirstOrDefault();
+        public Protoconf.ItemConf.Types.Item? FindFirstItemExtInfo(Protoconf.FruitType extType) =>
+            FindItemExtInfo(extType)?.FirstOrDefault();
 
         // Index: (ID,Name)<Type,UseEffectType>@AwardItem
-        public ref readonly Index_AwardItemMap GetAwardItemMap() => ref _indexAwardItemMap;
+        public ref readonly Index_AwardItemMap FindAwardItemMap() => ref _indexAwardItemMap;
 
-        public List<Protoconf.ItemConf.Types.Item>? GetAwardItem(ItemConf_Index_AwardItemKey key) =>
+        public List<Protoconf.ItemConf.Types.Item>? FindAwardItem(ItemConf_Index_AwardItemKey key) =>
             _indexAwardItemMap.TryGetValue(key, out var value) ? value : null;
 
-        public Protoconf.ItemConf.Types.Item? GetFirstAwardItem(ItemConf_Index_AwardItemKey key) =>
-            GetAwardItem(key)?.FirstOrDefault();
+        public Protoconf.ItemConf.Types.Item? FindFirstAwardItem(ItemConf_Index_AwardItemKey key) =>
+            FindAwardItem(key)?.FirstOrDefault();
 
         // Index: (ID,Type,Param,ExtType)@SpecialItem
-        public ref readonly Index_SpecialItemMap GetSpecialItemMap() => ref _indexSpecialItemMap;
+        public ref readonly Index_SpecialItemMap FindSpecialItemMap() => ref _indexSpecialItemMap;
 
-        public List<Protoconf.ItemConf.Types.Item>? GetSpecialItem(ItemConf_Index_SpecialItemKey key) =>
+        public List<Protoconf.ItemConf.Types.Item>? FindSpecialItem(ItemConf_Index_SpecialItemKey key) =>
             _indexSpecialItemMap.TryGetValue(key, out var value) ? value : null;
 
-        public Protoconf.ItemConf.Types.Item? GetFirstSpecialItem(ItemConf_Index_SpecialItemKey key) =>
-            GetSpecialItem(key)?.FirstOrDefault();
+        public Protoconf.ItemConf.Types.Item? FindFirstSpecialItem(ItemConf_Index_SpecialItemKey key) =>
+            FindSpecialItem(key)?.FirstOrDefault();
 
         // Index: PathDir@ItemPathDir
-        public ref readonly Index_ItemPathDirMap GetItemPathDirMap() => ref _indexItemPathDirMap;
+        public ref readonly Index_ItemPathDirMap FindItemPathDirMap() => ref _indexItemPathDirMap;
 
-        public List<Protoconf.ItemConf.Types.Item>? GetItemPathDir(string Dir) =>
-            _indexItemPathDirMap.TryGetValue(Dir, out var value) ? value : null;
+        public List<Protoconf.ItemConf.Types.Item>? FindItemPathDir(string dir) =>
+            _indexItemPathDirMap.TryGetValue(dir, out var value) ? value : null;
 
-        public Protoconf.ItemConf.Types.Item? GetFirstItemPathDir(string Dir) =>
-            GetItemPathDir(Dir)?.FirstOrDefault();
+        public Protoconf.ItemConf.Types.Item? FindFirstItemPathDir(string dir) =>
+            FindItemPathDir(dir)?.FirstOrDefault();
 
         // Index: PathName@ItemPathName
-        public ref readonly Index_ItemPathNameMap GetItemPathNameMap() => ref _indexItemPathNameMap;
+        public ref readonly Index_ItemPathNameMap FindItemPathNameMap() => ref _indexItemPathNameMap;
 
-        public List<Protoconf.ItemConf.Types.Item>? GetItemPathName(string Name) =>
-            _indexItemPathNameMap.TryGetValue(Name, out var value) ? value : null;
+        public List<Protoconf.ItemConf.Types.Item>? FindItemPathName(string name) =>
+            _indexItemPathNameMap.TryGetValue(name, out var value) ? value : null;
 
-        public Protoconf.ItemConf.Types.Item? GetFirstItemPathName(string Name) =>
-            GetItemPathName(Name)?.FirstOrDefault();
+        public Protoconf.ItemConf.Types.Item? FindFirstItemPathName(string name) =>
+            FindItemPathName(name)?.FirstOrDefault();
 
         // Index: PathFriendID@ItemPathFriendID
-        public ref readonly Index_ItemPathFriendIDMap GetItemPathFriendIDMap() => ref _indexItemPathFriendIdMap;
+        public ref readonly Index_ItemPathFriendIDMap FindItemPathFriendIDMap() => ref _indexItemPathFriendIdMap;
 
-        public List<Protoconf.ItemConf.Types.Item>? GetItemPathFriendID(uint Id) =>
-            _indexItemPathFriendIdMap.TryGetValue(Id, out var value) ? value : null;
+        public List<Protoconf.ItemConf.Types.Item>? FindItemPathFriendID(uint id) =>
+            _indexItemPathFriendIdMap.TryGetValue(id, out var value) ? value : null;
 
-        public Protoconf.ItemConf.Types.Item? GetFirstItemPathFriendID(uint Id) =>
-            GetItemPathFriendID(Id)?.FirstOrDefault();
+        public Protoconf.ItemConf.Types.Item? FindFirstItemPathFriendID(uint id) =>
+            FindItemPathFriendID(id)?.FirstOrDefault();
 
         // Index: UseEffectType@UseEffectType
-        public ref readonly Index_UseEffectTypeMap GetUseEffectTypeMap() => ref _indexUseEffectTypeMap;
+        public ref readonly Index_UseEffectTypeMap FindUseEffectTypeMap() => ref _indexUseEffectTypeMap;
 
-        public List<Protoconf.ItemConf.Types.Item>? GetUseEffectType(Protoconf.UseEffect.Types.Type Type) =>
-            _indexUseEffectTypeMap.TryGetValue(Type, out var value) ? value : null;
+        public List<Protoconf.ItemConf.Types.Item>? FindUseEffectType(Protoconf.UseEffect.Types.Type type) =>
+            _indexUseEffectTypeMap.TryGetValue(type, out var value) ? value : null;
 
-        public Protoconf.ItemConf.Types.Item? GetFirstUseEffectType(Protoconf.UseEffect.Types.Type Type) =>
-            GetUseEffectType(Type)?.FirstOrDefault();
+        public Protoconf.ItemConf.Types.Item? FindFirstUseEffectType(Protoconf.UseEffect.Types.Type type) =>
+            FindUseEffectType(type)?.FirstOrDefault();
     }
 }
