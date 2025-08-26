@@ -12,8 +12,8 @@ void SetErrMsg(const std::string& msg) { g_err_msg = msg; }
 
 const std::string kUnknownExt = ".unknown";
 const std::string kJSONExt = ".json";
-const std::string kTextExt = ".txt";
-const std::string kBinExt = ".bin";
+const std::string kTextExt = ".txtpb";
+const std::string kBinExt = ".binpb";
 
 namespace util {
 bool ReadFile(const std::filesystem::path& filename, std::string& content) {
