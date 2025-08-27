@@ -89,3 +89,15 @@ func (m *TreeMap[K, V]) Range(f func(key K, value V) bool) {
 		}
 	}
 }
+
+// ReverseRange calls f sequentially in reverse order for each key and value
+// present in the map. If f returns false, range stops the iteration.
+func (m *TreeMap[K, V]) ReverseRange(f func(key K, value V) bool) {
+	iterator := m.Iterator()
+	iterator.End()
+	for iterator.Prev() {
+		if !f(iterator.Key(), iterator.Value()) {
+			break
+		}
+	}
+}
