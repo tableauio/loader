@@ -30,10 +30,7 @@ type PatchReplaceConf struct {
 
 // Name returns the PatchReplaceConf's message name.
 func (x *PatchReplaceConf) Name() string {
-	if x != nil {
-		return string(x.data.ProtoReflect().Descriptor().Name())
-	}
-	return ""
+	return string((*protoconf.PatchReplaceConf)(nil).ProtoReflect().Descriptor().Name())
 }
 
 // Data returns the PatchReplaceConf's inner message data.
@@ -99,10 +96,7 @@ type PatchMergeConf struct {
 
 // Name returns the PatchMergeConf's message name.
 func (x *PatchMergeConf) Name() string {
-	if x != nil {
-		return string(x.data.ProtoReflect().Descriptor().Name())
-	}
-	return ""
+	return string((*protoconf.PatchMergeConf)(nil).ProtoReflect().Descriptor().Name())
 }
 
 // Data returns the PatchMergeConf's inner message data.
@@ -179,10 +173,7 @@ type RecursivePatchConf struct {
 
 // Name returns the RecursivePatchConf's message name.
 func (x *RecursivePatchConf) Name() string {
-	if x != nil {
-		return string(x.data.ProtoReflect().Descriptor().Name())
-	}
-	return ""
+	return string((*protoconf.RecursivePatchConf)(nil).ProtoReflect().Descriptor().Name())
 }
 
 // Data returns the RecursivePatchConf's inner message data.
