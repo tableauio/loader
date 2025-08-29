@@ -12,8 +12,8 @@ func prepareHubForTest() *tableau.Hub {
 	hub := tableau.NewHub()
 	err := hub.Load("../../testdata/conf/", format.JSON,
 		load.IgnoreUnknownFields(),
-		load.Paths(map[string]string{
-			"ItemConf": "../../testdata/conf/ItemConf.json",
+		load.WithMessagerOptions(map[string]*load.MessagerOptions{
+			"ItemConf": {Path: "../../testdata/conf/ItemConf.json"},
 		}))
 	if err != nil {
 		panic(err)
