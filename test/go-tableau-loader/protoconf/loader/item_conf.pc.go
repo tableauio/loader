@@ -87,10 +87,7 @@ type ItemConf struct {
 
 // Name returns the ItemConf's message name.
 func (x *ItemConf) Name() string {
-	if x != nil {
-		return string(x.data.ProtoReflect().Descriptor().Name())
-	}
-	return ""
+	return string((*protoconf.ItemConf)(nil).ProtoReflect().Descriptor().Name())
 }
 
 // Data returns the ItemConf's inner message data.

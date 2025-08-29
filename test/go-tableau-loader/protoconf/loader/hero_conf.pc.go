@@ -38,10 +38,7 @@ type HeroConf struct {
 
 // Name returns the HeroConf's message name.
 func (x *HeroConf) Name() string {
-	if x != nil {
-		return string(x.data.ProtoReflect().Descriptor().Name())
-	}
-	return ""
+	return string((*protoconf.HeroConf)(nil).ProtoReflect().Descriptor().Name())
 }
 
 // Data returns the HeroConf's inner message data.
@@ -179,10 +176,7 @@ type HeroBaseConf struct {
 
 // Name returns the HeroBaseConf's message name.
 func (x *HeroBaseConf) Name() string {
-	if x != nil {
-		return string(x.data.ProtoReflect().Descriptor().Name())
-	}
-	return ""
+	return string((*protoconf.HeroBaseConf)(nil).ProtoReflect().Descriptor().Name())
 }
 
 // Data returns the HeroBaseConf's inner message data.
