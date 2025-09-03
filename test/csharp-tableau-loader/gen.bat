@@ -12,10 +12,11 @@ set "ROOTDIR=%repoRoot%\test\csharp-tableau-loader"
 set "PLGUIN_DIR=%repoRoot%\cmd\protoc-gen-csharp-tableau-loader"
 set "PROTOCONF_IN=%repoRoot%\test\proto"
 set "PROTOCONF_OUT=%ROOTDIR%\protoconf"
+set "LOADER_OUT=%ROOTDIR%\tableau"
 
 REM remove old generated files
-rmdir /s /q "%PROTOCONF_OUT%" 2>nul
-mkdir "%PROTOCONF_OUT%"
+rmdir /s /q "%PROTOCONF_OUT%" "%LOADER_OUT%" 2>nul
+mkdir "%PROTOCONF_OUT%" "%LOADER_OUT%"
 
 REM build protoc plugin of loader
 pushd "%PLGUIN_DIR%"
@@ -32,7 +33,7 @@ for /R %%f in (*.proto) do (
 popd
 "%PROTOC%" ^
 --csharp_out="%PROTOCONF_OUT%" ^
---csharp-tableau-loader_out="%ROOTDIR%/tableau" ^
+--csharp-tableau-loader_out="%LOADER_OUT%" ^
 --csharp-tableau-loader_opt=paths=source_relative ^
 --proto_path="%PROTOBUF_PROTO%" ^
 --proto_path="%TABLEAU_PROTO%" ^

@@ -14,10 +14,11 @@ ROOTDIR="./test/csharp-tableau-loader"
 PLGUIN_DIR="./cmd/protoc-gen-csharp-tableau-loader"
 PROTOCONF_IN="./test/proto"
 PROTOCONF_OUT="${ROOTDIR}/protoconf"
+LOADER_OUT="${ROOTDIR}/tableau"
 
 # remove old generated files
-rm -rfv "$PROTOCONF_OUT"
-mkdir -p "$PROTOCONF_OUT"
+rm -rfv "$PROTOCONF_OUT" "$LOADER_OUT"
+mkdir -p "$PROTOCONF_OUT" "$LOADER_OUT"
 
 # build
 cd "${PLGUIN_DIR}" && go build && cd -
@@ -26,7 +27,7 @@ export PATH="${PATH}:${PLGUIN_DIR}"
 
 ${PROTOC} \
     --csharp_out="$PROTOCONF_OUT" \
-    --csharp-tableau-loader_out="$ROOTDIR/tableau" \
+    --csharp-tableau-loader_out="$LOADER_OUT" \
     --csharp-tableau-loader_opt=paths=source_relative \
     --proto_path="$PROTOBUF_PROTO" \
     --proto_path="$TABLEAU_PROTO" \
