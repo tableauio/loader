@@ -6,6 +6,7 @@ import (
 
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-csharp-tableau-loader/helper"
+	"github.com/tableauio/loader/internal/extensions"
 	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/loader/internal/options"
 	"github.com/tableauio/tableau/proto/tableaupb"
@@ -22,7 +23,7 @@ var messagers []string
 // Each wrapped struct type implement the Messager interface.
 func generateMessager(gen *protogen.Plugin, file *protogen.File) {
 
-	filename := filepath.Join(strcase.ToCamel(file.GeneratedFilenamePrefix) + ".cs")
+	filename := filepath.Join(strcase.ToCamel(file.GeneratedFilenamePrefix) + "." + extensions.PC + ".cs")
 	g := gen.NewGeneratedFile(filename, "")
 	helper.GenerateFileHeader(gen, file, g, version)
 	generateFileContent(gen, file, g)
