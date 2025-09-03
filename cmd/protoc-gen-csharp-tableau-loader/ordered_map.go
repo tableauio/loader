@@ -51,7 +51,7 @@ func genOrderedMapTypeDef(g *protogen.GeneratedFile, md protoreflect.MessageDesc
 				g.P()
 			}
 			if depth == 1 {
-				g.P(helper.Indent(2), "private readonly ", orderedMap, " _orderedMap = [];")
+				g.P(helper.Indent(2), "private ", orderedMap, " _orderedMap = [];")
 				g.P()
 			}
 			break

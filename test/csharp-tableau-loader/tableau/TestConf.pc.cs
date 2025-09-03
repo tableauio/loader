@@ -26,28 +26,28 @@ namespace Tableau
             : Tuple<Activity_Chapter_OrderedMap, Protoconf.ActivityConf.Types.Activity>(item1, item2);
         public class Activity_OrderedMap : SortedDictionary<ulong, Activity_OrderedMapValue>;
 
-        private readonly Activity_OrderedMap _orderedMap = [];
+        private Activity_OrderedMap _orderedMap = [];
 
         // Index types.
         // Index: ActivityName
         public class Index_ActivityMap : Dictionary<string, List<Protoconf.ActivityConf.Types.Activity>>;
 
-        private readonly Index_ActivityMap _indexActivityMap = [];
+        private Index_ActivityMap _indexActivityMap = [];
 
         // Index: ChapterID
         public class Index_ChapterMap : Dictionary<uint, List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>>;
 
-        private readonly Index_ChapterMap _indexChapterMap = [];
+        private Index_ChapterMap _indexChapterMap = [];
 
         // Index: ChapterName<AwardID>@NamedChapter
         public class Index_NamedChapterMap : Dictionary<string, List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>>;
 
-        private readonly Index_NamedChapterMap _indexNamedChapterMap = [];
+        private Index_NamedChapterMap _indexNamedChapterMap = [];
 
         // Index: SectionItemID@Award
         public class Index_AwardMap : Dictionary<uint, List<Protoconf.Section.Types.SectionItem>>;
 
-        private readonly Index_AwardMap _indexAwardMap = [];
+        private Index_AwardMap _indexAwardMap = [];
 
         private Protoconf.ActivityConf _data = new();
 
@@ -288,23 +288,23 @@ namespace Tableau
         // Index: ActivityID<Goal,ID>
         public class Index_TaskMap : Dictionary<long, List<Protoconf.TaskConf.Types.Task>>;
 
-        private readonly Index_TaskMap _indexTaskMap = [];
+        private Index_TaskMap _indexTaskMap = [];
 
         // OrderedIndex types.
         // OrderedIndex: Goal<ID>@OrderedTask
         public class OrderedIndex_OrderedTaskMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>>;
 
-        private readonly OrderedIndex_OrderedTaskMap _orderedIndexOrderedTaskMap = [];
+        private OrderedIndex_OrderedTaskMap _orderedIndexOrderedTaskMap = [];
 
         // OrderedIndex: Expiry@TaskExpiry
         public class OrderedIndex_TaskExpiryMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>>;
 
-        private readonly OrderedIndex_TaskExpiryMap _orderedIndexTaskExpiryMap = [];
+        private OrderedIndex_TaskExpiryMap _orderedIndexTaskExpiryMap = [];
 
         // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
         public class OrderedIndex_SortedTaskExpiryMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>>;
 
-        private readonly OrderedIndex_SortedTaskExpiryMap _orderedIndexSortedTaskExpiryMap = [];
+        private OrderedIndex_SortedTaskExpiryMap _orderedIndexSortedTaskExpiryMap = [];
 
         private Protoconf.TaskConf _data = new();
 

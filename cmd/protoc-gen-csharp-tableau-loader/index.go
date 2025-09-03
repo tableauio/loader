@@ -44,7 +44,7 @@ func genIndexTypeDef(g *protogen.GeneratedFile, descriptor *index.IndexDescripto
 			}
 			g.P()
 			indexContainerName := "_index" + strcase.ToCamel(index.Name()) + "Map"
-			g.P(helper.Indent(2), "private readonly ", mapType, " ", indexContainerName, " = [];")
+			g.P(helper.Indent(2), "private ", mapType, " ", indexContainerName, " = [];")
 			g.P()
 		}
 	}

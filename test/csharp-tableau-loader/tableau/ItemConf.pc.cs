@@ -14,28 +14,28 @@ namespace Tableau
         // OrderedMap types.
         public class Item_OrderedMap : SortedDictionary<uint, Protoconf.ItemConf.Types.Item>;
 
-        private readonly Item_OrderedMap _orderedMap = [];
+        private Item_OrderedMap _orderedMap = [];
 
         // Index types.
         // Index: Type
         public class Index_ItemMap : Dictionary<Protoconf.FruitType, List<Protoconf.ItemConf.Types.Item>>;
 
-        private readonly Index_ItemMap _indexItemMap = [];
+        private Index_ItemMap _indexItemMap = [];
 
         // Index: Param<ID>@ItemInfo
         public class Index_ItemInfoMap : Dictionary<int, List<Protoconf.ItemConf.Types.Item>>;
 
-        private readonly Index_ItemInfoMap _indexItemInfoMap = [];
+        private Index_ItemInfoMap _indexItemInfoMap = [];
 
         // Index: Default@ItemDefaultInfo
         public class Index_ItemDefaultInfoMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>>;
 
-        private readonly Index_ItemDefaultInfoMap _indexItemDefaultInfoMap = [];
+        private Index_ItemDefaultInfoMap _indexItemDefaultInfoMap = [];
 
         // Index: ExtType@ItemExtInfo
         public class Index_ItemExtInfoMap : Dictionary<Protoconf.FruitType, List<Protoconf.ItemConf.Types.Item>>;
 
-        private readonly Index_ItemExtInfoMap _indexItemExtInfoMap = [];
+        private Index_ItemExtInfoMap _indexItemExtInfoMap = [];
 
         // Index: (ID,Name)<Type,UseEffectType>@AwardItem
         public struct ItemConf_Index_AwardItemKey(uint id, string name)
@@ -46,7 +46,7 @@ namespace Tableau
 
         public class Index_AwardItemMap : Dictionary<ItemConf_Index_AwardItemKey, List<Protoconf.ItemConf.Types.Item>>;
 
-        private readonly Index_AwardItemMap _indexAwardItemMap = [];
+        private Index_AwardItemMap _indexAwardItemMap = [];
 
         // Index: (ID,Type,Param,ExtType)@SpecialItem
         public struct ItemConf_Index_SpecialItemKey(uint id, Protoconf.FruitType type, int param, Protoconf.FruitType extType)
@@ -59,27 +59,27 @@ namespace Tableau
 
         public class Index_SpecialItemMap : Dictionary<ItemConf_Index_SpecialItemKey, List<Protoconf.ItemConf.Types.Item>>;
 
-        private readonly Index_SpecialItemMap _indexSpecialItemMap = [];
+        private Index_SpecialItemMap _indexSpecialItemMap = [];
 
         // Index: PathDir@ItemPathDir
         public class Index_ItemPathDirMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>>;
 
-        private readonly Index_ItemPathDirMap _indexItemPathDirMap = [];
+        private Index_ItemPathDirMap _indexItemPathDirMap = [];
 
         // Index: PathName@ItemPathName
         public class Index_ItemPathNameMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>>;
 
-        private readonly Index_ItemPathNameMap _indexItemPathNameMap = [];
+        private Index_ItemPathNameMap _indexItemPathNameMap = [];
 
         // Index: PathFriendID@ItemPathFriendID
         public class Index_ItemPathFriendIDMap : Dictionary<uint, List<Protoconf.ItemConf.Types.Item>>;
 
-        private readonly Index_ItemPathFriendIDMap _indexItemPathFriendIdMap = [];
+        private Index_ItemPathFriendIDMap _indexItemPathFriendIdMap = [];
 
         // Index: UseEffectType@UseEffectType
         public class Index_UseEffectTypeMap : Dictionary<Protoconf.UseEffect.Types.Type, List<Protoconf.ItemConf.Types.Item>>;
 
-        private readonly Index_UseEffectTypeMap _indexUseEffectTypeMap = [];
+        private Index_UseEffectTypeMap _indexUseEffectTypeMap = [];
 
         private Protoconf.ItemConf _data = new();
 

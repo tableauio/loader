@@ -18,7 +18,7 @@ namespace Tableau
             : Tuple<Hero_Attr_OrderedMap, Protoconf.HeroConf.Types.Hero>(item1, item2);
         public class Hero_OrderedMap : SortedDictionary<string, Hero_OrderedMapValue>;
 
-        private readonly Hero_OrderedMap _orderedMap = [];
+        private Hero_OrderedMap _orderedMap = [];
 
         private Protoconf.HeroConf _data = new();
 

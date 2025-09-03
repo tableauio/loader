@@ -21,7 +21,7 @@ func genOrderedIndexTypeDef(g *protogen.GeneratedFile, descriptor *index.IndexDe
 			g.P(helper.Indent(2), "public class ", mapType, " : SortedDictionary<", keyType, ", List<", helper.ParseCsharpClassType(index.MD), ">>;")
 			g.P()
 			indexContainerName := "_orderedIndex" + strcase.ToCamel(index.Name()) + "Map"
-			g.P(helper.Indent(2), "private readonly ", mapType, " ", indexContainerName, " = [];")
+			g.P(helper.Indent(2), "private ", mapType, " ", indexContainerName, " = [];")
 			g.P()
 		}
 	}

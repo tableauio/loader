@@ -15,44 +15,44 @@ func generateHub(gen *protogen.Plugin) {
 	helper.GenerateFileHeader(gen, nil, g, version)
 	g.P(staticHubContent1)
 	for _, messager := range messagers {
-		g.P(helper.Indent(2), "public ", messager, "? ", messager, ";")
+		g.P(helper.Indent(2), "public ", messager, "? ", messager, " = InternalGet<", messager, ">(messagerMap);")
 	}
 	g.P(staticHubContent2)
 	for _, messager := range messagers {
-		g.P(helper.Indent(4), messager, " = Get<", messager, ">();")
+		g.P()
+		g.P(helper.Indent(2), "public ", messager, "? Get", messager, "() => _messagerContainer.Value?.", messager, ";")
 	}
 	g.P(staticHubContent3)
 	for _, messager := range messagers {
-		g.P()
-		g.P(helper.Indent(2), "public ", messager, "? Get", messager, "() => _messagerContainer.", messager, ";")
-	}
-	g.P(staticHubContent4)
-	for _, messager := range messagers {
 		g.P("            Register<", messager, ">();")
 	}
-	g.P(staticHubContent5)
+	g.P(staticHubContent4)
 }
 
 const staticHubContent1 = `using pb = global::Google.Protobuf;
 namespace Tableau
 {
-    internal class MessagerContainer
+    internal class MessagerContainer(in Dictionary<string, Messager>? messagerMap = null)
     {
-        public Dictionary<string, Messager> MessagerMap;
-        public DateTime LastLoadedTime;`
+        public Dictionary<string, Messager> MessagerMap = messagerMap ?? [];
+        public DateTime LastLoadedTime = DateTime.Now;`
 
 var staticHubContent2 = `
-        public MessagerContainer(in Dictionary<string, Messager>? messagerMap = null)
+        public T? Get<T>() where T : Messager, IMessagerName => InternalGet<T>(MessagerMap);
+
+        private static T? InternalGet<T>(in Dictionary<string, Messager>? messagerMap) where T : Messager, IMessagerName =>
+           messagerMap?.TryGetValue(T.Name(), out var messager) == true ? (T)messager : null;
+    }
+
+    internal class Atomic<T> where T : class
+    {
+        private T? _value;
+
+        public T? Value
         {
-            MessagerMap = messagerMap ?? [];
-            LastLoadedTime = DateTime.Now;
-            if (messagerMap != null)
-            {`
-
-var staticHubContent3 = `            }
+            get => Interlocked.CompareExchange(ref _value, null, null);
+            set => Interlocked.Exchange(ref _value, value);
         }
-
-        public T? Get<T>() where T : Messager, IMessagerName => MessagerMap.TryGetValue(T.Name(), out var messager) ? (T)messager : null;
     }
 
     public class HubOptions
@@ -62,8 +62,8 @@ var staticHubContent3 = `            }
 
     public class Hub(HubOptions? options = null)
     {
-        private MessagerContainer _messagerContainer = new();
-        private readonly HubOptions _options = options ?? new HubOptions();
+        private Atomic<MessagerContainer> _messagerContainer = new();
+        private readonly HubOptions? _options = options;
 
         public bool Load(string dir, Format fmt, in Load.Options? options = null)
         {
@@ -90,21 +90,21 @@ var staticHubContent3 = `            }
             return true;
         }
 
-        public ref Dictionary<string, Messager> GetMessagerMap() => ref _messagerContainer.MessagerMap;
+        public IReadOnlyDictionary<string, Messager>? GetMessagerMap() => _messagerContainer.Value?.MessagerMap;
 
-        public void SetMessagerMap(in Dictionary<string, Messager> map) => _messagerContainer = new MessagerContainer(map);
+        public void SetMessagerMap(in Dictionary<string, Messager> map) => _messagerContainer.Value = new MessagerContainer(map);
 
-        public T? Get<T>() where T : Messager, IMessagerName => _messagerContainer.Get<T>();`
+        public T? Get<T>() where T : Messager, IMessagerName => _messagerContainer.Value?.Get<T>();`
 
-const staticHubContent4 = `
-        public DateTime GetLastLoadedTime() => _messagerContainer.LastLoadedTime;
+const staticHubContent3 = `
+        public DateTime? GetLastLoadedTime() => _messagerContainer.Value?.LastLoadedTime;
 
         private Dictionary<string, Messager> NewMessagerMap()
         {
             var messagerMap = new Dictionary<string, Messager>();
             foreach (var kv in Registry.Registrar)
             {
-                if (_options.Filter?.Invoke(kv.Key) ?? true)
+                if (_options?.Filter?.Invoke(kv.Key) ?? true)
                 {
                     messagerMap[kv.Key] = kv.Value();
                 }
@@ -122,6 +122,6 @@ const staticHubContent4 = `
         public static void Init()
         {`
 
-const staticHubContent5 = `        }
+const staticHubContent4 = `        }
     }
 }`
