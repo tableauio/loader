@@ -1,0 +1,156 @@
+#include "hub.pc.h"
+
+#include "load.pc.h"
+#include "logger.pc.h"
+#include "util.pc.h"
+{{ if not .Shards }}
+// clang-format off
+{{ range .Protofiles }}#include "{{ toSnake .Name }}.pc.h"
+{{ end }}// clang-format on
+{{ end }}
+namespace tableau {
+std::once_flag Registry::once;
+Registrar Registry::registrar;
+
+Hub::Hub() { tableau::Registry::Init(); }
+
+void Hub::InitOnce(std::shared_ptr<const HubOptions> options) {
+  std::call_once(init_once_, [&]() { options_ = options; });
+}
+
+bool Hub::Load(const std::filesystem::path& dir, Format fmt /* = Format::kJSON */,
+               std::shared_ptr<const load::Options> options /* = nullptr */) {
+  auto msger_map = InternalLoad(dir, fmt, options);
+  if (!msger_map) {
+    return false;
+  }
+  bool ok = Postprocess(msger_map);
+  if (!ok) {
+    return false;
+  }
+  SetMessagerMap(msger_map);
+  return true;
+}
+
+bool Hub::AsyncLoad(const std::filesystem::path& dir, Format fmt /* = Format::kJSON */,
+                    std::shared_ptr<const load::Options> options /* = nullptr */) {
+  auto msger_map = InternalLoad(dir, fmt, options);
+  if (!msger_map) {
+    return false;
+  }
+  bool ok = Postprocess(msger_map);
+  if (!ok) {
+    return false;
+  }
+  sched_->Dispatch(std::bind(&Hub::SetMessagerMap, this, msger_map));
+  return true;
+}
+
+int Hub::LoopOnce() { return sched_->LoopOnce(); }
+
+void Hub::InitScheduler() {
+  sched_ = new internal::Scheduler();
+  sched_->Current();
+}
+
+std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::filesystem::path& dir, Format fmt /* = Format::kJSON */,
+                                               std::shared_ptr<const load::Options> options /* = nullptr */) const {
+  // intercept protobuf error logs
+  auto old_handler = google::protobuf::SetLogHandler(util::ProtobufLogHandler);
+  auto msger_map = NewMessagerMap();
+  options = options ? options : std::make_shared<load::Options>();
+  for (auto iter : *msger_map) {
+    auto&& name = iter.first;
+    ATOM_DEBUG("loading %s", name.c_str());
+    auto mopts = options->ParseMessagerOptionsByName(name);
+    bool ok = iter.second->Load(dir, fmt, mopts);
+    if (!ok) {
+      ATOM_ERROR("load %s failed: %s", name.c_str(), GetErrMsg().c_str());
+      // restore to old protobuf log handler
+      google::protobuf::SetLogHandler(old_handler);
+      return nullptr;
+    }
+    ATOM_DEBUG("loaded %s", name.c_str());
+  }
+
+  // restore to old protobuf log handler
+  google::protobuf::SetLogHandler(old_handler);
+  return msger_map;
+}
+
+std::shared_ptr<MessagerMap> Hub::NewMessagerMap() const {
+  std::shared_ptr<MessagerMap> msger_map = std::make_shared<MessagerMap>();
+  for (auto&& it : Registry::registrar) {
+    if (!options_ || !options_->filter || options_->filter(it.first)) {
+      (*msger_map)[it.first] = it.second();
+    }
+  }
+  return msger_map;
+}
+
+std::shared_ptr<MessagerMap> Hub::GetMessagerMap() const { return GetMessagerContainerWithProvider()->msger_map_; }
+
+void Hub::SetMessagerMap(std::shared_ptr<MessagerMap> msger_map) {
+  // replace with thread-safe guarantee.
+  std::unique_lock<std::mutex> lock(mutex_);
+  msger_container_ = std::make_shared<MessagerContainer>(msger_map);
+}
+
+const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const {
+  return GetMessagerContainerWithProvider()->GetMessager(name);
+}
+
+std::shared_ptr<MessagerContainer> Hub::GetMessagerContainerWithProvider() const {
+  if (options_ && options_->provider) {
+    return options_->provider(*this);
+  }
+  return msger_container_;
+}
+
+bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {
+  // create a temporary hub with messager container for post process
+  Hub tmp_hub;
+  tmp_hub.SetMessagerMap(msger_map);
+
+  // messager-level postprocess
+  for (auto iter : *msger_map) {
+    auto msger = iter.second;
+    bool ok = msger->ProcessAfterLoadAll(tmp_hub);
+    if (!ok) {
+      SetErrMsg("hub call ProcessAfterLoadAll failed, messager: " + iter.first);
+      return false;
+    }
+  }
+  return true;
+}
+
+std::time_t Hub::GetLastLoadedTime() const { return GetMessagerContainerWithProvider()->last_loaded_time_; }
+{{ if not .Shards }}{{ range .Protofiles }}{{ range .Messagers }}
+template <>
+const std::shared_ptr<{{ . }}> Hub::Get<{{ . }}>() const {
+  return GetMessagerContainerWithProvider()->{{ toSnake . }}_;
+}
+{{ end }}{{ end }}{{ end }}
+MessagerContainer::MessagerContainer(std::shared_ptr<MessagerMap> msger_map /* = nullptr*/)
+    : msger_map_(msger_map ? msger_map : std::make_shared<MessagerMap>()), last_loaded_time_(std::time(nullptr)) {{ "{" }}{{ if .Shards }}{{ range .Shards }}
+  InitShard{{ . }}();{{ end }}{{ else }}{{ range .Protofiles }}{{ range .Messagers }}
+  {{ toSnake . }}_ = std::dynamic_pointer_cast<{{ . }}>(GetMessager({{ . }}::Name()));{{ end }}{{ end }}{{ end }}
+}
+
+const std::shared_ptr<Messager> MessagerContainer::GetMessager(const std::string& name) const {
+  if (msger_map_) {
+    auto it = msger_map_->find(name);
+    if (it != msger_map_->end()) {
+      return it->second;
+    }
+  }
+  return nullptr;
+}
+
+void Registry::Init() {
+  std::call_once(once, []() {{ "{" }}{{ if .Shards }}{{ range .Shards }}
+    InitShard{{ . }}();{{ end }}{{ else }}{{ range .Protofiles }}{{ range .Messagers }}
+    Register<{{ . }}>();{{ end }}{{ end }}{{ end }}
+  });
+}
+}  // namespace tableau

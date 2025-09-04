@@ -5,8 +5,10 @@
 
 #include "hub.pc.h"
 
+// clang-format off
 #include "patch_conf.pc.h"
 #include "test_conf.pc.h"
+// clang-format on
 
 namespace tableau {
 template <>
