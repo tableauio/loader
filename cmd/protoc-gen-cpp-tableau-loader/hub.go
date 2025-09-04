@@ -39,7 +39,7 @@ func generateHub(gen *protogen.Plugin) {
 	g1 := gen.NewGeneratedFile(hppFilename, "")
 	helper.GenerateCommonHeader(gen, g1, version)
 	g1.P()
-	if err := tpl.Lookup("hub.pc.h.tpl").Execute(g1, params); err != nil {
+	if err := tpl.Lookup(hppFilename+".tpl").Execute(g1, params); err != nil {
 		panic(err)
 	}
 	// generate hub cpp
@@ -47,7 +47,7 @@ func generateHub(gen *protogen.Plugin) {
 	g2 := gen.NewGeneratedFile(cppFilename, "")
 	helper.GenerateCommonHeader(gen, g2, version)
 	g2.P()
-	if err := tpl.Lookup("hub.pc.cc.tpl").Execute(g2, params); err != nil {
+	if err := tpl.Lookup(cppFilename+".tpl").Execute(g2, params); err != nil {
 		panic(err)
 	}
 	// generate shards
@@ -57,11 +57,12 @@ func generateHub(gen *protogen.Plugin) {
 			Protofiles helper.ProtoFiles
 		}
 		params := &Param{Shard: i, Protofiles: shard}
+		cppTplname := "hub_shard" + "." + extensions.PC + ".cc"
 		cppFilename := "hub_shard" + strconv.Itoa(i) + "." + extensions.PC + ".cc"
 		g := gen.NewGeneratedFile(cppFilename, "")
 		helper.GenerateCommonHeader(gen, g, version)
 		g.P()
-		if err := tpl.Lookup("hub_shard.pc.cc.tpl").Execute(g, params); err != nil {
+		if err := tpl.Lookup(cppTplname+".tpl").Execute(g, params); err != nil {
 			panic(err)
 		}
 	}

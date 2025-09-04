@@ -20,7 +20,7 @@ func generateHub(gen *protogen.Plugin) {
 	g.P()
 	g.P("package ", *pkg)
 	g.P()
-	if err := tpl.Lookup("hub.pc.go.tpl").Execute(g, messagers); err != nil {
+	if err := tpl.Lookup(filename+".tpl").Execute(g, messagers); err != nil {
 		panic(err)
 	}
 }
