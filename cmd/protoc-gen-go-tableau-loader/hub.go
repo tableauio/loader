@@ -1,10 +1,10 @@
 package main
 
 import (
-	"path/filepath"
 	"text/template"
 
 	"github.com/iancoleman/strcase"
+	"github.com/tableauio/loader/internal/extensions"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
@@ -14,7 +14,7 @@ var tpl = template.Must(template.New("").Funcs(template.FuncMap{
 
 // generateHub generates related hub files.
 func generateHub(gen *protogen.Plugin) {
-	filename := filepath.Join("hub." + pcExt + ".go")
+	filename := "hub." + extensions.PC + ".go"
 	g := gen.NewGeneratedFile(filename, "")
 	generateCommonHeader(gen, g)
 	g.P()

@@ -7,6 +7,7 @@ import (
 
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
+	"github.com/tableauio/loader/internal/extensions"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
@@ -35,7 +36,7 @@ func generateHub(gen *protogen.Plugin) {
 	}
 	params := &Param{Shards: shards, Protofiles: protofiles}
 	// generate hub hpp
-	hppFilename := "hub." + pcExt + ".h"
+	hppFilename := "hub." + extensions.PC + ".h"
 	g1 := gen.NewGeneratedFile(hppFilename, "")
 	helper.GenerateCommonHeader(gen, g1, version)
 	g1.P()
@@ -43,7 +44,7 @@ func generateHub(gen *protogen.Plugin) {
 		panic(err)
 	}
 	// generate hub cpp
-	cppFilename := "hub." + pcExt + ".cc"
+	cppFilename := "hub." + extensions.PC + ".cc"
 	g2 := gen.NewGeneratedFile(cppFilename, "")
 	helper.GenerateCommonHeader(gen, g2, version)
 	g2.P()
@@ -63,7 +64,7 @@ func generateHub(gen *protogen.Plugin) {
 			Protofiles helper.ProtoFiles
 		}
 		params := &Param{Shard: i, Protofiles: protofiles[begin:end]}
-		cppFilename := "hub_shard" + strconv.Itoa(i) + "." + pcExt + ".cc"
+		cppFilename := "hub_shard" + strconv.Itoa(i) + "." + extensions.PC + ".cc"
 		g := gen.NewGeneratedFile(cppFilename, "")
 		helper.GenerateCommonHeader(gen, g, version)
 		g.P()
