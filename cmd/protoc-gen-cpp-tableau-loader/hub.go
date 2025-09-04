@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math"
 	"strconv"
 	"text/template"
 
@@ -52,18 +51,12 @@ func generateHub(gen *protogen.Plugin) {
 		panic(err)
 	}
 	// generate shards
-	for i := 0; i < realShardNum; i++ {
-		shardSize := int(math.Ceil(float64(len(protofiles)) / float64((realShardNum))))
-		begin := i * shardSize
-		end := (i + 1) * shardSize
-		if end > len(protofiles) {
-			end = len(protofiles)
-		}
+	for i, shard := range splitShards(protofiles, realShardNum) {
 		type Param struct {
 			Shard      int
 			Protofiles helper.ProtoFiles
 		}
-		params := &Param{Shard: i, Protofiles: protofiles[begin:end]}
+		params := &Param{Shard: i, Protofiles: shard}
 		cppFilename := "hub_shard" + strconv.Itoa(i) + "." + extensions.PC + ".cc"
 		g := gen.NewGeneratedFile(cppFilename, "")
 		helper.GenerateCommonHeader(gen, g, version)
@@ -71,5 +64,26 @@ func generateHub(gen *protogen.Plugin) {
 		if err := tpl.Lookup("hub_shard.pc.cc.tpl").Execute(g, params); err != nil {
 			panic(err)
 		}
+	}
+}
+
+func splitShards(protofiles helper.ProtoFiles, shardNum int) []helper.ProtoFiles {
+	if shardNum <= 1 {
+		// no need to split
+		return nil
+	} else {
+		cursor := 0
+		shards := []helper.ProtoFiles{}
+		for i := 0; i < shardNum; i++ {
+			shardSize := len(protofiles) / shardNum
+			if i < len(protofiles)%shardNum {
+				shardSize++
+			}
+			begin := cursor
+			end := cursor + shardSize
+			shards = append(shards, protofiles[begin:end])
+			cursor = end
+		}
+		return shards
 	}
 }
