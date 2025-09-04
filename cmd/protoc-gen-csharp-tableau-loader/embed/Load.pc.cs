@@ -99,7 +99,7 @@ namespace Tableau
 
         protected Stats LoadStats = new();
 
-        public ref Stats GetStats() => ref LoadStats;
+        public ref readonly Stats GetStats() => ref LoadStats;
 
         public abstract bool Load(string dir, Format fmt, in Load.MessagerOptions? options = null);
 

@@ -47,7 +47,7 @@ namespace Tableau
 
     public class Hub(HubOptions? options = null)
     {
-        private Atomic<MessagerContainer> _messagerContainer = new();
+        private readonly Atomic<MessagerContainer> _messagerContainer = new();
         private readonly HubOptions? _options = options;
 
         public bool Load(string dir, Format fmt, in Load.Options? options = null)
