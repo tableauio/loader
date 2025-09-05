@@ -4,10 +4,8 @@
 #include "logger.pc.h"
 #include "util.pc.h"
 {{ if not .Shards }}
-// clang-format off
 {{ range .Protofiles }}#include "{{ toSnake .Name }}.pc.h"
-{{ end }}// clang-format on
-{{ end }}
+{{ end }}{{ end }}
 namespace tableau {
 std::once_flag Registry::once;
 Registrar Registry::registrar;

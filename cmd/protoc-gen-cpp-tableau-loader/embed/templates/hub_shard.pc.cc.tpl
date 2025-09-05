@@ -1,9 +1,7 @@
 #include "hub.pc.h"
 
-// clang-format off
 {{ range .Protofiles }}#include "{{ toSnake .Name }}.pc.h"
-{{ end }}// clang-format on
-
+{{ end }}
 namespace tableau {{ "{" }}{{ range .Protofiles }}{{ range .Messagers }}
 template <>
 const std::shared_ptr<{{ . }}> Hub::Get<{{ . }}>() const {
