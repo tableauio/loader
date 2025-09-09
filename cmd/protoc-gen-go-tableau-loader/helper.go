@@ -6,9 +6,6 @@ import (
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
-const pcExt = "pc" // protoconf file extension
-const pbExt = "pb" // protobuf file extension
-
 func generateFileHeader(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile) {
 	generateCommonHeader(gen, g)
 	if file.Proto.GetOptions().GetDeprecated() {

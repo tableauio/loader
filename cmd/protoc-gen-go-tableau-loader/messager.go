@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
+	"github.com/tableauio/loader/internal/extensions"
 	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/loader/internal/options"
 	"github.com/tableauio/tableau/proto/tableaupb"
@@ -33,7 +33,7 @@ var messagers []string
 // generateMessager generates a protoconf file corresponding to the protobuf file.
 // Each wrapped struct type implement the Messager interface.
 func generateMessager(gen *protogen.Plugin, file *protogen.File) {
-	filename := filepath.Join(file.GeneratedFilenamePrefix + "." + pcExt + ".go")
+	filename := file.GeneratedFilenamePrefix + "." + extensions.PC + ".go"
 	g := gen.NewGeneratedFile(filename, "")
 	generateFileHeader(gen, file, g)
 	g.P()

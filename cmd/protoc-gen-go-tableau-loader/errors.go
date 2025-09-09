@@ -1,14 +1,13 @@
 package main
 
 import (
-	"path/filepath"
-
+	"github.com/tableauio/loader/internal/extensions"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
 // generateError generates related error files.
 func generateError(gen *protogen.Plugin) {
-	filename := filepath.Join("errors." + pcExt + ".go")
+	filename := "errors." + extensions.PC + ".go"
 	g := gen.NewGeneratedFile(filename, "")
 	generateCommonHeader(gen, g)
 	g.P()

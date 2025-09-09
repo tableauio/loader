@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
+	"github.com/tableauio/loader/internal/extensions"
 	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/loader/internal/options"
 	"github.com/tableauio/tableau/proto/tableaupb"
@@ -22,7 +23,7 @@ func generateMessager(gen *protogen.Plugin, file *protogen.File) {
 
 // generateHppFile generates a header file corresponding to a protobuf file.
 func generateHppFile(gen *protogen.Plugin, file *protogen.File) *protogen.GeneratedFile {
-	filename := file.GeneratedFilenamePrefix + "." + pcExt + ".h"
+	filename := file.GeneratedFilenamePrefix + "." + extensions.PC + ".h"
 	g := gen.NewGeneratedFile(filename, "")
 	helper.GenerateFileHeader(gen, file, g, version)
 	g.P()
@@ -32,7 +33,7 @@ func generateHppFile(gen *protogen.Plugin, file *protogen.File) *protogen.Genera
 
 // generateCppFile generates loader files related to protoconf files.
 func generateCppFile(gen *protogen.Plugin, file *protogen.File) *protogen.GeneratedFile {
-	filename := file.GeneratedFilenamePrefix + "." + pcExt + ".cc"
+	filename := file.GeneratedFilenamePrefix + "." + extensions.PC + ".cc"
 	g := gen.NewGeneratedFile(filename, "")
 	helper.GenerateFileHeader(gen, file, g, version)
 	g.P()
@@ -46,9 +47,9 @@ func generateHppFileContent(file *protogen.File, g *protogen.GeneratedFile) {
 	g.P("#include <filesystem>")
 	g.P("#include <string>")
 	g.P()
-	g.P(`#include "`, "load.", pcExt, `.h"`)
-	g.P(`#include "`, "util.", pcExt, `.h"`)
-	g.P(`#include "`, file.GeneratedFilenamePrefix, ".", pbExt, `.h"`)
+	g.P(`#include "`, "load.", extensions.PC, `.h"`)
+	g.P(`#include "`, "util.", extensions.PC, `.h"`)
+	g.P(`#include "`, file.GeneratedFilenamePrefix, ".", extensions.PB, `.h"`)
 	g.P()
 
 	g.P("namespace ", *namespace, " {")
@@ -136,7 +137,7 @@ func genHppMapGetters(depth int, keys []helper.MapKey, g *protogen.GeneratedFile
 
 // generateCppFileContent generates type implementations.
 func generateCppFileContent(file *protogen.File, g *protogen.GeneratedFile) {
-	g.P(`#include "`, file.GeneratedFilenamePrefix, ".", pcExt, `.h"`)
+	g.P(`#include "`, file.GeneratedFilenamePrefix, ".", extensions.PC, `.h"`)
 	g.P()
 	g.P(`#include "hub.pc.h"`)
 	g.P(`#include "util.pc.h"`)
