@@ -8,6 +8,7 @@ import (
 )
 
 const CustomItemConfName = "CustomItemConf"
+
 type CustomItemConf struct {
 	tableau.UnimplementedMessager
 	specialItemConf *protoconf.ItemConf_Item
@@ -17,7 +18,7 @@ func (x *CustomItemConf) Name() string {
 	return CustomItemConfName
 }
 
-func (x *CustomItemConf) ProcessAfterLoadAll(hub *tableau.Hub) error {
+func (x *CustomItemConf) ProcessAfterLoadAll(hub tableau.Hub) error {
 	config, err := hub.GetItemConf().Get1(1)
 	if err != nil {
 		return err
