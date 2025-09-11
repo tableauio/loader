@@ -8,7 +8,7 @@ import (
 	"github.com/tableauio/tableau/load"
 )
 
-func prepareHubForTest() *tableau.Hub {
+func prepareHubForTest() *tableau.ContainerHub {
 	hub := tableau.NewHub()
 	err := hub.Load("../../testdata/conf/", format.JSON,
 		load.IgnoreUnknownFields(),

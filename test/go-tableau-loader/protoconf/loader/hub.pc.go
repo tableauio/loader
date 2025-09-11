@@ -8,40 +8,14 @@ package loader
 import (
 	"fmt"
 	"os"
-	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/tableauio/tableau/format"
-	"github.com/tableauio/tableau/load"
 	"github.com/tableauio/tableau/store"
 	"google.golang.org/protobuf/proto"
 )
-
-type Messager interface {
-	// Name returns the unique message name.
-	Name() string
-	// GetStats returns stats info.
-	GetStats() *Stats
-	// Load fills message from file in the specified directory and format.
-	Load(dir string, fmt format.Format, opts *load.MessagerOptions) error
-	// Store writes message to file in the specified directory and format.
-	Store(dir string, fmt format.Format, options ...store.Option) error
-	// processAfterLoad is invoked after this messager loaded.
-	processAfterLoad() error
-	// ProcessAfterLoadAll is invoked after all messagers loaded.
-	ProcessAfterLoadAll(hub *Hub) error
-	// Message returns the inner message data.
-	Message() proto.Message
-	// Messager returns the current messager.
-	Messager() Messager
-	// originalMessage returns the original inner message data.
-	originalMessage() proto.Message
-	// enableBackup tells each messager to backup original inner message data.
-	enableBackup()
-}
 
 type Options struct {
 	// Filter can only filter in certain specific messagers based on the
@@ -104,109 +78,28 @@ func WithMutableCheck(check *MutableCheck) Option {
 	}
 }
 
-type Stats struct {
-	Duration time.Duration // total load time consuming.
-}
-
-type UnimplementedMessager struct {
-	Stats  Stats
-	backup bool
-}
-
-func (x *UnimplementedMessager) Name() string {
-	return ""
-}
-
-func (x *UnimplementedMessager) GetStats() *Stats {
-	return &x.Stats
-}
-
-func (x *UnimplementedMessager) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
-	return nil
-}
-
-func (x *UnimplementedMessager) Store(dir string, format format.Format, options ...store.Option) error {
-	return nil
-}
-
-func (x *UnimplementedMessager) processAfterLoad() error {
-	return nil
-}
-
-func (x *UnimplementedMessager) ProcessAfterLoadAll(hub *Hub) error {
-	return nil
-}
-
-func (x *UnimplementedMessager) Message() proto.Message {
-	return nil
-}
-
-func (x *UnimplementedMessager) Messager() Messager {
-	return nil
-}
-
-func (x *UnimplementedMessager) enableBackup() {
-	x.backup = true
-}
-
-func (x *UnimplementedMessager) originalMessage() proto.Message {
-	return nil
-}
-
-type MessagerMap = map[string]Messager
-type MessagerGenerator = func() Messager
-type Registrar struct {
-	Generators map[string]MessagerGenerator
-}
-
-func NewRegistrar() *Registrar {
-	return &Registrar{
-		Generators: map[string]MessagerGenerator{},
-	}
-}
-
-func (r *Registrar) Register(gen MessagerGenerator) {
-	if _, ok := r.Generators[gen().Name()]; ok {
-		panic("register duplicate messager: " + gen().Name())
-	}
-	r.Generators[gen().Name()] = gen
-}
-
-var registrarSingleton *Registrar
-var once sync.Once
-
-func getRegistrar() *Registrar {
-	once.Do(func() {
-		registrarSingleton = NewRegistrar()
-	})
-	return registrarSingleton
-}
-
-func Register(gen MessagerGenerator) {
-	getRegistrar().Register(gen)
-}
-
-func BoolToInt(ok bool) int {
-	if ok {
-		return 1
-	}
-	return 0
-}
-
 // Hub is the messager manager.
 type Hub struct {
-	messagerContainer atomic.Pointer[messagerContainer]
-	opts              *Options
+	opts     *Options
+	provider messagerContainerProvider
 }
 
-func NewHub(options ...Option) *Hub {
+func newHub(provider messagerContainerProvider, options ...Option) *Hub {
 	hub := &Hub{}
-	hub.messagerContainer.Store(&messagerContainer{})
 	hub.opts = ParseOptions(options...)
+	hub.provider = provider
 	if hub.opts.MutableCheck != nil {
 		go hub.mutableCheck()
 	}
 	return hub
+}
+
+// providedBy returns a new Hub with the specified provider.
+func (h *Hub) providedBy(provider messagerContainerProvider) *Hub {
+	return &Hub{
+		opts:     h.opts,
+		provider: provider,
+	}
 }
 
 // NewMessagerMap creates a new MessagerMap.
@@ -224,41 +117,19 @@ func (h *Hub) NewMessagerMap() MessagerMap {
 	return messagerMap
 }
 
-// GetMessagerMap returns hub's inner field messagerMap.
-func (h *Hub) GetMessagerMap() MessagerMap {
-	return h.messagerContainer.Load().messagerMap
+// getMessagerContainer returns hub's inner messager container.
+func (h *Hub) getMessagerContainer() *messagerContainer {
+	return h.provider.MessagerContainer()
 }
 
-// SetMessagerMap sets hub's inner field messagerMap.
-func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
-	h.messagerContainer.Store(newMessagerContainer(messagerMap))
+// GetMessagerMap returns hub's inner field messagerMap.
+func (h *Hub) GetMessagerMap() MessagerMap {
+	return h.getMessagerContainer().messagerMap
 }
 
 // GetMessager finds and returns the specified Messenger in hub.
 func (h *Hub) GetMessager(name string) Messager {
 	return h.GetMessagerMap()[name]
-}
-
-// Load fills messages from files in the specified directory and format.
-func (h *Hub) Load(dir string, format format.Format, options ...load.Option) error {
-	messagerMap := h.NewMessagerMap()
-	opts := load.ParseOptions(options...)
-	for name, msger := range messagerMap {
-		mopts := opts.ParseMessagerOptionsByName(name)
-		if err := msger.Load(dir, format, mopts); err != nil {
-			return errors.WithMessagef(err, "failed to load: %v", name)
-		}
-	}
-	// create a temporary hub with messager container for post process
-	tmpHub := &Hub{}
-	tmpHub.SetMessagerMap(messagerMap)
-	for name, msger := range messagerMap {
-		if err := msger.ProcessAfterLoadAll(tmpHub); err != nil {
-			return errors.WithMessagef(err, "failed to process messager %s after load all", name)
-		}
-	}
-	h.SetMessagerMap(messagerMap)
-	return nil
 }
 
 // Store stores protobuf messages to files in the specified directory and format.
@@ -315,7 +186,49 @@ func (h *Hub) onMutateDefault(name string, original, current proto.Message) {
 
 // GetLastLoadedTime returns the time when hub's messagerMap was last set.
 func (h *Hub) GetLastLoadedTime() time.Time {
-	return h.messagerContainer.Load().loadedTime
+	return h.getMessagerContainer().loadedTime
+}
+
+// Auto-generated getters below
+
+func (h *Hub) GetHeroConf() *HeroConf {
+	return h.getMessagerContainer().heroConf
+}
+
+func (h *Hub) GetHeroBaseConf() *HeroBaseConf {
+	return h.getMessagerContainer().heroBaseConf
+}
+
+func (h *Hub) GetItemConf() *ItemConf {
+	return h.getMessagerContainer().itemConf
+}
+
+func (h *Hub) GetPatchReplaceConf() *PatchReplaceConf {
+	return h.getMessagerContainer().patchReplaceConf
+}
+
+func (h *Hub) GetPatchMergeConf() *PatchMergeConf {
+	return h.getMessagerContainer().patchMergeConf
+}
+
+func (h *Hub) GetRecursivePatchConf() *RecursivePatchConf {
+	return h.getMessagerContainer().recursivePatchConf
+}
+
+func (h *Hub) GetActivityConf() *ActivityConf {
+	return h.getMessagerContainer().activityConf
+}
+
+func (h *Hub) GetChapterConf() *ChapterConf {
+	return h.getMessagerContainer().chapterConf
+}
+
+func (h *Hub) GetThemeConf() *ThemeConf {
+	return h.getMessagerContainer().themeConf
+}
+
+func (h *Hub) GetTaskConf() *TaskConf {
+	return h.getMessagerContainer().taskConf
 }
 
 type messagerContainer struct {
@@ -350,46 +263,4 @@ func newMessagerContainer(messagerMap MessagerMap) *messagerContainer {
 	messagerContainer.themeConf, _ = messagerMap[(&ThemeConf{}).Name()].(*ThemeConf)
 	messagerContainer.taskConf, _ = messagerMap[(&TaskConf{}).Name()].(*TaskConf)
 	return messagerContainer
-}
-
-// Auto-generated getters below
-
-func (h *Hub) GetHeroConf() *HeroConf {
-	return h.messagerContainer.Load().heroConf
-}
-
-func (h *Hub) GetHeroBaseConf() *HeroBaseConf {
-	return h.messagerContainer.Load().heroBaseConf
-}
-
-func (h *Hub) GetItemConf() *ItemConf {
-	return h.messagerContainer.Load().itemConf
-}
-
-func (h *Hub) GetPatchReplaceConf() *PatchReplaceConf {
-	return h.messagerContainer.Load().patchReplaceConf
-}
-
-func (h *Hub) GetPatchMergeConf() *PatchMergeConf {
-	return h.messagerContainer.Load().patchMergeConf
-}
-
-func (h *Hub) GetRecursivePatchConf() *RecursivePatchConf {
-	return h.messagerContainer.Load().recursivePatchConf
-}
-
-func (h *Hub) GetActivityConf() *ActivityConf {
-	return h.messagerContainer.Load().activityConf
-}
-
-func (h *Hub) GetChapterConf() *ChapterConf {
-	return h.messagerContainer.Load().chapterConf
-}
-
-func (h *Hub) GetThemeConf() *ThemeConf {
-	return h.messagerContainer.Load().themeConf
-}
-
-func (h *Hub) GetTaskConf() *TaskConf {
-	return h.messagerContainer.Load().taskConf
 }
