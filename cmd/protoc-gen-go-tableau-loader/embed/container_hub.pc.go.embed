@@ -11,19 +11,16 @@ type messagerContainerProvider interface {
 	MessagerContainer() *messagerContainer
 }
 
-var _ interface {
-	messagerContainerProvider
-	Hub
-} = (*ContainerHub)(nil)
+var _ messagerContainerProvider = (*ContainerHub)(nil)
 
 type ContainerHub struct {
-	*baseHub
+	*Hub
 	messagerContainer atomic.Pointer[messagerContainer]
 }
 
 func NewHub(options ...Option) *ContainerHub {
 	hub := &ContainerHub{}
-	hub.baseHub = newHub(hub, options...)
+	hub.Hub = newHub(hub, options...)
 	hub.messagerContainer.Store(&messagerContainer{})
 	return hub
 }
@@ -51,7 +48,7 @@ func (h *ContainerHub) Load(dir string, format format.Format, options ...load.Op
 	tmpHub := NewHub()
 	tmpHub.SetMessagerMap(messagerMap)
 	for name, msger := range messagerMap {
-		if err := msger.ProcessAfterLoadAll(tmpHub); err != nil {
+		if err := msger.ProcessAfterLoadAll(tmpHub.Hub); err != nil {
 			return errors.WithMessagef(err, "failed to process messager %s after load all", name)
 		}
 	}
@@ -67,19 +64,16 @@ func (h *ContainerHub) BindTo(ctx context.Context) context.Context {
 
 func (h *ContainerHub) ProvidedBy(ctx context.Context) *ProvidedHub {
 	hub := &ProvidedHub{}
-	hub.baseHub = h.baseHub.providedBy(hub)
+	hub.Hub = h.Hub.providedBy(hub)
 	hub.providedCtx = ctx
 	hub.baseProvider = h
 	return hub
 }
 
-var _ interface {
-	messagerContainerProvider
-	Hub
-} = (*ProvidedHub)(nil)
+var _ messagerContainerProvider = (*ProvidedHub)(nil)
 
 type ProvidedHub struct {
-	*baseHub
+	*Hub
 	providedCtx  context.Context
 	baseProvider messagerContainerProvider
 }
