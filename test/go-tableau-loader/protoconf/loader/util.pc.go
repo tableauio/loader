@@ -10,3 +10,10 @@ import (
 )
 
 var ErrNotFound = errors.New("not found")
+
+func BoolToInt(ok bool) int {
+	if ok {
+		return 1
+	}
+	return 0
+}

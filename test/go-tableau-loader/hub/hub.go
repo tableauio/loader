@@ -9,7 +9,7 @@ import (
 )
 
 type MyHub struct {
-	*tableau.Hub
+	*tableau.ContainerHub
 }
 
 var hubSingleton *MyHub
@@ -20,7 +20,7 @@ func GetHub() *MyHub {
 	once.Do(func() {
 		// new instance
 		hubSingleton = &MyHub{
-			Hub: tableau.NewHub(
+			ContainerHub: tableau.NewHub(
 				tableau.WithMutableCheck(&tableau.MutableCheck{
 					Interval: 1 * time.Second,
 				}),
