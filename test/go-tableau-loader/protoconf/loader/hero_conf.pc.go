@@ -151,7 +151,7 @@ func (x *HeroConf) FindAttr(title string) []*protoconf.HeroConf_Hero_Attr {
 // FindFirstAttr finds the first value of the given key,
 // or nil if no value found.
 func (x *HeroConf) FindFirstAttr(title string) *protoconf.HeroConf_Hero_Attr {
-	val := x.indexAttrMap[title]
+	val := x.FindAttr(title)
 	if len(val) > 0 {
 		return val[0]
 	}

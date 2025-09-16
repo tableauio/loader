@@ -42,7 +42,7 @@ func ParseIndexFieldNameAsFuncParam(gen *protogen.Plugin, fd protoreflect.FieldD
 
 // ParseGoType converts a FieldDescriptor to its Go type.
 // returns string if fd is scalar type, and protogen.GoIdent if fd is enum or message type.
-func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) any {
+func ParseGoType(gen *protogen.Plugin, g *protogen.GeneratedFile, fd protoreflect.FieldDescriptor) string {
 	switch fd.Kind() {
 	case protoreflect.BoolKind:
 		return "bool"
@@ -63,9 +63,9 @@ func ParseGoType(gen *protogen.Plugin, fd protoreflect.FieldDescriptor) any {
 	case protoreflect.BytesKind:
 		return "[]byte"
 	case protoreflect.EnumKind:
-		return FindEnumGoIdent(gen, fd.Enum())
+		return g.QualifiedGoIdent(FindEnumGoIdent(gen, fd.Enum()))
 	case protoreflect.MessageKind:
-		return FindMessageGoIdent(gen, fd.Message())
+		return g.QualifiedGoIdent(FindMessageGoIdent(gen, fd.Message()))
 	// case protoreflect.GroupKind:
 	// 	return "group"
 	default:

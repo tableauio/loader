@@ -202,16 +202,16 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItemExtInfo(protoconf::Fruit
 // Index: (ID,Name)<Type,UseEffectType>@AwardItem
 const ItemConf::Index_AwardItemMap& ItemConf::FindAwardItem() const { return index_award_item_map_ ;}
 
-const ItemConf::Index_AwardItemVector* ItemConf::FindAwardItem(const Index_AwardItemKey& key) const {
-  auto iter = index_award_item_map_.find(key);
+const ItemConf::Index_AwardItemVector* ItemConf::FindAwardItem(uint32_t id, const std::string& name) const {
+  auto iter = index_award_item_map_.find({id, name});
   if (iter == index_award_item_map_.end()) {
     return nullptr;
   }
   return &iter->second;
 }
 
-const protoconf::ItemConf::Item* ItemConf::FindFirstAwardItem(const Index_AwardItemKey& key) const {
-  auto conf = FindAwardItem(key);
+const protoconf::ItemConf::Item* ItemConf::FindFirstAwardItem(uint32_t id, const std::string& name) const {
+  auto conf = FindAwardItem(id, name);
   if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
@@ -221,16 +221,16 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstAwardItem(const Index_AwardI
 // Index: (ID,Type,Param,ExtType)@SpecialItem
 const ItemConf::Index_SpecialItemMap& ItemConf::FindSpecialItem() const { return index_special_item_map_ ;}
 
-const ItemConf::Index_SpecialItemVector* ItemConf::FindSpecialItem(const Index_SpecialItemKey& key) const {
-  auto iter = index_special_item_map_.find(key);
+const ItemConf::Index_SpecialItemVector* ItemConf::FindSpecialItem(uint32_t id, protoconf::FruitType type, int32_t param, protoconf::FruitType ext_type) const {
+  auto iter = index_special_item_map_.find({id, type, param, ext_type});
   if (iter == index_special_item_map_.end()) {
     return nullptr;
   }
   return &iter->second;
 }
 
-const protoconf::ItemConf::Item* ItemConf::FindFirstSpecialItem(const Index_SpecialItemKey& key) const {
-  auto conf = FindSpecialItem(key);
+const protoconf::ItemConf::Item* ItemConf::FindFirstSpecialItem(uint32_t id, protoconf::FruitType type, int32_t param, protoconf::FruitType ext_type) const {
+  auto conf = FindSpecialItem(id, type, param, ext_type);
   if (conf == nullptr || conf->empty()) {
     return nullptr;
   }

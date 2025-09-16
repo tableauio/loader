@@ -308,7 +308,7 @@ func (x *ActivityConf) FindActivity(activityName string) []*protoconf.ActivityCo
 // FindFirstActivity finds the first value of the given key,
 // or nil if no value found.
 func (x *ActivityConf) FindFirstActivity(activityName string) *protoconf.ActivityConf_Activity {
-	val := x.indexActivityMap[activityName]
+	val := x.FindActivity(activityName)
 	if len(val) > 0 {
 		return val[0]
 	}
@@ -331,7 +331,7 @@ func (x *ActivityConf) FindChapter(chapterId uint32) []*protoconf.ActivityConf_A
 // FindFirstChapter finds the first value of the given key,
 // or nil if no value found.
 func (x *ActivityConf) FindFirstChapter(chapterId uint32) *protoconf.ActivityConf_Activity_Chapter {
-	val := x.indexChapterMap[chapterId]
+	val := x.FindChapter(chapterId)
 	if len(val) > 0 {
 		return val[0]
 	}
@@ -354,7 +354,7 @@ func (x *ActivityConf) FindNamedChapter(chapterName string) []*protoconf.Activit
 // FindFirstNamedChapter finds the first value of the given key,
 // or nil if no value found.
 func (x *ActivityConf) FindFirstNamedChapter(chapterName string) *protoconf.ActivityConf_Activity_Chapter {
-	val := x.indexNamedChapterMap[chapterName]
+	val := x.FindNamedChapter(chapterName)
 	if len(val) > 0 {
 		return val[0]
 	}
@@ -377,7 +377,7 @@ func (x *ActivityConf) FindAward(id uint32) []*protoconf.Section_SectionItem {
 // FindFirstAward finds the first value of the given key,
 // or nil if no value found.
 func (x *ActivityConf) FindFirstAward(id uint32) *protoconf.Section_SectionItem {
-	val := x.indexAwardMap[id]
+	val := x.FindAward(id)
 	if len(val) > 0 {
 		return val[0]
 	}
@@ -737,7 +737,7 @@ func (x *TaskConf) FindTask(activityId int64) []*protoconf.TaskConf_Task {
 // FindFirstTask finds the first value of the given key,
 // or nil if no value found.
 func (x *TaskConf) FindFirstTask(activityId int64) *protoconf.TaskConf_Task {
-	val := x.indexTaskMap[activityId]
+	val := x.FindTask(activityId)
 	if len(val) > 0 {
 		return val[0]
 	}

@@ -119,9 +119,9 @@ class ItemConf : public Messager {
   // One key may correspond to multiple values, which are contained by a vector.
   const Index_AwardItemMap& FindAwardItem() const;
   // Finds a vector of all values of the given key.
-  const Index_AwardItemVector* FindAwardItem(const Index_AwardItemKey& key) const;
+  const Index_AwardItemVector* FindAwardItem(uint32_t id, const std::string& name) const;
   // Finds the first value of the given key.
-  const protoconf::ItemConf::Item* FindFirstAwardItem(const Index_AwardItemKey& key) const;
+  const protoconf::ItemConf::Item* FindFirstAwardItem(uint32_t id, const std::string& name) const;
 
  private:
   Index_AwardItemMap index_award_item_map_;
@@ -148,9 +148,9 @@ class ItemConf : public Messager {
   // One key may correspond to multiple values, which are contained by a vector.
   const Index_SpecialItemMap& FindSpecialItem() const;
   // Finds a vector of all values of the given key.
-  const Index_SpecialItemVector* FindSpecialItem(const Index_SpecialItemKey& key) const;
+  const Index_SpecialItemVector* FindSpecialItem(uint32_t id, protoconf::FruitType type, int32_t param, protoconf::FruitType ext_type) const;
   // Finds the first value of the given key.
-  const protoconf::ItemConf::Item* FindFirstSpecialItem(const Index_SpecialItemKey& key) const;
+  const protoconf::ItemConf::Item* FindFirstSpecialItem(uint32_t id, protoconf::FruitType type, int32_t param, protoconf::FruitType ext_type) const;
 
  private:
   Index_SpecialItemMap index_special_item_map_;
