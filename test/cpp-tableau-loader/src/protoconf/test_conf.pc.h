@@ -61,9 +61,9 @@ class ActivityConf : public Messager {
   // Finds the index (ActivityName) to value (Index_ActivityVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
   const Index_ActivityMap& FindActivityMap() const;
-  // Finds a vector of all values of the given key(s).
+  // Finds a vector of all values of the given key.
   const Index_ActivityVector* FindActivity(const std::string& activity_name) const;
-  // Finds the first value of the given key(s).
+  // Finds the first value of the given key.
   const protoconf::ActivityConf::Activity* FindFirstActivity(const std::string& activity_name) const;
 
  private:
@@ -76,9 +76,9 @@ class ActivityConf : public Messager {
   // Finds the index (ChapterID) to value (Index_ChapterVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
   const Index_ChapterMap& FindChapterMap() const;
-  // Finds a vector of all values of the given key(s).
+  // Finds a vector of all values of the given key.
   const Index_ChapterVector* FindChapter(uint32_t chapter_id) const;
-  // Finds the first value of the given key(s).
+  // Finds the first value of the given key.
   const protoconf::ActivityConf::Activity::Chapter* FindFirstChapter(uint32_t chapter_id) const;
 
  private:
@@ -91,9 +91,9 @@ class ActivityConf : public Messager {
   // Finds the index (ChapterName<AwardID>@NamedChapter) to value (Index_NamedChapterVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
   const Index_NamedChapterMap& FindNamedChapterMap() const;
-  // Finds a vector of all values of the given key(s).
+  // Finds a vector of all values of the given key.
   const Index_NamedChapterVector* FindNamedChapter(const std::string& chapter_name) const;
-  // Finds the first value of the given key(s).
+  // Finds the first value of the given key.
   const protoconf::ActivityConf::Activity::Chapter* FindFirstNamedChapter(const std::string& chapter_name) const;
 
  private:
@@ -106,9 +106,9 @@ class ActivityConf : public Messager {
   // Finds the index (SectionItemID@Award) to value (Index_AwardVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
   const Index_AwardMap& FindAwardMap() const;
-  // Finds a vector of all values of the given key(s).
+  // Finds a vector of all values of the given key.
   const Index_AwardVector* FindAward(uint32_t id) const;
-  // Finds the first value of the given key(s).
+  // Finds the first value of the given key.
   const protoconf::Section::SectionItem* FindFirstAward(uint32_t id) const;
 
  private:
@@ -172,9 +172,9 @@ class TaskConf : public Messager {
   // Finds the index (ActivityID<Goal,ID>) to value (Index_TaskVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
   const Index_TaskMap& FindTaskMap() const;
-  // Finds a vector of all values of the given key(s).
+  // Finds a vector of all values of the given key.
   const Index_TaskVector* FindTask(int64_t activity_id) const;
-  // Finds the first value of the given key(s).
+  // Finds the first value of the given key.
   const protoconf::TaskConf::Task* FindFirstTask(int64_t activity_id) const;
 
  private:

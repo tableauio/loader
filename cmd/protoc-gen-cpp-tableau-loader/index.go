@@ -26,9 +26,9 @@ func genHppIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescri
 				g.P(helper.Indent(1), "// Finds the index (", index.Index, ") to value (", vectorType, ") hash map.")
 				g.P(helper.Indent(1), "// One key may correspond to multiple values, which are contained by a vector.")
 				g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "Map() const;")
-				g.P(helper.Indent(1), "// Finds a vector of all values of the given key(s).")
+				g.P(helper.Indent(1), "// Finds a vector of all values of the given key.")
 				g.P(helper.Indent(1), "const ", vectorType, "* Find", index.Name(), "(", helper.ToConstRefType(keyType), " ", helper.ParseIndexFieldNameAsFuncParam(field.FD), ") const;")
-				g.P(helper.Indent(1), "// Finds the first value of the given key(s).")
+				g.P(helper.Indent(1), "// Finds the first value of the given key.")
 				g.P(helper.Indent(1), "const ", helper.ParseCppClassType(index.MD), "* FindFirst", index.Name(), "(", helper.ToConstRefType(keyType), " ", helper.ParseIndexFieldNameAsFuncParam(field.FD), ") const;")
 				g.P()
 
@@ -86,9 +86,9 @@ func genHppIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescri
 				g.P(helper.Indent(1), "// Finds the index (", index.Index, ") to value (", vectorType, ") hash map.")
 				g.P(helper.Indent(1), "// One key may correspond to multiple values, which are contained by a vector.")
 				g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "Map() const;")
-				g.P(helper.Indent(1), "// Finds a vector of all values of the given key.")
+				g.P(helper.Indent(1), "// Finds a vector of all values of the given keys.")
 				g.P(helper.Indent(1), "const ", vectorType, "* Find", index.Name(), "(", helper.GenGetParams(keys), ") const;")
-				g.P(helper.Indent(1), "// Finds the first value of the given key.")
+				g.P(helper.Indent(1), "// Finds the first value of the given keys.")
 				g.P(helper.Indent(1), "const ", helper.ParseCppClassType(index.MD), "* FindFirst", index.Name(), "(", helper.GenGetParams(keys), ") const;")
 				g.P()
 
