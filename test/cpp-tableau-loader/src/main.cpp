@@ -156,8 +156,7 @@ int main() {
   // std::cout << "item1: " << item_mgr->Data().DebugString() << std::endl;
 
   ATOM_DEBUG("-----Index: multi-column index test");
-  tableau::ItemConf::Index_AwardItemKey key{1, "apple"};
-  auto item = item_mgr->FindFirstAwardItem(key);
+  auto item = item_mgr->FindFirstAwardItem(1, "apple");
   if (!item) {
     ATOM_ERROR("ItemConf FindFirstAwardItem failed!");
     return 1;

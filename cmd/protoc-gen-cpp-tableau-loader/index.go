@@ -25,7 +25,7 @@ func genHppIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescri
 				g.P(helper.Indent(1), "using ", mapType, " = std::unordered_map<", keyType, ", ", vectorType, ">;")
 				g.P(helper.Indent(1), "// Finds the index (", index.Index, ") to value (", vectorType, ") hash map.")
 				g.P(helper.Indent(1), "// One key may correspond to multiple values, which are contained by a vector.")
-				g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "() const;")
+				g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "Map() const;")
 				g.P(helper.Indent(1), "// Finds a vector of all values of the given key.")
 				g.P(helper.Indent(1), "const ", vectorType, "* Find", index.Name(), "(", helper.ToConstRefType(keyType), " ", helper.ParseIndexFieldNameAsFuncParam(field.FD), ") const;")
 				g.P(helper.Indent(1), "// Finds the first value of the given key.")
@@ -47,9 +47,15 @@ func genHppIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescri
 
 				// generate key struct
 				g.P(helper.Indent(1), "struct ", keyType, " {")
+				var keys []helper.MapKey
 				equality := ""
 				for i, field := range index.ColFields {
-					g.P(helper.Indent(2), helper.ParseCppType(field.FD), " ", helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD), ";")
+					typ := helper.ParseCppType(field.FD)
+					keys = append(keys, helper.MapKey{
+						Type: typ,
+						Name: helper.ParseIndexFieldNameAsFuncParam(field.FD),
+					})
+					g.P(helper.Indent(2), typ, " ", helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD), ";")
 					equality += helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD) + " == other." + helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD)
 					if i != len(index.ColFields)-1 {
 						equality += " && "
@@ -79,11 +85,11 @@ func genHppIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescri
 				g.P(helper.Indent(1), "using ", mapType, " = std::unordered_map<", keyType, ", ", vectorType, ", ", keyHasherType, ">;")
 				g.P(helper.Indent(1), "// Finds the index (", index.Index, ") to value (", vectorType, ") hash map.")
 				g.P(helper.Indent(1), "// One key may correspond to multiple values, which are contained by a vector.")
-				g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "() const;")
-				g.P(helper.Indent(1), "// Finds a vector of all values of the given key.")
-				g.P(helper.Indent(1), "const ", vectorType, "* Find", index.Name(), "(const ", keyType, "& key) const;")
-				g.P(helper.Indent(1), "// Finds the first value of the given key.")
-				g.P(helper.Indent(1), "const ", helper.ParseCppClassType(index.MD), "* FindFirst", index.Name(), "(const ", keyType, "& key) const;")
+				g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "Map() const;")
+				g.P(helper.Indent(1), "// Finds a vector of all values of the given keys.")
+				g.P(helper.Indent(1), "const ", vectorType, "* Find", index.Name(), "(", helper.GenGetParams(keys), ") const;")
+				g.P(helper.Indent(1), "// Finds the first value of the given keys.")
+				g.P(helper.Indent(1), "const ", helper.ParseCppClassType(index.MD), "* FindFirst", index.Name(), "(", helper.GenGetParams(keys), ") const;")
 				g.P()
 
 				g.P(" private:")
@@ -248,23 +254,23 @@ func genCppIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescri
 			indexContainerName := "index_" + strcase.ToSnake(index.Name()) + "_map_"
 
 			g.P("// Index: ", index.Index)
-			g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Find", index.Name(), "() const { return ", indexContainerName, " ;}")
+			g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Find", index.Name(), "Map() const { return ", indexContainerName, " ;}")
 			g.P()
 
-			var keyType, keyName string
-			if len(index.ColFields) == 1 {
-				// single-column index
-				field := index.ColFields[0] // just take first field
-				keyType = helper.ParseCppType(field.FD)
-				keyName = helper.ParseIndexFieldNameAsFuncParam(field.FD)
-			} else {
-				// multi-column index
-				keyType = fmt.Sprintf("const Index_%sKey&", index.Name())
-				keyName = "key"
+			var keys []helper.MapKey
+			for _, field := range index.ColFields {
+				keys = append(keys, helper.MapKey{
+					Type: helper.ParseCppType(field.FD),
+					Name: helper.ParseIndexFieldNameAsFuncParam(field.FD),
+				})
 			}
 
-			g.P("const ", messagerName, "::", vectorType, "* ", messagerName, "::Find", index.Name(), "(", helper.ToConstRefType(keyType), " ", keyName, ") const {")
-			g.P(helper.Indent(1), "auto iter = ", indexContainerName, ".find(", keyName, ");")
+			g.P("const ", messagerName, "::", vectorType, "* ", messagerName, "::Find", index.Name(), "(", helper.GenGetParams(keys), ") const {")
+			if len(index.ColFields) == 1 {
+				g.P(helper.Indent(1), "auto iter = ", indexContainerName, ".find(", helper.GenGetArguments(keys), ");")
+			} else {
+				g.P(helper.Indent(1), "auto iter = ", indexContainerName, ".find({", helper.GenGetArguments(keys), "});")
+			}
 			g.P(helper.Indent(1), "if (iter == ", indexContainerName, ".end()) {")
 			g.P(helper.Indent(2), "return nullptr;")
 			g.P(helper.Indent(1), "}")
@@ -272,8 +278,8 @@ func genCppIndexFinders(g *protogen.GeneratedFile, descriptor *index.IndexDescri
 			g.P("}")
 			g.P()
 
-			g.P("const ", helper.ParseCppClassType(index.MD), "* ", messagerName, "::FindFirst", index.Name(), "(", helper.ToConstRefType(keyType), " ", keyName, ") const {")
-			g.P(helper.Indent(1), "auto conf = Find", index.Name(), "(", keyName, ");")
+			g.P("const ", helper.ParseCppClassType(index.MD), "* ", messagerName, "::FindFirst", index.Name(), "(", helper.GenGetParams(keys), ") const {")
+			g.P(helper.Indent(1), "auto conf = Find", index.Name(), "(", helper.GenGetArguments(keys), ");")
 			g.P(helper.Indent(1), "if (conf == nullptr || conf->empty()) {")
 			g.P(helper.Indent(2), "return nullptr;")
 			g.P(helper.Indent(1), "}")

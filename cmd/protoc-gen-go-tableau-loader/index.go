@@ -18,7 +18,7 @@ func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor
 				field := index.ColFields[0] // just take first field
 				g.P("// Index: ", index.Index)
 				mapType := fmt.Sprintf("%s_Index_%sMap", messagerName, index.Name())
-				keyType := helper.ParseGoType(gen, field.FD)
+				keyType := helper.ParseGoType(gen, g, field.FD)
 				g.P("type ", mapType, " = map[", keyType, "][]*", helper.FindMessageGoIdent(gen, index.MD))
 			} else {
 				// multi-column index
@@ -30,7 +30,7 @@ func genIndexTypeDef(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor
 				// KeyType must be comparable, refer https://go.dev/blog/maps
 				g.P("type ", keyType, " struct {")
 				for _, field := range index.ColFields {
-					g.P(helper.ParseIndexFieldNameAsKeyStructFieldName(gen, field.FD), " ", helper.ParseGoType(gen, field.FD))
+					g.P(helper.ParseIndexFieldNameAsKeyStructFieldName(gen, field.FD), " ", helper.ParseGoType(gen, g, field.FD))
 				}
 				g.P("}")
 				g.P("type ", mapType, " = map[", keyType, "][]*", helper.FindMessageGoIdent(gen, index.MD))
@@ -198,29 +198,28 @@ func genIndexFinders(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor
 			g.P("}")
 			g.P()
 
-			var keyType any
-			var keyName string
-			if len(index.ColFields) == 1 {
-				// single-column index
-				field := index.ColFields[0] // just take first field
-				keyType = helper.ParseGoType(gen, field.FD)
-				keyName = helper.ParseIndexFieldNameAsFuncParam(gen, field.FD)
-			} else {
-				// multi-column index
-				keyType = fmt.Sprintf("%s_Index_%sKey", messagerName, index.Name())
-				keyName = "key"
+			var keys []helper.MapKey
+			for _, field := range index.ColFields {
+				keys = append(keys, helper.MapKey{
+					Type: helper.ParseGoType(gen, g, field.FD),
+					Name: helper.ParseIndexFieldNameAsFuncParam(gen, field.FD),
+				})
 			}
 
 			g.P("// Find", index.Name(), " finds a slice of all values of the given key.")
-			g.P("func (x *", messagerName, ") Find", index.Name(), "(", keyName, " ", keyType, ") []*", helper.FindMessageGoIdent(gen, index.MD), " {")
-			g.P("return x.", indexContainerName, "[", keyName, "]")
+			g.P("func (x *", messagerName, ") Find", index.Name(), "(", helper.GenGetParams(keys), ") []*", helper.FindMessageGoIdent(gen, index.MD), " {")
+			if len(index.ColFields) == 1 {
+				g.P("return x.", indexContainerName, "[", helper.GenGetArguments(keys), "]")
+			} else {
+				g.P("return x.", indexContainerName, "[", fmt.Sprintf("%s_Index_%sKey", messagerName, index.Name()), "{", helper.GenGetArguments(keys), "}]")
+			}
 			g.P("}")
 			g.P()
 
 			g.P("// FindFirst", index.Name(), " finds the first value of the given key,")
 			g.P("// or nil if no value found.")
-			g.P("func (x *", messagerName, ") FindFirst", index.Name(), "(", keyName, " ", keyType, ") *", helper.FindMessageGoIdent(gen, index.MD), " {")
-			g.P("val := x.", indexContainerName, "[", keyName, "]")
+			g.P("func (x *", messagerName, ") FindFirst", index.Name(), "(", helper.GenGetParams(keys), ") *", helper.FindMessageGoIdent(gen, index.MD), " {")
+			g.P("val := x.Find", index.Name(), "(", helper.GenGetArguments(keys), ")")
 			g.P("if len(val) > 0 {")
 			g.P("return val[0]")
 			g.P("}")

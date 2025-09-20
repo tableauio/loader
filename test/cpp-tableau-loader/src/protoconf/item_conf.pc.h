@@ -45,7 +45,7 @@ class ItemConf : public Messager {
   using Index_ItemMap = std::unordered_map<protoconf::FruitType, Index_ItemVector>;
   // Finds the index (Type) to value (Index_ItemVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_ItemMap& FindItem() const;
+  const Index_ItemMap& FindItemMap() const;
   // Finds a vector of all values of the given key.
   const Index_ItemVector* FindItem(protoconf::FruitType type) const;
   // Finds the first value of the given key.
@@ -60,7 +60,7 @@ class ItemConf : public Messager {
   using Index_ItemInfoMap = std::unordered_map<int32_t, Index_ItemInfoVector>;
   // Finds the index (Param<ID>@ItemInfo) to value (Index_ItemInfoVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_ItemInfoMap& FindItemInfo() const;
+  const Index_ItemInfoMap& FindItemInfoMap() const;
   // Finds a vector of all values of the given key.
   const Index_ItemInfoVector* FindItemInfo(int32_t param) const;
   // Finds the first value of the given key.
@@ -75,7 +75,7 @@ class ItemConf : public Messager {
   using Index_ItemDefaultInfoMap = std::unordered_map<std::string, Index_ItemDefaultInfoVector>;
   // Finds the index (Default@ItemDefaultInfo) to value (Index_ItemDefaultInfoVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_ItemDefaultInfoMap& FindItemDefaultInfo() const;
+  const Index_ItemDefaultInfoMap& FindItemDefaultInfoMap() const;
   // Finds a vector of all values of the given key.
   const Index_ItemDefaultInfoVector* FindItemDefaultInfo(const std::string& default_) const;
   // Finds the first value of the given key.
@@ -90,7 +90,7 @@ class ItemConf : public Messager {
   using Index_ItemExtInfoMap = std::unordered_map<protoconf::FruitType, Index_ItemExtInfoVector>;
   // Finds the index (ExtType@ItemExtInfo) to value (Index_ItemExtInfoVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_ItemExtInfoMap& FindItemExtInfo() const;
+  const Index_ItemExtInfoMap& FindItemExtInfoMap() const;
   // Finds a vector of all values of the given key.
   const Index_ItemExtInfoVector* FindItemExtInfo(protoconf::FruitType ext_type) const;
   // Finds the first value of the given key.
@@ -117,11 +117,11 @@ class ItemConf : public Messager {
   using Index_AwardItemMap = std::unordered_map<Index_AwardItemKey, Index_AwardItemVector, Index_AwardItemKeyHasher>;
   // Finds the index ((ID,Name)<Type,UseEffectType>@AwardItem) to value (Index_AwardItemVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_AwardItemMap& FindAwardItem() const;
-  // Finds a vector of all values of the given key.
-  const Index_AwardItemVector* FindAwardItem(const Index_AwardItemKey& key) const;
-  // Finds the first value of the given key.
-  const protoconf::ItemConf::Item* FindFirstAwardItem(const Index_AwardItemKey& key) const;
+  const Index_AwardItemMap& FindAwardItemMap() const;
+  // Finds a vector of all values of the given keys.
+  const Index_AwardItemVector* FindAwardItem(uint32_t id, const std::string& name) const;
+  // Finds the first value of the given keys.
+  const protoconf::ItemConf::Item* FindFirstAwardItem(uint32_t id, const std::string& name) const;
 
  private:
   Index_AwardItemMap index_award_item_map_;
@@ -146,11 +146,11 @@ class ItemConf : public Messager {
   using Index_SpecialItemMap = std::unordered_map<Index_SpecialItemKey, Index_SpecialItemVector, Index_SpecialItemKeyHasher>;
   // Finds the index ((ID,Type,Param,ExtType)@SpecialItem) to value (Index_SpecialItemVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_SpecialItemMap& FindSpecialItem() const;
-  // Finds a vector of all values of the given key.
-  const Index_SpecialItemVector* FindSpecialItem(const Index_SpecialItemKey& key) const;
-  // Finds the first value of the given key.
-  const protoconf::ItemConf::Item* FindFirstSpecialItem(const Index_SpecialItemKey& key) const;
+  const Index_SpecialItemMap& FindSpecialItemMap() const;
+  // Finds a vector of all values of the given keys.
+  const Index_SpecialItemVector* FindSpecialItem(uint32_t id, protoconf::FruitType type, int32_t param, protoconf::FruitType ext_type) const;
+  // Finds the first value of the given keys.
+  const protoconf::ItemConf::Item* FindFirstSpecialItem(uint32_t id, protoconf::FruitType type, int32_t param, protoconf::FruitType ext_type) const;
 
  private:
   Index_SpecialItemMap index_special_item_map_;
@@ -161,7 +161,7 @@ class ItemConf : public Messager {
   using Index_ItemPathDirMap = std::unordered_map<std::string, Index_ItemPathDirVector>;
   // Finds the index (PathDir@ItemPathDir) to value (Index_ItemPathDirVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_ItemPathDirMap& FindItemPathDir() const;
+  const Index_ItemPathDirMap& FindItemPathDirMap() const;
   // Finds a vector of all values of the given key.
   const Index_ItemPathDirVector* FindItemPathDir(const std::string& dir) const;
   // Finds the first value of the given key.
@@ -176,7 +176,7 @@ class ItemConf : public Messager {
   using Index_ItemPathNameMap = std::unordered_map<std::string, Index_ItemPathNameVector>;
   // Finds the index (PathName@ItemPathName) to value (Index_ItemPathNameVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_ItemPathNameMap& FindItemPathName() const;
+  const Index_ItemPathNameMap& FindItemPathNameMap() const;
   // Finds a vector of all values of the given key.
   const Index_ItemPathNameVector* FindItemPathName(const std::string& name) const;
   // Finds the first value of the given key.
@@ -191,7 +191,7 @@ class ItemConf : public Messager {
   using Index_ItemPathFriendIDMap = std::unordered_map<uint32_t, Index_ItemPathFriendIDVector>;
   // Finds the index (PathFriendID@ItemPathFriendID) to value (Index_ItemPathFriendIDVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_ItemPathFriendIDMap& FindItemPathFriendID() const;
+  const Index_ItemPathFriendIDMap& FindItemPathFriendIDMap() const;
   // Finds a vector of all values of the given key.
   const Index_ItemPathFriendIDVector* FindItemPathFriendID(uint32_t id) const;
   // Finds the first value of the given key.
@@ -206,7 +206,7 @@ class ItemConf : public Messager {
   using Index_UseEffectTypeMap = std::unordered_map<protoconf::UseEffect::Type, Index_UseEffectTypeVector>;
   // Finds the index (UseEffectType@UseEffectType) to value (Index_UseEffectTypeVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_UseEffectTypeMap& FindUseEffectType() const;
+  const Index_UseEffectTypeMap& FindUseEffectTypeMap() const;
   // Finds a vector of all values of the given key.
   const Index_UseEffectTypeVector* FindUseEffectType(protoconf::UseEffect::Type type) const;
   // Finds the first value of the given key.

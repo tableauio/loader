@@ -264,16 +264,9 @@ func getNextLevelMapFD(fd protoreflect.FieldDescriptor) protoreflect.FieldDescri
 }
 
 func parseMapValueType(gen *protogen.Plugin, g *protogen.GeneratedFile, fd protoreflect.FieldDescriptor) string {
-	valueType := helper.ParseGoType(gen, fd.MapValue())
-	var valueTypeStr string
-	switch valueType := valueType.(type) {
-	case string:
-		valueTypeStr = valueType
-	case protogen.GoIdent:
-		valueTypeStr = g.QualifiedGoIdent(valueType)
-	}
+	valueType := helper.ParseGoType(gen, g, fd.MapValue())
 	if fd.MapValue().Kind() == protoreflect.MessageKind {
-		return "*" + valueTypeStr
+		return "*" + valueType
 	}
-	return valueTypeStr
+	return valueType
 }
