@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
-const version = "0.10.0"
+const version = "0.10.1"
 
 var pkg *string
 
