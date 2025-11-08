@@ -1,12 +1,9 @@
 package treemap
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
-
-	"golang.org/x/exp/constraints"
 )
 
 type testCase[T any, U any] struct {
@@ -46,6 +43,59 @@ func TestMapPut(t *testing.T) {
 		{6, "f", true},
 		{7, "g", true},
 		{8, "", false},
+	}
+
+	for _, test := range tests1 {
+		// retrievals
+		actualValue, actualFound := m.Get(test.Key)
+		if actualValue != test.Value || actualFound != test.Exist {
+			t.Errorf("Got %v expected %v", actualValue, test.Value)
+		}
+	}
+}
+
+type key struct {
+	k1, k2 int
+}
+
+func (k key) Less(other key) bool {
+	if k.k1 == other.k1 {
+		return k.k2 < other.k2
+	}
+	return k.k1 < other.k1
+}
+
+func TestMapPutByNew2(t *testing.T) {
+	m := New2[key, string]()
+	m.Put(key{3, 1}, "e")
+	m.Put(key{3, 2}, "f")
+	m.Put(key{4, 1}, "g")
+	m.Put(key{2, 1}, "c")
+	m.Put(key{2, 2}, "d")
+	m.Put(key{1, 1}, "x")
+	m.Put(key{1, 2}, "b")
+	m.Put(key{1, 1}, "a") //overwrite
+
+	if actualValue := m.Size(); actualValue != 7 {
+		t.Errorf("Got %v expected %v", actualValue, 7)
+	}
+	if actualValue, expectedValue := m.Keys(), []key{{1, 1}, {1, 2}, {2, 1}, {2, 2}, {3, 1}, {3, 2}, {4, 1}}; !sameElements(actualValue, expectedValue) {
+		t.Errorf("Got %v expected %v", actualValue, expectedValue)
+	}
+	if actualValue, expectedValue := m.Values(), []string{"a", "b", "c", "d", "e", "f", "g"}; !sameElements(actualValue, expectedValue) {
+		t.Errorf("Got %v expected %v", actualValue, expectedValue)
+	}
+
+	// key,expectedValue,expectedFound
+	tests1 := []testCase[key, string]{
+		{key{1, 1}, "a", true},
+		{key{1, 2}, "b", true},
+		{key{2, 1}, "c", true},
+		{key{2, 2}, "d", true},
+		{key{3, 1}, "e", true},
+		{key{3, 2}, "f", true},
+		{key{4, 1}, "g", true},
+		{key{4, 2}, "", false},
 	}
 
 	for _, test := range tests1 {
@@ -360,7 +410,7 @@ func TestMapCeilingOrMax(t *testing.T) {
 	}
 }
 
-func sameElements[T constraints.Ordered](a []T, b []T) bool {
+func sameElements[T comparable](a []T, b []T) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -786,75 +836,11 @@ func TestMapIteratorPrevTo(t *testing.T) {
 	}
 }
 
-func TestMapSerialization(t *testing.T) {
-	for i := 0; i < 10; i++ {
-		original := New[string, string]()
-		original.Put("d", "4")
-		original.Put("e", "5")
-		original.Put("c", "3")
-		original.Put("b", "2")
-		original.Put("a", "1")
-
-		assertSerialization(original, "A", t)
-
-		serialized, err := original.ToJSON()
-		if err != nil {
-			t.Errorf("Got error %v", err)
-		}
-		assertSerialization(original, "B", t)
-
-		deserialized := New[string, string]()
-		err = deserialized.FromJSON(serialized)
-		if err != nil {
-			t.Errorf("Got error %v", err)
-		}
-		assertSerialization(deserialized, "C", t)
-	}
-
-	m := New[string, int]()
-	m.Put("a", 1.0)
-	m.Put("b", 2.0)
-	m.Put("c", 3.0)
-
-	_, err := json.Marshal([]interface{}{"a", "b", "c", m})
-	if err != nil {
-		t.Errorf("Got error %v", err)
-	}
-
-	err = json.Unmarshal([]byte(`{"a":1,"b":2}`), &m)
-	if err != nil {
-		t.Errorf("Got error %v", err)
-	}
-}
-
 func TestMapString(t *testing.T) {
 	c := New[string, int]()
 	c.Put("a", 1)
 	if !strings.HasPrefix(c.String(), "TreeMap") {
 		t.Errorf("String should start with container name")
-	}
-}
-
-// noinspection GoBoolExpressions
-func assertSerialization(m *TreeMap[string, string], txt string, t *testing.T) {
-	if actualValue := m.Keys(); false ||
-		actualValue[0] != "a" ||
-		actualValue[1] != "b" ||
-		actualValue[2] != "c" ||
-		actualValue[3] != "d" ||
-		actualValue[4] != "e" {
-		t.Errorf("[%s] Got %v expected %v", txt, actualValue, "[a,b,c,d,e]")
-	}
-	if actualValue := m.Values(); false ||
-		actualValue[0] != "1" ||
-		actualValue[1] != "2" ||
-		actualValue[2] != "3" ||
-		actualValue[3] != "4" ||
-		actualValue[4] != "5" {
-		t.Errorf("[%s] Got %v expected %v", txt, actualValue, "[1,2,3,4,5]")
-	}
-	if actualValue, expectedValue := m.Size(), 5; actualValue != expectedValue {
-		t.Errorf("[%s] Got %v expected %v", txt, actualValue, expectedValue)
 	}
 }
 

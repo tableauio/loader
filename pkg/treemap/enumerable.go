@@ -13,7 +13,7 @@ func (m *TreeMap[K, V]) Each(f func(key K, value V)) {
 // Map invokes the given function once for each element and returns a container
 // containing the values returned by the given function as key/value pairs.
 func (m *TreeMap[K, V]) Map(f func(key1 K, value1 V) (K, V)) *TreeMap[K, V] {
-	newMap := New[K, V]()
+	newMap := new3[K, V](m.tree.Less)
 	iterator := m.Iterator()
 	for iterator.Next() {
 		key2, value2 := f(iterator.Key(), iterator.Value())
@@ -24,7 +24,7 @@ func (m *TreeMap[K, V]) Map(f func(key1 K, value1 V) (K, V)) *TreeMap[K, V] {
 
 // Select returns a new container containing all elements for which the given function returns a true value.
 func (m *TreeMap[K, V]) Select(f func(key K, value V) bool) *TreeMap[K, V] {
-	newMap := New[K, V]()
+	newMap := new3[K, V](m.tree.Less)
 	iterator := m.Iterator()
 	for iterator.Next() {
 		if f(iterator.Key(), iterator.Value()) {
