@@ -1,19 +1,27 @@
 package treemap
 
 import (
+	"cmp"
 	"fmt"
 	"strings"
 
 	rbt "github.com/tableauio/loader/pkg/treemap/redblacktree"
-	"golang.org/x/exp/constraints"
 )
 
-type TreeMap[K constraints.Ordered, V any] struct {
+type TreeMap[K comparable, V any] struct {
 	tree *rbt.Tree[K, V]
 }
 
-func New[K constraints.Ordered, V any]() *TreeMap[K, V] {
+func New[K cmp.Ordered, V any]() *TreeMap[K, V] {
 	return &TreeMap[K, V]{tree: rbt.New[K, V]()}
+}
+
+func New2[K rbt.Lesser[K], V any]() *TreeMap[K, V] {
+	return &TreeMap[K, V]{tree: rbt.New2[K, V]()}
+}
+
+func new3[K comparable, V any](less func(K, K) bool) *TreeMap[K, V] {
+	return &TreeMap[K, V]{tree: rbt.New3[K, V](less)}
 }
 
 // Put inserts key-value pair into the map.

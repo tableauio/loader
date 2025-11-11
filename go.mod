@@ -1,6 +1,6 @@
 module github.com/tableauio/loader
 
-go 1.20
+go 1.21
 
 require (
 	github.com/iancoleman/strcase v0.3.0

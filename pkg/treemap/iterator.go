@@ -2,12 +2,11 @@ package treemap
 
 import (
 	rbt "github.com/tableauio/loader/pkg/treemap/redblacktree"
-	"golang.org/x/exp/constraints"
 )
 
 // Refer: https://github.com/emirpasic/gods/blob/master/maps/treemap/iterator.go
 
-type TreeMapIterator[K constraints.Ordered, V any] struct {
+type TreeMapIterator[K comparable, V any] struct {
 	iterator *rbt.Iterator[K, V]
 }
 

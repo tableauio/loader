@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-
-	"golang.org/x/exp/constraints"
 )
 
 type testCase[T any, U any] struct {
@@ -46,6 +44,59 @@ func TestMapPut(t *testing.T) {
 		{6, "f", true},
 		{7, "g", true},
 		{8, "", false},
+	}
+
+	for _, test := range tests1 {
+		// retrievals
+		actualValue, actualFound := m.Get(test.Key)
+		if actualValue != test.Value || actualFound != test.Exist {
+			t.Errorf("Got %v expected %v", actualValue, test.Value)
+		}
+	}
+}
+
+type key struct {
+	k1, k2 int
+}
+
+func (k key) Less(other key) bool {
+	if k.k1 == other.k1 {
+		return k.k2 < other.k2
+	}
+	return k.k1 < other.k1
+}
+
+func TestMapPutByNew2(t *testing.T) {
+	m := New2[key, string]()
+	m.Put(key{3, 1}, "e")
+	m.Put(key{3, 2}, "f")
+	m.Put(key{4, 1}, "g")
+	m.Put(key{2, 1}, "c")
+	m.Put(key{2, 2}, "d")
+	m.Put(key{1, 1}, "x")
+	m.Put(key{1, 2}, "b")
+	m.Put(key{1, 1}, "a") //overwrite
+
+	if actualValue := m.Size(); actualValue != 7 {
+		t.Errorf("Got %v expected %v", actualValue, 7)
+	}
+	if actualValue, expectedValue := m.Keys(), []key{{1, 1}, {1, 2}, {2, 1}, {2, 2}, {3, 1}, {3, 2}, {4, 1}}; !sameElements(actualValue, expectedValue) {
+		t.Errorf("Got %v expected %v", actualValue, expectedValue)
+	}
+	if actualValue, expectedValue := m.Values(), []string{"a", "b", "c", "d", "e", "f", "g"}; !sameElements(actualValue, expectedValue) {
+		t.Errorf("Got %v expected %v", actualValue, expectedValue)
+	}
+
+	// key,expectedValue,expectedFound
+	tests1 := []testCase[key, string]{
+		{key{1, 1}, "a", true},
+		{key{1, 2}, "b", true},
+		{key{2, 1}, "c", true},
+		{key{2, 2}, "d", true},
+		{key{3, 1}, "e", true},
+		{key{3, 2}, "f", true},
+		{key{4, 1}, "g", true},
+		{key{4, 2}, "", false},
 	}
 
 	for _, test := range tests1 {
@@ -360,7 +411,7 @@ func TestMapCeilingOrMax(t *testing.T) {
 	}
 }
 
-func sameElements[T constraints.Ordered](a []T, b []T) bool {
+func sameElements[T comparable](a []T, b []T) bool {
 	if len(a) != len(b) {
 		return false
 	}

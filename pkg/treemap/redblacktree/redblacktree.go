@@ -1,9 +1,8 @@
 package redblacktree
 
 import (
+	"cmp"
 	"fmt"
-
-	"golang.org/x/exp/constraints"
 )
 
 // Refer: https://github.com/emirpasic/gods/blob/master/trees/redblacktree/redblacktree.go
@@ -15,13 +14,19 @@ const (
 )
 
 // Tree holds elements of the red-black tree
-type Tree[K constraints.Ordered, V any] struct {
+type Tree[K comparable, V any] struct {
 	Root *Node[K, V]
 	size int
+	Less func(K, K) bool
+}
+
+type Lesser[T any] interface {
+	comparable
+	Less(other T) bool
 }
 
 // Node is a single element within the tree
-type Node[K constraints.Ordered, V any] struct {
+type Node[K, V any] struct {
 	Key    K
 	Value  V
 	color  color
@@ -30,8 +35,16 @@ type Node[K constraints.Ordered, V any] struct {
 	Parent *Node[K, V]
 }
 
-func New[K constraints.Ordered, V any]() *Tree[K, V] {
-	return &Tree[K, V]{}
+func New[K cmp.Ordered, V any]() *Tree[K, V] {
+	return New3[K, V](cmp.Less)
+}
+
+func New2[K Lesser[K], V any]() *Tree[K, V] {
+	return New3[K, V](func(k1, k2 K) bool { return k1.Less(k2) })
+}
+
+func New3[K comparable, V any](less func(K, K) bool) *Tree[K, V] {
+	return &Tree[K, V]{Less: less}
 }
 
 // Put inserts node into the tree.
@@ -46,11 +59,7 @@ func (tree *Tree[K, V]) Put(key K, value V) {
 		loop := true
 		for loop {
 			switch {
-			case key == node.Key:
-				node.Key = key
-				node.Value = value
-				return
-			case key < node.Key:
+			case tree.Less(key, node.Key):
 				if node.Left == nil {
 					node.Left = &Node[K, V]{Key: key, Value: value, color: red}
 					insertedNode = node.Left
@@ -58,7 +67,7 @@ func (tree *Tree[K, V]) Put(key K, value V) {
 				} else {
 					node = node.Left
 				}
-			case key > node.Key:
+			case tree.Less(node.Key, key):
 				if node.Right == nil {
 					node.Right = &Node[K, V]{Key: key, Value: value, color: red}
 					insertedNode = node.Right
@@ -66,6 +75,10 @@ func (tree *Tree[K, V]) Put(key K, value V) {
 				} else {
 					node = node.Right
 				}
+			default:
+				node.Key = key
+				node.Value = value
+				return
 			}
 		}
 		insertedNode.Parent = node
@@ -204,13 +217,13 @@ func (tree *Tree[K, V]) Floor(key K) (floor *Node[K, V], found bool) {
 	node := tree.Root
 	for node != nil {
 		switch {
-		case key == node.Key:
-			return node, true
-		case key < node.Key:
+		case tree.Less(key, node.Key):
 			node = node.Left
-		case key > node.Key:
+		case tree.Less(node.Key, key):
 			floor, found = node, true
 			node = node.Right
+		default:
+			return node, true
 		}
 	}
 	if found {
@@ -232,13 +245,13 @@ func (tree *Tree[K, V]) Ceiling(key K) (ceiling *Node[K, V], found bool) {
 	node := tree.Root
 	for node != nil {
 		switch {
-		case key == node.Key:
-			return node, true
-		case key < node.Key:
+		case tree.Less(key, node.Key):
 			ceiling, found = node, true
 			node = node.Left
-		case key > node.Key:
+		case tree.Less(node.Key, key):
 			node = node.Right
+		default:
+			return node, true
 		}
 	}
 	if found {
@@ -298,12 +311,12 @@ func (tree *Tree[K, V]) lookup(key K) *Node[K, V] {
 	node := tree.Root
 	for node != nil {
 		switch {
-		case key == node.Key:
-			return node
-		case key < node.Key:
+		case tree.Less(key, node.Key):
 			node = node.Left
-		case key > node.Key:
+		case tree.Less(node.Key, key):
 			node = node.Right
+		default:
+			return node
 		}
 	}
 	return nil
