@@ -100,9 +100,9 @@ func ParseMapKeyType(fd protoreflect.FieldDescriptor) string {
 
 // ParseOrderedMapKeyType converts a FieldDescriptor to its treemap key type.
 // fd must be an ordered type, or a message which can be converted to an ordered type.
-func ParseOrderedMapKeyType(fd protoreflect.FieldDescriptor) string {
+func ParseOrderedMapKeyType(gen *protogen.Plugin, g *protogen.GeneratedFile, fd protoreflect.FieldDescriptor) string {
 	switch fd.Kind() {
-	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind, protoreflect.EnumKind:
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
 		return "int32"
 	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
 		return "uint32"
@@ -116,6 +116,8 @@ func ParseOrderedMapKeyType(fd protoreflect.FieldDescriptor) string {
 		return "double"
 	case protoreflect.StringKind:
 		return "string"
+	case protoreflect.EnumKind:
+		return g.QualifiedGoIdent(FindEnumGoIdent(gen, fd.Enum()))
 	case protoreflect.MessageKind:
 		switch fd.Message().FullName() {
 		case "google.protobuf.Timestamp", "google.protobuf.Duration":

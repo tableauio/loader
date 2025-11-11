@@ -62,6 +62,25 @@ type ItemConf_Index_ItemPathFriendIDMap = map[uint32][]*protoconf.ItemConf_Item
 // Index: UseEffectType@UseEffectType
 type ItemConf_Index_UseEffectTypeMap = map[protoconf.UseEffect_Type][]*protoconf.ItemConf_Item
 
+// OrderedIndex types.
+// OrderedIndex: ExtType@ExtType
+type ItemConf_OrderedIndex_ExtTypeMap = treemap.TreeMap[protoconf.FruitType, []*protoconf.ItemConf_Item]
+
+// OrderedIndex: (Param,ExtType)<ID>@ParamExtType
+type ItemConf_OrderedIndex_ParamExtTypeKey struct {
+	Param   int32
+	ExtType protoconf.FruitType
+}
+
+func (x ItemConf_OrderedIndex_ParamExtTypeKey) Less(other ItemConf_OrderedIndex_ParamExtTypeKey) bool {
+	if x.Param != other.Param {
+		return x.Param < other.Param
+	}
+	return x.ExtType < other.ExtType
+}
+
+type ItemConf_OrderedIndex_ParamExtTypeMap = treemap.TreeMap[ItemConf_OrderedIndex_ParamExtTypeKey, []*protoconf.ItemConf_Item]
+
 // ItemConf is a wrapper around protobuf message: protoconf.ItemConf.
 //
 // It is designed for three goals:
@@ -71,18 +90,20 @@ type ItemConf_Index_UseEffectTypeMap = map[protoconf.UseEffect_Type][]*protoconf
 //  3. Extensibility: Map, OrdererdMap, Index, OrderedIndex...
 type ItemConf struct {
 	UnimplementedMessager
-	data, originalData       *protoconf.ItemConf
-	orderedMap               *ProtoconfItemConfItemMap_OrderedMap
-	indexItemMap             ItemConf_Index_ItemMap
-	indexItemInfoMap         ItemConf_Index_ItemInfoMap
-	indexItemDefaultInfoMap  ItemConf_Index_ItemDefaultInfoMap
-	indexItemExtInfoMap      ItemConf_Index_ItemExtInfoMap
-	indexAwardItemMap        ItemConf_Index_AwardItemMap
-	indexSpecialItemMap      ItemConf_Index_SpecialItemMap
-	indexItemPathDirMap      ItemConf_Index_ItemPathDirMap
-	indexItemPathNameMap     ItemConf_Index_ItemPathNameMap
-	indexItemPathFriendIdMap ItemConf_Index_ItemPathFriendIDMap
-	indexUseEffectTypeMap    ItemConf_Index_UseEffectTypeMap
+	data, originalData          *protoconf.ItemConf
+	orderedMap                  *ProtoconfItemConfItemMap_OrderedMap
+	indexItemMap                ItemConf_Index_ItemMap
+	indexItemInfoMap            ItemConf_Index_ItemInfoMap
+	indexItemDefaultInfoMap     ItemConf_Index_ItemDefaultInfoMap
+	indexItemExtInfoMap         ItemConf_Index_ItemExtInfoMap
+	indexAwardItemMap           ItemConf_Index_AwardItemMap
+	indexSpecialItemMap         ItemConf_Index_SpecialItemMap
+	indexItemPathDirMap         ItemConf_Index_ItemPathDirMap
+	indexItemPathNameMap        ItemConf_Index_ItemPathNameMap
+	indexItemPathFriendIdMap    ItemConf_Index_ItemPathFriendIDMap
+	indexUseEffectTypeMap       ItemConf_Index_UseEffectTypeMap
+	orderedIndexExtTypeMap      *ItemConf_OrderedIndex_ExtTypeMap
+	orderedIndexParamExtTypeMap *ItemConf_OrderedIndex_ParamExtTypeMap
 }
 
 // Name returns the ItemConf's message name.
@@ -238,6 +259,36 @@ func (x *ItemConf) processAfterLoad() error {
 			return item[i].GetUseEffect().GetType() < item[j].GetUseEffect().GetType()
 		})
 	}
+	// OrderedIndex init.
+	x.orderedIndexExtTypeMap = treemap.New[protoconf.FruitType, []*protoconf.ItemConf_Item]()
+	x.orderedIndexParamExtTypeMap = treemap.New2[ItemConf_OrderedIndex_ParamExtTypeKey, []*protoconf.ItemConf_Item]()
+	for _, item1 := range x.data.GetItemMap() {
+		{
+			// OrderedIndex: ExtType@ExtType
+			for _, item2 := range item1.GetExtTypeList() {
+				key := item2
+				value, _ := x.orderedIndexExtTypeMap.Get(key)
+				x.orderedIndexExtTypeMap.Put(key, append(value, item1))
+			}
+		}
+		{
+			// OrderedIndex: (Param,ExtType)<ID>@ParamExtType
+			for _, indexItem0 := range item1.GetParamList() {
+				for _, indexItem1 := range item1.GetExtTypeList() {
+					key := ItemConf_OrderedIndex_ParamExtTypeKey{indexItem0, indexItem1}
+					value, _ := x.orderedIndexParamExtTypeMap.Get(key)
+					x.orderedIndexParamExtTypeMap.Put(key, append(value, item1))
+				}
+			}
+		}
+	}
+	// OrderedIndex(sort): (Param,ExtType)<ID>@ParamExtType
+	x.orderedIndexParamExtTypeMap.Range(func(key ItemConf_OrderedIndex_ParamExtTypeKey, item []*protoconf.ItemConf_Item) bool {
+		sort.Slice(item, func(i, j int) bool {
+			return item[i].GetId() < item[j].GetId()
+		})
+		return true
+	})
 	return nil
 }
 
@@ -481,6 +532,54 @@ func (x *ItemConf) FindUseEffectType(type_ protoconf.UseEffect_Type) []*protocon
 // or nil if no value found.
 func (x *ItemConf) FindFirstUseEffectType(type_ protoconf.UseEffect_Type) *protoconf.ItemConf_Item {
 	val := x.FindUseEffectType(type_)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// OrderedIndex: ExtType@ExtType
+
+// FindExtTypeMap finds the ordered index (ExtType@ExtType) to value (protoconf.ItemConf_Item) treemap.
+// One key may correspond to multiple values, which are contained by a slice.
+func (x *ItemConf) FindExtTypeMap() *ItemConf_OrderedIndex_ExtTypeMap {
+	return x.orderedIndexExtTypeMap
+}
+
+// FindExtType finds a slice of all values of the given key.
+func (x *ItemConf) FindExtType(extType protoconf.FruitType) []*protoconf.ItemConf_Item {
+	val, _ := x.orderedIndexExtTypeMap.Get(extType)
+	return val
+}
+
+// FindFirstExtType finds the first value of the given key,
+// or nil if no value found.
+func (x *ItemConf) FindFirstExtType(extType protoconf.FruitType) *protoconf.ItemConf_Item {
+	val := x.FindExtType(extType)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// OrderedIndex: (Param,ExtType)<ID>@ParamExtType
+
+// FindParamExtTypeMap finds the ordered index ((Param,ExtType)<ID>@ParamExtType) to value (protoconf.ItemConf_Item) treemap.
+// One key may correspond to multiple values, which are contained by a slice.
+func (x *ItemConf) FindParamExtTypeMap() *ItemConf_OrderedIndex_ParamExtTypeMap {
+	return x.orderedIndexParamExtTypeMap
+}
+
+// FindParamExtType finds a slice of all values of the given key.
+func (x *ItemConf) FindParamExtType(param int32, extType protoconf.FruitType) []*protoconf.ItemConf_Item {
+	val, _ := x.orderedIndexParamExtTypeMap.Get(ItemConf_OrderedIndex_ParamExtTypeKey{param, extType})
+	return val
+}
+
+// FindFirstParamExtType finds the first value of the given key,
+// or nil if no value found.
+func (x *ItemConf) FindFirstParamExtType(param int32, extType protoconf.FruitType) *protoconf.ItemConf_Item {
+	val := x.FindParamExtType(param, extType)
 	if len(val) > 0 {
 		return val[0]
 	}
