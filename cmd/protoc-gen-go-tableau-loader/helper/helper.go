@@ -130,6 +130,25 @@ func ParseOrderedMapKeyType(gen *protogen.Plugin, g *protogen.GeneratedFile, fd 
 	}
 }
 
+func ParseMapFieldName(fd protoreflect.FieldDescriptor) string {
+	opts := fd.Options().(*descriptorpb.FieldOptions)
+	fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
+	name := fdOpts.GetKey()
+	if fd.MapValue().Kind() == protoreflect.MessageKind {
+		valueFd := fd.MapValue().Message().Fields().Get(0)
+		name = string(valueFd.Name())
+	}
+	return escapeIdentifier(name)
+}
+
+func ParseMapValueType(gen *protogen.Plugin, g *protogen.GeneratedFile, fd protoreflect.FieldDescriptor) string {
+	valueType := ParseGoType(gen, g, fd.MapValue())
+	if fd.MapValue().Kind() == protoreflect.MessageKind {
+		return "*" + valueType
+	}
+	return valueType
+}
+
 func FindMessage(gen *protogen.Plugin, md protoreflect.MessageDescriptor) *protogen.Message {
 	if file, ok := gen.FilesByPath[md.ParentFile().Path()]; ok {
 		return FindMessageByDescriptor(file.Messages, md)
@@ -224,36 +243,30 @@ func GetTypeEmptyValue(fd protoreflect.FieldDescriptor) string {
 }
 
 type MapKey struct {
-	Type string
-	Name string
+	Type      string
+	Name      string
+	FieldName string // multi-colunm index only
 }
 
-func AddMapKey(gen *protogen.Plugin, fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
-	opts := fd.Options().(*descriptorpb.FieldOptions)
-	fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
-	name := fdOpts.GetKey()
-	if fd.MapValue().Kind() == protoreflect.MessageKind {
-		valueFd := fd.MapValue().Message().Fields().Get(0)
-		name = string(valueFd.Name())
+type MapKeys []MapKey
+
+func (keys MapKeys) AddMapKey(newKey MapKey) MapKeys {
+	if newKey.Name == "" {
+		newKey.Name = fmt.Sprintf("key%d", len(keys)+1)
 	}
-	name = escapeIdentifier(name)
-	if name == "" {
-		name = fmt.Sprintf("key%d", len(keys)+1)
-	} else {
-		for _, key := range keys {
-			if key.Name == name {
-				// rewrite to avoid name confict
-				name = fmt.Sprintf("%s%d", name, len(keys)+1)
-				break
-			}
+	for _, key := range keys {
+		if key.Name == newKey.Name {
+			// rewrite to avoid name confict
+			newKey.Name = fmt.Sprintf("%s%d", newKey.Name, len(keys)+1)
+			break
 		}
 	}
-	keys = append(keys, MapKey{ParseMapKeyType(fd.MapKey()), name})
+	keys = append(keys, newKey)
 	return keys
 }
 
 // GenGetParams generates function parameters, which are the names listed in the function's definition.
-func GenGetParams(keys []MapKey) string {
+func (keys MapKeys) GenGetParams() string {
 	var params string
 	for i, key := range keys {
 		params += key.Name + " " + key.Type
@@ -265,7 +278,7 @@ func GenGetParams(keys []MapKey) string {
 }
 
 // GenGetArguments generates function arguments, which are the real values passed to the function.
-func GenGetArguments(keys []MapKey) string {
+func (keys MapKeys) GenGetArguments() string {
 	var params string
 	for i, key := range keys {
 		params += key.Name

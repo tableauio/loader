@@ -4,6 +4,9 @@ import (
 	"fmt"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
+	idx "github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/index"
+	orderedindex "github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/ordered_index"
+	orderedmap "github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/ordered_map"
 	"github.com/tableauio/loader/internal/extensions"
 	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/loader/internal/options"
@@ -12,19 +15,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
-)
-
-const (
-	formatPackage  = protogen.GoImportPath("github.com/tableauio/tableau/format")
-	loadPackage    = protogen.GoImportPath("github.com/tableauio/tableau/load")
-	storePackage   = protogen.GoImportPath("github.com/tableauio/tableau/store")
-	errors         = protogen.GoImportPath("github.com/pkg/errors")
-	treeMapPackage = protogen.GoImportPath("github.com/tableauio/loader/pkg/treemap")
-	pairPackage    = protogen.GoImportPath("github.com/tableauio/loader/pkg/pair")
-	timePackage    = protogen.GoImportPath("time")
-	sortPackage    = protogen.GoImportPath("sort")
-	fmtPackage     = protogen.GoImportPath("fmt")
-	protoPackage   = protogen.GoImportPath("google.golang.org/protobuf/proto")
 )
 
 // golbal container for record all proto filenames and messager names
@@ -75,16 +65,14 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	messagerName := string(message.Desc.Name())
 	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
+	orderedMapGenerator := orderedmap.NewGenerator(gen, g, message)
+	indexGenerator := idx.NewGenerator(gen, g, indexDescriptor, message)
+	orderedIndexGenerator := orderedindex.NewGenerator(gen, g, indexDescriptor, message)
+
 	// type definitions
-	if options.NeedGenOrderedMap(message.Desc, options.LangGO) {
-		genOrderedMapTypeDef(gen, g, message.Desc, 1, nil, messagerName)
-	}
-	if options.NeedGenIndex(message.Desc, options.LangGO) {
-		genIndexTypeDef(gen, g, indexDescriptor, messagerName)
-	}
-	if options.NeedGenOrderedIndex(message.Desc, options.LangGO) {
-		genOrderedIndexTypeDef(gen, g, indexDescriptor, messagerName)
-	}
+	orderedMapGenerator.GenOrderedMapTypeDef()
+	indexGenerator.GenIndexTypeDef()
+	orderedIndexGenerator.GenOrderedIndexTypeDef()
 
 	g.P("// ", messagerName, " is a wrapper around protobuf message: ", message.GoIdent, ".")
 	g.P("//")
@@ -97,15 +85,9 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("type ", messagerName, " struct {")
 	g.P("UnimplementedMessager")
 	g.P("data, originalData *", message.GoIdent)
-	if options.NeedGenOrderedMap(message.Desc, options.LangGO) {
-		genOrderedMapField(g, message.Desc)
-	}
-	if options.NeedGenIndex(message.Desc, options.LangGO) {
-		genIndexField(g, indexDescriptor, messagerName)
-	}
-	if options.NeedGenOrderedIndex(message.Desc, options.LangGO) {
-		genOrderedIndexField(g, indexDescriptor, messagerName)
-	}
+	orderedMapGenerator.GenOrderedMapField()
+	indexGenerator.GenIndexField()
+	orderedIndexGenerator.GenOrderedIndexField()
 	g.P("}")
 	g.P()
 
@@ -129,13 +111,13 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P()
 
 	g.P("// Load fills ", messagerName, "'s inner message from file in the specified directory and format.")
-	g.P("func (x *", messagerName, ") Load(dir string, format ", formatPackage.Ident("Format"), " , opts *", loadPackage.Ident("MessagerOptions"), ") error {")
-	g.P("start := ", timePackage.Ident("Now"), "()")
+	g.P("func (x *", messagerName, ") Load(dir string, format ", helper.FormatPackage.Ident("Format"), " , opts *", helper.LoadPackage.Ident("MessagerOptions"), ") error {")
+	g.P("start := ", helper.TimePackage.Ident("Now"), "()")
 	g.P("defer func ()  {")
-	g.P("x.Stats.Duration = ", timePackage.Ident("Since"), "(start)")
+	g.P("x.Stats.Duration = ", helper.TimePackage.Ident("Since"), "(start)")
 	g.P("}()")
 	g.P("x.data = &", message.GoIdent, "{}")
-	g.P("err := ", loadPackage.Ident("LoadMessagerInDir"), "(x.data, dir, format, opts)")
+	g.P("err := ", helper.LoadPackage.Ident("LoadMessagerInDir"), "(x.data, dir, format, opts)")
 	g.P("if err != nil {")
 	g.P("return err")
 	g.P("}")
@@ -148,13 +130,13 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 
 	g.P("// Store writes ", messagerName, "'s inner message to file in the specified directory and format.")
 	g.P("// Available formats: JSON, Bin, and Text.")
-	g.P("func (x *", messagerName, ") Store(dir string, format ", formatPackage.Ident("Format"), " , options ...", storePackage.Ident("Option"), ") error {")
-	g.P("return ", storePackage.Ident("Store"), "(x.Data(), dir, format, options...)")
+	g.P("func (x *", messagerName, ") Store(dir string, format ", helper.FormatPackage.Ident("Format"), " , options ...", helper.StorePackage.Ident("Option"), ") error {")
+	g.P("return ", helper.StorePackage.Ident("Store"), "(x.Data(), dir, format, options...)")
 	g.P("}")
 	g.P()
 
 	g.P("// Message returns the ", messagerName, "'s inner message data.")
-	g.P("func (x *", messagerName, ") Message() ", protoPackage.Ident("Message"), " {")
+	g.P("func (x *", messagerName, ") Message() ", helper.ProtoPackage.Ident("Message"), " {")
 	g.P(`return x.Data()`)
 	g.P("}")
 	g.P()
@@ -177,15 +159,9 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	if options.NeedGenOrderedMap(message.Desc, options.LangGO) || options.NeedGenIndex(message.Desc, options.LangGO) || options.NeedGenOrderedIndex(message.Desc, options.LangGO) {
 		g.P("// processAfterLoad runs after this messager is loaded.")
 		g.P("func (x *", messagerName, ") processAfterLoad() error {")
-		if options.NeedGenOrderedMap(message.Desc, options.LangGO) {
-			genOrderedMapLoader(gen, g, message.Desc, 1, nil, messagerName, "")
-		}
-		if options.NeedGenIndex(message.Desc, options.LangGO) {
-			genIndexLoader(gen, g, indexDescriptor, messagerName)
-		}
-		if options.NeedGenOrderedIndex(message.Desc, options.LangGO) {
-			genOrderedIndexLoader(gen, g, indexDescriptor, messagerName)
-		}
+		orderedMapGenerator.GenOrderedMapLoader()
+		indexGenerator.GenIndexLoader()
+		orderedIndexGenerator.GenOrderedIndexLoader()
 		g.P("return nil")
 		g.P("}")
 		g.P()
@@ -193,26 +169,23 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 
 	// syntactic sugar for accessing map items
 	genMapGetters(gen, g, message, 1, nil, messagerName)
-	if options.NeedGenOrderedMap(message.Desc, options.LangGO) {
-		genOrderedMapGetters(gen, g, message.Desc, 1, nil, messagerName)
-	}
-	if options.NeedGenIndex(message.Desc, options.LangGO) {
-		genIndexFinders(gen, g, indexDescriptor, messagerName)
-	}
-	if options.NeedGenOrderedIndex(message.Desc, options.LangGO) {
-		genOrderedIndexFinders(gen, g, indexDescriptor, messagerName)
-	}
+	orderedMapGenerator.GenOrderedMapGetters()
+	indexGenerator.GenIndexFinders()
+	orderedIndexGenerator.GenOrderedIndexFinders()
 }
 
-func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message, depth int, keys []helper.MapKey, messagerName string) {
+func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message, depth int, keys helper.MapKeys, messagerName string) {
 	for _, field := range message.Fields {
 		fd := field.Desc
 		if fd.IsMap() {
-			keys = helper.AddMapKey(gen, fd, keys)
+			keys = keys.AddMapKey(helper.MapKey{
+				Type: helper.ParseMapKeyType(fd.MapKey()),
+				Name: helper.ParseMapFieldName(fd),
+			})
 			getter := fmt.Sprintf("Get%v", depth)
 			g.P("// ", getter, " finds value in the ", depth, "-level map. It will return")
 			g.P("// NotFound error if the key is not found.")
-			g.P("func (x *", messagerName, ") ", getter, "(", helper.GenGetParams(keys), ") (", parseMapValueType(gen, g, fd), ", error) {")
+			g.P("func (x *", messagerName, ") ", getter, "(", keys.GenGetParams(), ") (", helper.ParseMapValueType(gen, g, fd), ", error) {")
 
 			returnEmptyValue := helper.GetTypeEmptyValue(fd.MapValue())
 
@@ -223,7 +196,7 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 				container = "conf"
 				prevKeys := keys[:len(keys)-1]
 				prevGetter := fmt.Sprintf("Get%v", depth-1)
-				g.P("conf, err := x.", prevGetter, "(", helper.GenGetArguments(prevKeys), ")")
+				g.P("conf, err := x.", prevGetter, "(", prevKeys.GenGetArguments(), ")")
 				g.P("if err != nil {")
 				g.P(`return `, returnEmptyValue, `, err`)
 				g.P("}")
@@ -232,7 +205,7 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 			g.P("d := ", container, ".Get", field.GoName, "()")
 			lastKeyName := keys[len(keys)-1].Name
 			g.P("if val, ok := d[", lastKeyName, "]; !ok {")
-			g.P(`return `, returnEmptyValue, `, `, fmtPackage.Ident("Errorf"), `("`, lastKeyName, `(%v) %w", `, lastKeyName, `, ErrNotFound)`)
+			g.P(`return `, returnEmptyValue, `, `, helper.FmtPackage.Ident("Errorf"), `("`, lastKeyName, `(%v) %w", `, lastKeyName, `, ErrNotFound)`)
 			g.P("} else {")
 			g.P(`return val, nil`)
 			g.P("}")
@@ -248,25 +221,4 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 			break
 		}
 	}
-}
-
-func getNextLevelMapFD(fd protoreflect.FieldDescriptor) protoreflect.FieldDescriptor {
-	if fd.Kind() == protoreflect.MessageKind {
-		md := fd.Message()
-		for i := 0; i < md.Fields().Len(); i++ {
-			fd := md.Fields().Get(i)
-			if fd.IsMap() {
-				return fd
-			}
-		}
-	}
-	return nil
-}
-
-func parseMapValueType(gen *protogen.Plugin, g *protogen.GeneratedFile, fd protoreflect.FieldDescriptor) string {
-	valueType := helper.ParseGoType(gen, g, fd.MapValue())
-	if fd.MapValue().Kind() == protoreflect.MessageKind {
-		return "*" + valueType
-	}
-	return valueType
 }
