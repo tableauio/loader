@@ -3,7 +3,7 @@ package redblacktree
 // Refer: https://github.com/emirpasic/gods/blob/master/trees/redblacktree/iterator.go
 
 // Iterator holding the iterator's state
-type Iterator[K, V any] struct {
+type Iterator[K comparable, V any] struct {
 	tree     *Tree[K, V]
 	node     *Node[K, V]
 	position position

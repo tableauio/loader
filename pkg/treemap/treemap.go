@@ -8,7 +8,7 @@ import (
 	rbt "github.com/tableauio/loader/pkg/treemap/redblacktree"
 )
 
-type TreeMap[K, V any] struct {
+type TreeMap[K comparable, V any] struct {
 	tree *rbt.Tree[K, V]
 }
 
@@ -16,11 +16,11 @@ func New[K cmp.Ordered, V any]() *TreeMap[K, V] {
 	return &TreeMap[K, V]{tree: rbt.New[K, V]()}
 }
 
-func New2[K rbt.Ordered[K], V any]() *TreeMap[K, V] {
+func New2[K rbt.Lesser[K], V any]() *TreeMap[K, V] {
 	return &TreeMap[K, V]{tree: rbt.New2[K, V]()}
 }
 
-func new3[K, V any](less func(K, K) bool) *TreeMap[K, V] {
+func new3[K comparable, V any](less func(K, K) bool) *TreeMap[K, V] {
 	return &TreeMap[K, V]{tree: rbt.New3[K, V](less)}
 }
 

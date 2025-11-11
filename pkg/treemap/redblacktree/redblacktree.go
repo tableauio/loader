@@ -14,13 +14,14 @@ const (
 )
 
 // Tree holds elements of the red-black tree
-type Tree[K, V any] struct {
+type Tree[K comparable, V any] struct {
 	Root *Node[K, V]
 	size int
 	Less func(K, K) bool
 }
 
-type Ordered[T any] interface {
+type Lesser[T any] interface {
+	comparable
 	Less(other T) bool
 }
 
@@ -38,11 +39,11 @@ func New[K cmp.Ordered, V any]() *Tree[K, V] {
 	return New3[K, V](cmp.Less)
 }
 
-func New2[K interface{ Less(other K) bool }, V any]() *Tree[K, V] {
+func New2[K Lesser[K], V any]() *Tree[K, V] {
 	return New3[K, V](func(k1, k2 K) bool { return k1.Less(k2) })
 }
 
-func New3[K, V any](less func(K, K) bool) *Tree[K, V] {
+func New3[K comparable, V any](less func(K, K) bool) *Tree[K, V] {
 	return &Tree[K, V]{Less: less}
 }
 

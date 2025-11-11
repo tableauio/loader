@@ -6,7 +6,7 @@ import (
 
 // Refer: https://github.com/emirpasic/gods/blob/master/maps/treemap/iterator.go
 
-type TreeMapIterator[K, V any] struct {
+type TreeMapIterator[K comparable, V any] struct {
 	iterator *rbt.Iterator[K, V]
 }
 
