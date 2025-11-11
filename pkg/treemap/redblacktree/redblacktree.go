@@ -20,6 +20,10 @@ type Tree[K, V any] struct {
 	Less func(K, K) bool
 }
 
+type Ordered[T any] interface {
+	Less(other T) bool
+}
+
 // Node is a single element within the tree
 type Node[K, V any] struct {
 	Key    K

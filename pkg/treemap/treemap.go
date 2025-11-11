@@ -12,15 +12,11 @@ type TreeMap[K, V any] struct {
 	tree *rbt.Tree[K, V]
 }
 
-type Ordered[T any] interface {
-	Less(other T) bool
-}
-
 func New[K cmp.Ordered, V any]() *TreeMap[K, V] {
 	return &TreeMap[K, V]{tree: rbt.New[K, V]()}
 }
 
-func New2[K Ordered[K], V any]() *TreeMap[K, V] {
+func New2[K rbt.Ordered[K], V any]() *TreeMap[K, V] {
 	return &TreeMap[K, V]{tree: rbt.New2[K, V]()}
 }
 
