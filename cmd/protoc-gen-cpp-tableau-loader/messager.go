@@ -4,9 +4,11 @@ import (
 	"strings"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
+	idx "github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/index"
+	orderedindex "github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/ordered_index"
+	orderedmap "github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/ordered_map"
 	"github.com/tableauio/loader/internal/extensions"
 	"github.com/tableauio/loader/internal/index"
-	"github.com/tableauio/loader/internal/options"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -80,8 +82,11 @@ func generateHppFileContent(file *protogen.File, g *protogen.GeneratedFile) {
 // genHppMessage generates a message definition.
 func genHppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	cppFullName := helper.ParseCppClassType(message.Desc)
-	messagerFullName := string(message.Desc.FullName())
 	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
+
+	orderedMapGenerator := orderedmap.NewGenerator(g, message)
+	indexGenerator := idx.NewGenerator(g, indexDescriptor, message)
+	orderedIndexGenerator := orderedindex.NewGenerator(g, indexDescriptor, message)
 
 	g.P("class ", message.Desc.Name(), " : public Messager {")
 	g.P(" public:")
@@ -91,7 +96,7 @@ func genHppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P(helper.Indent(1), "const google::protobuf::Message* Message() const override { return &data_; }")
 	g.P()
 
-	if options.NeedGenOrderedMap(message.Desc, options.LangCPP) || options.NeedGenIndex(message.Desc, options.LangCPP) || options.NeedGenOrderedIndex(message.Desc, options.LangCPP) {
+	if orderedMapGenerator.Generate() || indexGenerator.Generate() || orderedIndexGenerator.Generate() {
 		g.P(" private:")
 		g.P(helper.Indent(1), "virtual bool ProcessAfterLoad() override final;")
 		g.P()
@@ -103,30 +108,25 @@ func genHppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P(" private:")
 	g.P(helper.Indent(1), "static const std::string kProtoName;")
 	g.P(helper.Indent(1), cppFullName, " data_;")
-	if options.NeedGenOrderedMap(message.Desc, options.LangCPP) {
-		g.P()
-		genHppOrderedMapGetters(g, message.Desc, 1, nil, messagerFullName)
-	}
-	if options.NeedGenIndex(message.Desc, options.LangCPP) {
-		g.P()
-		genHppIndexFinders(g, indexDescriptor)
-	}
-	if options.NeedGenOrderedIndex(message.Desc, options.LangCPP) {
-		genHppOrderedIndexFinders(g, indexDescriptor)
-	}
+	orderedMapGenerator.GenHppOrderedMapGetters()
+	indexGenerator.GenHppIndexFinders()
+	orderedIndexGenerator.GenHppOrderedIndexFinders()
 	g.P("};")
 	g.P()
 }
 
-func genHppMapGetters(depth int, keys []helper.MapKey, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
+func genHppMapGetters(depth int, keys helper.MapKeys, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
 			if depth == 1 {
 				g.P(" public:")
 			}
-			keys = helper.AddMapKey(fd, keys)
-			g.P(helper.Indent(1), "const ", helper.ParseCppType(fd.MapValue()), "* Get(", helper.GenGetParams(keys), ") const;")
+			keys = keys.AddMapKey(helper.MapKey{
+				Type: helper.ParseMapKeyType(fd.MapKey()),
+				Name: helper.ParseMapFieldName(fd),
+			})
+			g.P(helper.Indent(1), "const ", helper.ParseCppType(fd.MapValue()), "* Get(", keys.GenGetParams(), ") const;")
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
 				genHppMapGetters(depth+1, keys, g, fd.MapValue().Message())
 			}
@@ -157,9 +157,12 @@ func generateCppFileContent(file *protogen.File, g *protogen.GeneratedFile) {
 // genCppMessage generates a message implementation.
 func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	messagerName := string(message.Desc.Name())
-	messagerFullName := string(message.Desc.FullName())
 	cppFullName := helper.ParseCppClassType(message.Desc)
 	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
+
+	orderedMapGenerator := orderedmap.NewGenerator(g, message)
+	indexGenerator := idx.NewGenerator(g, indexDescriptor, message)
+	orderedIndexGenerator := orderedindex.NewGenerator(g, indexDescriptor, message)
 
 	g.P("const std::string ", messagerName, "::kProtoName = ", cppFullName, `::GetDescriptor()->name();`)
 	g.P()
@@ -172,17 +175,11 @@ func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P("}")
 	g.P()
 
-	if options.NeedGenOrderedMap(message.Desc, options.LangCPP) || options.NeedGenIndex(message.Desc, options.LangCPP) || options.NeedGenOrderedIndex(message.Desc, options.LangCPP) {
+	if orderedMapGenerator.Generate() || indexGenerator.Generate() || orderedIndexGenerator.Generate() {
 		g.P("bool ", messagerName, "::ProcessAfterLoad() {")
-		if options.NeedGenOrderedMap(message.Desc, options.LangCPP) {
-			genCppOrderedMapLoader(g, message.Desc, 1, messagerFullName)
-		}
-		if options.NeedGenIndex(message.Desc, options.LangCPP) {
-			genCppIndexLoader(g, indexDescriptor)
-		}
-		if options.NeedGenOrderedIndex(message.Desc, options.LangCPP) {
-			genCppOrderedIndexLoader(g, indexDescriptor)
-		}
+		orderedMapGenerator.GenOrderedMapLoader()
+		indexGenerator.GenCppIndexLoader()
+		orderedIndexGenerator.GenCppOrderedIndexLoader()
 		g.P(helper.Indent(1), "return true;")
 		g.P("}")
 		g.P()
@@ -190,23 +187,20 @@ func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 
 	// syntactic sugar for accessing map items
 	genCppMapGetters(g, message.Desc, 1, nil, messagerName)
-	genCppOrderedMapGetters(g, message.Desc, 1, nil, messagerName, messagerFullName)
-	if options.NeedGenIndex(message.Desc, options.LangCPP) {
-		genCppIndexFinders(g, indexDescriptor, messagerName)
-		g.P()
-	}
-	if options.NeedGenOrderedIndex(message.Desc, options.LangCPP) {
-		genCppOrderedIndexFinders(g, indexDescriptor, messagerName)
-		g.P()
-	}
+	orderedMapGenerator.GenOrderedMapGetters()
+	indexGenerator.GenCppIndexFinders()
+	orderedIndexGenerator.GenCppOrderedIndexFinders()
 }
 
-func genCppMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys []helper.MapKey, messagerName string) {
+func genCppMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys helper.MapKeys, messagerName string) {
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
-			keys = helper.AddMapKey(fd, keys)
-			g.P("const ", helper.ParseCppType(fd.MapValue()), "* ", messagerName, "::Get(", helper.GenGetParams(keys), ") const {")
+			keys = keys.AddMapKey(helper.MapKey{
+				Type: helper.ParseMapKeyType(fd.MapKey()),
+				Name: helper.ParseMapFieldName(fd),
+			})
+			g.P("const ", helper.ParseCppType(fd.MapValue()), "* ", messagerName, "::Get(", keys.GenGetParams(), ") const {")
 
 			var container string
 			if depth == 1 {
@@ -214,7 +208,7 @@ func genCppMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescript
 			} else {
 				container = "conf->" + string(fd.Name()) + "()"
 				prevKeys := keys[:len(keys)-1]
-				g.P(helper.Indent(1), "const auto* conf = Get(", helper.GenGetArguments(prevKeys), ");")
+				g.P(helper.Indent(1), "const auto* conf = Get(", prevKeys.GenGetArguments(), ");")
 				g.P(helper.Indent(1), "if (conf == nullptr) {")
 				g.P(helper.Indent(2), "return nullptr;")
 				g.P(helper.Indent(1), "}")
@@ -234,25 +228,4 @@ func genCppMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescript
 			break
 		}
 	}
-}
-
-func getNextLevelMapFD(fd protoreflect.FieldDescriptor) protoreflect.FieldDescriptor {
-	if fd.Kind() == protoreflect.MessageKind {
-		md := fd.Message()
-		for i := 0; i < md.Fields().Len(); i++ {
-			fd := md.Fields().Get(i)
-			if fd.IsMap() {
-				return fd
-			}
-		}
-	}
-	return nil
-}
-
-func parseMapValueType(fd protoreflect.FieldDescriptor) string {
-	valueType := helper.ParseCppType(fd.MapValue())
-	if fd.MapValue().Kind() == protoreflect.MessageKind {
-		return "const " + valueType + "*"
-	}
-	return valueType
 }

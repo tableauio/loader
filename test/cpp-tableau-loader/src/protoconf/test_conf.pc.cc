@@ -162,7 +162,7 @@ const ActivityConf::int32_OrderedMap* ActivityConf::GetOrderedMap(uint64_t activ
 }
 
 // Index: ActivityName
-const ActivityConf::Index_ActivityMap& ActivityConf::FindActivityMap() const { return index_activity_map_ ;}
+const ActivityConf::Index_ActivityMap& ActivityConf::FindActivity() const { return index_activity_map_ ;}
 
 const ActivityConf::Index_ActivityVector* ActivityConf::FindActivity(const std::string& activity_name) const {
   auto iter = index_activity_map_.find(activity_name);
@@ -181,7 +181,7 @@ const protoconf::ActivityConf::Activity* ActivityConf::FindFirstActivity(const s
 }
 
 // Index: ChapterID
-const ActivityConf::Index_ChapterMap& ActivityConf::FindChapterMap() const { return index_chapter_map_ ;}
+const ActivityConf::Index_ChapterMap& ActivityConf::FindChapter() const { return index_chapter_map_ ;}
 
 const ActivityConf::Index_ChapterVector* ActivityConf::FindChapter(uint32_t chapter_id) const {
   auto iter = index_chapter_map_.find(chapter_id);
@@ -200,7 +200,7 @@ const protoconf::ActivityConf::Activity::Chapter* ActivityConf::FindFirstChapter
 }
 
 // Index: ChapterName<AwardID>@NamedChapter
-const ActivityConf::Index_NamedChapterMap& ActivityConf::FindNamedChapterMap() const { return index_named_chapter_map_ ;}
+const ActivityConf::Index_NamedChapterMap& ActivityConf::FindNamedChapter() const { return index_named_chapter_map_ ;}
 
 const ActivityConf::Index_NamedChapterVector* ActivityConf::FindNamedChapter(const std::string& chapter_name) const {
   auto iter = index_named_chapter_map_.find(chapter_name);
@@ -219,7 +219,7 @@ const protoconf::ActivityConf::Activity::Chapter* ActivityConf::FindFirstNamedCh
 }
 
 // Index: SectionItemID@Award
-const ActivityConf::Index_AwardMap& ActivityConf::FindAwardMap() const { return index_award_map_ ;}
+const ActivityConf::Index_AwardMap& ActivityConf::FindAward() const { return index_award_map_ ;}
 
 const ActivityConf::Index_AwardVector* ActivityConf::FindAward(uint32_t id) const {
   auto iter = index_award_map_.find(id);
@@ -236,7 +236,6 @@ const protoconf::Section::SectionItem* ActivityConf::FindFirstAward(uint32_t id)
   }
   return conf->front();
 }
-
 
 const std::string ChapterConf::kProtoName = protoconf::ChapterConf::GetDescriptor()->name();
 
@@ -319,6 +318,7 @@ bool TaskConf::ProcessAfterLoad() {
   ordered_index_ordered_task_map_.clear();
   ordered_index_task_expiry_map_.clear();
   ordered_index_sorted_task_expiry_map_.clear();
+  ordered_index_activity_expiry_map_.clear();
   for (auto&& item1 : data_.task_map()) {
     {
       // OrderedIndex: Goal<ID>@OrderedTask
@@ -331,6 +331,11 @@ bool TaskConf::ProcessAfterLoad() {
     {
       // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
       ordered_index_sorted_task_expiry_map_[item1.second.expiry().seconds()].push_back(&item1.second);
+    }
+    {
+      // OrderedIndex: (Expiry,ActivityID)@ActivityExpiry
+      OrderedIndex_ActivityExpiryKey key{item1.second.expiry().seconds(), item1.second.activity_id()};
+      ordered_index_activity_expiry_map_[key].push_back(&item1.second);
     }
   }
   // OrderedIndex(sort): Goal<ID>@OrderedTask
@@ -362,7 +367,7 @@ const protoconf::TaskConf::Task* TaskConf::Get(int64_t id) const {
 }
 
 // Index: ActivityID<Goal,ID>
-const TaskConf::Index_TaskMap& TaskConf::FindTaskMap() const { return index_task_map_ ;}
+const TaskConf::Index_TaskMap& TaskConf::FindTask() const { return index_task_map_ ;}
 
 const TaskConf::Index_TaskVector* TaskConf::FindTask(int64_t activity_id) const {
   auto iter = index_task_map_.find(activity_id);
@@ -379,7 +384,6 @@ const protoconf::TaskConf::Task* TaskConf::FindFirstTask(int64_t activity_id) co
   }
   return conf->front();
 }
-
 
 // OrderedIndex: Goal<ID>@OrderedTask
 const TaskConf::OrderedIndex_OrderedTaskMap& TaskConf::FindOrderedTask() const { return ordered_index_ordered_task_map_ ;}
@@ -438,5 +442,23 @@ const protoconf::TaskConf::Task* TaskConf::FindFirstSortedTaskExpiry(int64_t exp
   return conf->front();
 }
 
+// OrderedIndex: (Expiry,ActivityID)@ActivityExpiry
+const TaskConf::OrderedIndex_ActivityExpiryMap& TaskConf::FindActivityExpiry() const { return ordered_index_activity_expiry_map_ ;}
+
+const TaskConf::OrderedIndex_ActivityExpiryVector* TaskConf::FindActivityExpiry(int64_t expiry, int64_t activity_id) const {
+  auto iter = ordered_index_activity_expiry_map_.find({expiry, activity_id});
+  if (iter == ordered_index_activity_expiry_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::TaskConf::Task* TaskConf::FindFirstActivityExpiry(int64_t expiry, int64_t activity_id) const {
+  auto conf = FindActivityExpiry(expiry, activity_id);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
 
 }  // namespace tableau

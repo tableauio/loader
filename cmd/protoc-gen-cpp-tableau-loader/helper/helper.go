@@ -40,6 +40,17 @@ func protocVersion(gen *protogen.Plugin) string {
 	return fmt.Sprintf("v%d.%d.%d%s", v.GetMajor(), v.GetMinor(), v.GetPatch(), suffix)
 }
 
+func ParseMapFieldName(fd protoreflect.FieldDescriptor) string {
+	opts := fd.Options().(*descriptorpb.FieldOptions)
+	fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
+	name := fdOpts.GetKey()
+	if fd.MapValue().Kind() == protoreflect.MessageKind {
+		valueFd := fd.MapValue().Message().Fields().Get(0)
+		name = string(valueFd.Name())
+	}
+	return escapeIdentifier(name)
+}
+
 func ParseIndexFieldName(fd protoreflect.FieldDescriptor) string {
 	return escapeIdentifier(string(fd.Name()))
 }
@@ -117,7 +128,7 @@ func ParseMapKeyType(fd protoreflect.FieldDescriptor) string {
 // fd must be an ordered type, or a message which can be converted to an ordered type.
 func ParseOrderedMapKeyType(fd protoreflect.FieldDescriptor) string {
 	switch fd.Kind() {
-	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind, protoreflect.EnumKind:
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
 		return "int32_t"
 	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
 		return "uint32_t"
@@ -131,6 +142,9 @@ func ParseOrderedMapKeyType(fd protoreflect.FieldDescriptor) string {
 		return "double"
 	case protoreflect.StringKind:
 		return "std::string"
+	case protoreflect.EnumKind:
+		protoFullName := string(fd.Enum().FullName())
+		return strings.ReplaceAll(protoFullName, ".", "::")
 	case protoreflect.MessageKind:
 		switch fd.Message().FullName() {
 		case "google.protobuf.Timestamp", "google.protobuf.Duration":
@@ -156,36 +170,31 @@ func ParseCppClassType(md protoreflect.MessageDescriptor) string {
 }
 
 type MapKey struct {
-	Type string
-	Name string
+	Type      string
+	Name      string
+	FieldName string
 }
 
-func AddMapKey(fd protoreflect.FieldDescriptor, keys []MapKey) []MapKey {
-	opts := fd.Options().(*descriptorpb.FieldOptions)
-	fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
-	name := fdOpts.GetKey()
-	if fd.MapValue().Kind() == protoreflect.MessageKind {
-		valueFd := fd.MapValue().Message().Fields().Get(0)
-		name = string(valueFd.Name())
-	}
-	name = escapeIdentifier(name)
-	if name == "" {
-		name = fmt.Sprintf("key%d", len(keys)+1)
+type MapKeys []MapKey
+
+func (keys MapKeys) AddMapKey(newKey MapKey) MapKeys {
+	if newKey.Name == "" {
+		newKey.Name = fmt.Sprintf("key%d", len(keys)+1)
 	} else {
 		for _, key := range keys {
-			if key.Name == name {
+			if key.Name == newKey.Name {
 				// rewrite to avoid name confict
-				name = fmt.Sprintf("%s%d", name, len(keys)+1)
+				newKey.Name = fmt.Sprintf("%s%d", newKey.Name, len(keys)+1)
 				break
 			}
 		}
 	}
-	keys = append(keys, MapKey{ParseMapKeyType(fd.MapKey()), name})
+	keys = append(keys, newKey)
 	return keys
 }
 
 // GenGetParams generates function parameters, which are the names listed in the function's definition.
-func GenGetParams(keys []MapKey) string {
+func (keys MapKeys) GenGetParams() string {
 	var params string
 	for i, key := range keys {
 		params += ToConstRefType(key.Type) + " " + key.Name
@@ -197,7 +206,7 @@ func GenGetParams(keys []MapKey) string {
 }
 
 // GenGetArguments generates function arguments, which are the real values passed to the function.
-func GenGetArguments(keys []MapKey) string {
+func (keys MapKeys) GenGetArguments() string {
 	var params string
 	for i, key := range keys {
 		params += key.Name
@@ -210,4 +219,12 @@ func GenGetArguments(keys []MapKey) string {
 
 func Indent(depth int) string {
 	return strings.Repeat("  ", depth)
+}
+
+func ParseMapValueType(fd protoreflect.FieldDescriptor) string {
+	valueType := ParseCppType(fd.MapValue())
+	if fd.MapValue().Kind() == protoreflect.MessageKind {
+		return "const " + valueType + "*"
+	}
+	return valueType
 }

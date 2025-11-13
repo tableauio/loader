@@ -178,14 +178,14 @@ func (x *Generator) genOneIndexLoader(index *index.LevelIndex, depth int, parent
 	x.g.P("}")
 }
 
-func (x *Generator) generateOneMulticolumnIndex(depth int, index *index.LevelIndex, parentDataName string, keys helper.MapKeys) helper.MapKeys {
+func (x *Generator) generateOneMulticolumnIndex(depth int, index *index.LevelIndex, parentDataName string, keys helper.MapKeys) {
 	cursor := len(keys)
 	if cursor >= len(index.ColFields) {
 		keyType := x.mapKeyType(index)
 		indexContainerName := x.indexContainerName(index)
 		x.g.P("key := ", keyType, " {", keys.GenGetArguments(), "}")
 		x.g.P("x.", indexContainerName, "[key] = append(x.", indexContainerName, "[key], ", parentDataName, ")")
-		return keys
+		return
 	}
 	field := index.ColFields[cursor]
 	fieldName := x.parseKeyFieldName(field)
@@ -193,14 +193,13 @@ func (x *Generator) generateOneMulticolumnIndex(depth int, index *index.LevelInd
 		itemName := fmt.Sprintf("indexItem%d", cursor)
 		x.g.P("for _, ", itemName, " := range ", parentDataName, fieldName, " {")
 		keys = append(keys, helper.MapKey{Name: itemName})
-		keys = x.generateOneMulticolumnIndex(depth+1, index, parentDataName, keys)
+		x.generateOneMulticolumnIndex(depth+1, index, parentDataName, keys)
 		x.g.P("}")
 	} else {
 		key := parentDataName + fieldName
 		keys = append(keys, helper.MapKey{Name: key})
-		keys = x.generateOneMulticolumnIndex(depth, index, parentDataName, keys)
+		x.generateOneMulticolumnIndex(depth, index, parentDataName, keys)
 	}
-	return keys
 }
 
 func (x *Generator) genIndexSorter() {

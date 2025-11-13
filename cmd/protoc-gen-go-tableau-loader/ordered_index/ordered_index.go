@@ -211,7 +211,7 @@ func (x *Generator) genOneOrderedIndexLoader(index *index.LevelIndex, depth int,
 	x.g.P("}")
 }
 
-func (x *Generator) generateOneMulticolumnOrderedIndex(depth int, index *index.LevelIndex, parentDataName string, keys helper.MapKeys) helper.MapKeys {
+func (x *Generator) generateOneMulticolumnOrderedIndex(depth int, index *index.LevelIndex, parentDataName string, keys helper.MapKeys) {
 	cursor := len(keys)
 	if cursor >= len(index.ColFields) {
 		keyType := x.mapKeyType(index)
@@ -219,7 +219,7 @@ func (x *Generator) generateOneMulticolumnOrderedIndex(depth int, index *index.L
 		x.g.P("key := ", keyType, " {", keys.GenGetArguments(), "}")
 		x.g.P("value, _ := x.", indexContainerName, ".Get(key)")
 		x.g.P("x.", indexContainerName, ".Put(key, append(value, ", parentDataName, "))")
-		return keys
+		return
 	}
 	field := index.ColFields[cursor]
 	fieldName, suffix := x.parseKeyFieldNameAndSuffix(field)
@@ -228,14 +228,13 @@ func (x *Generator) generateOneMulticolumnOrderedIndex(depth int, index *index.L
 		x.g.P("for _, ", itemName, " := range ", parentDataName, fieldName, " {")
 		key := itemName + suffix
 		keys = append(keys, helper.MapKey{Name: key})
-		keys = x.generateOneMulticolumnOrderedIndex(depth+1, index, parentDataName, keys)
+		x.generateOneMulticolumnOrderedIndex(depth+1, index, parentDataName, keys)
 		x.g.P("}")
 	} else {
 		key := parentDataName + fieldName + suffix
 		keys = append(keys, helper.MapKey{Name: key})
-		keys = x.generateOneMulticolumnOrderedIndex(depth, index, parentDataName, keys)
+		x.generateOneMulticolumnOrderedIndex(depth, index, parentDataName, keys)
 	}
-	return keys
 }
 
 func (x *Generator) genOrderedIndexSorter() {
