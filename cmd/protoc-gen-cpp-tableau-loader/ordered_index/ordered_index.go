@@ -65,9 +65,8 @@ func (x *Generator) indexKeys(index *index.LevelIndex) helper.MapKeys {
 	var keys []helper.MapKey
 	for _, field := range index.ColFields {
 		keys = append(keys, helper.MapKey{
-			Type:      helper.ParseOrderedMapKeyType(field.FD),
-			Name:      helper.ParseIndexFieldNameAsFuncParam(field.FD),
-			FieldName: helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD),
+			Type: helper.ParseOrderedMapKeyType(field.FD),
+			Name: helper.ParseIndexFieldNameAsFuncParam(field.FD),
 		})
 	}
 	return keys
@@ -111,20 +110,16 @@ func (x *Generator) GenHppOrderedIndexFinders() {
 				// Generate key struct
 				x.g.P(helper.Indent(1), "struct ", keyType, " {")
 				for _, key := range keys {
-					x.g.P(helper.Indent(2), key.Type, " ", key.FieldName, ";")
+					x.g.P(helper.Indent(2), key.Type, " ", key.Name, ";")
 				}
 				x.g.P("#if __cplusplus >= 202002L")
 				x.g.P(helper.Indent(2), "auto operator<=>(const ", keyType, "& other) const = default;")
 				x.g.P("#else")
 				x.g.P(helper.Indent(2), "bool operator<(const ", keyType, "& other) const {")
-				for i, key := range keys {
-					if i == len(keys)-1 {
-						x.g.P(helper.Indent(3), "return ", key.FieldName, " < other.", key.FieldName, ";")
-					} else {
-						x.g.P(helper.Indent(3), "if (", key.FieldName, " != other.", key.FieldName, ") {")
-						x.g.P(helper.Indent(4), "return ", key.FieldName, " < other.", key.FieldName, ";")
-						x.g.P(helper.Indent(3), "}")
-					}
+				if len(keys) == 1 {
+					x.g.P(helper.Indent(3), "return ", keys[0].Name, " < other.", keys[0].Name, ";")
+				} else {
+					x.g.P(helper.Indent(3), "return std::tie(", keys.GenGetArguments(), ") < std::tie(", keys.GenOtherArguments("other"), ");")
 				}
 				x.g.P(helper.Indent(2), "}")
 				x.g.P("#endif")

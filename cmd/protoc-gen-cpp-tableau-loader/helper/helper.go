@@ -55,17 +55,13 @@ func ParseIndexFieldName(fd protoreflect.FieldDescriptor) string {
 	return escapeIdentifier(string(fd.Name()))
 }
 
-func ParseIndexFieldNameAsKeyStructFieldName(fd protoreflect.FieldDescriptor) string {
+func ParseIndexFieldNameAsFuncParam(fd protoreflect.FieldDescriptor) string {
 	if fd.IsList() {
 		opts := fd.Options().(*descriptorpb.FieldOptions)
 		fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
 		return escapeIdentifier(strcase.ToSnake(fdOpts.GetName()))
 	}
 	return ParseIndexFieldName(fd)
-}
-
-func ParseIndexFieldNameAsFuncParam(fd protoreflect.FieldDescriptor) string {
-	return ParseIndexFieldNameAsKeyStructFieldName(fd)
 }
 
 // ParseCppType converts a FieldDescriptor to C++ type string.
@@ -170,9 +166,8 @@ func ParseCppClassType(md protoreflect.MessageDescriptor) string {
 }
 
 type MapKey struct {
-	Type      string
-	Name      string
-	FieldName string
+	Type string
+	Name string
 }
 
 type MapKeys []MapKey
@@ -195,26 +190,29 @@ func (keys MapKeys) AddMapKey(newKey MapKey) MapKeys {
 
 // GenGetParams generates function parameters, which are the names listed in the function's definition.
 func (keys MapKeys) GenGetParams() string {
-	var params string
-	for i, key := range keys {
-		params += ToConstRefType(key.Type) + " " + key.Name
-		if i != len(keys)-1 {
-			params += ", "
-		}
+	var params []string
+	for _, key := range keys {
+		params = append(params, ToConstRefType(key.Type)+" "+key.Name)
 	}
-	return params
+	return strings.Join(params, ", ")
 }
 
 // GenGetArguments generates function arguments, which are the real values passed to the function.
 func (keys MapKeys) GenGetArguments() string {
-	var params string
-	for i, key := range keys {
-		params += key.Name
-		if i != len(keys)-1 {
-			params += ", "
-		}
+	var params []string
+	for _, key := range keys {
+		params = append(params, key.Name)
 	}
-	return params
+	return strings.Join(params, ", ")
+}
+
+// GenOtherArguments generates function arguments for other value of std::tie.
+func (keys MapKeys) GenOtherArguments(other string) string {
+	var params []string
+	for _, key := range keys {
+		params = append(params, other+"."+key.Name)
+	}
+	return strings.Join(params, ", ")
 }
 
 func Indent(depth int) string {

@@ -65,9 +65,8 @@ func (x *Generator) indexKeys(index *index.LevelIndex) helper.MapKeys {
 	var keys []helper.MapKey
 	for _, field := range index.ColFields {
 		keys = append(keys, helper.MapKey{
-			Type:      helper.ParseCppType(field.FD),
-			Name:      helper.ParseIndexFieldNameAsFuncParam(field.FD),
-			FieldName: helper.ParseIndexFieldNameAsKeyStructFieldName(field.FD),
+			Type: helper.ParseCppType(field.FD),
+			Name: helper.ParseIndexFieldNameAsFuncParam(field.FD),
 		})
 	}
 	return keys
@@ -107,28 +106,27 @@ func (x *Generator) GenHppIndexFinders() {
 				hasher = ", " + keyHasherType
 				// Generate key struct
 				x.g.P(helper.Indent(1), "struct ", keyType, " {")
-				var equalities []string
 				for _, key := range keys {
-					x.g.P(helper.Indent(2), key.Type, " ", key.FieldName, ";")
-					equalities = append(equalities, key.FieldName+" == other."+key.FieldName)
+					x.g.P(helper.Indent(2), key.Type, " ", key.Name, ";")
 				}
 				x.g.P("#if __cplusplus >= 202002L")
 				x.g.P(helper.Indent(2), "bool operator==(const ", keyType, "& other) const = default;")
 				x.g.P("#else")
 				x.g.P(helper.Indent(2), "bool operator==(const ", keyType, "& other) const {")
-				x.g.P(helper.Indent(3), "return ", strings.Join(equalities, " && "), ";")
+				if len(keys) == 1 {
+					x.g.P(helper.Indent(3), "return ", keys[0].Name, " == other.", keys[0].Name, ";")
+				} else {
+					x.g.P(helper.Indent(3), "return std::tie(", keys.GenGetArguments(), ") == std::tie(", keys.GenOtherArguments("other"), ");")
+				}
+				// x.g.P(helper.Indent(3), "return ", strings.Join(equalities, " && "), ";")
 				x.g.P(helper.Indent(2), "}")
 				x.g.P("#endif")
 				x.g.P(helper.Indent(1), "};")
 
 				// Generate key hasher struct
 				x.g.P(helper.Indent(1), "struct ", keyHasherType, " {")
-				var combinedKeys []string
-				for _, key := range keys {
-					combinedKeys = append(combinedKeys, "key."+key.FieldName)
-				}
 				x.g.P(helper.Indent(2), "std::size_t operator()(const ", keyType, "& key) const {")
-				x.g.P(helper.Indent(3), "return util::SugaredHashCombine(", strings.Join(combinedKeys, ", "), ");")
+				x.g.P(helper.Indent(3), "return util::SugaredHashCombine(", keys.GenOtherArguments("key"), ");")
 				x.g.P(helper.Indent(2), "}")
 				x.g.P(helper.Indent(1), "};")
 			}

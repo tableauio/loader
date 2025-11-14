@@ -267,24 +267,18 @@ func (keys MapKeys) AddMapKey(newKey MapKey) MapKeys {
 
 // GenGetParams generates function parameters, which are the names listed in the function's definition.
 func (keys MapKeys) GenGetParams() string {
-	var params string
-	for i, key := range keys {
-		params += key.Name + " " + key.Type
-		if i != len(keys)-1 {
-			params += ", "
-		}
+	var params []string
+	for _, key := range keys {
+		params = append(params, key.Name+" "+key.Type)
 	}
-	return params
+	return strings.Join(params, ", ")
 }
 
 // GenGetArguments generates function arguments, which are the real values passed to the function.
 func (keys MapKeys) GenGetArguments() string {
-	var params string
-	for i, key := range keys {
-		params += key.Name
-		if i != len(keys)-1 {
-			params += ", "
-		}
+	var params []string
+	for _, key := range keys {
+		params = append(params, key.Name)
 	}
-	return params
+	return strings.Join(params, ", ")
 }

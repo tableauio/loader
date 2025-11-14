@@ -108,7 +108,7 @@ class ItemConf : public Messager {
     bool operator==(const Index_AwardItemKey& other) const = default;
 #else
     bool operator==(const Index_AwardItemKey& other) const {
-      return id == other.id && name == other.name;
+      return std::tie(id, name) == std::tie(other.id, other.name);
     }
 #endif
   };
@@ -141,7 +141,7 @@ class ItemConf : public Messager {
     bool operator==(const Index_SpecialItemKey& other) const = default;
 #else
     bool operator==(const Index_SpecialItemKey& other) const {
-      return id == other.id && type == other.type && param == other.param && ext_type == other.ext_type;
+      return std::tie(id, type, param, ext_type) == std::tie(other.id, other.type, other.param, other.ext_type);
     }
 #endif
   };
@@ -248,10 +248,7 @@ class ItemConf : public Messager {
     auto operator<=>(const OrderedIndex_ParamExtTypeKey& other) const = default;
 #else
     bool operator<(const OrderedIndex_ParamExtTypeKey& other) const {
-      if (param != other.param) {
-        return param < other.param;
-      }
-      return ext_type < other.ext_type;
+      return std::tie(param, ext_type) < std::tie(other.param, other.ext_type);
     }
 #endif
   };

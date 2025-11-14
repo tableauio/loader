@@ -235,10 +235,7 @@ class TaskConf : public Messager {
     auto operator<=>(const OrderedIndex_ActivityExpiryKey& other) const = default;
 #else
     bool operator<(const OrderedIndex_ActivityExpiryKey& other) const {
-      if (expiry != other.expiry) {
-        return expiry < other.expiry;
-      }
-      return activity_id < other.activity_id;
+      return std::tie(expiry, activity_id) < std::tie(other.expiry, other.activity_id);
     }
 #endif
   };
