@@ -33,15 +33,15 @@ class HeroConf : public Messager {
 
   // OrderedMap accessers.
  public:
-  using Hero_Attr_OrderedMap = std::map<std::string, const protoconf::HeroConf::Hero::Attr*>;
-  const Hero_Attr_OrderedMap* GetOrderedMap(const std::string& name) const;
+  using OrderedMap_Hero_AttrMap = std::map<std::string, const protoconf::HeroConf::Hero::Attr*>;
+  const OrderedMap_Hero_AttrMap* GetOrderedMap(const std::string& name) const;
 
-  using Hero_OrderedMapValue = std::pair<Hero_Attr_OrderedMap, const protoconf::HeroConf::Hero*>;
-  using Hero_OrderedMap = std::map<std::string, Hero_OrderedMapValue>;
-  const Hero_OrderedMap* GetOrderedMap() const;
+  using OrderedMap_HeroValue = std::pair<OrderedMap_Hero_AttrMap, const protoconf::HeroConf::Hero*>;
+  using OrderedMap_HeroMap = std::map<std::string, OrderedMap_HeroValue>;
+  const OrderedMap_HeroMap* GetOrderedMap() const;
 
  private:
-  Hero_OrderedMap ordered_map_;
+  OrderedMap_HeroMap ordered_map_;
 };
 
 class HeroBaseConf : public Messager {

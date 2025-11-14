@@ -39,11 +39,11 @@ func (x *Generator) orderedMapPrefix(mapFd protoreflect.FieldDescriptor) string 
 }
 
 func (x *Generator) mapType(mapFd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf("%s_OrderedMap", x.orderedMapPrefix(mapFd))
+	return fmt.Sprintf("OrderedMap_%sMap", x.orderedMapPrefix(mapFd))
 }
 
 func (x *Generator) mapValueType(mapFd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf("%s_OrderedMapValue", x.orderedMapPrefix(mapFd))
+	return fmt.Sprintf("OrderedMap_%sValue", x.orderedMapPrefix(mapFd))
 }
 
 func (x *Generator) mapValueFieldType(fd protoreflect.FieldDescriptor) string {

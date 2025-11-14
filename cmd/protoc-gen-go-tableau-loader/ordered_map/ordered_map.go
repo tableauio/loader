@@ -2,15 +2,13 @@ package orderedmap
 
 import (
 	"fmt"
+	"strings"
 
-	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/options"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
-
-var orderedMapTypeDefMap map[string]bool = make(map[string]bool)
 
 type Generator struct {
 	gen     *protogen.Plugin
@@ -34,12 +32,20 @@ func (x *Generator) messagerName() string {
 	return string(x.message.Desc.Name())
 }
 
+func (x *Generator) orderedMapPrefix(mapFd protoreflect.FieldDescriptor) string {
+	if mapFd.MapValue().Kind() == protoreflect.MessageKind {
+		localMsgProtoName := strings.TrimPrefix(string(mapFd.MapValue().Message().FullName()), string(x.message.Desc.FullName())+".")
+		return strings.ReplaceAll(localMsgProtoName, ".", "_")
+	}
+	return mapFd.MapValue().Kind().String()
+}
+
 func (x *Generator) mapType(mapFd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf("%s_OrderedMap", strcase.ToCamel(string(mapFd.FullName())))
+	return fmt.Sprintf("OrderedMap_%s_%sMap", x.messagerName(), x.orderedMapPrefix(mapFd))
 }
 
 func (x *Generator) mapValueType(mapFd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf("%s_OrderedMapValue", strcase.ToCamel(string(mapFd.FullName())))
+	return fmt.Sprintf("OrderedMap_%s_%sValue", x.messagerName(), x.orderedMapPrefix(mapFd))
 }
 
 func (x *Generator) mapValueFieldType(fd protoreflect.FieldDescriptor) string {
@@ -75,18 +81,14 @@ func (x *Generator) genOrderedMapTypeDef(md protoreflect.MessageDescriptor, dept
 			}
 			orderedMap := x.mapType(fd)
 			orderedMapValue := x.mapValueType(fd)
-			_, ok := orderedMapTypeDefMap[orderedMap]
-			if !ok {
-				orderedMapTypeDefMap[orderedMap] = true
-				nextMapFD := getNextLevelMapFD(fd.MapValue())
-				if nextMapFD != nil {
-					currValueType := helper.FindMessageGoIdent(x.gen, fd.MapValue().Message())
-					nextOrderedMap := x.mapType(nextMapFD)
-					x.g.P("type ", orderedMapValue, "= ", helper.PairPackage.Ident("Pair"), "[*", nextOrderedMap, ", *", currValueType, "];")
-				}
-				x.g.P("type ", orderedMap, "= ", helper.TreeMapPackage.Ident("TreeMap"), "[", keyType, ", ", x.mapValueFieldType(fd), "]")
-				x.g.P()
+			nextMapFD := getNextLevelMapFD(fd.MapValue())
+			if nextMapFD != nil {
+				currValueType := helper.FindMessageGoIdent(x.gen, fd.MapValue().Message())
+				nextOrderedMap := x.mapType(nextMapFD)
+				x.g.P("type ", orderedMapValue, "= ", helper.PairPackage.Ident("Pair"), "[*", nextOrderedMap, ", *", currValueType, "];")
 			}
+			x.g.P("type ", orderedMap, "= ", helper.TreeMapPackage.Ident("TreeMap"), "[", keyType, ", ", x.mapValueFieldType(fd), "]")
+			x.g.P()
 			return
 		}
 	}

@@ -36,7 +36,7 @@ func (x *Generator) messagerName() string {
 }
 
 func (x *Generator) mapType(index *index.LevelIndex) string {
-	return fmt.Sprintf("%s_Index_%sMap", x.messagerName(), index.Name())
+	return fmt.Sprintf("Index_%s_%sMap", x.messagerName(), index.Name())
 }
 
 func (x *Generator) mapKeyType(index *index.LevelIndex) string {
@@ -46,7 +46,7 @@ func (x *Generator) mapKeyType(index *index.LevelIndex) string {
 		return helper.ParseGoType(x.gen, x.g, field.FD)
 	} else {
 		// multi-column index
-		return fmt.Sprintf("%s_Index_%sKey", x.messagerName(), index.Name())
+		return fmt.Sprintf("Index_%s_%sKey", x.messagerName(), index.Name())
 	}
 }
 
