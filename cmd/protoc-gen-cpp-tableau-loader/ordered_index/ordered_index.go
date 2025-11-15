@@ -129,7 +129,7 @@ func (x *Generator) GenHppOrderedIndexFinders() {
 			x.g.P(helper.Indent(1), "using ", mapType, " = std::map<", keyType, ", ", vectorType, ">;")
 			x.g.P(helper.Indent(1), "// Finds the ordered index (", index.Index, ") to value (", vectorType, ") map.")
 			x.g.P(helper.Indent(1), "// One key may correspond to multiple values, which are contained by a vector.")
-			x.g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "Map() const;")
+			x.g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "() const;")
 			x.g.P(helper.Indent(1), "// Finds a vector of all values of the given key(s).")
 			x.g.P(helper.Indent(1), "const ", vectorType, "* Find", index.Name(), "(", keys.GenGetParams(), ") const;")
 			x.g.P(helper.Indent(1), "// Finds the first value of the given key(s).")
@@ -274,7 +274,7 @@ func (x *Generator) GenCppOrderedIndexFinders() {
 			messagerName := x.messagerName()
 
 			x.g.P("// OrderedIndex: ", index.Index)
-			x.g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Find", index.Name(), "Map() const { return ", indexContainerName, " ;}")
+			x.g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Find", index.Name(), "() const { return ", indexContainerName, " ;}")
 			x.g.P()
 
 			keys := x.indexKeys(index)
