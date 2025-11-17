@@ -16,6 +16,8 @@ message ItemConf {
   option (tableau.worksheet) = {
     name: "ItemConf"
     ordered_map: true
+    ordered_index: "ExtType@ExtType"
+    ordered_index: "(Param,ExtType)<ID>@ParamExtType"
     index: "Type"
     index: "Param<ID>@ItemInfo"
     index: "Default@ItemDefaultInfo"  // For testing programming language keyword conflicts
@@ -53,7 +55,9 @@ message Path {
 }
 
 message UseEffect {
-  option (tableau.union) = {name: "UseEffect"};
+  option (tableau.union) = {
+    name: "UseEffect"
+  };
 
   Type type = 9999 [(tableau.field) = { name: "Type" }];
   oneof value {

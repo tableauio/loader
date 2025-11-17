@@ -24,7 +24,7 @@ bool HeroConf::ProcessAfterLoad() {
   // OrderedMap init.
   ordered_map_.clear();
   for (auto&& item1 : data_.hero_map()) {
-    ordered_map_[item1.first] = Hero_OrderedMapValue(Hero_Attr_OrderedMap(), &item1.second);
+    ordered_map_[item1.first] = OrderedMap_HeroValue(OrderedMap_Hero_AttrMap(), &item1.second);
     auto&& ordered_map1 = ordered_map_[item1.first].first;
     for (auto&& item2 : item1.second.attr_map()) {
       ordered_map1[item2.first] = &item2.second;
@@ -53,11 +53,11 @@ const protoconf::HeroConf::Hero::Attr* HeroConf::Get(const std::string& name, co
   return &iter->second;
 }
 
-const HeroConf::Hero_OrderedMap* HeroConf::GetOrderedMap() const {
+const HeroConf::OrderedMap_HeroMap* HeroConf::GetOrderedMap() const {
   return &ordered_map_; 
 }
 
-const HeroConf::Hero_Attr_OrderedMap* HeroConf::GetOrderedMap(const std::string& name) const {
+const HeroConf::OrderedMap_Hero_AttrMap* HeroConf::GetOrderedMap(const std::string& name) const {
   const auto* conf = GetOrderedMap();
   if (conf == nullptr) {
     return nullptr;

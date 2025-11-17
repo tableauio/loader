@@ -185,7 +185,7 @@ int main() {
   //   std::cout << section_conf->DebugString() << std::endl;
 
   const auto* chapter_ordered_map =
-      Hub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::Activity_Chapter_OrderedMap>(
+      Hub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::OrderedMap_Activity_ChapterMap>(
           100001);
   if (!chapter_ordered_map) {
     ATOM_ERROR("ActivityConf GetOrderedMap chapter failed!");
@@ -209,7 +209,8 @@ int main() {
   }
 
   const auto* rank_ordered_map =
-      Hub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::int32_OrderedMap>(100001, 1, 2);
+      Hub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::OrderedMap_int32Map>(100001, 1,
+                                                                                                            2);
   if (!rank_ordered_map) {
     ATOM_ERROR("ActivityConf GetOrderedMap rank failed!");
     return 1;

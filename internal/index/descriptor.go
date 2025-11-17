@@ -107,10 +107,7 @@ func parseRecursively(index *Index, prefix string, md protoreflect.MessageDescri
 			SortedColFields: sortedColFields,
 		}
 		if ordered {
-			if len(colFields) == 1 {
-				// only support one column ordered index
-				levelMessage.OrderedIndexes = append(levelMessage.OrderedIndexes, levelIndex)
-			}
+			levelMessage.OrderedIndexes = append(levelMessage.OrderedIndexes, levelIndex)
 		} else {
 			levelMessage.Indexes = append(levelMessage.Indexes, levelIndex)
 		}
