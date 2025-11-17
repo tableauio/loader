@@ -27,7 +27,7 @@ func NewGenerator(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *i
 	}
 }
 
-func (x *Generator) generate() bool {
+func (x *Generator) needGenerate() bool {
 	return options.NeedGenOrderedIndex(x.message.Desc, options.LangGO)
 }
 
@@ -36,17 +36,17 @@ func (x *Generator) messagerName() string {
 }
 
 func (x *Generator) mapType(index *index.LevelIndex) string {
-	return fmt.Sprintf("OrderedIndex_%s_%sMap", x.messagerName(), index.Name())
+	return fmt.Sprintf("%s_OrderedIndex_%sMap", x.messagerName(), index.Name())
 }
 
 func (x *Generator) mapKeyType(index *index.LevelIndex) string {
 	if len(index.ColFields) == 1 {
 		// single-column index
 		field := index.ColFields[0] // just take first field
-		return helper.ParseOrderedMapKeyType(x.gen, x.g, field.FD)
+		return helper.ParseOrderedIndexKeyType(x.gen, x.g, field.FD)
 	} else {
 		// multi-column index
-		return fmt.Sprintf("OrderedIndex_%s_%sKey", x.messagerName(), index.Name())
+		return fmt.Sprintf("%s_OrderedIndex_%sKey", x.messagerName(), index.Name())
 	}
 }
 
@@ -69,10 +69,10 @@ func (x *Generator) mapCtor(index *index.LevelIndex) string {
 }
 
 func (x *Generator) indexKeys(index *index.LevelIndex) helper.MapKeys {
-	var keys []helper.MapKey
+	var keys helper.MapKeys
 	for _, field := range index.ColFields {
-		keys = append(keys, helper.MapKey{
-			Type:      helper.ParseOrderedMapKeyType(x.gen, x.g, field.FD),
+		keys = keys.AddMapKey(helper.MapKey{
+			Type:      helper.ParseOrderedIndexKeyType(x.gen, x.g, field.FD),
 			Name:      helper.ParseIndexFieldNameAsFuncParam(x.gen, field.FD),
 			FieldName: helper.ParseIndexFieldNameAsKeyStructFieldName(x.gen, field.FD),
 		})
@@ -100,7 +100,7 @@ func (x *Generator) parseKeyFieldNameAndSuffix(field *index.LevelField) (string,
 }
 
 func (x *Generator) GenOrderedIndexTypeDef() {
-	if !x.generate() {
+	if !x.needGenerate() {
 		return
 	}
 	x.g.P("// OrderedIndex types.")
@@ -141,7 +141,7 @@ func (x *Generator) GenOrderedIndexTypeDef() {
 }
 
 func (x *Generator) GenOrderedIndexField() {
-	if !x.generate() {
+	if !x.needGenerate() {
 		return
 	}
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
@@ -152,7 +152,7 @@ func (x *Generator) GenOrderedIndexField() {
 }
 
 func (x *Generator) GenOrderedIndexLoader() {
-	if !x.generate() {
+	if !x.needGenerate() {
 		return
 	}
 	x.g.P("// OrderedIndex init.")
@@ -227,12 +227,12 @@ func (x *Generator) generateOneMulticolumnOrderedIndex(depth int, index *index.L
 		itemName := fmt.Sprintf("indexItem%d", cursor)
 		x.g.P("for _, ", itemName, " := range ", parentDataName, fieldName, " {")
 		key := itemName + suffix
-		keys = append(keys, helper.MapKey{Name: key})
+		keys = keys.AddMapKey(helper.MapKey{Name: key})
 		x.generateOneMulticolumnOrderedIndex(depth+1, index, parentDataName, keys)
 		x.g.P("}")
 	} else {
 		key := parentDataName + fieldName + suffix
-		keys = append(keys, helper.MapKey{Name: key})
+		keys = keys.AddMapKey(helper.MapKey{Name: key})
 		x.generateOneMulticolumnOrderedIndex(depth, index, parentDataName, keys)
 	}
 }
@@ -263,7 +263,7 @@ func (x *Generator) genOrderedIndexSorter() {
 }
 
 func (x *Generator) GenOrderedIndexFinders() {
-	if !x.generate() {
+	if !x.needGenerate() {
 		return
 	}
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {

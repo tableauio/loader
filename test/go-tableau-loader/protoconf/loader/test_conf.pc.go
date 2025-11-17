@@ -20,29 +20,29 @@ import (
 )
 
 // OrderedMap types.
-type OrderedMap_ActivityConf_int32Map = treemap.TreeMap[uint32, int32]
+type ActivityConf_OrderedMap_int32Map = treemap.TreeMap[uint32, int32]
 
-type OrderedMap_ActivityConf_protoconf_SectionValue = pair.Pair[*OrderedMap_ActivityConf_int32Map, *protoconf.Section]
-type OrderedMap_ActivityConf_protoconf_SectionMap = treemap.TreeMap[uint32, *OrderedMap_ActivityConf_protoconf_SectionValue]
+type ActivityConf_OrderedMap_protoconf_SectionValue = pair.Pair[*ActivityConf_OrderedMap_int32Map, *protoconf.Section]
+type ActivityConf_OrderedMap_protoconf_SectionMap = treemap.TreeMap[uint32, *ActivityConf_OrderedMap_protoconf_SectionValue]
 
-type OrderedMap_ActivityConf_Activity_ChapterValue = pair.Pair[*OrderedMap_ActivityConf_protoconf_SectionMap, *protoconf.ActivityConf_Activity_Chapter]
-type OrderedMap_ActivityConf_Activity_ChapterMap = treemap.TreeMap[uint32, *OrderedMap_ActivityConf_Activity_ChapterValue]
+type ActivityConf_OrderedMap_Activity_ChapterValue = pair.Pair[*ActivityConf_OrderedMap_protoconf_SectionMap, *protoconf.ActivityConf_Activity_Chapter]
+type ActivityConf_OrderedMap_Activity_ChapterMap = treemap.TreeMap[uint32, *ActivityConf_OrderedMap_Activity_ChapterValue]
 
-type OrderedMap_ActivityConf_ActivityValue = pair.Pair[*OrderedMap_ActivityConf_Activity_ChapterMap, *protoconf.ActivityConf_Activity]
-type OrderedMap_ActivityConf_ActivityMap = treemap.TreeMap[uint64, *OrderedMap_ActivityConf_ActivityValue]
+type ActivityConf_OrderedMap_ActivityValue = pair.Pair[*ActivityConf_OrderedMap_Activity_ChapterMap, *protoconf.ActivityConf_Activity]
+type ActivityConf_OrderedMap_ActivityMap = treemap.TreeMap[uint64, *ActivityConf_OrderedMap_ActivityValue]
 
 // Index types.
 // Index: ActivityName
-type Index_ActivityConf_ActivityMap = map[string][]*protoconf.ActivityConf_Activity
+type ActivityConf_Index_ActivityMap = map[string][]*protoconf.ActivityConf_Activity
 
 // Index: ChapterID
-type Index_ActivityConf_ChapterMap = map[uint32][]*protoconf.ActivityConf_Activity_Chapter
+type ActivityConf_Index_ChapterMap = map[uint32][]*protoconf.ActivityConf_Activity_Chapter
 
 // Index: ChapterName<AwardID>@NamedChapter
-type Index_ActivityConf_NamedChapterMap = map[string][]*protoconf.ActivityConf_Activity_Chapter
+type ActivityConf_Index_NamedChapterMap = map[string][]*protoconf.ActivityConf_Activity_Chapter
 
 // Index: SectionItemID@Award
-type Index_ActivityConf_AwardMap = map[uint32][]*protoconf.Section_SectionItem
+type ActivityConf_Index_AwardMap = map[uint32][]*protoconf.Section_SectionItem
 
 // ActivityConf is a wrapper around protobuf message: protoconf.ActivityConf.
 //
@@ -54,11 +54,11 @@ type Index_ActivityConf_AwardMap = map[uint32][]*protoconf.Section_SectionItem
 type ActivityConf struct {
 	UnimplementedMessager
 	data, originalData   *protoconf.ActivityConf
-	orderedMap           *OrderedMap_ActivityConf_ActivityMap
-	indexActivityMap     Index_ActivityConf_ActivityMap
-	indexChapterMap      Index_ActivityConf_ChapterMap
-	indexNamedChapterMap Index_ActivityConf_NamedChapterMap
-	indexAwardMap        Index_ActivityConf_AwardMap
+	orderedMap           *ActivityConf_OrderedMap_ActivityMap
+	indexActivityMap     ActivityConf_Index_ActivityMap
+	indexChapterMap      ActivityConf_Index_ChapterMap
+	indexNamedChapterMap ActivityConf_Index_NamedChapterMap
+	indexAwardMap        ActivityConf_Index_AwardMap
 }
 
 // Name returns the ActivityConf's message name.
@@ -121,24 +121,24 @@ func (x *ActivityConf) originalMessage() proto.Message {
 // processAfterLoad runs after this messager is loaded.
 func (x *ActivityConf) processAfterLoad() error {
 	// OrderedMap init.
-	x.orderedMap = treemap.New[uint64, *OrderedMap_ActivityConf_ActivityValue]()
+	x.orderedMap = treemap.New[uint64, *ActivityConf_OrderedMap_ActivityValue]()
 	for k1, v1 := range x.Data().GetActivityMap() {
 		map1 := x.orderedMap
-		k1v := &OrderedMap_ActivityConf_ActivityValue{
-			First:  treemap.New[uint32, *OrderedMap_ActivityConf_Activity_ChapterValue](),
+		k1v := &ActivityConf_OrderedMap_ActivityValue{
+			First:  treemap.New[uint32, *ActivityConf_OrderedMap_Activity_ChapterValue](),
 			Second: v1,
 		}
 		map1.Put(k1, k1v)
 		for k2, v2 := range v1.GetChapterMap() {
 			map2 := k1v.First
-			k2v := &OrderedMap_ActivityConf_Activity_ChapterValue{
-				First:  treemap.New[uint32, *OrderedMap_ActivityConf_protoconf_SectionValue](),
+			k2v := &ActivityConf_OrderedMap_Activity_ChapterValue{
+				First:  treemap.New[uint32, *ActivityConf_OrderedMap_protoconf_SectionValue](),
 				Second: v2,
 			}
 			map2.Put(k2, k2v)
 			for k3, v3 := range v2.GetSectionMap() {
 				map3 := k2v.First
-				k3v := &OrderedMap_ActivityConf_protoconf_SectionValue{
+				k3v := &ActivityConf_OrderedMap_protoconf_SectionValue{
 					First:  treemap.New[uint32, int32](),
 					Second: v3,
 				}
@@ -151,10 +151,10 @@ func (x *ActivityConf) processAfterLoad() error {
 		}
 	}
 	// Index init.
-	x.indexActivityMap = make(Index_ActivityConf_ActivityMap)
-	x.indexChapterMap = make(Index_ActivityConf_ChapterMap)
-	x.indexNamedChapterMap = make(Index_ActivityConf_NamedChapterMap)
-	x.indexAwardMap = make(Index_ActivityConf_AwardMap)
+	x.indexActivityMap = make(ActivityConf_Index_ActivityMap)
+	x.indexChapterMap = make(ActivityConf_Index_ChapterMap)
+	x.indexNamedChapterMap = make(ActivityConf_Index_NamedChapterMap)
+	x.indexAwardMap = make(ActivityConf_Index_AwardMap)
 	for _, item1 := range x.data.GetActivityMap() {
 		{
 			// Index: ActivityName
@@ -249,13 +249,13 @@ func (x *ActivityConf) Get4(activityId uint64, chapterId uint32, sectionId uint3
 }
 
 // GetOrderedMap returns the 1-level ordered map.
-func (x *ActivityConf) GetOrderedMap() *OrderedMap_ActivityConf_ActivityMap {
+func (x *ActivityConf) GetOrderedMap() *ActivityConf_OrderedMap_ActivityMap {
 	return x.orderedMap
 }
 
 // GetOrderedMap1 finds value in the 1-level ordered map. It will return
 // NotFound error if the key is not found.
-func (x *ActivityConf) GetOrderedMap1(activityId uint64) (*OrderedMap_ActivityConf_Activity_ChapterMap, error) {
+func (x *ActivityConf) GetOrderedMap1(activityId uint64) (*ActivityConf_OrderedMap_Activity_ChapterMap, error) {
 	conf := x.orderedMap
 	if val, ok := conf.Get(activityId); !ok {
 		return nil, fmt.Errorf("activityId(%v) %w", activityId, ErrNotFound)
@@ -266,7 +266,7 @@ func (x *ActivityConf) GetOrderedMap1(activityId uint64) (*OrderedMap_ActivityCo
 
 // GetOrderedMap2 finds value in the 2-level ordered map. It will return
 // NotFound error if the key is not found.
-func (x *ActivityConf) GetOrderedMap2(activityId uint64, chapterId uint32) (*OrderedMap_ActivityConf_protoconf_SectionMap, error) {
+func (x *ActivityConf) GetOrderedMap2(activityId uint64, chapterId uint32) (*ActivityConf_OrderedMap_protoconf_SectionMap, error) {
 	conf, err := x.GetOrderedMap1(activityId)
 	if err != nil {
 		return nil, err
@@ -280,7 +280,7 @@ func (x *ActivityConf) GetOrderedMap2(activityId uint64, chapterId uint32) (*Ord
 
 // GetOrderedMap3 finds value in the 3-level ordered map. It will return
 // NotFound error if the key is not found.
-func (x *ActivityConf) GetOrderedMap3(activityId uint64, chapterId uint32, sectionId uint32) (*OrderedMap_ActivityConf_int32Map, error) {
+func (x *ActivityConf) GetOrderedMap3(activityId uint64, chapterId uint32, sectionId uint32) (*ActivityConf_OrderedMap_int32Map, error) {
 	conf, err := x.GetOrderedMap2(activityId, chapterId)
 	if err != nil {
 		return nil, err
@@ -296,7 +296,7 @@ func (x *ActivityConf) GetOrderedMap3(activityId uint64, chapterId uint32, secti
 
 // FindActivityMap finds the index (ActivityName) to value (protoconf.ActivityConf_Activity) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ActivityConf) FindActivityMap() Index_ActivityConf_ActivityMap {
+func (x *ActivityConf) FindActivityMap() ActivityConf_Index_ActivityMap {
 	return x.indexActivityMap
 }
 
@@ -319,7 +319,7 @@ func (x *ActivityConf) FindFirstActivity(activityName string) *protoconf.Activit
 
 // FindChapterMap finds the index (ChapterID) to value (protoconf.ActivityConf_Activity_Chapter) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ActivityConf) FindChapterMap() Index_ActivityConf_ChapterMap {
+func (x *ActivityConf) FindChapterMap() ActivityConf_Index_ChapterMap {
 	return x.indexChapterMap
 }
 
@@ -342,7 +342,7 @@ func (x *ActivityConf) FindFirstChapter(chapterId uint32) *protoconf.ActivityCon
 
 // FindNamedChapterMap finds the index (ChapterName<AwardID>@NamedChapter) to value (protoconf.ActivityConf_Activity_Chapter) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ActivityConf) FindNamedChapterMap() Index_ActivityConf_NamedChapterMap {
+func (x *ActivityConf) FindNamedChapterMap() ActivityConf_Index_NamedChapterMap {
 	return x.indexNamedChapterMap
 }
 
@@ -365,7 +365,7 @@ func (x *ActivityConf) FindFirstNamedChapter(chapterName string) *protoconf.Acti
 
 // FindAwardMap finds the index (SectionItemID@Award) to value (protoconf.Section_SectionItem) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ActivityConf) FindAwardMap() Index_ActivityConf_AwardMap {
+func (x *ActivityConf) FindAwardMap() ActivityConf_Index_AwardMap {
 	return x.indexAwardMap
 }
 
@@ -561,32 +561,32 @@ func (x *ThemeConf) Get2(name string, param string) (string, error) {
 
 // Index types.
 // Index: ActivityID<Goal,ID>
-type Index_TaskConf_TaskMap = map[int64][]*protoconf.TaskConf_Task
+type TaskConf_Index_TaskMap = map[int64][]*protoconf.TaskConf_Task
 
 // OrderedIndex types.
 // OrderedIndex: Goal<ID>@OrderedTask
-type OrderedIndex_TaskConf_OrderedTaskMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
+type TaskConf_OrderedIndex_OrderedTaskMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
 
 // OrderedIndex: Expiry@TaskExpiry
-type OrderedIndex_TaskConf_TaskExpiryMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
+type TaskConf_OrderedIndex_TaskExpiryMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
 
 // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
-type OrderedIndex_TaskConf_SortedTaskExpiryMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
+type TaskConf_OrderedIndex_SortedTaskExpiryMap = treemap.TreeMap[int64, []*protoconf.TaskConf_Task]
 
 // OrderedIndex: (Expiry,ActivityID)@ActivityExpiry
-type OrderedIndex_TaskConf_ActivityExpiryKey struct {
+type TaskConf_OrderedIndex_ActivityExpiryKey struct {
 	Expiry     int64
 	ActivityId int64
 }
 
-func (x OrderedIndex_TaskConf_ActivityExpiryKey) Less(other OrderedIndex_TaskConf_ActivityExpiryKey) bool {
+func (x TaskConf_OrderedIndex_ActivityExpiryKey) Less(other TaskConf_OrderedIndex_ActivityExpiryKey) bool {
 	if x.Expiry != other.Expiry {
 		return x.Expiry < other.Expiry
 	}
 	return x.ActivityId < other.ActivityId
 }
 
-type OrderedIndex_TaskConf_ActivityExpiryMap = treemap.TreeMap[OrderedIndex_TaskConf_ActivityExpiryKey, []*protoconf.TaskConf_Task]
+type TaskConf_OrderedIndex_ActivityExpiryMap = treemap.TreeMap[TaskConf_OrderedIndex_ActivityExpiryKey, []*protoconf.TaskConf_Task]
 
 // TaskConf is a wrapper around protobuf message: protoconf.TaskConf.
 //
@@ -598,11 +598,11 @@ type OrderedIndex_TaskConf_ActivityExpiryMap = treemap.TreeMap[OrderedIndex_Task
 type TaskConf struct {
 	UnimplementedMessager
 	data, originalData              *protoconf.TaskConf
-	indexTaskMap                    Index_TaskConf_TaskMap
-	orderedIndexOrderedTaskMap      *OrderedIndex_TaskConf_OrderedTaskMap
-	orderedIndexTaskExpiryMap       *OrderedIndex_TaskConf_TaskExpiryMap
-	orderedIndexSortedTaskExpiryMap *OrderedIndex_TaskConf_SortedTaskExpiryMap
-	orderedIndexActivityExpiryMap   *OrderedIndex_TaskConf_ActivityExpiryMap
+	indexTaskMap                    TaskConf_Index_TaskMap
+	orderedIndexOrderedTaskMap      *TaskConf_OrderedIndex_OrderedTaskMap
+	orderedIndexTaskExpiryMap       *TaskConf_OrderedIndex_TaskExpiryMap
+	orderedIndexSortedTaskExpiryMap *TaskConf_OrderedIndex_SortedTaskExpiryMap
+	orderedIndexActivityExpiryMap   *TaskConf_OrderedIndex_ActivityExpiryMap
 }
 
 // Name returns the TaskConf's message name.
@@ -665,7 +665,7 @@ func (x *TaskConf) originalMessage() proto.Message {
 // processAfterLoad runs after this messager is loaded.
 func (x *TaskConf) processAfterLoad() error {
 	// Index init.
-	x.indexTaskMap = make(Index_TaskConf_TaskMap)
+	x.indexTaskMap = make(TaskConf_Index_TaskMap)
 	for _, item1 := range x.data.GetTaskMap() {
 		{
 			// Index: ActivityID<Goal,ID>
@@ -686,7 +686,7 @@ func (x *TaskConf) processAfterLoad() error {
 	x.orderedIndexOrderedTaskMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
 	x.orderedIndexTaskExpiryMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
 	x.orderedIndexSortedTaskExpiryMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
-	x.orderedIndexActivityExpiryMap = treemap.New2[OrderedIndex_TaskConf_ActivityExpiryKey, []*protoconf.TaskConf_Task]()
+	x.orderedIndexActivityExpiryMap = treemap.New2[TaskConf_OrderedIndex_ActivityExpiryKey, []*protoconf.TaskConf_Task]()
 	for _, item1 := range x.data.GetTaskMap() {
 		{
 			// OrderedIndex: Goal<ID>@OrderedTask
@@ -708,7 +708,7 @@ func (x *TaskConf) processAfterLoad() error {
 		}
 		{
 			// OrderedIndex: (Expiry,ActivityID)@ActivityExpiry
-			key := OrderedIndex_TaskConf_ActivityExpiryKey{item1.GetExpiry().GetSeconds(), item1.GetActivityId()}
+			key := TaskConf_OrderedIndex_ActivityExpiryKey{item1.GetExpiry().GetSeconds(), item1.GetActivityId()}
 			value, _ := x.orderedIndexActivityExpiryMap.Get(key)
 			x.orderedIndexActivityExpiryMap.Put(key, append(value, item1))
 		}
@@ -748,7 +748,7 @@ func (x *TaskConf) Get1(id int64) (*protoconf.TaskConf_Task, error) {
 
 // FindTaskMap finds the index (ActivityID<Goal,ID>) to value (protoconf.TaskConf_Task) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *TaskConf) FindTaskMap() Index_TaskConf_TaskMap {
+func (x *TaskConf) FindTaskMap() TaskConf_Index_TaskMap {
 	return x.indexTaskMap
 }
 
@@ -771,7 +771,7 @@ func (x *TaskConf) FindFirstTask(activityId int64) *protoconf.TaskConf_Task {
 
 // FindOrderedTaskMap finds the ordered index (Goal<ID>@OrderedTask) to value (protoconf.TaskConf_Task) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *TaskConf) FindOrderedTaskMap() *OrderedIndex_TaskConf_OrderedTaskMap {
+func (x *TaskConf) FindOrderedTaskMap() *TaskConf_OrderedIndex_OrderedTaskMap {
 	return x.orderedIndexOrderedTaskMap
 }
 
@@ -795,7 +795,7 @@ func (x *TaskConf) FindFirstOrderedTask(goal int64) *protoconf.TaskConf_Task {
 
 // FindTaskExpiryMap finds the ordered index (Expiry@TaskExpiry) to value (protoconf.TaskConf_Task) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *TaskConf) FindTaskExpiryMap() *OrderedIndex_TaskConf_TaskExpiryMap {
+func (x *TaskConf) FindTaskExpiryMap() *TaskConf_OrderedIndex_TaskExpiryMap {
 	return x.orderedIndexTaskExpiryMap
 }
 
@@ -819,7 +819,7 @@ func (x *TaskConf) FindFirstTaskExpiry(expiry int64) *protoconf.TaskConf_Task {
 
 // FindSortedTaskExpiryMap finds the ordered index (Expiry<Goal,ID>@SortedTaskExpiry) to value (protoconf.TaskConf_Task) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *TaskConf) FindSortedTaskExpiryMap() *OrderedIndex_TaskConf_SortedTaskExpiryMap {
+func (x *TaskConf) FindSortedTaskExpiryMap() *TaskConf_OrderedIndex_SortedTaskExpiryMap {
 	return x.orderedIndexSortedTaskExpiryMap
 }
 
@@ -843,13 +843,13 @@ func (x *TaskConf) FindFirstSortedTaskExpiry(expiry int64) *protoconf.TaskConf_T
 
 // FindActivityExpiryMap finds the ordered index ((Expiry,ActivityID)@ActivityExpiry) to value (protoconf.TaskConf_Task) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *TaskConf) FindActivityExpiryMap() *OrderedIndex_TaskConf_ActivityExpiryMap {
+func (x *TaskConf) FindActivityExpiryMap() *TaskConf_OrderedIndex_ActivityExpiryMap {
 	return x.orderedIndexActivityExpiryMap
 }
 
 // FindActivityExpiry finds a slice of all values of the given key.
 func (x *TaskConf) FindActivityExpiry(expiry int64, activityId int64) []*protoconf.TaskConf_Task {
-	val, _ := x.orderedIndexActivityExpiryMap.Get(OrderedIndex_TaskConf_ActivityExpiryKey{expiry, activityId})
+	val, _ := x.orderedIndexActivityExpiryMap.Get(TaskConf_OrderedIndex_ActivityExpiryKey{expiry, activityId})
 	return val
 }
 

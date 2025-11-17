@@ -96,7 +96,7 @@ func genHppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P(helper.Indent(1), "const google::protobuf::Message* Message() const override { return &data_; }")
 	g.P()
 
-	if orderedMapGenerator.Generate() || indexGenerator.Generate() || orderedIndexGenerator.Generate() {
+	if orderedMapGenerator.NeedGenerate() || indexGenerator.NeedGenerate() || orderedIndexGenerator.NeedGenerate() {
 		g.P(" private:")
 		g.P(helper.Indent(1), "virtual bool ProcessAfterLoad() override final;")
 		g.P()
@@ -175,7 +175,7 @@ func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P("}")
 	g.P()
 
-	if orderedMapGenerator.Generate() || indexGenerator.Generate() || orderedIndexGenerator.Generate() {
+	if orderedMapGenerator.NeedGenerate() || indexGenerator.NeedGenerate() || orderedIndexGenerator.NeedGenerate() {
 		g.P("bool ", messagerName, "::ProcessAfterLoad() {")
 		orderedMapGenerator.GenOrderedMapLoader()
 		indexGenerator.GenCppIndexLoader()

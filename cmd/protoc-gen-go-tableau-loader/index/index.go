@@ -27,7 +27,7 @@ func NewGenerator(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *i
 	}
 }
 
-func (x *Generator) generate() bool {
+func (x *Generator) needGenerate() bool {
 	return options.NeedGenIndex(x.message.Desc, options.LangGO)
 }
 
@@ -36,7 +36,7 @@ func (x *Generator) messagerName() string {
 }
 
 func (x *Generator) mapType(index *index.LevelIndex) string {
-	return fmt.Sprintf("Index_%s_%sMap", x.messagerName(), index.Name())
+	return fmt.Sprintf("%s_Index_%sMap", x.messagerName(), index.Name())
 }
 
 func (x *Generator) mapKeyType(index *index.LevelIndex) string {
@@ -46,7 +46,7 @@ func (x *Generator) mapKeyType(index *index.LevelIndex) string {
 		return helper.ParseGoType(x.gen, x.g, field.FD)
 	} else {
 		// multi-column index
-		return fmt.Sprintf("Index_%s_%sKey", x.messagerName(), index.Name())
+		return fmt.Sprintf("%s_Index_%sKey", x.messagerName(), index.Name())
 	}
 }
 
@@ -59,9 +59,9 @@ func (x *Generator) indexContainerName(index *index.LevelIndex) string {
 }
 
 func (x *Generator) indexKeys(index *index.LevelIndex) helper.MapKeys {
-	var keys []helper.MapKey
+	var keys helper.MapKeys
 	for _, field := range index.ColFields {
-		keys = append(keys, helper.MapKey{
+		keys = keys.AddMapKey(helper.MapKey{
 			Type:      helper.ParseGoType(x.gen, x.g, field.FD),
 			Name:      helper.ParseIndexFieldNameAsFuncParam(x.gen, field.FD),
 			FieldName: helper.ParseIndexFieldNameAsKeyStructFieldName(x.gen, field.FD),
@@ -83,7 +83,7 @@ func (x *Generator) parseKeyFieldName(field *index.LevelField) string {
 }
 
 func (x *Generator) GenIndexTypeDef() {
-	if !x.generate() {
+	if !x.needGenerate() {
 		return
 	}
 	x.g.P("// Index types.")
@@ -110,7 +110,7 @@ func (x *Generator) GenIndexTypeDef() {
 }
 
 func (x *Generator) GenIndexField() {
-	if !x.generate() {
+	if !x.needGenerate() {
 		return
 	}
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
@@ -121,7 +121,7 @@ func (x *Generator) GenIndexField() {
 }
 
 func (x *Generator) GenIndexLoader() {
-	if !x.generate() {
+	if !x.needGenerate() {
 		return
 	}
 	x.g.P("// Index init.")
@@ -192,12 +192,12 @@ func (x *Generator) generateOneMulticolumnIndex(depth int, index *index.LevelInd
 	if field.FD.IsList() {
 		itemName := fmt.Sprintf("indexItem%d", cursor)
 		x.g.P("for _, ", itemName, " := range ", parentDataName, fieldName, " {")
-		keys = append(keys, helper.MapKey{Name: itemName})
+		keys = keys.AddMapKey(helper.MapKey{Name: itemName})
 		x.generateOneMulticolumnIndex(depth+1, index, parentDataName, keys)
 		x.g.P("}")
 	} else {
 		key := parentDataName + fieldName
-		keys = append(keys, helper.MapKey{Name: key})
+		keys = keys.AddMapKey(helper.MapKey{Name: key})
 		x.generateOneMulticolumnIndex(depth, index, parentDataName, keys)
 	}
 }
@@ -227,7 +227,7 @@ func (x *Generator) genIndexSorter() {
 }
 
 func (x *Generator) GenIndexFinders() {
-	if !x.generate() {
+	if !x.needGenerate() {
 		return
 	}
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {

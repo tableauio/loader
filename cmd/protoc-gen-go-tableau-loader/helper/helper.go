@@ -98,9 +98,9 @@ func ParseMapKeyType(fd protoreflect.FieldDescriptor) string {
 	}
 }
 
-// ParseOrderedMapKeyType converts a FieldDescriptor to its treemap key type.
+// ParseOrderedIndexKeyType converts a FieldDescriptor to its treemap key type.
 // fd must be an ordered type, or a message which can be converted to an ordered type.
-func ParseOrderedMapKeyType(gen *protogen.Plugin, g *protogen.GeneratedFile, fd protoreflect.FieldDescriptor) string {
+func ParseOrderedIndexKeyType(gen *protogen.Plugin, g *protogen.GeneratedFile, fd protoreflect.FieldDescriptor) string {
 	switch fd.Kind() {
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
 		return "int32"
@@ -261,8 +261,7 @@ func (keys MapKeys) AddMapKey(newKey MapKey) MapKeys {
 			break
 		}
 	}
-	keys = append(keys, newKey)
-	return keys
+	return append(keys, newKey)
 }
 
 // GenGetParams generates function parameters, which are the names listed in the function's definition.

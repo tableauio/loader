@@ -19,67 +19,67 @@ import (
 )
 
 // OrderedMap types.
-type OrderedMap_ItemConf_ItemMap = treemap.TreeMap[uint32, *protoconf.ItemConf_Item]
+type ItemConf_OrderedMap_ItemMap = treemap.TreeMap[uint32, *protoconf.ItemConf_Item]
 
 // Index types.
 // Index: Type
-type Index_ItemConf_ItemMap = map[protoconf.FruitType][]*protoconf.ItemConf_Item
+type ItemConf_Index_ItemMap = map[protoconf.FruitType][]*protoconf.ItemConf_Item
 
 // Index: Param<ID>@ItemInfo
-type Index_ItemConf_ItemInfoMap = map[int32][]*protoconf.ItemConf_Item
+type ItemConf_Index_ItemInfoMap = map[int32][]*protoconf.ItemConf_Item
 
 // Index: Default@ItemDefaultInfo
-type Index_ItemConf_ItemDefaultInfoMap = map[string][]*protoconf.ItemConf_Item
+type ItemConf_Index_ItemDefaultInfoMap = map[string][]*protoconf.ItemConf_Item
 
 // Index: ExtType@ItemExtInfo
-type Index_ItemConf_ItemExtInfoMap = map[protoconf.FruitType][]*protoconf.ItemConf_Item
+type ItemConf_Index_ItemExtInfoMap = map[protoconf.FruitType][]*protoconf.ItemConf_Item
 
 // Index: (ID,Name)<Type,UseEffectType>@AwardItem
-type Index_ItemConf_AwardItemKey struct {
+type ItemConf_Index_AwardItemKey struct {
 	Id   uint32
 	Name string
 }
-type Index_ItemConf_AwardItemMap = map[Index_ItemConf_AwardItemKey][]*protoconf.ItemConf_Item
+type ItemConf_Index_AwardItemMap = map[ItemConf_Index_AwardItemKey][]*protoconf.ItemConf_Item
 
 // Index: (ID,Type,Param,ExtType)@SpecialItem
-type Index_ItemConf_SpecialItemKey struct {
+type ItemConf_Index_SpecialItemKey struct {
 	Id      uint32
 	Type    protoconf.FruitType
 	Param   int32
 	ExtType protoconf.FruitType
 }
-type Index_ItemConf_SpecialItemMap = map[Index_ItemConf_SpecialItemKey][]*protoconf.ItemConf_Item
+type ItemConf_Index_SpecialItemMap = map[ItemConf_Index_SpecialItemKey][]*protoconf.ItemConf_Item
 
 // Index: PathDir@ItemPathDir
-type Index_ItemConf_ItemPathDirMap = map[string][]*protoconf.ItemConf_Item
+type ItemConf_Index_ItemPathDirMap = map[string][]*protoconf.ItemConf_Item
 
 // Index: PathName@ItemPathName
-type Index_ItemConf_ItemPathNameMap = map[string][]*protoconf.ItemConf_Item
+type ItemConf_Index_ItemPathNameMap = map[string][]*protoconf.ItemConf_Item
 
 // Index: PathFriendID@ItemPathFriendID
-type Index_ItemConf_ItemPathFriendIDMap = map[uint32][]*protoconf.ItemConf_Item
+type ItemConf_Index_ItemPathFriendIDMap = map[uint32][]*protoconf.ItemConf_Item
 
 // Index: UseEffectType@UseEffectType
-type Index_ItemConf_UseEffectTypeMap = map[protoconf.UseEffect_Type][]*protoconf.ItemConf_Item
+type ItemConf_Index_UseEffectTypeMap = map[protoconf.UseEffect_Type][]*protoconf.ItemConf_Item
 
 // OrderedIndex types.
 // OrderedIndex: ExtType@ExtType
-type OrderedIndex_ItemConf_ExtTypeMap = treemap.TreeMap[protoconf.FruitType, []*protoconf.ItemConf_Item]
+type ItemConf_OrderedIndex_ExtTypeMap = treemap.TreeMap[protoconf.FruitType, []*protoconf.ItemConf_Item]
 
 // OrderedIndex: (Param,ExtType)<ID>@ParamExtType
-type OrderedIndex_ItemConf_ParamExtTypeKey struct {
+type ItemConf_OrderedIndex_ParamExtTypeKey struct {
 	Param   int32
 	ExtType protoconf.FruitType
 }
 
-func (x OrderedIndex_ItemConf_ParamExtTypeKey) Less(other OrderedIndex_ItemConf_ParamExtTypeKey) bool {
+func (x ItemConf_OrderedIndex_ParamExtTypeKey) Less(other ItemConf_OrderedIndex_ParamExtTypeKey) bool {
 	if x.Param != other.Param {
 		return x.Param < other.Param
 	}
 	return x.ExtType < other.ExtType
 }
 
-type OrderedIndex_ItemConf_ParamExtTypeMap = treemap.TreeMap[OrderedIndex_ItemConf_ParamExtTypeKey, []*protoconf.ItemConf_Item]
+type ItemConf_OrderedIndex_ParamExtTypeMap = treemap.TreeMap[ItemConf_OrderedIndex_ParamExtTypeKey, []*protoconf.ItemConf_Item]
 
 // ItemConf is a wrapper around protobuf message: protoconf.ItemConf.
 //
@@ -91,19 +91,19 @@ type OrderedIndex_ItemConf_ParamExtTypeMap = treemap.TreeMap[OrderedIndex_ItemCo
 type ItemConf struct {
 	UnimplementedMessager
 	data, originalData          *protoconf.ItemConf
-	orderedMap                  *OrderedMap_ItemConf_ItemMap
-	indexItemMap                Index_ItemConf_ItemMap
-	indexItemInfoMap            Index_ItemConf_ItemInfoMap
-	indexItemDefaultInfoMap     Index_ItemConf_ItemDefaultInfoMap
-	indexItemExtInfoMap         Index_ItemConf_ItemExtInfoMap
-	indexAwardItemMap           Index_ItemConf_AwardItemMap
-	indexSpecialItemMap         Index_ItemConf_SpecialItemMap
-	indexItemPathDirMap         Index_ItemConf_ItemPathDirMap
-	indexItemPathNameMap        Index_ItemConf_ItemPathNameMap
-	indexItemPathFriendIdMap    Index_ItemConf_ItemPathFriendIDMap
-	indexUseEffectTypeMap       Index_ItemConf_UseEffectTypeMap
-	orderedIndexExtTypeMap      *OrderedIndex_ItemConf_ExtTypeMap
-	orderedIndexParamExtTypeMap *OrderedIndex_ItemConf_ParamExtTypeMap
+	orderedMap                  *ItemConf_OrderedMap_ItemMap
+	indexItemMap                ItemConf_Index_ItemMap
+	indexItemInfoMap            ItemConf_Index_ItemInfoMap
+	indexItemDefaultInfoMap     ItemConf_Index_ItemDefaultInfoMap
+	indexItemExtInfoMap         ItemConf_Index_ItemExtInfoMap
+	indexAwardItemMap           ItemConf_Index_AwardItemMap
+	indexSpecialItemMap         ItemConf_Index_SpecialItemMap
+	indexItemPathDirMap         ItemConf_Index_ItemPathDirMap
+	indexItemPathNameMap        ItemConf_Index_ItemPathNameMap
+	indexItemPathFriendIdMap    ItemConf_Index_ItemPathFriendIDMap
+	indexUseEffectTypeMap       ItemConf_Index_UseEffectTypeMap
+	orderedIndexExtTypeMap      *ItemConf_OrderedIndex_ExtTypeMap
+	orderedIndexParamExtTypeMap *ItemConf_OrderedIndex_ParamExtTypeMap
 }
 
 // Name returns the ItemConf's message name.
@@ -172,16 +172,16 @@ func (x *ItemConf) processAfterLoad() error {
 		map1.Put(k1, v1)
 	}
 	// Index init.
-	x.indexItemMap = make(Index_ItemConf_ItemMap)
-	x.indexItemInfoMap = make(Index_ItemConf_ItemInfoMap)
-	x.indexItemDefaultInfoMap = make(Index_ItemConf_ItemDefaultInfoMap)
-	x.indexItemExtInfoMap = make(Index_ItemConf_ItemExtInfoMap)
-	x.indexAwardItemMap = make(Index_ItemConf_AwardItemMap)
-	x.indexSpecialItemMap = make(Index_ItemConf_SpecialItemMap)
-	x.indexItemPathDirMap = make(Index_ItemConf_ItemPathDirMap)
-	x.indexItemPathNameMap = make(Index_ItemConf_ItemPathNameMap)
-	x.indexItemPathFriendIdMap = make(Index_ItemConf_ItemPathFriendIDMap)
-	x.indexUseEffectTypeMap = make(Index_ItemConf_UseEffectTypeMap)
+	x.indexItemMap = make(ItemConf_Index_ItemMap)
+	x.indexItemInfoMap = make(ItemConf_Index_ItemInfoMap)
+	x.indexItemDefaultInfoMap = make(ItemConf_Index_ItemDefaultInfoMap)
+	x.indexItemExtInfoMap = make(ItemConf_Index_ItemExtInfoMap)
+	x.indexAwardItemMap = make(ItemConf_Index_AwardItemMap)
+	x.indexSpecialItemMap = make(ItemConf_Index_SpecialItemMap)
+	x.indexItemPathDirMap = make(ItemConf_Index_ItemPathDirMap)
+	x.indexItemPathNameMap = make(ItemConf_Index_ItemPathNameMap)
+	x.indexItemPathFriendIdMap = make(ItemConf_Index_ItemPathFriendIDMap)
+	x.indexUseEffectTypeMap = make(ItemConf_Index_UseEffectTypeMap)
 	for _, item1 := range x.data.GetItemMap() {
 		{
 			// Index: Type
@@ -209,14 +209,14 @@ func (x *ItemConf) processAfterLoad() error {
 		}
 		{
 			// Index: (ID,Name)<Type,UseEffectType>@AwardItem
-			key := Index_ItemConf_AwardItemKey{item1.GetId(), item1.GetName()}
+			key := ItemConf_Index_AwardItemKey{item1.GetId(), item1.GetName()}
 			x.indexAwardItemMap[key] = append(x.indexAwardItemMap[key], item1)
 		}
 		{
 			// Index: (ID,Type,Param,ExtType)@SpecialItem
 			for _, indexItem2 := range item1.GetParamList() {
 				for _, indexItem3 := range item1.GetExtTypeList() {
-					key := Index_ItemConf_SpecialItemKey{item1.GetId(), item1.GetType(), indexItem2, indexItem3}
+					key := ItemConf_Index_SpecialItemKey{item1.GetId(), item1.GetType(), indexItem2, indexItem3}
 					x.indexSpecialItemMap[key] = append(x.indexSpecialItemMap[key], item1)
 				}
 			}
@@ -261,7 +261,7 @@ func (x *ItemConf) processAfterLoad() error {
 	}
 	// OrderedIndex init.
 	x.orderedIndexExtTypeMap = treemap.New[protoconf.FruitType, []*protoconf.ItemConf_Item]()
-	x.orderedIndexParamExtTypeMap = treemap.New2[OrderedIndex_ItemConf_ParamExtTypeKey, []*protoconf.ItemConf_Item]()
+	x.orderedIndexParamExtTypeMap = treemap.New2[ItemConf_OrderedIndex_ParamExtTypeKey, []*protoconf.ItemConf_Item]()
 	for _, item1 := range x.data.GetItemMap() {
 		{
 			// OrderedIndex: ExtType@ExtType
@@ -275,7 +275,7 @@ func (x *ItemConf) processAfterLoad() error {
 			// OrderedIndex: (Param,ExtType)<ID>@ParamExtType
 			for _, indexItem0 := range item1.GetParamList() {
 				for _, indexItem1 := range item1.GetExtTypeList() {
-					key := OrderedIndex_ItemConf_ParamExtTypeKey{indexItem0, indexItem1}
+					key := ItemConf_OrderedIndex_ParamExtTypeKey{indexItem0, indexItem1}
 					value, _ := x.orderedIndexParamExtTypeMap.Get(key)
 					x.orderedIndexParamExtTypeMap.Put(key, append(value, item1))
 				}
@@ -283,7 +283,7 @@ func (x *ItemConf) processAfterLoad() error {
 		}
 	}
 	// OrderedIndex(sort): (Param,ExtType)<ID>@ParamExtType
-	x.orderedIndexParamExtTypeMap.Range(func(key OrderedIndex_ItemConf_ParamExtTypeKey, item []*protoconf.ItemConf_Item) bool {
+	x.orderedIndexParamExtTypeMap.Range(func(key ItemConf_OrderedIndex_ParamExtTypeKey, item []*protoconf.ItemConf_Item) bool {
 		sort.Slice(item, func(i, j int) bool {
 			return item[i].GetId() < item[j].GetId()
 		})
@@ -304,7 +304,7 @@ func (x *ItemConf) Get1(id uint32) (*protoconf.ItemConf_Item, error) {
 }
 
 // GetOrderedMap returns the 1-level ordered map.
-func (x *ItemConf) GetOrderedMap() *OrderedMap_ItemConf_ItemMap {
+func (x *ItemConf) GetOrderedMap() *ItemConf_OrderedMap_ItemMap {
 	return x.orderedMap
 }
 
@@ -312,7 +312,7 @@ func (x *ItemConf) GetOrderedMap() *OrderedMap_ItemConf_ItemMap {
 
 // FindItemMap finds the index (Type) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ItemConf) FindItemMap() Index_ItemConf_ItemMap {
+func (x *ItemConf) FindItemMap() ItemConf_Index_ItemMap {
 	return x.indexItemMap
 }
 
@@ -335,7 +335,7 @@ func (x *ItemConf) FindFirstItem(type_ protoconf.FruitType) *protoconf.ItemConf_
 
 // FindItemInfoMap finds the index (Param<ID>@ItemInfo) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ItemConf) FindItemInfoMap() Index_ItemConf_ItemInfoMap {
+func (x *ItemConf) FindItemInfoMap() ItemConf_Index_ItemInfoMap {
 	return x.indexItemInfoMap
 }
 
@@ -358,7 +358,7 @@ func (x *ItemConf) FindFirstItemInfo(param int32) *protoconf.ItemConf_Item {
 
 // FindItemDefaultInfoMap finds the index (Default@ItemDefaultInfo) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ItemConf) FindItemDefaultInfoMap() Index_ItemConf_ItemDefaultInfoMap {
+func (x *ItemConf) FindItemDefaultInfoMap() ItemConf_Index_ItemDefaultInfoMap {
 	return x.indexItemDefaultInfoMap
 }
 
@@ -381,7 +381,7 @@ func (x *ItemConf) FindFirstItemDefaultInfo(default_ string) *protoconf.ItemConf
 
 // FindItemExtInfoMap finds the index (ExtType@ItemExtInfo) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ItemConf) FindItemExtInfoMap() Index_ItemConf_ItemExtInfoMap {
+func (x *ItemConf) FindItemExtInfoMap() ItemConf_Index_ItemExtInfoMap {
 	return x.indexItemExtInfoMap
 }
 
@@ -404,13 +404,13 @@ func (x *ItemConf) FindFirstItemExtInfo(extType protoconf.FruitType) *protoconf.
 
 // FindAwardItemMap finds the index ((ID,Name)<Type,UseEffectType>@AwardItem) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ItemConf) FindAwardItemMap() Index_ItemConf_AwardItemMap {
+func (x *ItemConf) FindAwardItemMap() ItemConf_Index_AwardItemMap {
 	return x.indexAwardItemMap
 }
 
 // FindAwardItem finds a slice of all values of the given key.
 func (x *ItemConf) FindAwardItem(id uint32, name string) []*protoconf.ItemConf_Item {
-	return x.indexAwardItemMap[Index_ItemConf_AwardItemKey{id, name}]
+	return x.indexAwardItemMap[ItemConf_Index_AwardItemKey{id, name}]
 }
 
 // FindFirstAwardItem finds the first value of the given key,
@@ -427,13 +427,13 @@ func (x *ItemConf) FindFirstAwardItem(id uint32, name string) *protoconf.ItemCon
 
 // FindSpecialItemMap finds the index ((ID,Type,Param,ExtType)@SpecialItem) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ItemConf) FindSpecialItemMap() Index_ItemConf_SpecialItemMap {
+func (x *ItemConf) FindSpecialItemMap() ItemConf_Index_SpecialItemMap {
 	return x.indexSpecialItemMap
 }
 
 // FindSpecialItem finds a slice of all values of the given key.
 func (x *ItemConf) FindSpecialItem(id uint32, type_ protoconf.FruitType, param int32, extType protoconf.FruitType) []*protoconf.ItemConf_Item {
-	return x.indexSpecialItemMap[Index_ItemConf_SpecialItemKey{id, type_, param, extType}]
+	return x.indexSpecialItemMap[ItemConf_Index_SpecialItemKey{id, type_, param, extType}]
 }
 
 // FindFirstSpecialItem finds the first value of the given key,
@@ -450,7 +450,7 @@ func (x *ItemConf) FindFirstSpecialItem(id uint32, type_ protoconf.FruitType, pa
 
 // FindItemPathDirMap finds the index (PathDir@ItemPathDir) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ItemConf) FindItemPathDirMap() Index_ItemConf_ItemPathDirMap {
+func (x *ItemConf) FindItemPathDirMap() ItemConf_Index_ItemPathDirMap {
 	return x.indexItemPathDirMap
 }
 
@@ -473,7 +473,7 @@ func (x *ItemConf) FindFirstItemPathDir(dir string) *protoconf.ItemConf_Item {
 
 // FindItemPathNameMap finds the index (PathName@ItemPathName) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ItemConf) FindItemPathNameMap() Index_ItemConf_ItemPathNameMap {
+func (x *ItemConf) FindItemPathNameMap() ItemConf_Index_ItemPathNameMap {
 	return x.indexItemPathNameMap
 }
 
@@ -496,7 +496,7 @@ func (x *ItemConf) FindFirstItemPathName(name string) *protoconf.ItemConf_Item {
 
 // FindItemPathFriendIDMap finds the index (PathFriendID@ItemPathFriendID) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ItemConf) FindItemPathFriendIDMap() Index_ItemConf_ItemPathFriendIDMap {
+func (x *ItemConf) FindItemPathFriendIDMap() ItemConf_Index_ItemPathFriendIDMap {
 	return x.indexItemPathFriendIdMap
 }
 
@@ -519,7 +519,7 @@ func (x *ItemConf) FindFirstItemPathFriendID(id uint32) *protoconf.ItemConf_Item
 
 // FindUseEffectTypeMap finds the index (UseEffectType@UseEffectType) to value (protoconf.ItemConf_Item) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ItemConf) FindUseEffectTypeMap() Index_ItemConf_UseEffectTypeMap {
+func (x *ItemConf) FindUseEffectTypeMap() ItemConf_Index_UseEffectTypeMap {
 	return x.indexUseEffectTypeMap
 }
 
@@ -542,7 +542,7 @@ func (x *ItemConf) FindFirstUseEffectType(type_ protoconf.UseEffect_Type) *proto
 
 // FindExtTypeMap finds the ordered index (ExtType@ExtType) to value (protoconf.ItemConf_Item) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ItemConf) FindExtTypeMap() *OrderedIndex_ItemConf_ExtTypeMap {
+func (x *ItemConf) FindExtTypeMap() *ItemConf_OrderedIndex_ExtTypeMap {
 	return x.orderedIndexExtTypeMap
 }
 
@@ -566,13 +566,13 @@ func (x *ItemConf) FindFirstExtType(extType protoconf.FruitType) *protoconf.Item
 
 // FindParamExtTypeMap finds the ordered index ((Param,ExtType)<ID>@ParamExtType) to value (protoconf.ItemConf_Item) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *ItemConf) FindParamExtTypeMap() *OrderedIndex_ItemConf_ParamExtTypeMap {
+func (x *ItemConf) FindParamExtTypeMap() *ItemConf_OrderedIndex_ParamExtTypeMap {
 	return x.orderedIndexParamExtTypeMap
 }
 
 // FindParamExtType finds a slice of all values of the given key.
 func (x *ItemConf) FindParamExtType(param int32, extType protoconf.FruitType) []*protoconf.ItemConf_Item {
-	val, _ := x.orderedIndexParamExtTypeMap.Get(OrderedIndex_ItemConf_ParamExtTypeKey{param, extType})
+	val, _ := x.orderedIndexParamExtTypeMap.Get(ItemConf_OrderedIndex_ParamExtTypeKey{param, extType})
 	return val
 }
 

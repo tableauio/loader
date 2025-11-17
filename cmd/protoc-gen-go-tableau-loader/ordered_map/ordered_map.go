@@ -24,7 +24,7 @@ func NewGenerator(gen *protogen.Plugin, g *protogen.GeneratedFile, message *prot
 	}
 }
 
-func (x *Generator) generate() bool {
+func (x *Generator) needGenerate() bool {
 	return options.NeedGenOrderedMap(x.message.Desc, options.LangGO)
 }
 
@@ -41,11 +41,11 @@ func (x *Generator) orderedMapPrefix(mapFd protoreflect.FieldDescriptor) string 
 }
 
 func (x *Generator) mapType(mapFd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf("OrderedMap_%s_%sMap", x.messagerName(), x.orderedMapPrefix(mapFd))
+	return fmt.Sprintf("%s_OrderedMap_%sMap", x.messagerName(), x.orderedMapPrefix(mapFd))
 }
 
 func (x *Generator) mapValueType(mapFd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf("OrderedMap_%s_%sValue", x.messagerName(), x.orderedMapPrefix(mapFd))
+	return fmt.Sprintf("%s_OrderedMap_%sValue", x.messagerName(), x.orderedMapPrefix(mapFd))
 }
 
 func (x *Generator) mapValueFieldType(fd protoreflect.FieldDescriptor) string {
@@ -57,7 +57,7 @@ func (x *Generator) mapValueFieldType(fd protoreflect.FieldDescriptor) string {
 }
 
 func (x *Generator) GenOrderedMapTypeDef() {
-	if !x.generate() {
+	if !x.needGenerate() {
 		return
 	}
 	x.g.P("// OrderedMap types.")
@@ -95,7 +95,7 @@ func (x *Generator) genOrderedMapTypeDef(md protoreflect.MessageDescriptor, dept
 }
 
 func (x *Generator) GenOrderedMapField() {
-	if !x.generate() {
+	if !x.needGenerate() {
 		return
 	}
 	md := x.message.Desc
@@ -109,7 +109,7 @@ func (x *Generator) GenOrderedMapField() {
 }
 
 func (x *Generator) GenOrderedMapLoader() {
-	if !x.generate() {
+	if !x.needGenerate() {
 		return
 	}
 	x.g.P("// OrderedMap init.")
@@ -171,7 +171,7 @@ func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth
 }
 
 func (x *Generator) GenOrderedMapGetters() {
-	if !x.generate() {
+	if !x.needGenerate() {
 		return
 	}
 	x.genOrderedMapGetters(x.message.Desc, 1, nil)

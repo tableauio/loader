@@ -22,7 +22,7 @@ func NewGenerator(g *protogen.GeneratedFile, message *protogen.Message) *Generat
 	}
 }
 
-func (x *Generator) Generate() bool {
+func (x *Generator) NeedGenerate() bool {
 	return options.NeedGenOrderedMap(x.message.Desc, options.LangCPP)
 }
 
@@ -55,7 +55,7 @@ func (x *Generator) mapValueFieldType(fd protoreflect.FieldDescriptor) string {
 }
 
 func (x *Generator) GenHppOrderedMapGetters() {
-	if !x.Generate() {
+	if !x.NeedGenerate() {
 		return
 	}
 	x.g.P()
@@ -97,7 +97,7 @@ func (x *Generator) genHppOrderedMapGetters(md protoreflect.MessageDescriptor, d
 }
 
 func (x *Generator) GenOrderedMapLoader() {
-	if !x.Generate() {
+	if !x.NeedGenerate() {
 		return
 	}
 	x.g.P(helper.Indent(1), "// OrderedMap init.")
@@ -144,7 +144,7 @@ func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth
 }
 
 func (x *Generator) GenOrderedMapGetters() {
-	if !x.Generate() {
+	if !x.NeedGenerate() {
 		return
 	}
 	x.genOrderedMapGetters(x.message.Desc, 1, nil)

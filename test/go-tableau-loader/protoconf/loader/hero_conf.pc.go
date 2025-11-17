@@ -21,7 +21,7 @@ import (
 
 // Index types.
 // Index: Title
-type Index_HeroConf_AttrMap = map[string][]*protoconf.HeroConf_Hero_Attr
+type HeroConf_Index_AttrMap = map[string][]*protoconf.HeroConf_Hero_Attr
 
 // HeroConf is a wrapper around protobuf message: protoconf.HeroConf.
 //
@@ -33,7 +33,7 @@ type Index_HeroConf_AttrMap = map[string][]*protoconf.HeroConf_Hero_Attr
 type HeroConf struct {
 	UnimplementedMessager
 	data, originalData *protoconf.HeroConf
-	indexAttrMap       Index_HeroConf_AttrMap
+	indexAttrMap       HeroConf_Index_AttrMap
 }
 
 // Name returns the HeroConf's message name.
@@ -96,7 +96,7 @@ func (x *HeroConf) originalMessage() proto.Message {
 // processAfterLoad runs after this messager is loaded.
 func (x *HeroConf) processAfterLoad() error {
 	// Index init.
-	x.indexAttrMap = make(Index_HeroConf_AttrMap)
+	x.indexAttrMap = make(HeroConf_Index_AttrMap)
 	for _, item1 := range x.data.GetHeroMap() {
 		for _, item2 := range item1.GetAttrMap() {
 			{
@@ -139,7 +139,7 @@ func (x *HeroConf) Get2(name string, title string) (*protoconf.HeroConf_Hero_Att
 
 // FindAttrMap finds the index (Title) to value (protoconf.HeroConf_Hero_Attr) map.
 // One key may correspond to multiple values, which are contained by a slice.
-func (x *HeroConf) FindAttrMap() Index_HeroConf_AttrMap {
+func (x *HeroConf) FindAttrMap() HeroConf_Index_AttrMap {
 	return x.indexAttrMap
 }
 
@@ -159,10 +159,10 @@ func (x *HeroConf) FindFirstAttr(title string) *protoconf.HeroConf_Hero_Attr {
 }
 
 // OrderedMap types.
-type OrderedMap_HeroBaseConf_base_ItemMap = treemap.TreeMap[string, *base.Item]
+type HeroBaseConf_OrderedMap_base_ItemMap = treemap.TreeMap[string, *base.Item]
 
-type OrderedMap_HeroBaseConf_base_HeroValue = pair.Pair[*OrderedMap_HeroBaseConf_base_ItemMap, *base.Hero]
-type OrderedMap_HeroBaseConf_base_HeroMap = treemap.TreeMap[string, *OrderedMap_HeroBaseConf_base_HeroValue]
+type HeroBaseConf_OrderedMap_base_HeroValue = pair.Pair[*HeroBaseConf_OrderedMap_base_ItemMap, *base.Hero]
+type HeroBaseConf_OrderedMap_base_HeroMap = treemap.TreeMap[string, *HeroBaseConf_OrderedMap_base_HeroValue]
 
 // HeroBaseConf is a wrapper around protobuf message: protoconf.HeroBaseConf.
 //
@@ -174,7 +174,7 @@ type OrderedMap_HeroBaseConf_base_HeroMap = treemap.TreeMap[string, *OrderedMap_
 type HeroBaseConf struct {
 	UnimplementedMessager
 	data, originalData *protoconf.HeroBaseConf
-	orderedMap         *OrderedMap_HeroBaseConf_base_HeroMap
+	orderedMap         *HeroBaseConf_OrderedMap_base_HeroMap
 }
 
 // Name returns the HeroBaseConf's message name.
@@ -237,10 +237,10 @@ func (x *HeroBaseConf) originalMessage() proto.Message {
 // processAfterLoad runs after this messager is loaded.
 func (x *HeroBaseConf) processAfterLoad() error {
 	// OrderedMap init.
-	x.orderedMap = treemap.New[string, *OrderedMap_HeroBaseConf_base_HeroValue]()
+	x.orderedMap = treemap.New[string, *HeroBaseConf_OrderedMap_base_HeroValue]()
 	for k1, v1 := range x.Data().GetHeroMap() {
 		map1 := x.orderedMap
-		k1v := &OrderedMap_HeroBaseConf_base_HeroValue{
+		k1v := &HeroBaseConf_OrderedMap_base_HeroValue{
 			First:  treemap.New[string, *base.Item](),
 			Second: v1,
 		}
@@ -280,13 +280,13 @@ func (x *HeroBaseConf) Get2(name string, id string) (*base.Item, error) {
 }
 
 // GetOrderedMap returns the 1-level ordered map.
-func (x *HeroBaseConf) GetOrderedMap() *OrderedMap_HeroBaseConf_base_HeroMap {
+func (x *HeroBaseConf) GetOrderedMap() *HeroBaseConf_OrderedMap_base_HeroMap {
 	return x.orderedMap
 }
 
 // GetOrderedMap1 finds value in the 1-level ordered map. It will return
 // NotFound error if the key is not found.
-func (x *HeroBaseConf) GetOrderedMap1(name string) (*OrderedMap_HeroBaseConf_base_ItemMap, error) {
+func (x *HeroBaseConf) GetOrderedMap1(name string) (*HeroBaseConf_OrderedMap_base_ItemMap, error) {
 	conf := x.orderedMap
 	if val, ok := conf.Get(name); !ok {
 		return nil, fmt.Errorf("name(%v) %w", name, ErrNotFound)

@@ -26,7 +26,7 @@ func NewGenerator(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, 
 	}
 }
 
-func (x *Generator) Generate() bool {
+func (x *Generator) NeedGenerate() bool {
 	return options.NeedGenOrderedIndex(x.message.Desc, options.LangCPP)
 }
 
@@ -42,7 +42,7 @@ func (x *Generator) mapKeyType(index *index.LevelIndex) string {
 	if len(index.ColFields) == 1 {
 		// single-column index
 		field := index.ColFields[0] // just take first field
-		return helper.ParseOrderedMapKeyType(field.FD)
+		return helper.ParseOrderedIndexKeyType(field.FD)
 	} else {
 		// multi-column index
 		return fmt.Sprintf("OrderedIndex_%sKey", index.Name())
@@ -62,10 +62,10 @@ func (x *Generator) indexContainerName(index *index.LevelIndex) string {
 }
 
 func (x *Generator) indexKeys(index *index.LevelIndex) helper.MapKeys {
-	var keys []helper.MapKey
+	var keys helper.MapKeys
 	for _, field := range index.ColFields {
-		keys = append(keys, helper.MapKey{
-			Type: helper.ParseOrderedMapKeyType(field.FD),
+		keys = keys.AddMapKey(helper.MapKey{
+			Type: helper.ParseOrderedIndexKeyType(field.FD),
 			Name: helper.ParseIndexFieldNameAsFuncParam(field.FD),
 		})
 	}
@@ -92,7 +92,7 @@ func (x *Generator) parseKeyFieldNameAndSuffix(field *index.LevelField) (string,
 }
 
 func (x *Generator) GenHppOrderedIndexFinders() {
-	if !x.Generate() {
+	if !x.NeedGenerate() {
 		return
 	}
 	x.g.P(helper.Indent(1), "// OrderedIndex accessers.")
@@ -144,7 +144,7 @@ func (x *Generator) GenHppOrderedIndexFinders() {
 }
 
 func (x *Generator) GenCppOrderedIndexLoader() {
-	if !x.Generate() {
+	if !x.NeedGenerate() {
 		return
 	}
 	x.g.P(helper.Indent(1), "// OrderedIndex init.")
@@ -225,12 +225,12 @@ func (x *Generator) generateOneCppMulticolumnOrderedIndex(depth int, index *inde
 		if field.FD.Enum() != nil {
 			key = "static_cast<" + helper.ParseCppType(field.FD) + ">(" + key + ")"
 		}
-		keys = append(keys, helper.MapKey{Name: key})
+		keys = keys.AddMapKey(helper.MapKey{Name: key})
 		x.generateOneCppMulticolumnOrderedIndex(depth+1, index, parentDataName, keys)
 		x.g.P(helper.Indent(depth+1), "}")
 	} else {
 		key := parentDataName + fieldName + suffix
-		keys = append(keys, helper.MapKey{Name: key})
+		keys = keys.AddMapKey(helper.MapKey{Name: key})
 		x.generateOneCppMulticolumnOrderedIndex(depth, index, parentDataName, keys)
 	}
 }
@@ -263,7 +263,7 @@ func (x *Generator) genOrderedIndexSorter() {
 }
 
 func (x *Generator) GenCppOrderedIndexFinders() {
-	if !x.Generate() {
+	if !x.NeedGenerate() {
 		return
 	}
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
