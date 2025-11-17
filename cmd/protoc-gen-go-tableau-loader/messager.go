@@ -5,8 +5,8 @@ import (
 
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
 	idx "github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/index"
-	orderedindex "github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/ordered_index"
-	orderedmap "github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/ordered_map"
+	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/orderedindex"
+	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/orderedmap"
 	"github.com/tableauio/loader/internal/extensions"
 	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/loader/internal/options"
