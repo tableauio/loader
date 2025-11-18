@@ -3,6 +3,7 @@ package index
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
@@ -88,10 +89,11 @@ func (x *Generator) GenHppIndexFinders() {
 	if !x.NeedGenerate() {
 		return
 	}
-	x.g.P()
-	x.g.P(helper.Indent(1), "// Index accessers.")
+	var once sync.Once
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
+			x.g.P()
+			once.Do(func() { x.g.P(helper.Indent(1), "// Index accessers.") })
 			x.g.P(helper.Indent(1), "// Index: ", index.Index)
 			x.g.P(" public:")
 			mapType := x.mapType(index)
@@ -113,12 +115,7 @@ func (x *Generator) GenHppIndexFinders() {
 				x.g.P(helper.Indent(2), "bool operator==(const ", keyType, "& other) const = default;")
 				x.g.P("#else")
 				x.g.P(helper.Indent(2), "bool operator==(const ", keyType, "& other) const {")
-				if len(keys) == 1 {
-					x.g.P(helper.Indent(3), "return ", keys[0].Name, " == other.", keys[0].Name, ";")
-				} else {
-					x.g.P(helper.Indent(3), "return std::tie(", keys.GenGetArguments(), ") == std::tie(", keys.GenOtherArguments("other"), ");")
-				}
-				// x.g.P(helper.Indent(3), "return ", strings.Join(equalities, " && "), ";")
+				x.g.P(helper.Indent(3), "return std::tie(", keys.GenGetArguments(), ") == std::tie(", keys.GenOtherArguments("other"), ");")
 				x.g.P(helper.Indent(2), "}")
 				x.g.P("#endif")
 				x.g.P(helper.Indent(1), "};")
@@ -134,7 +131,7 @@ func (x *Generator) GenHppIndexFinders() {
 			x.g.P(helper.Indent(1), "using ", mapType, " = std::unordered_map<", keyType, ", ", vectorType, hasher, ">;")
 			x.g.P(helper.Indent(1), "// Finds the index (", index.Index, ") to value (", vectorType, ") hash map.")
 			x.g.P(helper.Indent(1), "// One key may correspond to multiple values, which are contained by a vector.")
-			x.g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "() const;")
+			x.g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "Map() const;")
 			x.g.P(helper.Indent(1), "// Finds a vector of all values of the given key(s).")
 			x.g.P(helper.Indent(1), "const ", vectorType, "* Find", index.Name(), "(", keys.GenGetParams(), ") const;")
 			x.g.P(helper.Indent(1), "// Finds the first value of the given key(s).")
@@ -142,7 +139,6 @@ func (x *Generator) GenHppIndexFinders() {
 			x.g.P()
 			x.g.P(" private:")
 			x.g.P(helper.Indent(1), mapType, " ", x.indexContainerName(index), ";")
-			x.g.P()
 		}
 	}
 }
@@ -277,7 +273,7 @@ func (x *Generator) GenCppIndexFinders() {
 			messagerName := x.messagerName()
 
 			x.g.P("// Index: ", index.Index)
-			x.g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Find", index.Name(), "() const { return ", indexContainerName, " ;}")
+			x.g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Find", index.Name(), "Map() const { return ", indexContainerName, " ;}")
 			x.g.P()
 
 			keys := x.indexKeys(index)

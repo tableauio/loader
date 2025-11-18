@@ -3,6 +3,7 @@ package orderedindex
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
@@ -95,9 +96,11 @@ func (x *Generator) GenHppOrderedIndexFinders() {
 	if !x.NeedGenerate() {
 		return
 	}
-	x.g.P(helper.Indent(1), "// OrderedIndex accessers.")
+	var once sync.Once
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.OrderedIndexes {
+			x.g.P()
+			once.Do(func() { x.g.P(helper.Indent(1), "// OrderedIndex accessers.") })
 			x.g.P(helper.Indent(1), "// OrderedIndex: ", index.Index)
 			x.g.P(" public:")
 			mapType := x.mapType(index)
@@ -116,11 +119,7 @@ func (x *Generator) GenHppOrderedIndexFinders() {
 				x.g.P(helper.Indent(2), "auto operator<=>(const ", keyType, "& other) const = default;")
 				x.g.P("#else")
 				x.g.P(helper.Indent(2), "bool operator<(const ", keyType, "& other) const {")
-				if len(keys) == 1 {
-					x.g.P(helper.Indent(3), "return ", keys[0].Name, " < other.", keys[0].Name, ";")
-				} else {
-					x.g.P(helper.Indent(3), "return std::tie(", keys.GenGetArguments(), ") < std::tie(", keys.GenOtherArguments("other"), ");")
-				}
+				x.g.P(helper.Indent(3), "return std::tie(", keys.GenGetArguments(), ") < std::tie(", keys.GenOtherArguments("other"), ");")
 				x.g.P(helper.Indent(2), "}")
 				x.g.P("#endif")
 				x.g.P(helper.Indent(1), "};")
@@ -129,7 +128,7 @@ func (x *Generator) GenHppOrderedIndexFinders() {
 			x.g.P(helper.Indent(1), "using ", mapType, " = std::map<", keyType, ", ", vectorType, ">;")
 			x.g.P(helper.Indent(1), "// Finds the ordered index (", index.Index, ") to value (", vectorType, ") map.")
 			x.g.P(helper.Indent(1), "// One key may correspond to multiple values, which are contained by a vector.")
-			x.g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "() const;")
+			x.g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "Map() const;")
 			x.g.P(helper.Indent(1), "// Finds a vector of all values of the given key(s).")
 			x.g.P(helper.Indent(1), "const ", vectorType, "* Find", index.Name(), "(", keys.GenGetParams(), ") const;")
 			x.g.P(helper.Indent(1), "// Finds the first value of the given key(s).")
@@ -138,7 +137,6 @@ func (x *Generator) GenHppOrderedIndexFinders() {
 
 			x.g.P(" private:")
 			x.g.P(helper.Indent(1), mapType, " ", x.indexContainerName(index), ";")
-			x.g.P()
 		}
 	}
 }
@@ -274,7 +272,7 @@ func (x *Generator) GenCppOrderedIndexFinders() {
 			messagerName := x.messagerName()
 
 			x.g.P("// OrderedIndex: ", index.Index)
-			x.g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Find", index.Name(), "() const { return ", indexContainerName, " ;}")
+			x.g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Find", index.Name(), "Map() const { return ", indexContainerName, " ;}")
 			x.g.P()
 
 			keys := x.indexKeys(index)

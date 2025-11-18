@@ -60,7 +60,7 @@ class ActivityConf : public Messager {
   using Index_ActivityMap = std::unordered_map<std::string, Index_ActivityVector>;
   // Finds the index (ActivityName) to value (Index_ActivityVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_ActivityMap& FindActivity() const;
+  const Index_ActivityMap& FindActivityMap() const;
   // Finds a vector of all values of the given key(s).
   const Index_ActivityVector* FindActivity(const std::string& activity_name) const;
   // Finds the first value of the given key(s).
@@ -75,7 +75,7 @@ class ActivityConf : public Messager {
   using Index_ChapterMap = std::unordered_map<uint32_t, Index_ChapterVector>;
   // Finds the index (ChapterID) to value (Index_ChapterVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_ChapterMap& FindChapter() const;
+  const Index_ChapterMap& FindChapterMap() const;
   // Finds a vector of all values of the given key(s).
   const Index_ChapterVector* FindChapter(uint32_t chapter_id) const;
   // Finds the first value of the given key(s).
@@ -90,7 +90,7 @@ class ActivityConf : public Messager {
   using Index_NamedChapterMap = std::unordered_map<std::string, Index_NamedChapterVector>;
   // Finds the index (ChapterName<AwardID>@NamedChapter) to value (Index_NamedChapterVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_NamedChapterMap& FindNamedChapter() const;
+  const Index_NamedChapterMap& FindNamedChapterMap() const;
   // Finds a vector of all values of the given key(s).
   const Index_NamedChapterVector* FindNamedChapter(const std::string& chapter_name) const;
   // Finds the first value of the given key(s).
@@ -105,7 +105,7 @@ class ActivityConf : public Messager {
   using Index_AwardMap = std::unordered_map<uint32_t, Index_AwardVector>;
   // Finds the index (SectionItemID@Award) to value (Index_AwardVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_AwardMap& FindAward() const;
+  const Index_AwardMap& FindAwardMap() const;
   // Finds a vector of all values of the given key(s).
   const Index_AwardVector* FindAward(uint32_t id) const;
   // Finds the first value of the given key(s).
@@ -113,7 +113,6 @@ class ActivityConf : public Messager {
 
  private:
   Index_AwardMap index_award_map_;
-
 };
 
 class ChapterConf : public Messager {
@@ -171,7 +170,7 @@ class TaskConf : public Messager {
   using Index_TaskMap = std::unordered_map<int64_t, Index_TaskVector>;
   // Finds the index (ActivityID<Goal,ID>) to value (Index_TaskVector) hash map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const Index_TaskMap& FindTask() const;
+  const Index_TaskMap& FindTaskMap() const;
   // Finds a vector of all values of the given key(s).
   const Index_TaskVector* FindTask(int64_t activity_id) const;
   // Finds the first value of the given key(s).
@@ -187,7 +186,7 @@ class TaskConf : public Messager {
   using OrderedIndex_OrderedTaskMap = std::map<int64_t, OrderedIndex_OrderedTaskVector>;
   // Finds the ordered index (Goal<ID>@OrderedTask) to value (OrderedIndex_OrderedTaskVector) map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const OrderedIndex_OrderedTaskMap& FindOrderedTask() const;
+  const OrderedIndex_OrderedTaskMap& FindOrderedTaskMap() const;
   // Finds a vector of all values of the given key(s).
   const OrderedIndex_OrderedTaskVector* FindOrderedTask(int64_t goal) const;
   // Finds the first value of the given key(s).
@@ -202,7 +201,7 @@ class TaskConf : public Messager {
   using OrderedIndex_TaskExpiryMap = std::map<int64_t, OrderedIndex_TaskExpiryVector>;
   // Finds the ordered index (Expiry@TaskExpiry) to value (OrderedIndex_TaskExpiryVector) map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const OrderedIndex_TaskExpiryMap& FindTaskExpiry() const;
+  const OrderedIndex_TaskExpiryMap& FindTaskExpiryMap() const;
   // Finds a vector of all values of the given key(s).
   const OrderedIndex_TaskExpiryVector* FindTaskExpiry(int64_t expiry) const;
   // Finds the first value of the given key(s).
@@ -217,7 +216,7 @@ class TaskConf : public Messager {
   using OrderedIndex_SortedTaskExpiryMap = std::map<int64_t, OrderedIndex_SortedTaskExpiryVector>;
   // Finds the ordered index (Expiry<Goal,ID>@SortedTaskExpiry) to value (OrderedIndex_SortedTaskExpiryVector) map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const OrderedIndex_SortedTaskExpiryMap& FindSortedTaskExpiry() const;
+  const OrderedIndex_SortedTaskExpiryMap& FindSortedTaskExpiryMap() const;
   // Finds a vector of all values of the given key(s).
   const OrderedIndex_SortedTaskExpiryVector* FindSortedTaskExpiry(int64_t expiry) const;
   // Finds the first value of the given key(s).
@@ -243,7 +242,7 @@ class TaskConf : public Messager {
   using OrderedIndex_ActivityExpiryMap = std::map<OrderedIndex_ActivityExpiryKey, OrderedIndex_ActivityExpiryVector>;
   // Finds the ordered index ((Expiry,ActivityID)@ActivityExpiry) to value (OrderedIndex_ActivityExpiryVector) map.
   // One key may correspond to multiple values, which are contained by a vector.
-  const OrderedIndex_ActivityExpiryMap& FindActivityExpiry() const;
+  const OrderedIndex_ActivityExpiryMap& FindActivityExpiryMap() const;
   // Finds a vector of all values of the given key(s).
   const OrderedIndex_ActivityExpiryVector* FindActivityExpiry(int64_t expiry, int64_t activity_id) const;
   // Finds the first value of the given key(s).
@@ -251,7 +250,6 @@ class TaskConf : public Messager {
 
  private:
   OrderedIndex_ActivityExpiryMap ordered_index_activity_expiry_map_;
-
 };
 
 }  // namespace tableau
