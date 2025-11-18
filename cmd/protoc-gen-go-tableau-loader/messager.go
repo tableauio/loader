@@ -5,6 +5,7 @@ import (
 
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
 	idx "github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/index"
+	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/leveledindex"
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/orderedindex"
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/orderedmap"
 	"github.com/tableauio/loader/internal/extensions"
@@ -66,11 +67,13 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
 	orderedMapGenerator := orderedmap.NewGenerator(gen, g, message)
-	indexGenerator := idx.NewGenerator(gen, g, indexDescriptor, message)
-	orderedIndexGenerator := orderedindex.NewGenerator(gen, g, indexDescriptor, message)
+	leveledIndexGenerator := leveledindex.NewGenerator(gen, g, indexDescriptor, message)
+	indexGenerator := idx.NewGenerator(gen, g, indexDescriptor, message, leveledIndexGenerator)
+	orderedIndexGenerator := orderedindex.NewGenerator(gen, g, indexDescriptor, message, leveledIndexGenerator)
 
 	// type definitions
 	orderedMapGenerator.GenOrderedMapTypeDef()
+	leveledIndexGenerator.GenLeveledIndexTypeDef()
 	indexGenerator.GenIndexTypeDef()
 	orderedIndexGenerator.GenOrderedIndexTypeDef()
 
@@ -177,7 +180,7 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 		if fd.IsMap() {
 			keys = keys.AddMapKey(helper.MapKey{
 				Type: helper.ParseMapKeyType(fd.MapKey()),
-				Name: helper.ParseMapFieldName(fd),
+				Name: helper.ParseMapFieldNameAsFuncParam(fd),
 			})
 			getter := fmt.Sprintf("Get%v", depth)
 			g.P("// ", getter, " finds value in the ", depth, "-level map. It will return")

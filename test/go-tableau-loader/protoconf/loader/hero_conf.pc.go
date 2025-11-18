@@ -34,6 +34,7 @@ type HeroConf struct {
 	UnimplementedMessager
 	data, originalData *protoconf.HeroConf
 	indexAttrMap       HeroConf_Index_AttrMap
+	indexAttrMap1      map[string]HeroConf_Index_AttrMap
 }
 
 // Name returns the HeroConf's message name.
@@ -94,12 +95,19 @@ func (x *HeroConf) originalMessage() proto.Message {
 func (x *HeroConf) processAfterLoad() error {
 	// Index init.
 	x.indexAttrMap = make(HeroConf_Index_AttrMap)
-	for _, item1 := range x.data.GetHeroMap() {
-		for _, item2 := range item1.GetAttrMap() {
+	x.indexAttrMap1 = make(map[string]HeroConf_Index_AttrMap)
+	for k1, v1 := range x.data.GetHeroMap() {
+		_ = k1
+		for k2, v2 := range v1.GetAttrMap() {
+			_ = k2
 			{
 				// Index: Title
-				key := item2.GetTitle()
-				x.indexAttrMap[key] = append(x.indexAttrMap[key], item2)
+				key := v2.GetTitle()
+				x.indexAttrMap[key] = append(x.indexAttrMap[key], v2)
+				if x.indexAttrMap1[k1] == nil {
+					x.indexAttrMap1[k1] = make(HeroConf_Index_AttrMap)
+				}
+				x.indexAttrMap1[k1][key] = append(x.indexAttrMap1[k1][key], v2)
 			}
 		}
 	}
@@ -149,6 +157,28 @@ func (x *HeroConf) FindAttr(title string) []*protoconf.HeroConf_Hero_Attr {
 // or nil if no value found.
 func (x *HeroConf) FindFirstAttr(title string) *protoconf.HeroConf_Hero_Attr {
 	val := x.FindAttr(title)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// FindAttrMap1 finds the index (Title) to value (protoconf.HeroConf_Hero_Attr) map
+// specified by (name).
+// One key may correspond to multiple values, which are contained by a slice.
+func (x *HeroConf) FindAttrMap1(name string) HeroConf_Index_AttrMap {
+	return x.indexAttrMap1[name]
+}
+
+// FindAttr1 finds a slice of all values of the given key specified by (name).
+func (x *HeroConf) FindAttr1(name string, title string) []*protoconf.HeroConf_Hero_Attr {
+	return x.FindAttrMap1(name)[title]
+}
+
+// FindFirstAttr1 finds the first value of the given key specified by (name),
+// or nil if no value found.
+func (x *HeroConf) FindFirstAttr1(name string, title string) *protoconf.HeroConf_Hero_Attr {
+	val := x.FindAttr1(name, title)
 	if len(val) > 0 {
 		return val[0]
 	}

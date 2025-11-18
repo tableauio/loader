@@ -179,111 +179,126 @@ func (x *ItemConf) processAfterLoad() error {
 	x.indexItemPathNameMap = make(ItemConf_Index_ItemPathNameMap)
 	x.indexItemPathFriendIdMap = make(ItemConf_Index_ItemPathFriendIDMap)
 	x.indexUseEffectTypeMap = make(ItemConf_Index_UseEffectTypeMap)
-	for _, item1 := range x.data.GetItemMap() {
+	for k1, v1 := range x.data.GetItemMap() {
+		_ = k1
 		{
 			// Index: Type
-			key := item1.GetType()
-			x.indexItemMap[key] = append(x.indexItemMap[key], item1)
+			key := v1.GetType()
+			x.indexItemMap[key] = append(x.indexItemMap[key], v1)
 		}
 		{
 			// Index: Param<ID>@ItemInfo
-			for _, item2 := range item1.GetParamList() {
-				key := item2
-				x.indexItemInfoMap[key] = append(x.indexItemInfoMap[key], item1)
+			for k2, v2 := range v1.GetParamList() {
+				_ = k2
+				key := v2
+				x.indexItemInfoMap[key] = append(x.indexItemInfoMap[key], v1)
 			}
 		}
 		{
 			// Index: Default@ItemDefaultInfo
-			key := item1.GetDefault()
-			x.indexItemDefaultInfoMap[key] = append(x.indexItemDefaultInfoMap[key], item1)
+			key := v1.GetDefault()
+			x.indexItemDefaultInfoMap[key] = append(x.indexItemDefaultInfoMap[key], v1)
 		}
 		{
 			// Index: ExtType@ItemExtInfo
-			for _, item2 := range item1.GetExtTypeList() {
-				key := item2
-				x.indexItemExtInfoMap[key] = append(x.indexItemExtInfoMap[key], item1)
+			for k2, v2 := range v1.GetExtTypeList() {
+				_ = k2
+				key := v2
+				x.indexItemExtInfoMap[key] = append(x.indexItemExtInfoMap[key], v1)
 			}
 		}
 		{
 			// Index: (ID,Name)<Type,UseEffectType>@AwardItem
-			key := ItemConf_Index_AwardItemKey{item1.GetId(), item1.GetName()}
-			x.indexAwardItemMap[key] = append(x.indexAwardItemMap[key], item1)
+			key := ItemConf_Index_AwardItemKey{v1.GetId(), v1.GetName()}
+			x.indexAwardItemMap[key] = append(x.indexAwardItemMap[key], v1)
 		}
 		{
 			// Index: (ID,Type,Param,ExtType)@SpecialItem
-			for _, indexItem2 := range item1.GetParamList() {
-				for _, indexItem3 := range item1.GetExtTypeList() {
-					key := ItemConf_Index_SpecialItemKey{item1.GetId(), item1.GetType(), indexItem2, indexItem3}
-					x.indexSpecialItemMap[key] = append(x.indexSpecialItemMap[key], item1)
+			for _, indexItem2 := range v1.GetParamList() {
+				for _, indexItem3 := range v1.GetExtTypeList() {
+					key := ItemConf_Index_SpecialItemKey{v1.GetId(), v1.GetType(), indexItem2, indexItem3}
+					x.indexSpecialItemMap[key] = append(x.indexSpecialItemMap[key], v1)
 				}
 			}
 		}
 		{
 			// Index: PathDir@ItemPathDir
-			key := item1.GetPath().GetDir()
-			x.indexItemPathDirMap[key] = append(x.indexItemPathDirMap[key], item1)
+			key := v1.GetPath().GetDir()
+			x.indexItemPathDirMap[key] = append(x.indexItemPathDirMap[key], v1)
 		}
 		{
 			// Index: PathName@ItemPathName
-			for _, item2 := range item1.GetPath().GetNameList() {
-				key := item2
-				x.indexItemPathNameMap[key] = append(x.indexItemPathNameMap[key], item1)
+			for k2, v2 := range v1.GetPath().GetNameList() {
+				_ = k2
+				key := v2
+				x.indexItemPathNameMap[key] = append(x.indexItemPathNameMap[key], v1)
 			}
 		}
 		{
 			// Index: PathFriendID@ItemPathFriendID
-			key := item1.GetPath().GetFriend().GetId()
-			x.indexItemPathFriendIdMap[key] = append(x.indexItemPathFriendIdMap[key], item1)
+			key := v1.GetPath().GetFriend().GetId()
+			x.indexItemPathFriendIdMap[key] = append(x.indexItemPathFriendIdMap[key], v1)
 		}
 		{
 			// Index: UseEffectType@UseEffectType
-			key := item1.GetUseEffect().GetType()
-			x.indexUseEffectTypeMap[key] = append(x.indexUseEffectTypeMap[key], item1)
+			key := v1.GetUseEffect().GetType()
+			x.indexUseEffectTypeMap[key] = append(x.indexUseEffectTypeMap[key], v1)
 		}
 	}
 	// Index(sort): Param<ID>@ItemInfo
-	for _, item := range x.indexItemInfoMap {
-		sort.Slice(item, func(i, j int) bool {
+	indexItemInfoMapSorter := func(item []*protoconf.ItemConf_Item) func(i, j int) bool {
+		return func(i, j int) bool {
 			return item[i].GetId() < item[j].GetId()
-		})
+		}
+	}
+	for _, item := range x.indexItemInfoMap {
+		sort.Slice(item, indexItemInfoMapSorter(item))
 	}
 	// Index(sort): (ID,Name)<Type,UseEffectType>@AwardItem
-	for _, item := range x.indexAwardItemMap {
-		sort.Slice(item, func(i, j int) bool {
+	indexAwardItemMapSorter := func(item []*protoconf.ItemConf_Item) func(i, j int) bool {
+		return func(i, j int) bool {
 			if item[i].GetType() != item[j].GetType() {
 				return item[i].GetType() < item[j].GetType()
 			}
 			return item[i].GetUseEffect().GetType() < item[j].GetUseEffect().GetType()
-		})
+		}
+	}
+	for _, item := range x.indexAwardItemMap {
+		sort.Slice(item, indexAwardItemMapSorter(item))
 	}
 	// OrderedIndex init.
 	x.orderedIndexExtTypeMap = treemap.New[protoconf.FruitType, []*protoconf.ItemConf_Item]()
 	x.orderedIndexParamExtTypeMap = treemap.New2[ItemConf_OrderedIndex_ParamExtTypeKey, []*protoconf.ItemConf_Item]()
-	for _, item1 := range x.data.GetItemMap() {
+	for k1, v1 := range x.data.GetItemMap() {
+		_ = k1
 		{
 			// OrderedIndex: ExtType@ExtType
-			for _, item2 := range item1.GetExtTypeList() {
-				key := item2
+			for k2, v2 := range v1.GetExtTypeList() {
+				_ = k2
+				key := v2
 				value, _ := x.orderedIndexExtTypeMap.Get(key)
-				x.orderedIndexExtTypeMap.Put(key, append(value, item1))
+				x.orderedIndexExtTypeMap.Put(key, append(value, v1))
 			}
 		}
 		{
 			// OrderedIndex: (Param,ExtType)<ID>@ParamExtType
-			for _, indexItem0 := range item1.GetParamList() {
-				for _, indexItem1 := range item1.GetExtTypeList() {
+			for _, indexItem0 := range v1.GetParamList() {
+				for _, indexItem1 := range v1.GetExtTypeList() {
 					key := ItemConf_OrderedIndex_ParamExtTypeKey{indexItem0, indexItem1}
 					value, _ := x.orderedIndexParamExtTypeMap.Get(key)
-					x.orderedIndexParamExtTypeMap.Put(key, append(value, item1))
+					x.orderedIndexParamExtTypeMap.Put(key, append(value, v1))
 				}
 			}
 		}
 	}
 	// OrderedIndex(sort): (Param,ExtType)<ID>@ParamExtType
-	x.orderedIndexParamExtTypeMap.Range(func(key ItemConf_OrderedIndex_ParamExtTypeKey, item []*protoconf.ItemConf_Item) bool {
-		sort.Slice(item, func(i, j int) bool {
+	orderedIndexParamExtTypeMapSorter := func(item []*protoconf.ItemConf_Item) func(i, j int) bool {
+		return func(i, j int) bool {
 			return item[i].GetId() < item[j].GetId()
-		})
+		}
+	}
+	x.orderedIndexParamExtTypeMap.Range(func(key ItemConf_OrderedIndex_ParamExtTypeKey, item []*protoconf.ItemConf_Item) bool {
+		sort.Slice(item, orderedIndexParamExtTypeMapSorter(item))
 		return true
 	})
 	return nil
@@ -583,8 +598,197 @@ func (x *ItemConf) FindFirstParamExtType(param int32, extType protoconf.FruitTyp
 	return nil
 }
 
+// OrderedIndex types.
+// OrderedIndex: Price<FruitID>
+type FruitConf_OrderedIndex_FruitMap = treemap.TreeMap[int32, []*protoconf.FruitConf_Fruits_Fruit]
+
+// FruitConf is a wrapper around protobuf message: protoconf.FruitConf.
+//
+// It is designed for three goals:
+//
+//  1. Easy use: simple yet powerful accessers.
+//  2. Elegant API: concise and clean functions.
+//  3. Extensibility: Map, OrdererdMap, Index, OrderedIndex...
+type FruitConf struct {
+	UnimplementedMessager
+	data, originalData    *protoconf.FruitConf
+	orderedIndexFruitMap  *FruitConf_OrderedIndex_FruitMap
+	orderedIndexFruitMap1 map[int32]*FruitConf_OrderedIndex_FruitMap
+}
+
+// Name returns the FruitConf's message name.
+func (x *FruitConf) Name() string {
+	return string((*protoconf.FruitConf)(nil).ProtoReflect().Descriptor().Name())
+}
+
+// Data returns the FruitConf's inner message data.
+func (x *FruitConf) Data() *protoconf.FruitConf {
+	if x != nil {
+		return x.data
+	}
+	return nil
+}
+
+// Load fills FruitConf's inner message from file in the specified directory and format.
+func (x *FruitConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
+	start := time.Now()
+	defer func() {
+		x.Stats.Duration = time.Since(start)
+	}()
+	x.data = &protoconf.FruitConf{}
+	err := load.LoadMessagerInDir(x.data, dir, format, opts)
+	if err != nil {
+		return err
+	}
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.FruitConf)
+	}
+	return x.processAfterLoad()
+}
+
+// Store writes FruitConf's inner message to file in the specified directory and format.
+// Available formats: JSON, Bin, and Text.
+func (x *FruitConf) Store(dir string, format format.Format, options ...store.Option) error {
+	return store.Store(x.Data(), dir, format, options...)
+}
+
+// Message returns the FruitConf's inner message data.
+func (x *FruitConf) Message() proto.Message {
+	return x.Data()
+}
+
+// Messager returns the current messager.
+func (x *FruitConf) Messager() Messager {
+	return x
+}
+
+// originalMessage returns the FruitConf's original inner message.
+func (x *FruitConf) originalMessage() proto.Message {
+	if x != nil {
+		return x.originalData
+	}
+	return nil
+}
+
+// processAfterLoad runs after this messager is loaded.
+func (x *FruitConf) processAfterLoad() error {
+	// OrderedIndex init.
+	x.orderedIndexFruitMap = treemap.New[int32, []*protoconf.FruitConf_Fruits_Fruit]()
+	x.orderedIndexFruitMap1 = make(map[int32]*FruitConf_OrderedIndex_FruitMap)
+	for k1, v1 := range x.data.GetFruitsMap() {
+		_ = k1
+		for k2, v2 := range v1.GetFruitMap() {
+			_ = k2
+			{
+				// OrderedIndex: Price<FruitID>
+				key := v2.GetPrice()
+				value, _ := x.orderedIndexFruitMap.Get(key)
+				x.orderedIndexFruitMap.Put(key, append(value, v2))
+				if x.orderedIndexFruitMap1[k1] == nil {
+					x.orderedIndexFruitMap1[k1] = treemap.New[int32, []*protoconf.FruitConf_Fruits_Fruit]()
+				}
+				orderedIndexFruitMap1Value, _ := x.orderedIndexFruitMap1[k1].Get(key)
+				x.orderedIndexFruitMap1[k1].Put(key, append(orderedIndexFruitMap1Value, v2))
+			}
+		}
+	}
+	// OrderedIndex(sort): Price<FruitID>
+	orderedIndexFruitMapSorter := func(item []*protoconf.FruitConf_Fruits_Fruit) func(i, j int) bool {
+		return func(i, j int) bool {
+			return item[i].GetFruitId() < item[j].GetFruitId()
+		}
+	}
+	x.orderedIndexFruitMap.Range(func(key int32, item []*protoconf.FruitConf_Fruits_Fruit) bool {
+		sort.Slice(item, orderedIndexFruitMapSorter(item))
+		return true
+	})
+	for _, item := range x.orderedIndexFruitMap1 {
+		item.Range(func(key int32, item1 []*protoconf.FruitConf_Fruits_Fruit) bool {
+			sort.Slice(item1, orderedIndexFruitMapSorter(item1))
+			return true
+		})
+	}
+	return nil
+}
+
+// Get1 finds value in the 1-level map. It will return
+// NotFound error if the key is not found.
+func (x *FruitConf) Get1(fruitType int32) (*protoconf.FruitConf_Fruits, error) {
+	d := x.Data().GetFruitsMap()
+	if val, ok := d[fruitType]; !ok {
+		return nil, fmt.Errorf("fruitType(%v) %w", fruitType, ErrNotFound)
+	} else {
+		return val, nil
+	}
+}
+
+// Get2 finds value in the 2-level map. It will return
+// NotFound error if the key is not found.
+func (x *FruitConf) Get2(fruitType int32, fruitId int32) (*protoconf.FruitConf_Fruits_Fruit, error) {
+	conf, err := x.Get1(fruitType)
+	if err != nil {
+		return nil, err
+	}
+	d := conf.GetFruitMap()
+	if val, ok := d[fruitId]; !ok {
+		return nil, fmt.Errorf("fruitId(%v) %w", fruitId, ErrNotFound)
+	} else {
+		return val, nil
+	}
+}
+
+// OrderedIndex: Price<FruitID>
+
+// FindFruitMap finds the ordered index (Price<FruitID>) to value (protoconf.FruitConf_Fruits_Fruit) treemap.
+// One key may correspond to multiple values, which are contained by a slice.
+func (x *FruitConf) FindFruitMap() *FruitConf_OrderedIndex_FruitMap {
+	return x.orderedIndexFruitMap
+}
+
+// FindFruit finds a slice of all values of the given key.
+func (x *FruitConf) FindFruit(price int32) []*protoconf.FruitConf_Fruits_Fruit {
+	val, _ := x.orderedIndexFruitMap.Get(price)
+	return val
+}
+
+// FindFirstFruit finds the first value of the given key,
+// or nil if no value found.
+func (x *FruitConf) FindFirstFruit(price int32) *protoconf.FruitConf_Fruits_Fruit {
+	val := x.FindFruit(price)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// FindFruitMap1 finds the index (Price<FruitID>) to value (protoconf.FruitConf_Fruits_Fruit) treemap
+// specified by (fruitType).
+// One key may correspond to multiple values, which are contained by a slice.
+func (x *FruitConf) FindFruitMap1(fruitType int32) *FruitConf_OrderedIndex_FruitMap {
+	return x.orderedIndexFruitMap1[fruitType]
+}
+
+// FindFruit1 finds a slice of all values of the given key specified by (fruitType).
+func (x *FruitConf) FindFruit1(fruitType int32, price int32) []*protoconf.FruitConf_Fruits_Fruit {
+	val, _ := x.FindFruitMap1(fruitType).Get(price)
+	return val
+}
+
+// FindFirstFruit1 finds the first value of the given key specified by (fruitType),
+// or nil if no value found.
+func (x *FruitConf) FindFirstFruit1(fruitType int32, price int32) *protoconf.FruitConf_Fruits_Fruit {
+	val := x.FindFruit1(fruitType, price)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
 func init() {
 	Register(func() Messager {
 		return new(ItemConf)
+	})
+	Register(func() Messager {
+		return new(FruitConf)
 	})
 }

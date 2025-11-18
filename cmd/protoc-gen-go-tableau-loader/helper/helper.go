@@ -37,7 +37,7 @@ func ParseIndexFieldNameAsFuncParam(gen *protogen.Plugin, fd protoreflect.FieldD
 	if fieldName == "" {
 		return fieldName
 	}
-	return escapeIdentifier(strings.ToLower(fieldName[:1]) + fieldName[1:])
+	return escapeIdentifier(fieldName)
 }
 
 // ParseGoType converts a FieldDescriptor to its Go type.
@@ -130,7 +130,7 @@ func ParseOrderedIndexKeyType(gen *protogen.Plugin, g *protogen.GeneratedFile, f
 	}
 }
 
-func ParseMapFieldName(fd protoreflect.FieldDescriptor) string {
+func ParseMapFieldNameAsKeyStructFieldName(fd protoreflect.FieldDescriptor) string {
 	opts := fd.Options().(*descriptorpb.FieldOptions)
 	fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
 	name := fdOpts.GetKey()
@@ -138,7 +138,15 @@ func ParseMapFieldName(fd protoreflect.FieldDescriptor) string {
 		valueFd := fd.MapValue().Message().Fields().Get(0)
 		name = string(valueFd.Name())
 	}
-	return escapeIdentifier(name)
+	return strcase.ToCamel(name)
+}
+
+func ParseMapFieldNameAsFuncParam(fd protoreflect.FieldDescriptor) string {
+	fieldName := ParseMapFieldNameAsKeyStructFieldName(fd)
+	if fieldName == "" {
+		return fieldName
+	}
+	return escapeIdentifier(fieldName)
 }
 
 func ParseMapValueType(gen *protogen.Plugin, g *protogen.GeneratedFile, fd protoreflect.FieldDescriptor) string {
@@ -240,6 +248,14 @@ func GetTypeEmptyValue(fd protoreflect.FieldDescriptor) string {
 	default:
 		return fmt.Sprintf("<unknown:%d>", fd.Kind())
 	}
+}
+
+func ParseLeveledMapPrefix(md protoreflect.MessageDescriptor, mapFd protoreflect.FieldDescriptor) string {
+	if mapFd.MapValue().Kind() == protoreflect.MessageKind {
+		localMsgProtoName := strings.TrimPrefix(string(mapFd.MapValue().Message().FullName()), string(md.FullName())+".")
+		return strings.ReplaceAll(localMsgProtoName, ".", "_")
+	}
+	return mapFd.MapValue().Kind().String()
 }
 
 type MapKey struct {

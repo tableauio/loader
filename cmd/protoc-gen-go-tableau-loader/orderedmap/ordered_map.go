@@ -2,7 +2,6 @@ package orderedmap
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/options"
@@ -32,20 +31,12 @@ func (x *Generator) messagerName() string {
 	return string(x.message.Desc.Name())
 }
 
-func (x *Generator) orderedMapPrefix(mapFd protoreflect.FieldDescriptor) string {
-	if mapFd.MapValue().Kind() == protoreflect.MessageKind {
-		localMsgProtoName := strings.TrimPrefix(string(mapFd.MapValue().Message().FullName()), string(x.message.Desc.FullName())+".")
-		return strings.ReplaceAll(localMsgProtoName, ".", "_")
-	}
-	return mapFd.MapValue().Kind().String()
-}
-
 func (x *Generator) mapType(mapFd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf("%s_OrderedMap_%sMap", x.messagerName(), x.orderedMapPrefix(mapFd))
+	return fmt.Sprintf("%s_OrderedMap_%sMap", x.messagerName(), helper.ParseLeveledMapPrefix(x.message.Desc, mapFd))
 }
 
 func (x *Generator) mapValueType(mapFd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf("%s_OrderedMap_%sValue", x.messagerName(), x.orderedMapPrefix(mapFd))
+	return fmt.Sprintf("%s_OrderedMap_%sValue", x.messagerName(), helper.ParseLeveledMapPrefix(x.message.Desc, mapFd))
 }
 
 func (x *Generator) mapValueFieldType(fd protoreflect.FieldDescriptor) string {
@@ -70,7 +61,7 @@ func (x *Generator) genOrderedMapTypeDef(md protoreflect.MessageDescriptor, dept
 		if fd.IsMap() {
 			nextKeys := keys.AddMapKey(helper.MapKey{
 				Type: helper.ParseMapKeyType(fd.MapKey()),
-				Name: helper.ParseMapFieldName(fd),
+				Name: helper.ParseMapFieldNameAsFuncParam(fd),
 			})
 			keyType := nextKeys[len(nextKeys)-1].Type
 			if keyType == "bool" {
@@ -124,7 +115,7 @@ func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth
 			needConvertBool := len(keys) > 0 && keys[len(keys)-1].Type == "int"
 			nextKeys := keys.AddMapKey(helper.MapKey{
 				Type: helper.ParseMapKeyType(fd.MapKey()),
-				Name: helper.ParseMapFieldName(fd),
+				Name: helper.ParseMapFieldNameAsFuncParam(fd),
 			})
 			keyType := nextKeys[len(nextKeys)-1].Type
 			needConvertBoolNext := keyType == "bool"
@@ -226,7 +217,7 @@ func (x *Generator) genOrderedMapGetters(md protoreflect.MessageDescriptor, dept
 
 			nextKeys := keys.AddMapKey(helper.MapKey{
 				Type: helper.ParseMapKeyType(fd.MapKey()),
-				Name: helper.ParseMapFieldName(fd),
+				Name: helper.ParseMapFieldNameAsFuncParam(fd),
 			})
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
 				x.genOrderedMapGetters(fd.MapValue().Message(), depth+1, nextKeys)

@@ -224,6 +224,10 @@ func (h *Hub) GetItemConf() *ItemConf {
 	return h.mc.Load().GetItemConf()
 }
 
+func (h *Hub) GetFruitConf() *FruitConf {
+	return h.mc.Load().GetFruitConf()
+}
+
 func (h *Hub) GetPatchReplaceConf() *PatchReplaceConf {
 	return h.mc.Load().GetPatchReplaceConf()
 }
