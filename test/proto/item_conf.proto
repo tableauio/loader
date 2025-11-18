@@ -78,3 +78,20 @@ message UseEffect {
   }
   message AccountLevel {}
 }
+
+message FruitConf {
+  option (tableau.worksheet) = {
+    name: "FruitConf"
+    ordered_index: "Price<FruitID>"
+  };
+
+  map<int32, Fruits> fruits_map = 1 [(tableau.field) = { key: "FruitType" layout: LAYOUT_VERTICAL }];
+  message Fruits {
+    protoconf.FruitType fruit_type = 1 [(tableau.field) = { name: "FruitType" }];
+    map<int32, Fruit> fruit_map = 2 [(tableau.field) = { key: "FruitID" layout: LAYOUT_VERTICAL }];
+    message Fruit {
+      int32 fruit_id = 1 [(tableau.field) = { name: "FruitID" }];
+      int32 price = 2 [(tableau.field) = { name: "Price" }];
+    }
+  }
+}

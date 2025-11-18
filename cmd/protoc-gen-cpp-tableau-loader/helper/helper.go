@@ -165,6 +165,14 @@ func ParseCppClassType(md protoreflect.MessageDescriptor) string {
 	return strings.ReplaceAll(protoFullName, ".", "::")
 }
 
+func ParseLeveledMapPrefix(md protoreflect.MessageDescriptor, mapFd protoreflect.FieldDescriptor) string {
+	if mapFd.MapValue().Kind() == protoreflect.MessageKind {
+		localMsgProtoName := strings.TrimPrefix(string(mapFd.MapValue().Message().FullName()), string(md.FullName())+".")
+		return strings.ReplaceAll(localMsgProtoName, ".", "_")
+	}
+	return mapFd.MapValue().Kind().String()
+}
+
 type MapKey struct {
 	Type string
 	Name string
@@ -216,6 +224,10 @@ func (keys MapKeys) GenOtherArguments(other string) string {
 
 func Indent(depth int) string {
 	return strings.Repeat("  ", depth)
+}
+
+func Whitespace(count int) string {
+	return strings.Repeat(" ", count)
 }
 
 func ParseMapValueType(fd protoreflect.FieldDescriptor) string {

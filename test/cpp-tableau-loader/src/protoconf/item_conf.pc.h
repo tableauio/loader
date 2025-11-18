@@ -266,9 +266,54 @@ class ItemConf : public Messager {
   OrderedIndex_ParamExtTypeMap ordered_index_param_ext_type_map_;
 };
 
+class FruitConf : public Messager {
+ public:
+  static const std::string& Name() { return kProtoName; }
+  virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
+  const protoconf::FruitConf& Data() const { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
+
+ private:
+  virtual bool ProcessAfterLoad() override final;
+
+ public:
+  const protoconf::FruitConf::Fruits* Get(int32_t fruit_type) const;
+  const protoconf::FruitConf::Fruits::Fruit* Get(int32_t fruit_type, int32_t fruit_id) const;
+
+ private:
+  static const std::string kProtoName;
+  protoconf::FruitConf data_;
+
+  // OrderedIndex accessers.
+  // OrderedIndex: Price<FruitID>
+ public:
+  using OrderedIndex_FruitVector = std::vector<const protoconf::FruitConf::Fruits::Fruit*>;
+  using OrderedIndex_FruitMap = std::map<int32_t, OrderedIndex_FruitVector>;
+  // Finds the ordered index (Price<FruitID>) to value (OrderedIndex_FruitVector) map.
+  // One key may correspond to multiple values, which are contained by a vector.
+  const OrderedIndex_FruitMap& FindFruitMap() const;
+  // Finds a vector of all values of the given key(s).
+  const OrderedIndex_FruitVector* FindFruit(int32_t price) const;
+  // Finds the first value of the given key(s).
+  const protoconf::FruitConf::Fruits::Fruit* FindFirstFruit(int32_t price) const;
+  // Finds the ordered index (Price<FruitID>) to value (OrderedIndex_FruitVector) map
+  // specified by (fruit_type).
+  // One key may correspond to multiple values, which are contained by a vector.
+  const OrderedIndex_FruitMap* FindFruitMap(int32_t fruit_type) const;
+  // Finds a vector of all values of the given key(s) specified by (fruit_type).
+  const OrderedIndex_FruitVector* FindFruit(int32_t fruit_type, int32_t price) const;
+  // Finds the first value of the given key(s) specified by (fruit_type).
+  const protoconf::FruitConf::Fruits::Fruit* FindFirstFruit(int32_t fruit_type, int32_t price) const;
+
+ private:
+  OrderedIndex_FruitMap ordered_index_fruit_map_;
+  std::unordered_map<int32_t, OrderedIndex_FruitMap> ordered_index_fruit_map1_;
+};
+
 }  // namespace tableau
 
 namespace protoconf {
 // Here are some type aliases for easy use.
 using ItemConfMgr = tableau::ItemConf;
+using FruitConfMgr = tableau::FruitConf;
 }  // namespace protoconf

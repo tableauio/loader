@@ -52,6 +52,9 @@ type LevelMessage struct {
 
 	// Current level message's all index fields
 	Indexes, OrderedIndexes []*LevelIndex
+
+	// depth of message hierarchy
+	Depth int
 }
 
 func (l *LevelMessage) NeedGen() bool {
@@ -77,21 +80,23 @@ func (l *LevelIndex) Name() string {
 	return name
 }
 
-func parseLevelMessage(md protoreflect.MessageDescriptor) *LevelMessage {
-	levelInfo := &LevelMessage{}
+func parseLevelMessage(md protoreflect.MessageDescriptor, depth int) *LevelMessage {
+	levelInfo := &LevelMessage{
+		Depth: depth,
+	}
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() && fd.MapValue().Kind() == protoreflect.MessageKind {
-			levelInfo.NextLevel = parseLevelMessage(fd.MapValue().Message())
+			levelInfo.NextLevel = parseLevelMessage(fd.MapValue().Message(), depth+1)
 			levelInfo.FD = fd
 			return levelInfo
 		} else if fd.IsList() && fd.Kind() == protoreflect.MessageKind {
-			levelInfo.NextLevel = parseLevelMessage(fd.Message())
+			levelInfo.NextLevel = parseLevelMessage(fd.Message(), depth+1)
 			levelInfo.FD = fd
 			return levelInfo
 		}
 	}
-	return &LevelMessage{}
+	return levelInfo
 }
 
 // parseRecursively parses multi-column index related info.
@@ -169,7 +174,7 @@ func parseCols(cols []string, prefix string, md protoreflect.MessageDescriptor, 
 
 func ParseIndexDescriptor(md protoreflect.MessageDescriptor) *IndexDescriptor {
 	descriptor := &IndexDescriptor{
-		LevelMessage: parseLevelMessage(md),
+		LevelMessage: parseLevelMessage(md, 1),
 	}
 	indexes, orderedIndexes := ParseWSOptionIndex(md)
 	// parse indexes into level message

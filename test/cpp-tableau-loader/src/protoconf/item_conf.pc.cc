@@ -92,21 +92,23 @@ bool ItemConf::ProcessAfterLoad() {
     }
   }
   // Index(sort): Param<ID>@ItemInfo
+  auto index_item_info_map_sorter = [](const protoconf::ItemConf::Item* a,
+                                       const protoconf::ItemConf::Item* b) {
+    return a->id() < b->id();
+  };
   for (auto&& item : index_item_info_map_) {
-    std::sort(item.second.begin(), item.second.end(),
-              [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
-                return a->id() < b->id();
-              });
+    std::sort(item.second.begin(), item.second.end(), index_item_info_map_sorter);
   }
   // Index(sort): (ID,Name)<Type,UseEffectType>@AwardItem
+  auto index_award_item_map_sorter = [](const protoconf::ItemConf::Item* a,
+                                        const protoconf::ItemConf::Item* b) {
+    if (a->type() != b->type()) {
+      return a->type() < b->type();
+    }
+    return a->use_effect().type() < b->use_effect().type();
+  };
   for (auto&& item : index_award_item_map_) {
-    std::sort(item.second.begin(), item.second.end(),
-              [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
-                if (a->type() != b->type()) {
-                  return a->type() < b->type();
-                }
-                return a->use_effect().type() < b->use_effect().type();
-              });
+    std::sort(item.second.begin(), item.second.end(), index_award_item_map_sorter);
   }
   // OrderedIndex init.
   ordered_index_ext_type_map_.clear();
@@ -129,11 +131,12 @@ bool ItemConf::ProcessAfterLoad() {
     }
   }
   // OrderedIndex(sort): (Param,ExtType)<ID>@ParamExtType
+  auto ordered_index_param_ext_type_map_sorter = [](const protoconf::ItemConf::Item* a,
+                                                    const protoconf::ItemConf::Item* b) {
+    return a->id() < b->id();
+  };
   for (auto&& item : ordered_index_param_ext_type_map_) {
-    std::sort(item.second.begin(), item.second.end(),
-              [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
-                return a->id() < b->id();
-              });
+    std::sort(item.second.begin(), item.second.end(), ordered_index_param_ext_type_map_sorter);
   }
   return true;
 }
@@ -372,6 +375,112 @@ const ItemConf::OrderedIndex_ParamExtTypeVector* ItemConf::FindParamExtType(int3
 
 const protoconf::ItemConf::Item* ItemConf::FindFirstParamExtType(int32_t param, protoconf::FruitType ext_type) const {
   auto conf = FindParamExtType(param, ext_type);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+const std::string FruitConf::kProtoName = protoconf::FruitConf::GetDescriptor()->name();
+
+bool FruitConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
+  tableau::util::TimeProfiler profiler;
+  bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
+  bool ok = loaded ? ProcessAfterLoad() : false;
+  stats_.duration = profiler.Elapse();
+  return ok;
+}
+
+bool FruitConf::ProcessAfterLoad() {
+  // OrderedIndex init.
+  ordered_index_fruit_map_.clear();
+  ordered_index_fruit_map1_.clear();
+  for (auto&& item1 : data_.fruits_map()) {
+    for (auto&& item2 : item1.second.fruit_map()) {
+      {
+        // OrderedIndex: Price<FruitID>
+        ordered_index_fruit_map_[item2.second.price()].push_back(&item2.second);
+        ordered_index_fruit_map1_[item1.first][item2.second.price()].push_back(&item2.second);
+      }
+    }
+  }
+  // OrderedIndex(sort): Price<FruitID>
+  auto ordered_index_fruit_map_sorter = [](const protoconf::FruitConf::Fruits::Fruit* a,
+                                           const protoconf::FruitConf::Fruits::Fruit* b) {
+    return a->fruit_id() < b->fruit_id();
+  };
+  for (auto&& item : ordered_index_fruit_map_) {
+    std::sort(item.second.begin(), item.second.end(), ordered_index_fruit_map_sorter);
+  }
+  for (auto&& item : ordered_index_fruit_map1_) {
+    for (auto&& item1 : item.second) {
+      std::sort(item1.second.begin(), item1.second.end(), ordered_index_fruit_map_sorter);
+    }
+  }
+  return true;
+}
+
+const protoconf::FruitConf::Fruits* FruitConf::Get(int32_t fruit_type) const {
+  auto iter = data_.fruits_map().find(fruit_type);
+  if (iter == data_.fruits_map().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::FruitConf::Fruits::Fruit* FruitConf::Get(int32_t fruit_type, int32_t fruit_id) const {
+  const auto* conf = Get(fruit_type);
+  if (conf == nullptr) {
+    return nullptr;
+  }
+  auto iter = conf->fruit_map().find(fruit_id);
+  if (iter == conf->fruit_map().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+// OrderedIndex: Price<FruitID>
+const FruitConf::OrderedIndex_FruitMap& FruitConf::FindFruitMap() const { return ordered_index_fruit_map_ ;}
+
+const FruitConf::OrderedIndex_FruitVector* FruitConf::FindFruit(int32_t price) const {
+  auto iter = ordered_index_fruit_map_.find(price);
+  if (iter == ordered_index_fruit_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::FruitConf::Fruits::Fruit* FruitConf::FindFirstFruit(int32_t price) const {
+  auto conf = FindFruit(price);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+const FruitConf::OrderedIndex_FruitMap* FruitConf::FindFruitMap(int32_t fruit_type) const {
+  auto iter = ordered_index_fruit_map1_.find(fruit_type);
+  if (iter == ordered_index_fruit_map1_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const FruitConf::OrderedIndex_FruitVector* FruitConf::FindFruit(int32_t fruit_type, int32_t price) const {
+  auto map = FindFruitMap(fruit_type);
+  if (map == nullptr) {
+    return nullptr;
+  }
+  auto iter = map->find(price);
+  if (iter == map->end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::FruitConf::Fruits::Fruit* FruitConf::FindFirstFruit(int32_t fruit_type, int32_t price) const {
+  auto conf = FindFruit(fruit_type, price);
   if (conf == nullptr || conf->empty()) {
     return nullptr;
   }

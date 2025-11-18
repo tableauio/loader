@@ -5,6 +5,7 @@ import (
 
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
 	idx "github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/index"
+	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/leveledindex"
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/orderedindex"
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/orderedmap"
 	"github.com/tableauio/loader/internal/extensions"
@@ -85,8 +86,9 @@ func genHppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
 	orderedMapGenerator := orderedmap.NewGenerator(g, message)
-	indexGenerator := idx.NewGenerator(g, indexDescriptor, message)
-	orderedIndexGenerator := orderedindex.NewGenerator(g, indexDescriptor, message)
+	leveledIndexGenerator := leveledindex.NewGenerator(g, indexDescriptor, message)
+	indexGenerator := idx.NewGenerator(g, indexDescriptor, message, leveledIndexGenerator)
+	orderedIndexGenerator := orderedindex.NewGenerator(g, indexDescriptor, message, leveledIndexGenerator)
 
 	g.P("class ", message.Desc.Name(), " : public Messager {")
 	g.P(" public:")
@@ -109,6 +111,7 @@ func genHppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P(helper.Indent(1), "static const std::string kProtoName;")
 	g.P(helper.Indent(1), cppFullName, " data_;")
 	orderedMapGenerator.GenHppOrderedMapGetters()
+	leveledIndexGenerator.GenHppLeveledIndexKeys()
 	indexGenerator.GenHppIndexFinders()
 	orderedIndexGenerator.GenHppOrderedIndexFinders()
 	g.P("};")
@@ -161,8 +164,9 @@ func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
 	orderedMapGenerator := orderedmap.NewGenerator(g, message)
-	indexGenerator := idx.NewGenerator(g, indexDescriptor, message)
-	orderedIndexGenerator := orderedindex.NewGenerator(g, indexDescriptor, message)
+	leveledIndexGenerator := leveledindex.NewGenerator(g, indexDescriptor, message)
+	indexGenerator := idx.NewGenerator(g, indexDescriptor, message, leveledIndexGenerator)
+	orderedIndexGenerator := orderedindex.NewGenerator(g, indexDescriptor, message, leveledIndexGenerator)
 
 	g.P("const std::string ", messagerName, "::kProtoName = ", cppFullName, `::GetDescriptor()->name();`)
 	g.P()
