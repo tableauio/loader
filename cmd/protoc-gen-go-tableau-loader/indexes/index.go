@@ -1,4 +1,4 @@
-package index
+package indexes
 
 import (
 	"fmt"
@@ -6,44 +6,19 @@ import (
 
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
-	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/leveledindex"
 	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/loader/internal/options"
-	"google.golang.org/protobuf/compiler/protogen"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-type Generator struct {
-	gen        *protogen.Plugin
-	g          *protogen.GeneratedFile
-	descriptor *index.IndexDescriptor
-	message    *protogen.Message
-	level      *leveledindex.Generator
-}
-
-func NewGenerator(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, message *protogen.Message, level *leveledindex.Generator) *Generator {
-	return &Generator{
-		gen:        gen,
-		g:          g,
-		descriptor: descriptor,
-		message:    message,
-		level:      level,
-	}
-}
-
-func (x *Generator) needGenerate() bool {
+func (x *Generator) needGenerateIndex() bool {
 	return options.NeedGenIndex(x.message.Desc, options.LangGO)
 }
 
-func (x *Generator) messagerName() string {
-	return string(x.message.Desc.Name())
-}
-
-func (x *Generator) mapType(index *index.LevelIndex) string {
+func (x *Generator) indexMapType(index *index.LevelIndex) string {
 	return fmt.Sprintf("%s_Index_%sMap", x.messagerName(), index.Name())
 }
 
-func (x *Generator) mapKeyType(index *index.LevelIndex) string {
+func (x *Generator) indexMapKeyType(index *index.LevelIndex) string {
 	if len(index.ColFields) == 1 {
 		// single-column index
 		field := index.ColFields[0] // just take first field
@@ -54,15 +29,10 @@ func (x *Generator) mapKeyType(index *index.LevelIndex) string {
 	}
 }
 
-func (x *Generator) mapValueType(index *index.LevelIndex) protogen.GoIdent {
-	return helper.FindMessageGoIdent(x.gen, index.MD)
-}
-
-func (x *Generator) indexContainerName(index *index.LevelIndex) string {
-	return fmt.Sprintf("index%sMap", strcase.ToCamel(index.Name()))
-}
-
-func (x *Generator) indexContainerNameI(index *index.LevelIndex, i int) string {
+func (x *Generator) indexContainerName(index *index.LevelIndex, i int) string {
+	if i == 0 {
+		return fmt.Sprintf("index%sMap", strcase.ToCamel(index.Name()))
+	}
 	return fmt.Sprintf("index%sMap%d", strcase.ToCamel(index.Name()), i)
 }
 
@@ -78,20 +48,8 @@ func (x *Generator) indexKeys(index *index.LevelIndex) helper.MapKeys {
 	return keys
 }
 
-func (x *Generator) fieldGetter(fd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf(".Get%s()", helper.ParseIndexFieldName(x.gen, fd))
-}
-
-func (x *Generator) parseKeyFieldName(field *index.LevelField) string {
-	var fieldName string
-	for _, leveledFd := range field.LeveledFDList {
-		fieldName += x.fieldGetter(leveledFd)
-	}
-	return fieldName
-}
-
-func (x *Generator) GenIndexTypeDef() {
-	if !x.needGenerate() {
+func (x *Generator) genIndexTypeDef() {
+	if !x.needGenerateIndex() {
 		return
 	}
 	x.g.P("// Index types.")
@@ -100,7 +58,7 @@ func (x *Generator) GenIndexTypeDef() {
 			x.g.P("// Index: ", index.Index)
 			if len(index.ColFields) != 1 {
 				// multi-column index
-				keyType := x.mapKeyType(index)
+				keyType := x.indexMapKeyType(index)
 				keys := x.indexKeys(index)
 
 				// generate key struct
@@ -111,52 +69,52 @@ func (x *Generator) GenIndexTypeDef() {
 				}
 				x.g.P("}")
 			}
-			x.g.P("type ", x.mapType(index), " = map[", x.mapKeyType(index), "][]*", x.mapValueType(index))
+			x.g.P("type ", x.indexMapType(index), " = map[", x.indexMapKeyType(index), "][]*", x.mapValueType(index))
 			x.g.P()
 		}
 	}
 }
 
-func (x *Generator) GenIndexField() {
-	if !x.needGenerate() {
+func (x *Generator) genIndexField() {
+	if !x.needGenerateIndex() {
 		return
 	}
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
-			x.g.P(x.indexContainerName(index), " ", x.mapType(index))
+			x.g.P(x.indexContainerName(index, 0), " ", x.indexMapType(index))
 			for i := 1; i <= levelMessage.Depth-2; i++ {
-				if i > len(x.level.Keys) {
+				if i > len(x.keys) {
 					break
 				}
 				if i == 1 {
-					x.g.P(x.indexContainerNameI(index, i), " map[", x.level.Keys[0].Type, "]", x.mapType(index))
+					x.g.P(x.indexContainerName(index, i), " map[", x.keys[0].Type, "]", x.indexMapType(index))
 				} else {
-					leveledIndexKeyType := x.level.KeyType(x.level.MapFds[i-1])
-					x.g.P(x.indexContainerNameI(index, i), " map[", leveledIndexKeyType, "]", x.mapType(index))
+					leveledIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+					x.g.P(x.indexContainerName(index, i), " map[", leveledIndexKeyType, "]", x.indexMapType(index))
 				}
 			}
 		}
 	}
 }
 
-func (x *Generator) GenIndexLoader() {
-	if !x.needGenerate() {
+func (x *Generator) genIndexLoader() {
+	if !x.needGenerateIndex() {
 		return
 	}
 	defer x.genIndexSorter()
 	x.g.P("// Index init.")
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
-			x.g.P("x.", x.indexContainerName(index), " = make(", x.mapType(index), ")")
+			x.g.P("x.", x.indexContainerName(index, 0), " = make(", x.indexMapType(index), ")")
 			for i := 1; i <= levelMessage.Depth-2; i++ {
-				if i > len(x.level.Keys) {
+				if i > len(x.keys) {
 					break
 				}
 				if i == 1 {
-					x.g.P("x.", x.indexContainerNameI(index, i), " = make(map[", x.level.Keys[0].Type, "]", x.mapType(index), ")")
+					x.g.P("x.", x.indexContainerName(index, i), " = make(map[", x.keys[0].Type, "]", x.indexMapType(index), ")")
 				} else {
-					leveledIndexKeyType := x.level.KeyType(x.level.MapFds[i-1])
-					x.g.P("x.", x.indexContainerNameI(index, i), " = make(map[", leveledIndexKeyType, "]", x.mapType(index), ")")
+					leveledIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+					x.g.P("x.", x.indexContainerName(index, i), " = make(map[", leveledIndexKeyType, "]", x.indexMapType(index), ")")
 				}
 			}
 		}
@@ -187,18 +145,18 @@ func (x *Generator) genOneIndexLoader(index *index.LevelIndex, depth int, parent
 	if len(index.ColFields) == 1 {
 		// single-column index
 		field := index.ColFields[0] // just take the first field
-		fieldName := x.parseKeyFieldName(field)
+		fieldName, _ := x.parseKeyFieldNameAndSuffix(field)
 		if field.FD.IsList() {
 			keyName := fmt.Sprintf("k%d", depth)
 			valueName := fmt.Sprintf("v%d", depth)
 			x.g.P("for ", keyName, ", ", valueName, " := range ", parentDataName, fieldName, " {")
 			x.g.P("_ = ", keyName)
 			x.g.P("key := ", valueName)
-			x.genLoader(depth, index, parentDataName)
+			x.genIndexLoaderCommon(depth, index, parentDataName)
 			x.g.P("}")
 		} else {
 			x.g.P("key := ", parentDataName, fieldName)
-			x.genLoader(depth, index, parentDataName)
+			x.genIndexLoaderCommon(depth, index, parentDataName)
 		}
 	} else {
 		// multi-column index
@@ -210,13 +168,13 @@ func (x *Generator) genOneIndexLoader(index *index.LevelIndex, depth int, parent
 func (x *Generator) generateOneMulticolumnIndex(depth int, index *index.LevelIndex, parentDataName string, keys helper.MapKeys) {
 	cursor := len(keys)
 	if cursor >= len(index.ColFields) {
-		keyType := x.mapKeyType(index)
+		keyType := x.indexMapKeyType(index)
 		x.g.P("key := ", keyType, " {", keys.GenGetArguments(), "}")
-		x.genLoader(depth, index, parentDataName)
+		x.genIndexLoaderCommon(depth, index, parentDataName)
 		return
 	}
 	field := index.ColFields[cursor]
-	fieldName := x.parseKeyFieldName(field)
+	fieldName, _ := x.parseKeyFieldNameAndSuffix(field)
 	if field.FD.IsList() {
 		itemName := fmt.Sprintf("indexItem%d", cursor)
 		x.g.P("for _, ", itemName, " := range ", parentDataName, fieldName, " {")
@@ -230,31 +188,31 @@ func (x *Generator) generateOneMulticolumnIndex(depth int, index *index.LevelInd
 	}
 }
 
-func (x *Generator) genLoader(depth int, index *index.LevelIndex, parentDataName string) {
-	indexContainerName := x.indexContainerName(index)
+func (x *Generator) genIndexLoaderCommon(depth int, index *index.LevelIndex, parentDataName string) {
+	indexContainerName := x.indexContainerName(index, 0)
 	x.g.P("x.", indexContainerName, "[key] = append(x.", indexContainerName, "[key], ", parentDataName, ")")
 	for i := 1; i <= depth-2; i++ {
-		if i > len(x.level.Keys) {
+		if i > len(x.keys) {
 			break
 		}
-		indexContainerNameI := x.indexContainerNameI(index, i)
+		indexContainerName := x.indexContainerName(index, i)
 		if i == 1 {
-			x.g.P("if x.", indexContainerNameI, "[k1] == nil {")
-			x.g.P("x.", indexContainerNameI, "[k1] = make(", x.mapType(index), ")")
+			x.g.P("if x.", indexContainerName, "[k1] == nil {")
+			x.g.P("x.", indexContainerName, "[k1] = make(", x.indexMapType(index), ")")
 			x.g.P("}")
-			x.g.P("x.", indexContainerNameI, "[k1][key] = append(x.", indexContainerNameI, "[k1][key], ", parentDataName, ")")
+			x.g.P("x.", indexContainerName, "[k1][key] = append(x.", indexContainerName, "[k1][key], ", parentDataName, ")")
 		} else {
 			var fields []string
 			for j := 1; j <= i; j++ {
 				fields = append(fields, fmt.Sprintf("k%d", j))
 			}
-			leveledIndexKeyType := x.level.KeyType(x.level.MapFds[i-1])
-			keyName := indexContainerNameI + "Keys"
+			leveledIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+			keyName := indexContainerName + "Keys"
 			x.g.P(keyName, " := ", leveledIndexKeyType, "{", strings.Join(fields, ", "), "}")
-			x.g.P("if x.", indexContainerNameI, "[", keyName, "] == nil {")
-			x.g.P("x.", indexContainerNameI, "[", keyName, "] = make(", x.mapType(index), ")")
+			x.g.P("if x.", indexContainerName, "[", keyName, "] == nil {")
+			x.g.P("x.", indexContainerName, "[", keyName, "] = make(", x.indexMapType(index), ")")
 			x.g.P("}")
-			x.g.P("x.", indexContainerNameI, "[", keyName, "][key] = append(x.", indexContainerNameI, "[", keyName, "][key], ", parentDataName, ")")
+			x.g.P("x.", indexContainerName, "[", keyName, "][key] = append(x.", indexContainerName, "[", keyName, "][key], ", parentDataName, ")")
 		}
 	}
 }
@@ -264,11 +222,11 @@ func (x *Generator) genIndexSorter() {
 		for _, index := range levelMessage.Indexes {
 			if len(index.SortedColFields) != 0 {
 				x.g.P("// Index(sort): ", index.Index)
-				indexContainerName := x.indexContainerName(index)
+				indexContainerName := x.indexContainerName(index, 0)
 				x.g.P(indexContainerName, "Sorter := func(item []*", x.mapValueType(index), ") func(i, j int) bool {")
 				x.g.P("return func(i, j int) bool {")
 				for i, field := range index.SortedColFields {
-					fieldName := x.parseKeyFieldName(field)
+					fieldName, _ := x.parseKeyFieldNameAndSuffix(field)
 					if i == len(index.SortedColFields)-1 {
 						x.g.P("return item[i]", fieldName, " < item[j]", fieldName)
 					} else {
@@ -279,14 +237,14 @@ func (x *Generator) genIndexSorter() {
 				}
 				x.g.P("}")
 				x.g.P("}")
-				x.g.P("for _, item := range x.", x.indexContainerName(index), " {")
+				x.g.P("for _, item := range x.", x.indexContainerName(index, 0), " {")
 				x.g.P(helper.SortPackage.Ident("Slice"), "(item, ", indexContainerName, "Sorter(item))")
 				x.g.P("}")
 				for i := 1; i <= levelMessage.Depth-2; i++ {
-					if i > len(x.level.Keys) {
+					if i > len(x.keys) {
 						break
 					}
-					x.g.P("for _, item := range x.", x.indexContainerNameI(index, i), " {")
+					x.g.P("for _, item := range x.", x.indexContainerName(index, i), " {")
 					x.g.P("for _, item1 := range item {")
 					x.g.P(helper.SortPackage.Ident("Slice"), "(item1, ", indexContainerName, "Sorter(item1))")
 					x.g.P("}")
@@ -297,20 +255,20 @@ func (x *Generator) genIndexSorter() {
 	}
 }
 
-func (x *Generator) GenIndexFinders() {
-	if !x.needGenerate() {
+func (x *Generator) genIndexFinders() {
+	if !x.needGenerateIndex() {
 		return
 	}
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
-			indexContainerName := x.indexContainerName(index)
+			indexContainerName := x.indexContainerName(index, 0)
 			messagerName := x.messagerName()
 			x.g.P("// Index: ", index.Index)
 			x.g.P()
 
 			x.g.P("// Find", index.Name(), "Map finds the index (", index.Index, ") to value (", x.mapValueType(index), ") map.")
 			x.g.P("// One key may correspond to multiple values, which are contained by a slice.")
-			x.g.P("func (x *", messagerName, ") Find", index.Name(), "Map() ", x.mapType(index), " {")
+			x.g.P("func (x *", messagerName, ") Find", index.Name(), "Map() ", x.indexMapType(index), " {")
 			x.g.P("return x.", indexContainerName)
 			x.g.P("}")
 			x.g.P()
@@ -323,7 +281,7 @@ func (x *Generator) GenIndexFinders() {
 			if len(index.ColFields) == 1 {
 				x.g.P("return x.", indexContainerName, "[", args, "]")
 			} else {
-				x.g.P("return x.", indexContainerName, "[", x.mapKeyType(index), "{", args, "}]")
+				x.g.P("return x.", indexContainerName, "[", x.indexMapKeyType(index), "{", args, "}]")
 			}
 			x.g.P("}")
 			x.g.P()
@@ -340,23 +298,23 @@ func (x *Generator) GenIndexFinders() {
 			x.g.P()
 
 			for i := 1; i <= levelMessage.Depth-2; i++ {
-				if i > len(x.level.Keys) {
+				if i > len(x.keys) {
 					break
 				}
-				indexContainerNameI := x.indexContainerNameI(index, i)
-				partKeys := x.level.Keys[:i]
+				indexContainerName := x.indexContainerName(index, i)
+				partKeys := x.keys[:i]
 				partParams := partKeys.GenGetParams()
 				partArgs := partKeys.GenGetArguments()
 
 				x.g.P("// Find", index.Name(), "Map", i, " finds the index (", index.Index, ") to value (", x.mapValueType(index), ") map")
 				x.g.P("// specified by (", partArgs, ").")
 				x.g.P("// One key may correspond to multiple values, which are contained by a slice.")
-				x.g.P("func (x *", messagerName, ") Find", index.Name(), "Map", i, "(", partParams, ") ", x.mapType(index), " {")
+				x.g.P("func (x *", messagerName, ") Find", index.Name(), "Map", i, "(", partParams, ") ", x.indexMapType(index), " {")
 				if len(partKeys) == 1 {
-					x.g.P("return x.", indexContainerNameI, "[", partArgs, "]")
+					x.g.P("return x.", indexContainerName, "[", partArgs, "]")
 				} else {
-					leveledIndexKeyType := x.level.KeyType(x.level.MapFds[i-1])
-					x.g.P("return x.", indexContainerNameI, "[", leveledIndexKeyType, "{", partArgs, "}]")
+					leveledIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+					x.g.P("return x.", indexContainerName, "[", leveledIndexKeyType, "{", partArgs, "}]")
 				}
 				x.g.P("}")
 				x.g.P()
@@ -366,7 +324,7 @@ func (x *Generator) GenIndexFinders() {
 				if len(index.ColFields) == 1 {
 					x.g.P("return x.Find", index.Name(), "Map", i, "(", partArgs, ")[", args, "]")
 				} else {
-					x.g.P("return x.Find", index.Name(), "Map", i, "(", partArgs, ")[", x.mapKeyType(index), "{", args, "}]")
+					x.g.P("return x.Find", index.Name(), "Map", i, "(", partArgs, ")[", x.indexMapKeyType(index), "{", args, "}]")
 				}
 				x.g.P("}")
 				x.g.P()

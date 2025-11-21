@@ -4,13 +4,10 @@ import (
 	"fmt"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
-	idx "github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/index"
-	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/leveledindex"
-	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/orderedindex"
+	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/indexes"
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/orderedmap"
 	"github.com/tableauio/loader/internal/extensions"
 	"github.com/tableauio/loader/internal/index"
-	"github.com/tableauio/loader/internal/options"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -67,15 +64,11 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
 	orderedMapGenerator := orderedmap.NewGenerator(gen, g, message)
-	leveledIndexGenerator := leveledindex.NewGenerator(gen, g, indexDescriptor, message)
-	indexGenerator := idx.NewGenerator(gen, g, indexDescriptor, message, leveledIndexGenerator)
-	orderedIndexGenerator := orderedindex.NewGenerator(gen, g, indexDescriptor, message, leveledIndexGenerator)
+	indexGenerator := indexes.NewGenerator(gen, g, indexDescriptor, message)
 
 	// type definitions
 	orderedMapGenerator.GenOrderedMapTypeDef()
-	leveledIndexGenerator.GenLeveledIndexTypeDef()
 	indexGenerator.GenIndexTypeDef()
-	orderedIndexGenerator.GenOrderedIndexTypeDef()
 
 	g.P("// ", messagerName, " is a wrapper around protobuf message: ", message.GoIdent, ".")
 	g.P("//")
@@ -90,7 +83,6 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("data, originalData *", message.GoIdent)
 	orderedMapGenerator.GenOrderedMapField()
 	indexGenerator.GenIndexField()
-	orderedIndexGenerator.GenOrderedIndexField()
 	g.P("}")
 	g.P()
 
@@ -156,12 +148,11 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("}")
 	g.P()
 
-	if options.NeedGenOrderedMap(message.Desc, options.LangGO) || options.NeedGenIndex(message.Desc, options.LangGO) || options.NeedGenOrderedIndex(message.Desc, options.LangGO) {
+	if orderedMapGenerator.NeedGenerate() || indexGenerator.NeedGenerate() {
 		g.P("// processAfterLoad runs after this messager is loaded.")
 		g.P("func (x *", messagerName, ") processAfterLoad() error {")
 		orderedMapGenerator.GenOrderedMapLoader()
 		indexGenerator.GenIndexLoader()
-		orderedIndexGenerator.GenOrderedIndexLoader()
 		g.P("return nil")
 		g.P("}")
 		g.P()
@@ -171,7 +162,6 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	genMapGetters(gen, g, message, 1, nil, messagerName)
 	orderedMapGenerator.GenOrderedMapGetters()
 	indexGenerator.GenIndexFinders()
-	orderedIndexGenerator.GenOrderedIndexFinders()
 }
 
 func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message, depth int, keys helper.MapKeys, messagerName string) {
