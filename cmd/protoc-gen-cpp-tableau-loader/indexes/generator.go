@@ -1,11 +1,10 @@
-package leveledindex
+package indexes
 
 import (
 	"fmt"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/index"
-	"github.com/tableauio/loader/internal/options"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -15,29 +14,30 @@ type Generator struct {
 	descriptor *index.IndexDescriptor
 	message    *protogen.Message
 
+	// level message
 	maxDepth int
-	Keys     helper.MapKeys
-	MapFds   []protoreflect.FieldDescriptor
+	keys     helper.MapKeys
+	mapFds   []protoreflect.FieldDescriptor
 }
 
 func NewGenerator(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, message *protogen.Message) *Generator {
-	gen := &Generator{
+	generator := &Generator{
 		g:          g,
 		descriptor: descriptor,
 		message:    message,
 	}
-	gen.init()
-	return gen
+	generator.initLevelMessage()
+	return generator
 }
 
-func (x *Generator) init() {
+func (x *Generator) initLevelMessage() {
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		if fd := levelMessage.FD; fd != nil && fd.IsMap() {
-			x.Keys = x.Keys.AddMapKey(helper.MapKey{
+			x.keys = x.keys.AddMapKey(helper.MapKey{
 				Type: helper.ParseMapKeyType(fd.MapKey()),
 				Name: helper.ParseMapFieldName(fd),
 			})
-			x.MapFds = append(x.MapFds, fd)
+			x.mapFds = append(x.mapFds, fd)
 		}
 		if len(levelMessage.Indexes) != 0 || len(levelMessage.OrderedIndexes) != 0 {
 			x.maxDepth = levelMessage.Depth
@@ -46,27 +46,54 @@ func (x *Generator) init() {
 }
 
 func (x *Generator) NeedGenerate() bool {
-	return options.NeedGenIndex(x.message.Desc, options.LangCPP) || options.NeedGenOrderedIndex(x.message.Desc, options.LangCPP)
+	return x.needGenerateIndex() || x.needGenerateOrderedIndex()
 }
 
-func (x *Generator) KeyType(mapFd protoreflect.FieldDescriptor) string {
+func (x *Generator) messagerName() string {
+	return string(x.message.Desc.Name())
+}
+
+func (x *Generator) levelKeyType(mapFd protoreflect.FieldDescriptor) string {
 	return fmt.Sprintf("LeveledIndex_%sKey", helper.ParseLeveledMapPrefix(x.message.Desc, mapFd))
 }
 
-func (x *Generator) GenHppLeveledIndexKeys() {
+func (x *Generator) mapValueType(index *index.LevelIndex) string {
+	return helper.ParseCppClassType(index.MD)
+}
+
+func (x *Generator) fieldGetter(fd protoreflect.FieldDescriptor) string {
+	return fmt.Sprintf(".%s()", helper.ParseIndexFieldName(fd))
+}
+
+func (x *Generator) parseKeyFieldNameAndSuffix(field *index.LevelField) (string, string) {
+	var fieldName, suffix string
+	for i, leveledFd := range field.LeveledFDList {
+		fieldName += x.fieldGetter(leveledFd)
+		if i == len(field.LeveledFDList)-1 && leveledFd.Message() != nil {
+			switch leveledFd.Message().FullName() {
+			case "google.protobuf.Timestamp", "google.protobuf.Duration":
+				suffix = ".seconds()"
+			default:
+			}
+		}
+	}
+	return fieldName, suffix
+}
+
+func (x *Generator) GenHppIndexFinders() {
 	if !x.NeedGenerate() {
 		return
 	}
-	for i := 1; i <= x.maxDepth-3 && i <= len(x.MapFds)-1; i++ {
+	for i := 1; i <= x.maxDepth-3 && i <= len(x.mapFds)-1; i++ {
 		if i == 1 {
 			x.g.P()
 			x.g.P(helper.Indent(1), "// LeveledIndex keys.")
 			x.g.P(" public:")
 		}
-		fd := x.MapFds[i]
-		keyType := x.KeyType(fd)
+		fd := x.mapFds[i]
+		keyType := x.levelKeyType(fd)
 		x.g.P(helper.Indent(1), "struct ", keyType, " {")
-		keys := x.Keys[:i+1]
+		keys := x.keys[:i+1]
 		for _, key := range keys {
 			x.g.P(helper.Indent(2), key.Type, " ", key.Name, ";")
 		}
@@ -84,4 +111,16 @@ func (x *Generator) GenHppLeveledIndexKeys() {
 		x.g.P(helper.Indent(2), "}")
 		x.g.P(helper.Indent(1), "};")
 	}
+	x.genHppIndexFinders()
+	x.genHppOrderedIndexFinders()
+}
+
+func (x *Generator) GenIndexLoader() {
+	x.genIndexLoader()
+	x.genOrderedIndexLoader()
+}
+
+func (x *Generator) GenCppIndexFinders() {
+	x.genCppIndexFinders()
+	x.genCppOrderedIndexFinders()
 }

@@ -4,9 +4,7 @@ import (
 	"strings"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
-	idx "github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/index"
-	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/leveledindex"
-	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/orderedindex"
+	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/indexes"
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/orderedmap"
 	"github.com/tableauio/loader/internal/extensions"
 	"github.com/tableauio/loader/internal/index"
@@ -86,9 +84,7 @@ func genHppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
 	orderedMapGenerator := orderedmap.NewGenerator(g, message)
-	leveledIndexGenerator := leveledindex.NewGenerator(g, indexDescriptor, message)
-	indexGenerator := idx.NewGenerator(g, indexDescriptor, message, leveledIndexGenerator)
-	orderedIndexGenerator := orderedindex.NewGenerator(g, indexDescriptor, message, leveledIndexGenerator)
+	indexGenerator := indexes.NewGenerator(g, indexDescriptor, message)
 
 	g.P("class ", message.Desc.Name(), " : public Messager {")
 	g.P(" public:")
@@ -98,7 +94,7 @@ func genHppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P(helper.Indent(1), "const google::protobuf::Message* Message() const override { return &data_; }")
 	g.P()
 
-	if orderedMapGenerator.NeedGenerate() || indexGenerator.NeedGenerate() || orderedIndexGenerator.NeedGenerate() {
+	if orderedMapGenerator.NeedGenerate() || indexGenerator.NeedGenerate() {
 		g.P(" private:")
 		g.P(helper.Indent(1), "virtual bool ProcessAfterLoad() override final;")
 		g.P()
@@ -111,9 +107,7 @@ func genHppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P(helper.Indent(1), "static const std::string kProtoName;")
 	g.P(helper.Indent(1), cppFullName, " data_;")
 	orderedMapGenerator.GenHppOrderedMapGetters()
-	leveledIndexGenerator.GenHppLeveledIndexKeys()
 	indexGenerator.GenHppIndexFinders()
-	orderedIndexGenerator.GenHppOrderedIndexFinders()
 	g.P("};")
 	g.P()
 }
@@ -164,9 +158,7 @@ func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
 	orderedMapGenerator := orderedmap.NewGenerator(g, message)
-	leveledIndexGenerator := leveledindex.NewGenerator(g, indexDescriptor, message)
-	indexGenerator := idx.NewGenerator(g, indexDescriptor, message, leveledIndexGenerator)
-	orderedIndexGenerator := orderedindex.NewGenerator(g, indexDescriptor, message, leveledIndexGenerator)
+	indexGenerator := indexes.NewGenerator(g, indexDescriptor, message)
 
 	g.P("const std::string ", messagerName, "::kProtoName = ", cppFullName, `::GetDescriptor()->name();`)
 	g.P()
@@ -179,11 +171,10 @@ func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P("}")
 	g.P()
 
-	if orderedMapGenerator.NeedGenerate() || indexGenerator.NeedGenerate() || orderedIndexGenerator.NeedGenerate() {
+	if orderedMapGenerator.NeedGenerate() || indexGenerator.NeedGenerate() {
 		g.P("bool ", messagerName, "::ProcessAfterLoad() {")
 		orderedMapGenerator.GenOrderedMapLoader()
-		indexGenerator.GenCppIndexLoader()
-		orderedIndexGenerator.GenCppOrderedIndexLoader()
+		indexGenerator.GenIndexLoader()
 		g.P(helper.Indent(1), "return true;")
 		g.P("}")
 		g.P()
@@ -193,7 +184,6 @@ func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	genCppMapGetters(g, message.Desc, 1, nil, messagerName)
 	orderedMapGenerator.GenOrderedMapGetters()
 	indexGenerator.GenCppIndexFinders()
-	orderedIndexGenerator.GenCppOrderedIndexFinders()
 }
 
 func genCppMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys helper.MapKeys, messagerName string) {
