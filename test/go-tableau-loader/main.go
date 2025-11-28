@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -74,7 +75,7 @@ func main() {
 	fmt.Printf("HeroBaseConf: %v\n", hub.GetHub().GetHeroBaseConf().Data().GetHeroMap())
 
 	// save current messager container to ctx
-	// ctx := hub.GetHub().BindTo(context.Background())
+	ctx := hub.GetHub().NewContext(context.Background())
 
 	// load again with patch
 	err = hub.GetHub().Load("../testdata/conf/", format.JSON,
@@ -89,10 +90,10 @@ func main() {
 
 	// print patch replace conf
 	fmt.Printf("PatchReplaceConf: %v\n", hub.GetHub().GetPatchReplaceConf().Data())
-	// print provided patch replace conf
-	fmt.Printf("PatchReplaceConf(provided): %v\n", hub.GetHub().GetPatchReplaceConf().Data())
-	// print patch replace conf binding to background context
-	fmt.Printf("PatchReplaceConf(background): %v\n", hub.GetHub().GetPatchReplaceConf().Data())
+	// print patch replace conf from ctx
+	fmt.Printf("PatchReplaceConf(from ctx): %v\n", hub.GetHub().FromContext(ctx).GetPatchReplaceConf().Data())
+	// print patch replace conf from background context
+	fmt.Printf("PatchReplaceConf(from background): %v\n", hub.GetHub().FromContext(context.Background()).GetPatchReplaceConf().Data())
 
 	// // test mutable check
 	// delete(hub.GetHub().GetActivityConf().Data().ActivityMap, 100001)

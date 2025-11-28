@@ -2,18 +2,23 @@ package main
 
 import (
 	"embed"
-	"path"
 	"strings"
+	"text/template"
 
+	"github.com/iancoleman/strcase"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
 //go:embed embed/*
 var efs embed.FS
 
+var tpl = template.Must(template.New("").Funcs(template.FuncMap{
+	"toLowerCamel": strcase.ToLowerCamel,
+}).ParseFS(efs, "embed/templates/*"))
+
 // generateEmbed generates related registry files.
 func generateEmbed(gen *protogen.Plugin) {
-	entries, err := efs.ReadDir("embed")
+	entries, err := efs.ReadDir("embed/templates")
 	if err != nil {
 		panic(err)
 	}
@@ -22,16 +27,13 @@ func generateEmbed(gen *protogen.Plugin) {
 			continue
 		}
 
-		g := gen.NewGeneratedFile(strings.TrimSuffix(entry.Name(), ".embed"), "")
+		g := gen.NewGeneratedFile(strings.TrimSuffix(entry.Name(), ".tpl"), "")
 		generateCommonHeader(gen, g)
 		g.P()
 		g.P("package ", *pkg)
 		g.P()
-		// refer: [embed: embed path on different OS cannot open file](https://github.com/golang/go/issues/45230)
-		content, err := efs.ReadFile(path.Join("embed", entry.Name()))
-		if err != nil {
+		if err := tpl.Lookup(entry.Name()).Execute(g, messagers); err != nil {
 			panic(err)
 		}
-		g.P(string(content))
 	}
 }

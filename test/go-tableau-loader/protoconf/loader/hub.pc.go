@@ -6,13 +6,13 @@
 package loader
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/pmezard/go-difflib/difflib"
 	"github.com/tableauio/tableau/format"
 	"github.com/tableauio/tableau/load"
 	"github.com/tableauio/tableau/store"
@@ -111,21 +111,6 @@ func (h *Hub) NewMessagerMap() MessagerMap {
 	return messagerMap
 }
 
-// GetMessagerMap returns hub's inner field messagerMap.
-func (h *Hub) GetMessagerMap() MessagerMap {
-	return h.messagerContainer.Load().messagerMap
-}
-
-// SetMessagerMap sets hub's inner field messagerMap.
-func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
-	h.messagerContainer.Store(newMessagerContainer(messagerMap))
-}
-
-// GetMessager finds and returns the specified Messenger in hub.
-func (h *Hub) GetMessager(name string) Messager {
-	return h.GetMessagerMap()[name]
-}
-
 // Load fills messages from files in the specified directory and format.
 func (h *Hub) Load(dir string, format format.Format, options ...load.Option) error {
 	messagerMap := h.NewMessagerMap()
@@ -136,15 +121,14 @@ func (h *Hub) Load(dir string, format format.Format, options ...load.Option) err
 			return errors.WithMessagef(err, "failed to load: %v", name)
 		}
 	}
-	// create a temporary hub with messager container for post process
-	tmpHub := &Hub{}
-	tmpHub.SetMessagerMap(messagerMap)
+	// create messager container for post process
+	mc := newMessagerContainer(messagerMap)
 	for name, msger := range messagerMap {
-		if err := msger.ProcessAfterLoadAll(tmpHub); err != nil {
+		if err := msger.ProcessAfterLoadAll(mc); err != nil {
 			return errors.WithMessagef(err, "failed to process messager %s after load all", name)
 		}
 	}
-	h.SetMessagerMap(messagerMap)
+	h.messagerContainer.Store(mc)
 	return nil
 }
 
@@ -185,98 +169,76 @@ func (h *Hub) mutableCheck() {
 }
 
 func (h *Hub) onMutateDefault(name string, original, current proto.Message) {
-	originalText, _ := store.MarshalToText(original, true)
-	currentText, _ := store.MarshalToText(current, true)
-	diff := difflib.UnifiedDiff{
-		A:        difflib.SplitLines(string(originalText)),
-		B:        difflib.SplitLines(string(currentText)),
-		FromFile: "Original",
-		ToFile:   "Current",
-		Context:  3,
-	}
-	text, _ := difflib.GetUnifiedDiffString(diff)
+	text, _ := UnifiedDiff(original, current)
 	fmt.Fprintf(os.Stderr,
 		"==== %s DIFF BEGIN ====\n%s==== %s DIFF END ====\n",
 		name, text, name)
 }
 
-// GetLastLoadedTime returns the time when hub's messagerMap was last set.
-func (h *Hub) GetLastLoadedTime() time.Time {
-	return h.messagerContainer.Load().loadedTime
+type ctxKey struct{}
+
+func (h *Hub) NewContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, ctxKey{}, h.messagerContainer.Load())
 }
 
-// Auto-generated getters below
+func (h *Hub) FromContext(ctx context.Context) MessagerContainer {
+	mc, ok := ctx.Value(ctxKey{}).(MessagerContainer)
+	if ok {
+		return mc
+	}
+	return h
+}
+
+// Implements MessagerContainer interface below
+
+func (h *Hub) GetMessagerMap() MessagerMap {
+	return h.messagerContainer.Load().GetMessagerMap()
+}
+
+func (h *Hub) GetMessager(name string) Messager {
+	return h.messagerContainer.Load().GetMessager(name)
+}
+
+func (h *Hub) GetLastLoadedTime() time.Time {
+	return h.messagerContainer.Load().GetLastLoadedTime()
+}
 
 func (h *Hub) GetHeroConf() *HeroConf {
-	return h.messagerContainer.Load().heroConf
+	return h.messagerContainer.Load().GetHeroConf()
 }
 
 func (h *Hub) GetHeroBaseConf() *HeroBaseConf {
-	return h.messagerContainer.Load().heroBaseConf
+	return h.messagerContainer.Load().GetHeroBaseConf()
 }
 
 func (h *Hub) GetItemConf() *ItemConf {
-	return h.messagerContainer.Load().itemConf
+	return h.messagerContainer.Load().GetItemConf()
 }
 
 func (h *Hub) GetPatchReplaceConf() *PatchReplaceConf {
-	return h.messagerContainer.Load().patchReplaceConf
+	return h.messagerContainer.Load().GetPatchReplaceConf()
 }
 
 func (h *Hub) GetPatchMergeConf() *PatchMergeConf {
-	return h.messagerContainer.Load().patchMergeConf
+	return h.messagerContainer.Load().GetPatchMergeConf()
 }
 
 func (h *Hub) GetRecursivePatchConf() *RecursivePatchConf {
-	return h.messagerContainer.Load().recursivePatchConf
+	return h.messagerContainer.Load().GetRecursivePatchConf()
 }
 
 func (h *Hub) GetActivityConf() *ActivityConf {
-	return h.messagerContainer.Load().activityConf
+	return h.messagerContainer.Load().GetActivityConf()
 }
 
 func (h *Hub) GetChapterConf() *ChapterConf {
-	return h.messagerContainer.Load().chapterConf
+	return h.messagerContainer.Load().GetChapterConf()
 }
 
 func (h *Hub) GetThemeConf() *ThemeConf {
-	return h.messagerContainer.Load().themeConf
+	return h.messagerContainer.Load().GetThemeConf()
 }
 
 func (h *Hub) GetTaskConf() *TaskConf {
-	return h.messagerContainer.Load().taskConf
-}
-
-type messagerContainer struct {
-	messagerMap MessagerMap
-	loadedTime  time.Time
-	// all messagers as fields for fast access
-	heroConf           *HeroConf
-	heroBaseConf       *HeroBaseConf
-	itemConf           *ItemConf
-	patchReplaceConf   *PatchReplaceConf
-	patchMergeConf     *PatchMergeConf
-	recursivePatchConf *RecursivePatchConf
-	activityConf       *ActivityConf
-	chapterConf        *ChapterConf
-	themeConf          *ThemeConf
-	taskConf           *TaskConf
-}
-
-func newMessagerContainer(messagerMap MessagerMap) *messagerContainer {
-	messagerContainer := &messagerContainer{
-		messagerMap: messagerMap,
-		loadedTime:  time.Now(),
-	}
-	messagerContainer.heroConf, _ = messagerMap[(&HeroConf{}).Name()].(*HeroConf)
-	messagerContainer.heroBaseConf, _ = messagerMap[(&HeroBaseConf{}).Name()].(*HeroBaseConf)
-	messagerContainer.itemConf, _ = messagerMap[(&ItemConf{}).Name()].(*ItemConf)
-	messagerContainer.patchReplaceConf, _ = messagerMap[(&PatchReplaceConf{}).Name()].(*PatchReplaceConf)
-	messagerContainer.patchMergeConf, _ = messagerMap[(&PatchMergeConf{}).Name()].(*PatchMergeConf)
-	messagerContainer.recursivePatchConf, _ = messagerMap[(&RecursivePatchConf{}).Name()].(*RecursivePatchConf)
-	messagerContainer.activityConf, _ = messagerMap[(&ActivityConf{}).Name()].(*ActivityConf)
-	messagerContainer.chapterConf, _ = messagerMap[(&ChapterConf{}).Name()].(*ChapterConf)
-	messagerContainer.themeConf, _ = messagerMap[(&ThemeConf{}).Name()].(*ThemeConf)
-	messagerContainer.taskConf, _ = messagerMap[(&TaskConf{}).Name()].(*TaskConf)
-	return messagerContainer
+	return h.messagerContainer.Load().GetTaskConf()
 }

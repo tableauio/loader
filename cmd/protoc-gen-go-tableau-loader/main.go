@@ -35,7 +35,6 @@ func main() {
 
 			generateMessager(gen, f)
 		}
-		generateHub(gen)
 		generateEmbed(gen)
 		return nil
 	})
