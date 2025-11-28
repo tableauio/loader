@@ -1,11 +1,13 @@
 import (
 	"fmt"
 	"os"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/tableauio/tableau/format"
+	"github.com/tableauio/tableau/load"
 	"github.com/tableauio/tableau/store"
 	"google.golang.org/protobuf/proto"
 )
@@ -73,26 +75,18 @@ func WithMutableCheck(check *MutableCheck) Option {
 
 // Hub is the messager manager.
 type Hub struct {
-	opts     *Options
-	provider messagerContainerProvider
+	messagerContainer atomic.Pointer[messagerContainer]
+	opts              *Options
 }
 
-func newHub(provider messagerContainerProvider, options ...Option) *Hub {
+func NewHub(options ...Option) *Hub {
 	hub := &Hub{}
+	hub.messagerContainer.Store(&messagerContainer{})
 	hub.opts = ParseOptions(options...)
-	hub.provider = provider
 	if hub.opts.MutableCheck != nil {
 		go hub.mutableCheck()
 	}
 	return hub
-}
-
-// providedBy returns a new Hub with the specified provider.
-func (h *Hub) providedBy(provider messagerContainerProvider) *Hub {
-	return &Hub{
-		opts:     h.opts,
-		provider: provider,
-	}
 }
 
 // NewMessagerMap creates a new MessagerMap.
@@ -110,19 +104,41 @@ func (h *Hub) NewMessagerMap() MessagerMap {
 	return messagerMap
 }
 
-// getMessagerContainer returns hub's inner messager container.
-func (h *Hub) getMessagerContainer() *messagerContainer {
-	return h.provider.MessagerContainer()
-}
-
 // GetMessagerMap returns hub's inner field messagerMap.
 func (h *Hub) GetMessagerMap() MessagerMap {
-	return h.getMessagerContainer().messagerMap
+	return h.messagerContainer.Load().messagerMap
+}
+
+// SetMessagerMap sets hub's inner field messagerMap.
+func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
+	h.messagerContainer.Store(newMessagerContainer(messagerMap))
 }
 
 // GetMessager finds and returns the specified Messenger in hub.
 func (h *Hub) GetMessager(name string) Messager {
 	return h.GetMessagerMap()[name]
+}
+
+// Load fills messages from files in the specified directory and format.
+func (h *Hub) Load(dir string, format format.Format, options ...load.Option) error {
+	messagerMap := h.NewMessagerMap()
+	opts := load.ParseOptions(options...)
+	for name, msger := range messagerMap {
+		mopts := opts.ParseMessagerOptionsByName(name)
+		if err := msger.Load(dir, format, mopts); err != nil {
+			return errors.WithMessagef(err, "failed to load: %v", name)
+		}
+	}
+	// create a temporary hub with messager container for post process
+	tmpHub := &Hub{}
+	tmpHub.SetMessagerMap(messagerMap)
+	for name, msger := range messagerMap {
+		if err := msger.ProcessAfterLoadAll(tmpHub); err != nil {
+			return errors.WithMessagef(err, "failed to process messager %s after load all", name)
+		}
+	}
+	h.SetMessagerMap(messagerMap)
+	return nil
 }
 
 // Store stores protobuf messages to files in the specified directory and format.
@@ -179,13 +195,13 @@ func (h *Hub) onMutateDefault(name string, original, current proto.Message) {
 
 // GetLastLoadedTime returns the time when hub's messagerMap was last set.
 func (h *Hub) GetLastLoadedTime() time.Time {
-	return h.getMessagerContainer().loadedTime
+	return h.messagerContainer.Load().loadedTime
 }
 
 // Auto-generated getters below
 {{ range . }}
 func (h *Hub) Get{{ . }}() *{{ . }} {
-	return h.getMessagerContainer().{{ toLowerCamel . }}
+	return h.messagerContainer.Load().{{ toLowerCamel . }}
 }
 {{ end }}
 
