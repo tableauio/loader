@@ -1,9 +1,9 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/tableauio/loader/test/go-tableau-loader/hub"
 	"github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader"
@@ -74,7 +74,10 @@ func main() {
 	fmt.Printf("specialItemName: %v\n", hub.GetHub().GetCustomItemConf().GetSpecialItemName())
 	fmt.Printf("HeroBaseConf: %v\n", hub.GetHub().GetHeroBaseConf().Data().GetHeroMap())
 
-	// patchconf
+	// save current messager container to ctx
+	ctx := hub.GetHub().NewContext(context.Background())
+
+	// load again with patch
 	err = hub.GetHub().Load("../testdata/conf/", format.JSON,
 		load.IgnoreUnknownFields(),
 		load.PatchDirs("../testdata/patchconf/"),
@@ -85,8 +88,15 @@ func main() {
 	// print recursive patch conf
 	fmt.Printf("RecursivePatchConf: %v\n", hub.GetHub().GetRecursivePatchConf().Data())
 
-	// test mutable check
-	delete(hub.GetHub().GetActivityConf().Data().ActivityMap, 100001)
-	hub.GetHub().GetActivityConf().Data().ThemeName = "theme2"
-	time.Sleep(time.Minute)
+	// print patch replace conf
+	fmt.Printf("PatchReplaceConf: %v\n", hub.GetHub().GetPatchReplaceConf().Data())
+	// print patch replace conf from ctx
+	fmt.Printf("PatchReplaceConf(from ctx): %v\n", hub.GetHub().FromContext(ctx).GetPatchReplaceConf().Data())
+	// print patch replace conf from background context
+	fmt.Printf("PatchReplaceConf(from background): %v\n", hub.GetHub().FromContext(context.Background()).GetPatchReplaceConf().Data())
+
+	// // test mutable check
+	// delete(hub.GetHub().GetActivityConf().Data().ActivityMap, 100001)
+	// hub.GetHub().GetActivityConf().Data().ThemeName = "theme2"
+	// time.Sleep(time.Minute)
 }

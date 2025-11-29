@@ -94,10 +94,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	// messager methods
 	g.P("// Name returns the ", messagerName, "'s message name.")
 	g.P("func (x *", messagerName, ") Name() string {")
-	g.P("if x != nil {")
-	g.P("return string(x.data.ProtoReflect().Descriptor().Name())")
-	g.P("}")
-	g.P(`return ""`)
+	g.P("return string((*", message.GoIdent, ")(nil).ProtoReflect().Descriptor().Name())")
 	g.P("}")
 	g.P()
 

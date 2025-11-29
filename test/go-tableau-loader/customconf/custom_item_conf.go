@@ -8,6 +8,7 @@ import (
 )
 
 const CustomItemConfName = "CustomItemConf"
+
 type CustomItemConf struct {
 	tableau.UnimplementedMessager
 	specialItemConf *protoconf.ItemConf_Item
