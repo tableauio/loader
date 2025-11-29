@@ -15,6 +15,12 @@ func BoolToInt(ok bool) int {
 	return 0
 }
 
+func GetMessager[T Messager](messagerMap MessagerMap) T {
+	var t T
+	messager, _ := messagerMap[t.Name()].(T)
+	return messager
+}
+
 func UnifiedDiff(original, current proto.Message) (string, error) {
 	originalText, err := store.MarshalToText(original, true)
 	if err != nil {

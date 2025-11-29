@@ -5,7 +5,11 @@
 
 package loader
 
-import "time"
+import (
+	"time"
+
+	"github.com/pkg/errors"
+)
 
 type MessagerContainer interface {
 	GetMessagerMap() MessagerMap
@@ -41,22 +45,27 @@ type messagerContainer struct {
 	taskConf           *TaskConf
 }
 
-func newMessagerContainer(messagerMap MessagerMap) *messagerContainer {
-	messagerContainer := &messagerContainer{
-		messagerMap: messagerMap,
-		loadedTime:  time.Now(),
+func newMessagerContainer(messagerMap MessagerMap) (*messagerContainer, error) {
+	mc := &messagerContainer{
+		messagerMap:        messagerMap,
+		loadedTime:         time.Now(),
+		heroConf:           GetMessager[*HeroConf](messagerMap),
+		heroBaseConf:       GetMessager[*HeroBaseConf](messagerMap),
+		itemConf:           GetMessager[*ItemConf](messagerMap),
+		patchReplaceConf:   GetMessager[*PatchReplaceConf](messagerMap),
+		patchMergeConf:     GetMessager[*PatchMergeConf](messagerMap),
+		recursivePatchConf: GetMessager[*RecursivePatchConf](messagerMap),
+		activityConf:       GetMessager[*ActivityConf](messagerMap),
+		chapterConf:        GetMessager[*ChapterConf](messagerMap),
+		themeConf:          GetMessager[*ThemeConf](messagerMap),
+		taskConf:           GetMessager[*TaskConf](messagerMap),
 	}
-	messagerContainer.heroConf, _ = messagerMap[(&HeroConf{}).Name()].(*HeroConf)
-	messagerContainer.heroBaseConf, _ = messagerMap[(&HeroBaseConf{}).Name()].(*HeroBaseConf)
-	messagerContainer.itemConf, _ = messagerMap[(&ItemConf{}).Name()].(*ItemConf)
-	messagerContainer.patchReplaceConf, _ = messagerMap[(&PatchReplaceConf{}).Name()].(*PatchReplaceConf)
-	messagerContainer.patchMergeConf, _ = messagerMap[(&PatchMergeConf{}).Name()].(*PatchMergeConf)
-	messagerContainer.recursivePatchConf, _ = messagerMap[(&RecursivePatchConf{}).Name()].(*RecursivePatchConf)
-	messagerContainer.activityConf, _ = messagerMap[(&ActivityConf{}).Name()].(*ActivityConf)
-	messagerContainer.chapterConf, _ = messagerMap[(&ChapterConf{}).Name()].(*ChapterConf)
-	messagerContainer.themeConf, _ = messagerMap[(&ThemeConf{}).Name()].(*ThemeConf)
-	messagerContainer.taskConf, _ = messagerMap[(&TaskConf{}).Name()].(*TaskConf)
-	return messagerContainer
+	for name, msger := range messagerMap {
+		if err := msger.ProcessAfterLoadAll(mc); err != nil {
+			return nil, errors.WithMessagef(err, "failed to process messager %s after load all", name)
+		}
+	}
+	return mc, nil
 }
 
 func (mc *messagerContainer) GetMessagerMap() MessagerMap {

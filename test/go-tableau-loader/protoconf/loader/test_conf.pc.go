@@ -63,10 +63,7 @@ type ActivityConf struct {
 
 // Name returns the ActivityConf's message name.
 func (x *ActivityConf) Name() string {
-	if x != nil {
-		return string(x.data.ProtoReflect().Descriptor().Name())
-	}
-	return ""
+	return string((*protoconf.ActivityConf)(nil).ProtoReflect().Descriptor().Name())
 }
 
 // Data returns the ActivityConf's inner message data.
@@ -398,10 +395,7 @@ type ChapterConf struct {
 
 // Name returns the ChapterConf's message name.
 func (x *ChapterConf) Name() string {
-	if x != nil {
-		return string(x.data.ProtoReflect().Descriptor().Name())
-	}
-	return ""
+	return string((*protoconf.ChapterConf)(nil).ProtoReflect().Descriptor().Name())
 }
 
 // Data returns the ChapterConf's inner message data.
@@ -478,10 +472,7 @@ type ThemeConf struct {
 
 // Name returns the ThemeConf's message name.
 func (x *ThemeConf) Name() string {
-	if x != nil {
-		return string(x.data.ProtoReflect().Descriptor().Name())
-	}
-	return ""
+	return string((*protoconf.ThemeConf)(nil).ProtoReflect().Descriptor().Name())
 }
 
 // Data returns the ThemeConf's inner message data.
@@ -607,10 +598,7 @@ type TaskConf struct {
 
 // Name returns the TaskConf's message name.
 func (x *TaskConf) Name() string {
-	if x != nil {
-		return string(x.data.ProtoReflect().Descriptor().Name())
-	}
-	return ""
+	return string((*protoconf.TaskConf)(nil).ProtoReflect().Descriptor().Name())
 }
 
 // Data returns the TaskConf's inner message data.

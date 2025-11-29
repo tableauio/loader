@@ -1,4 +1,8 @@
-import "time"
+import (
+	"time"
+
+	"github.com/pkg/errors"
+)
 
 type MessagerContainer interface {
 	GetMessagerMap() MessagerMap
@@ -16,13 +20,18 @@ type messagerContainer struct {
 {{ range . }}	{{ toLowerCamel . }} *{{ . }}
 {{ end }}}
 
-func newMessagerContainer(messagerMap MessagerMap) *messagerContainer {
-	messagerContainer := &messagerContainer{
+func newMessagerContainer(messagerMap MessagerMap) (*messagerContainer, error) {
+	mc := &messagerContainer{
 		messagerMap: messagerMap,
 		loadedTime:  time.Now(),
+{{ range . }}		{{ toLowerCamel . }}: GetMessager[*{{ . }}](messagerMap),
+{{ end }}	}
+	for name, msger := range messagerMap {
+		if err := msger.ProcessAfterLoadAll(mc); err != nil {
+			return nil, errors.WithMessagef(err, "failed to process messager %s after load all", name)
+		}
 	}
-{{ range . }}	messagerContainer.{{ toLowerCamel . }}, _ = messagerMap[(&{{ . }}{}).Name()].(*{{ . }})
-{{ end }}	return messagerContainer
+	return mc, nil
 }
 
 func (mc *messagerContainer) GetMessagerMap() MessagerMap {

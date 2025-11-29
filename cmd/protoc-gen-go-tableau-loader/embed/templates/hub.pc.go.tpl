@@ -75,13 +75,13 @@ func WithMutableCheck(check *MutableCheck) Option {
 
 // Hub is the messager manager.
 type Hub struct {
-	messagerContainer atomic.Pointer[messagerContainer]
-	opts              *Options
+	mc   atomic.Pointer[messagerContainer]
+	opts *Options
 }
 
 func NewHub(options ...Option) *Hub {
 	hub := &Hub{}
-	hub.messagerContainer.Store(&messagerContainer{})
+	hub.mc.Store(&messagerContainer{})
 	hub.opts = ParseOptions(options...)
 	if hub.opts.MutableCheck != nil {
 		go hub.mutableCheck()
@@ -104,6 +104,17 @@ func (h *Hub) NewMessagerMap() MessagerMap {
 	return messagerMap
 }
 
+// SetMessagerMap creates a MessagerContainer from messagerMap, then sets
+// hub's inner field mc.
+func (h *Hub) SetMessagerMap(messagerMap MessagerMap) error {
+	mc, err := newMessagerContainer(messagerMap)
+	if err != nil {
+		return errors.WithMessagef(err, "failed to create messager container")
+	}
+	h.mc.Store(mc)
+	return nil
+}
+
 // Load fills messages from files in the specified directory and format.
 func (h *Hub) Load(dir string, format format.Format, options ...load.Option) error {
 	messagerMap := h.NewMessagerMap()
@@ -114,15 +125,7 @@ func (h *Hub) Load(dir string, format format.Format, options ...load.Option) err
 			return errors.WithMessagef(err, "failed to load: %v", name)
 		}
 	}
-	// create messager container for post process
-	mc := newMessagerContainer(messagerMap)
-	for name, msger := range messagerMap {
-		if err := msger.ProcessAfterLoadAll(mc); err != nil {
-			return errors.WithMessagef(err, "failed to process messager %s after load all", name)
-		}
-	}
-	h.messagerContainer.Store(mc)
-	return nil
+	return h.SetMessagerMap(messagerMap)
 }
 
 // Store stores protobuf messages to files in the specified directory and format.
@@ -171,7 +174,7 @@ func (h *Hub) onMutateDefault(name string, original, current proto.Message) {
 type ctxKey struct{}
 
 func (h *Hub) NewContext(ctx context.Context) context.Context {
-	return context.WithValue(ctx, ctxKey{}, h.messagerContainer.Load())
+	return context.WithValue(ctx, ctxKey{}, h.mc.Load())
 }
 
 func (h *Hub) FromContext(ctx context.Context) MessagerContainer {
@@ -185,18 +188,18 @@ func (h *Hub) FromContext(ctx context.Context) MessagerContainer {
 // Implements MessagerContainer interface below
 
 func (h *Hub) GetMessagerMap() MessagerMap {
-	return h.messagerContainer.Load().GetMessagerMap()
+	return h.mc.Load().GetMessagerMap()
 }
 
 func (h *Hub) GetMessager(name string) Messager {
-	return h.messagerContainer.Load().GetMessager(name)
+	return h.mc.Load().GetMessager(name)
 }
 
 func (h *Hub) GetLastLoadedTime() time.Time {
-	return h.messagerContainer.Load().GetLastLoadedTime()
+	return h.mc.Load().GetLastLoadedTime()
 }
 {{ range . }}
 func (h *Hub) Get{{ . }}() *{{ . }} {
-	return h.messagerContainer.Load().Get{{ . }}()
+	return h.mc.Load().Get{{ . }}()
 }
 {{ end }}
