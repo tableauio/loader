@@ -18,7 +18,7 @@ func (x *CustomItemConf) Name() string {
 	return CustomItemConfName
 }
 
-func (x *CustomItemConf) ProcessAfterLoadAll(hub tableau.MessagerContainer) error {
+func (x *CustomItemConf) ProcessAfterLoadAll(hub *tableau.Hub) error {
 	config, err := hub.GetItemConf().Get1(1)
 	if err != nil {
 		return err

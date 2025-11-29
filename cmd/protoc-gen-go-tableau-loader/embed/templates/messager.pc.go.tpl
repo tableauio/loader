@@ -20,7 +20,7 @@ type Messager interface {
 	// processAfterLoad is invoked after this messager loaded.
 	processAfterLoad() error
 	// ProcessAfterLoadAll is invoked after all messagers loaded.
-	ProcessAfterLoadAll(mc MessagerContainer) error
+	ProcessAfterLoadAll(hub *Hub) error
 	// Message returns the inner message data.
 	Message() proto.Message
 	// Messager returns the current messager.
@@ -60,7 +60,7 @@ func (x *UnimplementedMessager) processAfterLoad() error {
 	return nil
 }
 
-func (x *UnimplementedMessager) ProcessAfterLoadAll(mc MessagerContainer) error {
+func (x *UnimplementedMessager) ProcessAfterLoadAll(hub *Hub) error {
 	return nil
 }
 

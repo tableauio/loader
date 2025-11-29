@@ -7,8 +7,6 @@ package loader
 
 import (
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 type MessagerContainer interface {
@@ -45,8 +43,8 @@ type messagerContainer struct {
 	taskConf           *TaskConf
 }
 
-func newMessagerContainer(messagerMap MessagerMap) (*messagerContainer, error) {
-	mc := &messagerContainer{
+func newMessagerContainer(messagerMap MessagerMap) *messagerContainer {
+	return &messagerContainer{
 		messagerMap:        messagerMap,
 		loadedTime:         time.Now(),
 		heroConf:           GetMessager[*HeroConf](messagerMap),
@@ -60,12 +58,6 @@ func newMessagerContainer(messagerMap MessagerMap) (*messagerContainer, error) {
 		themeConf:          GetMessager[*ThemeConf](messagerMap),
 		taskConf:           GetMessager[*TaskConf](messagerMap),
 	}
-	for name, msger := range messagerMap {
-		if err := msger.ProcessAfterLoadAll(mc); err != nil {
-			return nil, errors.WithMessagef(err, "failed to process messager %s after load all", name)
-		}
-	}
-	return mc, nil
 }
 
 func (mc *messagerContainer) GetMessagerMap() MessagerMap {

@@ -111,15 +111,8 @@ func (h *Hub) NewMessagerMap() MessagerMap {
 	return messagerMap
 }
 
-// SetMessagerMap creates a MessagerContainer from messagerMap, then sets
-// hub's inner field mc.
-func (h *Hub) SetMessagerMap(messagerMap MessagerMap) error {
-	mc, err := newMessagerContainer(messagerMap)
-	if err != nil {
-		return errors.WithMessagef(err, "failed to create messager container")
-	}
-	h.mc.Store(mc)
-	return nil
+func (h *Hub) SetMessagerMap(messagerMap MessagerMap) {
+	h.mc.Store(newMessagerContainer(messagerMap))
 }
 
 // Load fills messages from files in the specified directory and format.
@@ -132,7 +125,16 @@ func (h *Hub) Load(dir string, format format.Format, options ...load.Option) err
 			return errors.WithMessagef(err, "failed to load: %v", name)
 		}
 	}
-	return h.SetMessagerMap(messagerMap)
+	// create a temporary hub with messager container for post process
+	tmpHub := &Hub{}
+	tmpHub.SetMessagerMap(messagerMap)
+	for name, msger := range messagerMap {
+		if err := msger.ProcessAfterLoadAll(tmpHub); err != nil {
+			return errors.WithMessagef(err, "failed to process messager %s after load all", name)
+		}
+	}
+	h.SetMessagerMap(messagerMap)
+	return nil
 }
 
 // Store stores protobuf messages to files in the specified directory and format.
