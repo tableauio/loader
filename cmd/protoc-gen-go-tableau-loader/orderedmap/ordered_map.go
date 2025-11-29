@@ -141,7 +141,7 @@ func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth
 				mapName = fmt.Sprintf("v%d.Get%s()", depth-1, field.GoName)
 				keyName := fmt.Sprintf("k%d", depth-1)
 				if needConvertBool {
-					keyName = fmt.Sprintf("BoolToInt(%s)", keyName)
+					keyName = fmt.Sprintf("boolToInt(%s)", keyName)
 				}
 				x.g.P("k", depth-1, "v := &", lastOrderedMapValue, "{")
 				x.g.P("First: ", helper.TreeMapPackage.Ident("New"), "[", keyType, ", ", x.mapValueFieldType(fd), "](),")
@@ -160,7 +160,7 @@ func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth
 			} else {
 				keyName := fmt.Sprintf("k%d", depth)
 				if needConvertBoolNext {
-					keyName = fmt.Sprintf("BoolToInt(%s)", keyName)
+					keyName = fmt.Sprintf("boolToInt(%s)", keyName)
 				}
 				x.g.P("map", depth, ".Put(", keyName, ", v", depth, ")")
 			}
@@ -212,7 +212,7 @@ func (x *Generator) genOrderedMapGetters(md protoreflect.MessageDescriptor, dept
 				lastKeyType := keys[len(keys)-1].Type
 				keyName := lastKeyName
 				if lastKeyType == "int" {
-					keyName = fmt.Sprintf("BoolToInt(%s)", keyName)
+					keyName = fmt.Sprintf("boolToInt(%s)", keyName)
 				}
 				x.g.P("if val, ok := conf.Get(", keyName, "); !ok {")
 				x.g.P(`return nil, `, helper.FmtPackage.Ident("Errorf"), `("`, lastKeyName, `(%v) %w", `, lastKeyName, `, ErrNotFound)`)

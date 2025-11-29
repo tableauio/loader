@@ -75,13 +75,13 @@ func WithMutableCheck(check *MutableCheck) Option {
 
 // Hub is the messager manager.
 type Hub struct {
-	mc   atomic.Pointer[messagerContainer]
+	mc   atomic.Pointer[MessagerContainer]
 	opts *Options
 }
 
 func NewHub(options ...Option) *Hub {
 	hub := &Hub{}
-	hub.mc.Store(&messagerContainer{})
+	hub.mc.Store(&MessagerContainer{})
 	hub.opts = ParseOptions(options...)
 	if hub.opts.MutableCheck != nil {
 		go hub.mutableCheck()
@@ -175,19 +175,23 @@ func (h *Hub) onMutateDefault(name string, original, current proto.Message) {
 
 type ctxKey struct{}
 
+// NewContext creates a derived context which binds the current underlying
+// [MessagerContainer].
 func (h *Hub) NewContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, ctxKey{}, h.mc.Load())
 }
 
-func (h *Hub) FromContext(ctx context.Context) MessagerContainer {
-	mc, ok := ctx.Value(ctxKey{}).(MessagerContainer)
+// FromContext returns the [MessagerContainer] associated with this context,
+// or the default [MessagerContainer] if this context has no associated one.
+func (h *Hub) FromContext(ctx context.Context) *MessagerContainer {
+	mc, ok := ctx.Value(ctxKey{}).(*MessagerContainer)
 	if ok {
 		return mc
 	}
-	return h
+	return h.mc.Load()
 }
 
-// Implements MessagerContainer interface below
+// Export MessagerContainer methods below.
 
 func (h *Hub) GetMessagerMap() MessagerMap {
 	return h.mc.Load().GetMessagerMap()

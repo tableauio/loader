@@ -9,25 +9,7 @@ import (
 	"time"
 )
 
-type MessagerContainer interface {
-	GetMessagerMap() MessagerMap
-	GetMessager(name string) Messager
-	GetLastLoadedTime() time.Time
-
-	// Auto-generated getters below
-	GetHeroConf() *HeroConf
-	GetHeroBaseConf() *HeroBaseConf
-	GetItemConf() *ItemConf
-	GetPatchReplaceConf() *PatchReplaceConf
-	GetPatchMergeConf() *PatchMergeConf
-	GetRecursivePatchConf() *RecursivePatchConf
-	GetActivityConf() *ActivityConf
-	GetChapterConf() *ChapterConf
-	GetThemeConf() *ThemeConf
-	GetTaskConf() *TaskConf
-}
-
-type messagerContainer struct {
+type MessagerContainer struct {
 	messagerMap MessagerMap
 	loadedTime  time.Time
 	// all messagers as fields for fast access
@@ -43,8 +25,8 @@ type messagerContainer struct {
 	taskConf           *TaskConf
 }
 
-func newMessagerContainer(messagerMap MessagerMap) *messagerContainer {
-	return &messagerContainer{
+func newMessagerContainer(messagerMap MessagerMap) *MessagerContainer {
+	return &MessagerContainer{
 		messagerMap:        messagerMap,
 		loadedTime:         time.Now(),
 		heroConf:           GetMessager[*HeroConf](messagerMap),
@@ -60,54 +42,56 @@ func newMessagerContainer(messagerMap MessagerMap) *messagerContainer {
 	}
 }
 
-func (mc *messagerContainer) GetMessagerMap() MessagerMap {
+func (mc *MessagerContainer) GetMessagerMap() MessagerMap {
 	return mc.messagerMap
 }
 
-func (mc *messagerContainer) GetMessager(name string) Messager {
+func (mc *MessagerContainer) GetMessager(name string) Messager {
 	return mc.messagerMap[name]
 }
 
-func (mc *messagerContainer) GetLastLoadedTime() time.Time {
+func (mc *MessagerContainer) GetLastLoadedTime() time.Time {
 	return mc.loadedTime
 }
 
-func (mc *messagerContainer) GetHeroConf() *HeroConf {
+// Auto-generated getters below
+
+func (mc *MessagerContainer) GetHeroConf() *HeroConf {
 	return mc.heroConf
 }
 
-func (mc *messagerContainer) GetHeroBaseConf() *HeroBaseConf {
+func (mc *MessagerContainer) GetHeroBaseConf() *HeroBaseConf {
 	return mc.heroBaseConf
 }
 
-func (mc *messagerContainer) GetItemConf() *ItemConf {
+func (mc *MessagerContainer) GetItemConf() *ItemConf {
 	return mc.itemConf
 }
 
-func (mc *messagerContainer) GetPatchReplaceConf() *PatchReplaceConf {
+func (mc *MessagerContainer) GetPatchReplaceConf() *PatchReplaceConf {
 	return mc.patchReplaceConf
 }
 
-func (mc *messagerContainer) GetPatchMergeConf() *PatchMergeConf {
+func (mc *MessagerContainer) GetPatchMergeConf() *PatchMergeConf {
 	return mc.patchMergeConf
 }
 
-func (mc *messagerContainer) GetRecursivePatchConf() *RecursivePatchConf {
+func (mc *MessagerContainer) GetRecursivePatchConf() *RecursivePatchConf {
 	return mc.recursivePatchConf
 }
 
-func (mc *messagerContainer) GetActivityConf() *ActivityConf {
+func (mc *MessagerContainer) GetActivityConf() *ActivityConf {
 	return mc.activityConf
 }
 
-func (mc *messagerContainer) GetChapterConf() *ChapterConf {
+func (mc *MessagerContainer) GetChapterConf() *ChapterConf {
 	return mc.chapterConf
 }
 
-func (mc *messagerContainer) GetThemeConf() *ThemeConf {
+func (mc *MessagerContainer) GetThemeConf() *ThemeConf {
 	return mc.themeConf
 }
 
-func (mc *messagerContainer) GetTaskConf() *TaskConf {
+func (mc *MessagerContainer) GetTaskConf() *TaskConf {
 	return mc.taskConf
 }
