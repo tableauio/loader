@@ -113,8 +113,8 @@ func (x *Generator) genOrderedIndexField() {
 				if i == 1 {
 					x.g.P(x.orderedIndexContainerName(index, i), " map[", x.keys[0].Type, "]*", x.orderedIndexMapType(index))
 				} else {
-					leveledIndexKeyType := x.levelKeyType(x.mapFds[i-1])
-					x.g.P(x.orderedIndexContainerName(index, i), " map[", leveledIndexKeyType, "]*", x.orderedIndexMapType(index))
+					levelIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+					x.g.P(x.orderedIndexContainerName(index, i), " map[", levelIndexKeyType, "]*", x.orderedIndexMapType(index))
 				}
 			}
 		}
@@ -137,8 +137,8 @@ func (x *Generator) genOrderedIndexLoader() {
 				if i == 1 {
 					x.g.P("x.", x.orderedIndexContainerName(index, i), " = make(map[", x.keys[0].Type, "]*", x.orderedIndexMapType(index), ")")
 				} else {
-					leveledIndexKeyType := x.levelKeyType(x.mapFds[i-1])
-					x.g.P("x.", x.orderedIndexContainerName(index, i), " = make(map[", leveledIndexKeyType, "]*", x.orderedIndexMapType(index), ")")
+					levelIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+					x.g.P("x.", x.orderedIndexContainerName(index, i), " = make(map[", levelIndexKeyType, "]*", x.orderedIndexMapType(index), ")")
 				}
 			}
 		}
@@ -234,9 +234,9 @@ func (x *Generator) genOrderedIndexLoaderCommon(depth int, index *index.LevelInd
 			for j := 1; j <= i; j++ {
 				fields = append(fields, fmt.Sprintf("k%d", j))
 			}
-			leveledIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+			levelIndexKeyType := x.levelKeyType(x.mapFds[i-1])
 			keyName := orderedIndexContainerName + "Keys"
-			x.g.P(keyName, " := ", leveledIndexKeyType, "{", strings.Join(fields, ", "), "}")
+			x.g.P(keyName, " := ", levelIndexKeyType, "{", strings.Join(fields, ", "), "}")
 			x.g.P("if x.", orderedIndexContainerName, "[", keyName, "] == nil {")
 			x.g.P("x.", orderedIndexContainerName, "[", keyName, "] = ", helper.TreeMapPackage.Ident(x.mapCtor(index)), "[", x.orderedIndexMapKeyType(index), ", []*", x.mapValueType(index), "]()")
 			x.g.P("}")
@@ -345,8 +345,8 @@ func (x *Generator) genOrderedIndexFinders() {
 				if len(partKeys) == 1 {
 					x.g.P("return x.", orderedIndexContainerName, "[", partArgs, "]")
 				} else {
-					leveledIndexKeyType := x.levelKeyType(x.mapFds[i-1])
-					x.g.P("return x.", orderedIndexContainerName, "[", leveledIndexKeyType, "{", partArgs, "}]")
+					levelIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+					x.g.P("return x.", orderedIndexContainerName, "[", levelIndexKeyType, "{", partArgs, "}]")
 				}
 				x.g.P("}")
 				x.g.P()

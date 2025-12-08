@@ -89,8 +89,8 @@ func (x *Generator) genIndexField() {
 				if i == 1 {
 					x.g.P(x.indexContainerName(index, i), " map[", x.keys[0].Type, "]", x.indexMapType(index))
 				} else {
-					leveledIndexKeyType := x.levelKeyType(x.mapFds[i-1])
-					x.g.P(x.indexContainerName(index, i), " map[", leveledIndexKeyType, "]", x.indexMapType(index))
+					levelIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+					x.g.P(x.indexContainerName(index, i), " map[", levelIndexKeyType, "]", x.indexMapType(index))
 				}
 			}
 		}
@@ -113,8 +113,8 @@ func (x *Generator) genIndexLoader() {
 				if i == 1 {
 					x.g.P("x.", x.indexContainerName(index, i), " = make(map[", x.keys[0].Type, "]", x.indexMapType(index), ")")
 				} else {
-					leveledIndexKeyType := x.levelKeyType(x.mapFds[i-1])
-					x.g.P("x.", x.indexContainerName(index, i), " = make(map[", leveledIndexKeyType, "]", x.indexMapType(index), ")")
+					levelIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+					x.g.P("x.", x.indexContainerName(index, i), " = make(map[", levelIndexKeyType, "]", x.indexMapType(index), ")")
 				}
 			}
 		}
@@ -206,9 +206,9 @@ func (x *Generator) genIndexLoaderCommon(depth int, index *index.LevelIndex, par
 			for j := 1; j <= i; j++ {
 				fields = append(fields, fmt.Sprintf("k%d", j))
 			}
-			leveledIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+			levelIndexKeyType := x.levelKeyType(x.mapFds[i-1])
 			keyName := indexContainerName + "Keys"
-			x.g.P(keyName, " := ", leveledIndexKeyType, "{", strings.Join(fields, ", "), "}")
+			x.g.P(keyName, " := ", levelIndexKeyType, "{", strings.Join(fields, ", "), "}")
 			x.g.P("if x.", indexContainerName, "[", keyName, "] == nil {")
 			x.g.P("x.", indexContainerName, "[", keyName, "] = make(", x.indexMapType(index), ")")
 			x.g.P("}")
@@ -313,8 +313,8 @@ func (x *Generator) genIndexFinders() {
 				if len(partKeys) == 1 {
 					x.g.P("return x.", indexContainerName, "[", partArgs, "]")
 				} else {
-					leveledIndexKeyType := x.levelKeyType(x.mapFds[i-1])
-					x.g.P("return x.", indexContainerName, "[", leveledIndexKeyType, "{", partArgs, "}]")
+					levelIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+					x.g.P("return x.", indexContainerName, "[", levelIndexKeyType, "{", partArgs, "}]")
 				}
 				x.g.P("}")
 				x.g.P()

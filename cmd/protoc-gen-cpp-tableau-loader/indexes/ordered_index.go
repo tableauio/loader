@@ -118,8 +118,8 @@ func (x *Generator) genHppOrderedIndexFinders() {
 				if i == 1 {
 					x.g.P(helper.Indent(1), "std::unordered_map<", x.keys[0].Type, ", ", mapType, "> ", x.orderedIndexContainerName(index, i), ";")
 				} else {
-					leveledIndexKeyType := x.levelKeyType(x.mapFds[i-1])
-					x.g.P(helper.Indent(1), "std::unordered_map<", leveledIndexKeyType, ", ", mapType, ", ", leveledIndexKeyType, "Hasher> ", x.orderedIndexContainerName(index, i), ";")
+					levelIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+					x.g.P(helper.Indent(1), "std::unordered_map<", levelIndexKeyType, ", ", mapType, ", ", levelIndexKeyType, "Hasher> ", x.orderedIndexContainerName(index, i), ";")
 				}
 			}
 		}

@@ -54,7 +54,7 @@ func (x *Generator) messagerName() string {
 }
 
 func (x *Generator) levelKeyType(mapFd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf("LeveledIndex_%sKey", helper.ParseLeveledMapPrefix(x.message.Desc, mapFd))
+	return fmt.Sprintf("LevelIndex_%sKey", helper.ParseLeveledMapPrefix(x.message.Desc, mapFd))
 }
 
 func (x *Generator) mapValueType(index *index.LevelIndex) string {
@@ -87,7 +87,7 @@ func (x *Generator) GenHppIndexFinders() {
 	for i := 1; i <= x.maxDepth-3 && i <= len(x.mapFds)-1; i++ {
 		if i == 1 {
 			x.g.P()
-			x.g.P(helper.Indent(1), "// LeveledIndex keys.")
+			x.g.P(helper.Indent(1), "// LevelIndex keys.")
 			x.g.P(" public:")
 		}
 		fd := x.mapFds[i]

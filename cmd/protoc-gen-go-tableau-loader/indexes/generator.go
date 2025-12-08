@@ -57,7 +57,7 @@ func (x *Generator) messagerName() string {
 }
 
 func (x *Generator) levelKeyType(mapFd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf("%s_LeveledIndex_%sKey", x.messagerName(), helper.ParseLeveledMapPrefix(x.message.Desc, mapFd))
+	return fmt.Sprintf("%s_LevelIndex_%sKey", x.messagerName(), helper.ParseLeveledMapPrefix(x.message.Desc, mapFd))
 }
 
 func (x *Generator) mapValueType(index *index.LevelIndex) protogen.GoIdent {
@@ -90,7 +90,7 @@ func (x *Generator) GenIndexTypeDef() {
 	for i := 1; i <= x.maxDepth-3 && i <= len(x.mapFds)-1; i++ {
 		if i == 1 {
 			x.g.P()
-			x.g.P("// LeveledIndex keys.")
+			x.g.P("// LevelIndex keys.")
 		}
 		fd := x.mapFds[i]
 		keyType := x.levelKeyType(fd)

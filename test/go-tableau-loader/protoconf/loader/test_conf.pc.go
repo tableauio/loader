@@ -31,12 +31,12 @@ type ActivityConf_OrderedMap_Activity_ChapterMap = treemap.TreeMap[uint32, *Acti
 type ActivityConf_OrderedMap_ActivityValue = pair.Pair[*ActivityConf_OrderedMap_Activity_ChapterMap, *protoconf.ActivityConf_Activity]
 type ActivityConf_OrderedMap_ActivityMap = treemap.TreeMap[uint64, *ActivityConf_OrderedMap_ActivityValue]
 
-// LeveledIndex keys.
-type ActivityConf_LeveledIndex_Activity_ChapterKey struct {
+// LevelIndex keys.
+type ActivityConf_LevelIndex_Activity_ChapterKey struct {
 	ActivityId uint64
 	ChapterId  uint32
 }
-type ActivityConf_LeveledIndex_protoconf_SectionKey struct {
+type ActivityConf_LevelIndex_protoconf_SectionKey struct {
 	ActivityId uint64
 	ChapterId  uint32
 	SectionId  uint32
@@ -73,8 +73,8 @@ type ActivityConf struct {
 	indexNamedChapterMap1 map[uint64]ActivityConf_Index_NamedChapterMap
 	indexAwardMap         ActivityConf_Index_AwardMap
 	indexAwardMap1        map[uint64]ActivityConf_Index_AwardMap
-	indexAwardMap2        map[ActivityConf_LeveledIndex_Activity_ChapterKey]ActivityConf_Index_AwardMap
-	indexAwardMap3        map[ActivityConf_LeveledIndex_protoconf_SectionKey]ActivityConf_Index_AwardMap
+	indexAwardMap2        map[ActivityConf_LevelIndex_Activity_ChapterKey]ActivityConf_Index_AwardMap
+	indexAwardMap3        map[ActivityConf_LevelIndex_protoconf_SectionKey]ActivityConf_Index_AwardMap
 }
 
 // Name returns the ActivityConf's message name.
@@ -171,8 +171,8 @@ func (x *ActivityConf) processAfterLoad() error {
 	x.indexNamedChapterMap1 = make(map[uint64]ActivityConf_Index_NamedChapterMap)
 	x.indexAwardMap = make(ActivityConf_Index_AwardMap)
 	x.indexAwardMap1 = make(map[uint64]ActivityConf_Index_AwardMap)
-	x.indexAwardMap2 = make(map[ActivityConf_LeveledIndex_Activity_ChapterKey]ActivityConf_Index_AwardMap)
-	x.indexAwardMap3 = make(map[ActivityConf_LeveledIndex_protoconf_SectionKey]ActivityConf_Index_AwardMap)
+	x.indexAwardMap2 = make(map[ActivityConf_LevelIndex_Activity_ChapterKey]ActivityConf_Index_AwardMap)
+	x.indexAwardMap3 = make(map[ActivityConf_LevelIndex_protoconf_SectionKey]ActivityConf_Index_AwardMap)
 	for k1, v1 := range x.data.GetActivityMap() {
 		_ = k1
 		{
@@ -212,12 +212,12 @@ func (x *ActivityConf) processAfterLoad() error {
 							x.indexAwardMap1[k1] = make(ActivityConf_Index_AwardMap)
 						}
 						x.indexAwardMap1[k1][key] = append(x.indexAwardMap1[k1][key], v4)
-						indexAwardMap2Keys := ActivityConf_LeveledIndex_Activity_ChapterKey{k1, k2}
+						indexAwardMap2Keys := ActivityConf_LevelIndex_Activity_ChapterKey{k1, k2}
 						if x.indexAwardMap2[indexAwardMap2Keys] == nil {
 							x.indexAwardMap2[indexAwardMap2Keys] = make(ActivityConf_Index_AwardMap)
 						}
 						x.indexAwardMap2[indexAwardMap2Keys][key] = append(x.indexAwardMap2[indexAwardMap2Keys][key], v4)
-						indexAwardMap3Keys := ActivityConf_LeveledIndex_protoconf_SectionKey{k1, k2, k3}
+						indexAwardMap3Keys := ActivityConf_LevelIndex_protoconf_SectionKey{k1, k2, k3}
 						if x.indexAwardMap3[indexAwardMap3Keys] == nil {
 							x.indexAwardMap3[indexAwardMap3Keys] = make(ActivityConf_Index_AwardMap)
 						}
@@ -506,7 +506,7 @@ func (x *ActivityConf) FindFirstAward1(activityId uint64, id uint32) *protoconf.
 // specified by (activityId, chapterId).
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ActivityConf) FindAwardMap2(activityId uint64, chapterId uint32) ActivityConf_Index_AwardMap {
-	return x.indexAwardMap2[ActivityConf_LeveledIndex_Activity_ChapterKey{activityId, chapterId}]
+	return x.indexAwardMap2[ActivityConf_LevelIndex_Activity_ChapterKey{activityId, chapterId}]
 }
 
 // FindAward2 finds a slice of all values of the given key specified by (activityId, chapterId).
@@ -528,7 +528,7 @@ func (x *ActivityConf) FindFirstAward2(activityId uint64, chapterId uint32, id u
 // specified by (activityId, chapterId, sectionId).
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ActivityConf) FindAwardMap3(activityId uint64, chapterId uint32, sectionId uint32) ActivityConf_Index_AwardMap {
-	return x.indexAwardMap3[ActivityConf_LeveledIndex_protoconf_SectionKey{activityId, chapterId, sectionId}]
+	return x.indexAwardMap3[ActivityConf_LevelIndex_protoconf_SectionKey{activityId, chapterId, sectionId}]
 }
 
 // FindAward3 finds a slice of all values of the given key specified by (activityId, chapterId, sectionId).
