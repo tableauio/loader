@@ -393,82 +393,82 @@ bool FruitConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_p
 
 bool FruitConf::ProcessAfterLoad() {
   // OrderedIndex init.
-  ordered_index_fruit_map_.clear();
-  ordered_index_fruit_map1_.clear();
-  for (auto&& item1 : data_.fruits_map()) {
-    for (auto&& item2 : item1.second.fruit_map()) {
+  ordered_index_item_map_.clear();
+  ordered_index_item_map1_.clear();
+  for (auto&& item1 : data_.fruit_map()) {
+    for (auto&& item2 : item1.second.item_map()) {
       {
-        // OrderedIndex: Price<FruitID>
-        ordered_index_fruit_map_[item2.second.price()].push_back(&item2.second);
-        ordered_index_fruit_map1_[item1.first][item2.second.price()].push_back(&item2.second);
+        // OrderedIndex: Price<ID>
+        ordered_index_item_map_[item2.second.price()].push_back(&item2.second);
+        ordered_index_item_map1_[item1.first][item2.second.price()].push_back(&item2.second);
       }
     }
   }
-  // OrderedIndex(sort): Price<FruitID>
-  auto ordered_index_fruit_map_sorter = [](const protoconf::FruitConf::Fruits::Fruit* a,
-                                           const protoconf::FruitConf::Fruits::Fruit* b) {
-    return a->fruit_id() < b->fruit_id();
+  // OrderedIndex(sort): Price<ID>
+  auto ordered_index_item_map_sorter = [](const protoconf::FruitConf::Fruit::Item* a,
+                                          const protoconf::FruitConf::Fruit::Item* b) {
+    return a->id() < b->id();
   };
-  for (auto&& item : ordered_index_fruit_map_) {
-    std::sort(item.second.begin(), item.second.end(), ordered_index_fruit_map_sorter);
+  for (auto&& item : ordered_index_item_map_) {
+    std::sort(item.second.begin(), item.second.end(), ordered_index_item_map_sorter);
   }
-  for (auto&& item : ordered_index_fruit_map1_) {
+  for (auto&& item : ordered_index_item_map1_) {
     for (auto&& item1 : item.second) {
-      std::sort(item1.second.begin(), item1.second.end(), ordered_index_fruit_map_sorter);
+      std::sort(item1.second.begin(), item1.second.end(), ordered_index_item_map_sorter);
     }
   }
   return true;
 }
 
-const protoconf::FruitConf::Fruits* FruitConf::Get(int32_t fruit_type) const {
-  auto iter = data_.fruits_map().find(fruit_type);
-  if (iter == data_.fruits_map().end()) {
+const protoconf::FruitConf::Fruit* FruitConf::Get(int32_t fruit_type) const {
+  auto iter = data_.fruit_map().find(fruit_type);
+  if (iter == data_.fruit_map().end()) {
     return nullptr;
   }
   return &iter->second;
 }
 
-const protoconf::FruitConf::Fruits::Fruit* FruitConf::Get(int32_t fruit_type, int32_t fruit_id) const {
+const protoconf::FruitConf::Fruit::Item* FruitConf::Get(int32_t fruit_type, int32_t id) const {
   const auto* conf = Get(fruit_type);
   if (conf == nullptr) {
     return nullptr;
   }
-  auto iter = conf->fruit_map().find(fruit_id);
-  if (iter == conf->fruit_map().end()) {
+  auto iter = conf->item_map().find(id);
+  if (iter == conf->item_map().end()) {
     return nullptr;
   }
   return &iter->second;
 }
 
-// OrderedIndex: Price<FruitID>
-const FruitConf::OrderedIndex_FruitMap& FruitConf::FindFruitMap() const { return ordered_index_fruit_map_ ;}
+// OrderedIndex: Price<ID>
+const FruitConf::OrderedIndex_ItemMap& FruitConf::FindItemMap() const { return ordered_index_item_map_ ;}
 
-const FruitConf::OrderedIndex_FruitVector* FruitConf::FindFruit(int32_t price) const {
-  auto iter = ordered_index_fruit_map_.find(price);
-  if (iter == ordered_index_fruit_map_.end()) {
+const FruitConf::OrderedIndex_ItemVector* FruitConf::FindItem(int32_t price) const {
+  auto iter = ordered_index_item_map_.find(price);
+  if (iter == ordered_index_item_map_.end()) {
     return nullptr;
   }
   return &iter->second;
 }
 
-const protoconf::FruitConf::Fruits::Fruit* FruitConf::FindFirstFruit(int32_t price) const {
-  auto conf = FindFruit(price);
+const protoconf::FruitConf::Fruit::Item* FruitConf::FindFirstItem(int32_t price) const {
+  auto conf = FindItem(price);
   if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
   return conf->front();
 }
 
-const FruitConf::OrderedIndex_FruitMap* FruitConf::FindFruitMap(int32_t fruit_type) const {
-  auto iter = ordered_index_fruit_map1_.find(fruit_type);
-  if (iter == ordered_index_fruit_map1_.end()) {
+const FruitConf::OrderedIndex_ItemMap* FruitConf::FindItemMap(int32_t fruit_type) const {
+  auto iter = ordered_index_item_map1_.find(fruit_type);
+  if (iter == ordered_index_item_map1_.end()) {
     return nullptr;
   }
   return &iter->second;
 }
 
-const FruitConf::OrderedIndex_FruitVector* FruitConf::FindFruit(int32_t fruit_type, int32_t price) const {
-  auto map = FindFruitMap(fruit_type);
+const FruitConf::OrderedIndex_ItemVector* FruitConf::FindItem(int32_t fruit_type, int32_t price) const {
+  auto map = FindItemMap(fruit_type);
   if (map == nullptr) {
     return nullptr;
   }
@@ -479,8 +479,8 @@ const FruitConf::OrderedIndex_FruitVector* FruitConf::FindFruit(int32_t fruit_ty
   return &iter->second;
 }
 
-const protoconf::FruitConf::Fruits::Fruit* FruitConf::FindFirstFruit(int32_t fruit_type, int32_t price) const {
-  auto conf = FindFruit(fruit_type, price);
+const protoconf::FruitConf::Fruit::Item* FruitConf::FindFirstItem(int32_t fruit_type, int32_t price) const {
+  auto conf = FindItem(fruit_type, price);
   if (conf == nullptr || conf->empty()) {
     return nullptr;
   }

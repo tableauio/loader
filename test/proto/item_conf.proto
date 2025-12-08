@@ -82,15 +82,15 @@ message UseEffect {
 message FruitConf {
   option (tableau.worksheet) = {
     name: "FruitConf"
-    ordered_index: "Price<FruitID>"
+    ordered_index: "Price<ID>"
   };
 
-  map<int32, Fruits> fruits_map = 1 [(tableau.field) = { key: "FruitType" layout: LAYOUT_VERTICAL }];
-  message Fruits {
+  map<int32, Fruit> fruit_map = 1 [(tableau.field) = { key: "FruitType" layout: LAYOUT_VERTICAL }];
+  message Fruit {
     protoconf.FruitType fruit_type = 1 [(tableau.field) = { name: "FruitType" }];
-    map<int32, Fruit> fruit_map = 2 [(tableau.field) = { key: "FruitID" layout: LAYOUT_VERTICAL }];
-    message Fruit {
-      int32 fruit_id = 1 [(tableau.field) = { name: "FruitID" }];
+    map<int32, Item> item_map = 2 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
+    message Item {
+      int32 id = 1 [(tableau.field) = { name: "ID" }];
       int32 price = 2 [(tableau.field) = { name: "Price" }];
     }
   }
