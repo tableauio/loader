@@ -254,31 +254,31 @@ func (x *Generator) genOrderedIndexSorter() {
 			if len(index.SortedColFields) != 0 {
 				x.g.P("// OrderedIndex(sort): ", index.Index)
 				indexContainerName := x.orderedIndexContainerName(index, 0)
-				x.g.P(indexContainerName, "Sorter := func(item []*", x.mapValueType(index), ") func(i, j int) bool {")
+				x.g.P(indexContainerName, "Sorter := func(itemList []*", x.mapValueType(index), ") func(i, j int) bool {")
 				x.g.P("return func(i, j int) bool {")
 				for i, field := range index.SortedColFields {
 					fieldName, _ := x.parseKeyFieldNameAndSuffix(field)
 					if i == len(index.SortedColFields)-1 {
-						x.g.P("return item[i]", fieldName, " < item[j]", fieldName)
+						x.g.P("return itemList[i]", fieldName, " < itemList[j]", fieldName)
 					} else {
-						x.g.P("if item[i]", fieldName, " != item[j]", fieldName, " {")
-						x.g.P("return item[i]", fieldName, " < item[j]", fieldName)
+						x.g.P("if itemList[i]", fieldName, " != itemList[j]", fieldName, " {")
+						x.g.P("return itemList[i]", fieldName, " < itemList[j]", fieldName)
 						x.g.P("}")
 					}
 				}
 				x.g.P("}")
 				x.g.P("}")
-				x.g.P("x.", x.orderedIndexContainerName(index, 0), ".Range(func(key ", x.orderedIndexMapKeyType(index), ", item []*", x.mapValueType(index), ") bool {")
-				x.g.P(helper.SortPackage.Ident("Slice"), "(item, ", indexContainerName, "Sorter(item))")
+				x.g.P("x.", x.orderedIndexContainerName(index, 0), ".Range(func(key ", x.orderedIndexMapKeyType(index), ", itemList []*", x.mapValueType(index), ") bool {")
+				x.g.P(helper.SortPackage.Ident("Slice"), "(itemList, ", indexContainerName, "Sorter(itemList))")
 				x.g.P("return true")
 				x.g.P("})")
 				for i := 1; i <= levelMessage.MapDepth-2; i++ {
 					if i > len(x.keys) {
 						break
 					}
-					x.g.P("for _, item := range x.", x.orderedIndexContainerName(index, i), " {")
-					x.g.P("item.Range(func(key ", x.orderedIndexMapKeyType(index), ", item1 []*", x.mapValueType(index), ") bool {")
-					x.g.P(helper.SortPackage.Ident("Slice"), "(item1, ", indexContainerName, "Sorter(item1))")
+					x.g.P("for _, itemMap := range x.", x.orderedIndexContainerName(index, i), " {")
+					x.g.P("itemMap.Range(func(key ", x.orderedIndexMapKeyType(index), ", itemList []*", x.mapValueType(index), ") bool {")
+					x.g.P(helper.SortPackage.Ident("Slice"), "(itemList, ", indexContainerName, "Sorter(itemList))")
 					x.g.P("return true")
 					x.g.P("})")
 					x.g.P("}")
@@ -340,7 +340,7 @@ func (x *Generator) genOrderedIndexFinders() {
 				partParams := partKeys.GenGetParams()
 				partArgs := partKeys.GenGetArguments()
 
-				x.g.P("// Find", index.Name(), "Map", i, " finds the index (", index.Index, ") to value (", x.mapValueType(index), ") treemap")
+				x.g.P("// Find", index.Name(), "Map", i, " finds the index (", index.Index, ") to value (", x.mapValueType(index), ") ", i, "-level treemap")
 				x.g.P("// specified by (", partArgs, ").")
 				x.g.P("// One key may correspond to multiple values, which are contained by a slice.")
 				x.g.P("func (x *", messagerName, ") Find", index.Name(), "Map", i, "(", partParams, ") *", x.orderedIndexMapType(index), " {")
@@ -353,7 +353,8 @@ func (x *Generator) genOrderedIndexFinders() {
 				x.g.P("}")
 				x.g.P()
 
-				x.g.P("// Find", index.Name(), i, " finds a slice of all values of the given key specified by (", partArgs, ").")
+				x.g.P("// Find", index.Name(), i, " finds a slice of all values of the given key in the ", i, "-level treemap")
+				x.g.P("// specified by (", partArgs, ").")
 				x.g.P("func (x *", messagerName, ") Find", index.Name(), i, "(", partParams, ", ", params, ") []*", x.mapValueType(index), " {")
 				if len(index.ColFields) == 1 {
 					x.g.P("val, _ := x.Find", index.Name(), "Map", i, "(", partArgs, ").Get(", args, ")")
@@ -364,8 +365,8 @@ func (x *Generator) genOrderedIndexFinders() {
 				x.g.P("}")
 				x.g.P()
 
-				x.g.P("// FindFirst", index.Name(), i, " finds the first value of the given key specified by (", partArgs, "),")
-				x.g.P("// or nil if no value found.")
+				x.g.P("// FindFirst", index.Name(), i, " finds the first value of the given key in the ", i, "-level treemap")
+				x.g.P("// specified by (", partArgs, "), or nil if no value found.")
 				x.g.P("func (x *", messagerName, ") FindFirst", index.Name(), i, "(", partParams, ", ", params, ") *", x.mapValueType(index), " {")
 				x.g.P("val := x.Find", index.Name(), i, "(", partArgs, ", ", args, ")")
 				x.g.P("if len(val) > 0 {")
