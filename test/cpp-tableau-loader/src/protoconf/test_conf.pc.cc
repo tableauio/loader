@@ -47,31 +47,32 @@ bool ActivityConf::ProcessAfterLoad() {
   index_award_map_.clear();
   index_award_map1_.clear();
   index_award_map2_.clear();
-  index_award_map3_.clear();
   for (auto&& item1 : data_.activity_map()) {
+    auto k1 = item1.first;
     {
       // Index: ActivityName
       index_activity_map_[item1.second.activity_name()].push_back(&item1.second);
     }
     for (auto&& item2 : item1.second.chapter_map()) {
+      auto k2 = item2.first;
       {
         // Index: ChapterID
         index_chapter_map_[item2.second.chapter_id()].push_back(&item2.second);
-        index_chapter_map1_[item1.first][item2.second.chapter_id()].push_back(&item2.second);
+        index_chapter_map1_[k1][item2.second.chapter_id()].push_back(&item2.second);
       }
       {
         // Index: ChapterName<AwardID>@NamedChapter
         index_named_chapter_map_[item2.second.chapter_name()].push_back(&item2.second);
-        index_named_chapter_map1_[item1.first][item2.second.chapter_name()].push_back(&item2.second);
+        index_named_chapter_map1_[k1][item2.second.chapter_name()].push_back(&item2.second);
       }
       for (auto&& item3 : item2.second.section_map()) {
+        auto k3 = item3.first;
         for (auto&& item4 : item3.second.section_item_list()) {
           {
             // Index: SectionItemID@Award
             index_award_map_[item4.id()].push_back(&item4);
-            index_award_map1_[item1.first][item4.id()].push_back(&item4);
-            index_award_map2_[{item1.first, item2.first}][item4.id()].push_back(&item4);
-            index_award_map3_[{item1.first, item2.first, item3.first}][item4.id()].push_back(&item4);
+            index_award_map1_[k1][item4.id()].push_back(&item4);
+            index_award_map2_[{k1, k2}][item4.id()].push_back(&item4);
           }
         }
       }
@@ -365,34 +366,6 @@ const protoconf::Section::SectionItem* ActivityConf::FindFirstAward(uint64_t act
   return conf->front();
 }
 
-const ActivityConf::Index_AwardMap* ActivityConf::FindAwardMap(uint64_t activity_id, uint32_t chapter_id, uint32_t section_id) const {
-  auto iter = index_award_map3_.find({activity_id, chapter_id, section_id});
-  if (iter == index_award_map3_.end()) {
-    return nullptr;
-  }
-  return &iter->second;
-}
-
-const ActivityConf::Index_AwardVector* ActivityConf::FindAward(uint64_t activity_id, uint32_t chapter_id, uint32_t section_id, uint32_t id) const {
-  auto map = FindAwardMap(activity_id, chapter_id, section_id);
-  if (map == nullptr) {
-    return nullptr;
-  }
-  auto iter = map->find(id);
-  if (iter == map->end()) {
-    return nullptr;
-  }
-  return &iter->second;
-}
-
-const protoconf::Section::SectionItem* ActivityConf::FindFirstAward(uint64_t activity_id, uint32_t chapter_id, uint32_t section_id, uint32_t id) const {
-  auto conf = FindAward(activity_id, chapter_id, section_id, id);
-  if (conf == nullptr || conf->empty()) {
-    return nullptr;
-  }
-  return conf->front();
-}
-
 const std::string ChapterConf::kProtoName = protoconf::ChapterConf::GetDescriptor()->name();
 
 bool ChapterConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
@@ -455,6 +428,7 @@ bool TaskConf::ProcessAfterLoad() {
   // Index init.
   index_task_map_.clear();
   for (auto&& item1 : data_.task_map()) {
+    auto k1 = item1.first;
     {
       // Index: ActivityID<Goal,ID>
       index_task_map_[item1.second.activity_id()].push_back(&item1.second);
@@ -477,6 +451,7 @@ bool TaskConf::ProcessAfterLoad() {
   ordered_index_sorted_task_expiry_map_.clear();
   ordered_index_activity_expiry_map_.clear();
   for (auto&& item1 : data_.task_map()) {
+    auto k1 = item1.first;
     {
       // OrderedIndex: Goal<ID>@OrderedTask
       ordered_index_ordered_task_map_[item1.second.goal()].push_back(&item1.second);

@@ -71,23 +71,6 @@ class ActivityConf : public Messager {
       return util::SugaredHashCombine(key.activity_id, key.chapter_id);
     }
   };
-  struct LevelIndex_protoconf_SectionKey {
-    uint64_t activity_id;
-    uint32_t chapter_id;
-    uint32_t section_id;
-#if __cplusplus >= 202002L
-    bool operator==(const LevelIndex_protoconf_SectionKey& other) const = default;
-#else
-    bool operator==(const LevelIndex_protoconf_SectionKey& other) const {
-      return std::tie(activity_id, chapter_id, section_id) == std::tie(other.activity_id, other.chapter_id, other.section_id);
-    }
-#endif
-  };
-  struct LevelIndex_protoconf_SectionKeyHasher {
-    std::size_t operator()(const LevelIndex_protoconf_SectionKey& key) const {
-      return util::SugaredHashCombine(key.activity_id, key.chapter_id, key.section_id);
-    }
-  };
 
   // Index accessers.
   // Index: ActivityName
@@ -180,20 +163,11 @@ class ActivityConf : public Messager {
   const Index_AwardVector* FindAward(uint64_t activity_id, uint32_t chapter_id, uint32_t id) const;
   // Finds the first value of the given key(s) specified by (activity_id, chapter_id).
   const protoconf::Section::SectionItem* FindFirstAward(uint64_t activity_id, uint32_t chapter_id, uint32_t id) const;
-  // Finds the index (SectionItemID@Award) to value (Index_AwardVector) hash map
-  // specified by (activity_id, chapter_id, section_id).
-  // One key may correspond to multiple values, which are contained by a vector.
-  const Index_AwardMap* FindAwardMap(uint64_t activity_id, uint32_t chapter_id, uint32_t section_id) const;
-  // Finds a vector of all values of the given key(s) specified by (activity_id, chapter_id, section_id).
-  const Index_AwardVector* FindAward(uint64_t activity_id, uint32_t chapter_id, uint32_t section_id, uint32_t id) const;
-  // Finds the first value of the given key(s) specified by (activity_id, chapter_id, section_id).
-  const protoconf::Section::SectionItem* FindFirstAward(uint64_t activity_id, uint32_t chapter_id, uint32_t section_id, uint32_t id) const;
 
  private:
   Index_AwardMap index_award_map_;
   std::unordered_map<uint64_t, Index_AwardMap> index_award_map1_;
   std::unordered_map<LevelIndex_Activity_ChapterKey, Index_AwardMap, LevelIndex_Activity_ChapterKeyHasher> index_award_map2_;
-  std::unordered_map<LevelIndex_protoconf_SectionKey, Index_AwardMap, LevelIndex_protoconf_SectionKeyHasher> index_award_map3_;
 };
 
 class ChapterConf : public Messager {

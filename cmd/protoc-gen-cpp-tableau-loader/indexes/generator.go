@@ -40,7 +40,7 @@ func (x *Generator) initLevelMessage() {
 			x.mapFds = append(x.mapFds, fd)
 		}
 		if len(levelMessage.Indexes) != 0 || len(levelMessage.OrderedIndexes) != 0 {
-			x.maxDepth = levelMessage.Depth
+			x.maxDepth = levelMessage.MapDepth
 		}
 	}
 }
