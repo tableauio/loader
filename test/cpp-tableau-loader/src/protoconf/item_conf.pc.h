@@ -393,6 +393,69 @@ class Fruit2Conf : public Messager {
   std::unordered_map<int32_t, OrderedIndex_ItemMap> ordered_index_item_map1_;
 };
 
+class Fruit3Conf : public Messager {
+ public:
+  static const std::string& Name() { return kProtoName; }
+  virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
+  const protoconf::Fruit3Conf& Data() const { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
+
+ private:
+  virtual bool ProcessAfterLoad() override final;
+
+
+ private:
+  static const std::string kProtoName;
+  protoconf::Fruit3Conf data_;
+
+  // Index accessers.
+  // Index: CountryName
+ public:
+  using Index_CountryVector = std::vector<const protoconf::Fruit3Conf::Fruit::Country*>;
+  using Index_CountryMap = std::unordered_map<std::string, Index_CountryVector>;
+  // Finds the index (CountryName) to value (Index_CountryVector) hash map.
+  // One key may correspond to multiple values, which are contained by a vector.
+  const Index_CountryMap& FindCountryMap() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_CountryVector* FindCountry(const std::string& name) const;
+  // Finds the first value of the given key(s).
+  const protoconf::Fruit3Conf::Fruit::Country* FindFirstCountry(const std::string& name) const;
+
+ private:
+  Index_CountryMap index_country_map_;
+
+  // Index: CountryItemAttrName
+ public:
+  using Index_AttrVector = std::vector<const protoconf::Fruit3Conf::Fruit::Country::Item::Attr*>;
+  using Index_AttrMap = std::unordered_map<std::string, Index_AttrVector>;
+  // Finds the index (CountryItemAttrName) to value (Index_AttrVector) hash map.
+  // One key may correspond to multiple values, which are contained by a vector.
+  const Index_AttrMap& FindAttrMap() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_AttrVector* FindAttr(const std::string& name) const;
+  // Finds the first value of the given key(s).
+  const protoconf::Fruit3Conf::Fruit::Country::Item::Attr* FindFirstAttr(const std::string& name) const;
+
+ private:
+  Index_AttrMap index_attr_map_;
+
+  // OrderedIndex accessers.
+  // OrderedIndex: CountryItemPrice<CountryItemID>
+ public:
+  using OrderedIndex_ItemVector = std::vector<const protoconf::Fruit3Conf::Fruit::Country::Item*>;
+  using OrderedIndex_ItemMap = std::map<int32_t, OrderedIndex_ItemVector>;
+  // Finds the ordered index (CountryItemPrice<CountryItemID>) to value (OrderedIndex_ItemVector) map.
+  // One key may correspond to multiple values, which are contained by a vector.
+  const OrderedIndex_ItemMap& FindItemMap() const;
+  // Finds a vector of all values of the given key(s).
+  const OrderedIndex_ItemVector* FindItem(int32_t price) const;
+  // Finds the first value of the given key(s).
+  const protoconf::Fruit3Conf::Fruit::Country::Item* FindFirstItem(int32_t price) const;
+
+ private:
+  OrderedIndex_ItemMap ordered_index_item_map_;
+};
+
 }  // namespace tableau
 
 namespace protoconf {
@@ -400,4 +463,5 @@ namespace protoconf {
 using ItemConfMgr = tableau::ItemConf;
 using FruitConfMgr = tableau::FruitConf;
 using Fruit2ConfMgr = tableau::Fruit2Conf;
+using Fruit3ConfMgr = tableau::Fruit3Conf;
 }  // namespace protoconf

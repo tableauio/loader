@@ -25,6 +25,11 @@ const std::shared_ptr<Fruit2Conf> Hub::Get<Fruit2Conf>() const {
 }
 
 template <>
+const std::shared_ptr<Fruit3Conf> Hub::Get<Fruit3Conf>() const {
+  return GetMessagerContainerWithProvider()->fruit_3_conf_;
+}
+
+template <>
 const std::shared_ptr<FruitConf> Hub::Get<FruitConf>() const {
   return GetMessagerContainerWithProvider()->fruit_conf_;
 }
@@ -38,6 +43,7 @@ void MessagerContainer::InitShard0() {
   hero_base_conf_ = std::dynamic_pointer_cast<HeroBaseConf>(GetMessager(HeroBaseConf::Name()));
   hero_conf_ = std::dynamic_pointer_cast<HeroConf>(GetMessager(HeroConf::Name()));
   fruit_2_conf_ = std::dynamic_pointer_cast<Fruit2Conf>(GetMessager(Fruit2Conf::Name()));
+  fruit_3_conf_ = std::dynamic_pointer_cast<Fruit3Conf>(GetMessager(Fruit3Conf::Name()));
   fruit_conf_ = std::dynamic_pointer_cast<FruitConf>(GetMessager(FruitConf::Name()));
   item_conf_ = std::dynamic_pointer_cast<ItemConf>(GetMessager(ItemConf::Name()));
 }
@@ -46,6 +52,7 @@ void Registry::InitShard0() {
   Register<HeroBaseConf>();
   Register<HeroConf>();
   Register<Fruit2Conf>();
+  Register<Fruit3Conf>();
   Register<FruitConf>();
   Register<ItemConf>();
 }

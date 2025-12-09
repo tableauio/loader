@@ -123,3 +123,31 @@ message Fruit2Conf {
     }
   }
 }
+
+message Fruit3Conf {
+  option (tableau.worksheet) = {
+    name: "Fruit2Conf"
+    index: "CountryName"
+    index: "CountryItemAttrName"
+    ordered_index: "CountryItemPrice<CountryItemID>"
+  };
+
+  repeated Fruit fruit_list = 1 [(tableau.field) = { layout: LAYOUT_VERTICAL }];
+  message Fruit {
+    protoconf.FruitType fruit_type = 1 [(tableau.field) = { name: "FruitType" }];
+    repeated Country country_list = 2 [(tableau.field) = { name: "Country" layout: LAYOUT_HORIZONTAL }];
+    message Country {
+      string name = 1 [(tableau.field) = { name: "Name" }];
+      map<int32, Item> item_map = 2 [(tableau.field) = { name: "Item" key: "ID" layout: LAYOUT_HORIZONTAL }];
+      message Item {
+        int32 id = 1 [(tableau.field) = { name: "ID" }];
+        int32 price = 2 [(tableau.field) = { name: "Price" }];
+        repeated Attr attr_list = 3 [(tableau.field) = { name: "Attr" layout: LAYOUT_HORIZONTAL }];
+        message Attr {
+          string name = 1 [(tableau.field) = { name: "Name" }];
+          int32 value = 2 [(tableau.field) = { name: "Value" }];
+        }
+      }
+    }
+  }
+}

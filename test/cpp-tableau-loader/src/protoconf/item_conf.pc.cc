@@ -678,4 +678,116 @@ const protoconf::Fruit2Conf::Fruit::Country::Item* Fruit2Conf::FindFirstItem(int
   return conf->front();
 }
 
+const std::string Fruit3Conf::kProtoName = protoconf::Fruit3Conf::GetDescriptor()->name();
+
+bool Fruit3Conf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
+  tableau::util::TimeProfiler profiler;
+  bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
+  bool ok = loaded ? ProcessAfterLoad() : false;
+  stats_.duration = profiler.Elapse();
+  return ok;
+}
+
+bool Fruit3Conf::ProcessAfterLoad() {
+  // Index init.
+  index_country_map_.clear();
+  index_attr_map_.clear();
+  for (auto&& item1 : data_.fruit_list()) {
+    for (auto&& item2 : item1.country_list()) {
+      {
+        // Index: CountryName
+        index_country_map_[item2.name()].push_back(&item2);
+      }
+      for (auto&& item3 : item2.item_map()) {
+        auto k1 = item3.first;
+        for (auto&& item4 : item3.second.attr_list()) {
+          {
+            // Index: CountryItemAttrName
+            index_attr_map_[item4.name()].push_back(&item4);
+          }
+        }
+      }
+    }
+  }
+  // OrderedIndex init.
+  ordered_index_item_map_.clear();
+  for (auto&& item1 : data_.fruit_list()) {
+    for (auto&& item2 : item1.country_list()) {
+      for (auto&& item3 : item2.item_map()) {
+        auto k1 = item3.first;
+        {
+          // OrderedIndex: CountryItemPrice<CountryItemID>
+          ordered_index_item_map_[item3.second.price()].push_back(&item3.second);
+        }
+      }
+    }
+  }
+  // OrderedIndex(sort): CountryItemPrice<CountryItemID>
+  auto ordered_index_item_map_sorter = [](const protoconf::Fruit3Conf::Fruit::Country::Item* a,
+                                          const protoconf::Fruit3Conf::Fruit::Country::Item* b) {
+    return a->id() < b->id();
+  };
+  for (auto&& item : ordered_index_item_map_) {
+    std::sort(item.second.begin(), item.second.end(), ordered_index_item_map_sorter);
+  }
+  return true;
+}
+
+// Index: CountryName
+const Fruit3Conf::Index_CountryMap& Fruit3Conf::FindCountryMap() const { return index_country_map_ ;}
+
+const Fruit3Conf::Index_CountryVector* Fruit3Conf::FindCountry(const std::string& name) const {
+  auto iter = index_country_map_.find(name);
+  if (iter == index_country_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::Fruit3Conf::Fruit::Country* Fruit3Conf::FindFirstCountry(const std::string& name) const {
+  auto conf = FindCountry(name);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+// Index: CountryItemAttrName
+const Fruit3Conf::Index_AttrMap& Fruit3Conf::FindAttrMap() const { return index_attr_map_ ;}
+
+const Fruit3Conf::Index_AttrVector* Fruit3Conf::FindAttr(const std::string& name) const {
+  auto iter = index_attr_map_.find(name);
+  if (iter == index_attr_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::Fruit3Conf::Fruit::Country::Item::Attr* Fruit3Conf::FindFirstAttr(const std::string& name) const {
+  auto conf = FindAttr(name);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+// OrderedIndex: CountryItemPrice<CountryItemID>
+const Fruit3Conf::OrderedIndex_ItemMap& Fruit3Conf::FindItemMap() const { return ordered_index_item_map_ ;}
+
+const Fruit3Conf::OrderedIndex_ItemVector* Fruit3Conf::FindItem(int32_t price) const {
+  auto iter = ordered_index_item_map_.find(price);
+  if (iter == ordered_index_item_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::Fruit3Conf::Fruit::Country::Item* Fruit3Conf::FindFirstItem(int32_t price) const {
+  auto conf = FindItem(price);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
 }  // namespace tableau
