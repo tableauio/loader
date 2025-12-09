@@ -17,6 +17,7 @@ type MessagerContainer struct {
 	heroBaseConf       *HeroBaseConf
 	itemConf           *ItemConf
 	fruitConf          *FruitConf
+	fruit2Conf         *Fruit2Conf
 	patchReplaceConf   *PatchReplaceConf
 	patchMergeConf     *PatchMergeConf
 	recursivePatchConf *RecursivePatchConf
@@ -34,6 +35,7 @@ func newMessagerContainer(messagerMap MessagerMap) *MessagerContainer {
 		heroBaseConf:       GetMessager[*HeroBaseConf](messagerMap),
 		itemConf:           GetMessager[*ItemConf](messagerMap),
 		fruitConf:          GetMessager[*FruitConf](messagerMap),
+		fruit2Conf:         GetMessager[*Fruit2Conf](messagerMap),
 		patchReplaceConf:   GetMessager[*PatchReplaceConf](messagerMap),
 		patchMergeConf:     GetMessager[*PatchMergeConf](messagerMap),
 		recursivePatchConf: GetMessager[*RecursivePatchConf](messagerMap),
@@ -72,6 +74,10 @@ func (mc *MessagerContainer) GetItemConf() *ItemConf {
 
 func (mc *MessagerContainer) GetFruitConf() *FruitConf {
 	return mc.fruitConf
+}
+
+func (mc *MessagerContainer) GetFruit2Conf() *Fruit2Conf {
+	return mc.fruit2Conf
 }
 
 func (mc *MessagerContainer) GetPatchReplaceConf() *PatchReplaceConf {

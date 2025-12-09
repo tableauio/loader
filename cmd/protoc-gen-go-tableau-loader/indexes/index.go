@@ -82,7 +82,7 @@ func (x *Generator) genIndexField() {
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
 			x.g.P(x.indexContainerName(index, 0), " ", x.indexMapType(index))
-			for i := 1; i <= levelMessage.Depth-2; i++ {
+			for i := 1; i <= levelMessage.MapDepth-2; i++ {
 				if i > len(x.keys) {
 					break
 				}
@@ -106,7 +106,7 @@ func (x *Generator) genIndexLoader() {
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
 			x.g.P("x.", x.indexContainerName(index, 0), " = make(", x.indexMapType(index), ")")
-			for i := 1; i <= levelMessage.Depth-2; i++ {
+			for i := 1; i <= levelMessage.MapDepth-2; i++ {
 				if i > len(x.keys) {
 					break
 				}
@@ -122,18 +122,22 @@ func (x *Generator) genIndexLoader() {
 	parentDataName := "x.data"
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
-			x.genOneIndexLoader(index, levelMessage.Depth, parentDataName)
+			x.genOneIndexLoader(index, levelMessage.MapDepth, parentDataName)
 		}
-		keyName := fmt.Sprintf("k%d", levelMessage.Depth)
+		keyName := fmt.Sprintf("k%d", levelMessage.MapDepth)
 		valueName := fmt.Sprintf("v%d", levelMessage.Depth)
 		if levelMessage.FD == nil {
 			break
 		}
-		if !levelMessage.NextLevel.NeedGen() {
+		if !levelMessage.NextLevel.NeedGenIndex() {
 			break
 		}
-		x.g.P("for ", keyName, ", ", valueName, " := range ", parentDataName, x.fieldGetter(levelMessage.FD), " {")
-		x.g.P("_ = ", keyName)
+		if levelMessage.FD.IsMap() {
+			x.g.P("for ", keyName, ", ", valueName, " := range ", parentDataName, x.fieldGetter(levelMessage.FD), " {")
+			x.g.P("_ = ", keyName)
+		} else {
+			x.g.P("for _ , ", valueName, " := range ", parentDataName, x.fieldGetter(levelMessage.FD), " {")
+		}
 		parentDataName = valueName
 		defer x.g.P("}")
 	}
@@ -147,10 +151,8 @@ func (x *Generator) genOneIndexLoader(index *index.LevelIndex, depth int, parent
 		field := index.ColFields[0] // just take the first field
 		fieldName, _ := x.parseKeyFieldNameAndSuffix(field)
 		if field.FD.IsList() {
-			keyName := fmt.Sprintf("k%d", depth)
 			valueName := fmt.Sprintf("v%d", depth)
-			x.g.P("for ", keyName, ", ", valueName, " := range ", parentDataName, fieldName, " {")
-			x.g.P("_ = ", keyName)
+			x.g.P("for _ , ", valueName, " := range ", parentDataName, fieldName, " {")
 			x.g.P("key := ", valueName)
 			x.genIndexLoaderCommon(depth, index, parentDataName)
 			x.g.P("}")
@@ -240,7 +242,7 @@ func (x *Generator) genIndexSorter() {
 				x.g.P("for _, item := range x.", x.indexContainerName(index, 0), " {")
 				x.g.P(helper.SortPackage.Ident("Slice"), "(item, ", indexContainerName, "Sorter(item))")
 				x.g.P("}")
-				for i := 1; i <= levelMessage.Depth-2; i++ {
+				for i := 1; i <= levelMessage.MapDepth-2; i++ {
 					if i > len(x.keys) {
 						break
 					}
@@ -297,7 +299,7 @@ func (x *Generator) genIndexFinders() {
 			x.g.P("}")
 			x.g.P()
 
-			for i := 1; i <= levelMessage.Depth-2; i++ {
+			for i := 1; i <= levelMessage.MapDepth-2; i++ {
 				if i > len(x.keys) {
 					break
 				}

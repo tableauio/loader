@@ -36,11 +36,6 @@ type ActivityConf_LevelIndex_Activity_ChapterKey struct {
 	ActivityId uint64
 	ChapterId  uint32
 }
-type ActivityConf_LevelIndex_protoconf_SectionKey struct {
-	ActivityId uint64
-	ChapterId  uint32
-	SectionId  uint32
-}
 
 // Index types.
 // Index: ActivityName
@@ -74,7 +69,6 @@ type ActivityConf struct {
 	indexAwardMap         ActivityConf_Index_AwardMap
 	indexAwardMap1        map[uint64]ActivityConf_Index_AwardMap
 	indexAwardMap2        map[ActivityConf_LevelIndex_Activity_ChapterKey]ActivityConf_Index_AwardMap
-	indexAwardMap3        map[ActivityConf_LevelIndex_protoconf_SectionKey]ActivityConf_Index_AwardMap
 }
 
 // Name returns the ActivityConf's message name.
@@ -172,7 +166,6 @@ func (x *ActivityConf) processAfterLoad() error {
 	x.indexAwardMap = make(ActivityConf_Index_AwardMap)
 	x.indexAwardMap1 = make(map[uint64]ActivityConf_Index_AwardMap)
 	x.indexAwardMap2 = make(map[ActivityConf_LevelIndex_Activity_ChapterKey]ActivityConf_Index_AwardMap)
-	x.indexAwardMap3 = make(map[ActivityConf_LevelIndex_protoconf_SectionKey]ActivityConf_Index_AwardMap)
 	for k1, v1 := range x.data.GetActivityMap() {
 		_ = k1
 		{
@@ -202,8 +195,7 @@ func (x *ActivityConf) processAfterLoad() error {
 			}
 			for k3, v3 := range v2.GetSectionMap() {
 				_ = k3
-				for k4, v4 := range v3.GetSectionItemList() {
-					_ = k4
+				for _, v4 := range v3.GetSectionItemList() {
 					{
 						// Index: SectionItemID@Award
 						key := v4.GetId()
@@ -217,11 +209,6 @@ func (x *ActivityConf) processAfterLoad() error {
 							x.indexAwardMap2[indexAwardMap2Keys] = make(ActivityConf_Index_AwardMap)
 						}
 						x.indexAwardMap2[indexAwardMap2Keys][key] = append(x.indexAwardMap2[indexAwardMap2Keys][key], v4)
-						indexAwardMap3Keys := ActivityConf_LevelIndex_protoconf_SectionKey{k1, k2, k3}
-						if x.indexAwardMap3[indexAwardMap3Keys] == nil {
-							x.indexAwardMap3[indexAwardMap3Keys] = make(ActivityConf_Index_AwardMap)
-						}
-						x.indexAwardMap3[indexAwardMap3Keys][key] = append(x.indexAwardMap3[indexAwardMap3Keys][key], v4)
 					}
 				}
 			}
@@ -518,28 +505,6 @@ func (x *ActivityConf) FindAward2(activityId uint64, chapterId uint32, id uint32
 // or nil if no value found.
 func (x *ActivityConf) FindFirstAward2(activityId uint64, chapterId uint32, id uint32) *protoconf.Section_SectionItem {
 	val := x.FindAward2(activityId, chapterId, id)
-	if len(val) > 0 {
-		return val[0]
-	}
-	return nil
-}
-
-// FindAwardMap3 finds the index (SectionItemID@Award) to value (protoconf.Section_SectionItem) map
-// specified by (activityId, chapterId, sectionId).
-// One key may correspond to multiple values, which are contained by a slice.
-func (x *ActivityConf) FindAwardMap3(activityId uint64, chapterId uint32, sectionId uint32) ActivityConf_Index_AwardMap {
-	return x.indexAwardMap3[ActivityConf_LevelIndex_protoconf_SectionKey{activityId, chapterId, sectionId}]
-}
-
-// FindAward3 finds a slice of all values of the given key specified by (activityId, chapterId, sectionId).
-func (x *ActivityConf) FindAward3(activityId uint64, chapterId uint32, sectionId uint32, id uint32) []*protoconf.Section_SectionItem {
-	return x.FindAwardMap3(activityId, chapterId, sectionId)[id]
-}
-
-// FindFirstAward3 finds the first value of the given key specified by (activityId, chapterId, sectionId),
-// or nil if no value found.
-func (x *ActivityConf) FindFirstAward3(activityId uint64, chapterId uint32, sectionId uint32, id uint32) *protoconf.Section_SectionItem {
-	val := x.FindAward3(activityId, chapterId, sectionId, id)
 	if len(val) > 0 {
 		return val[0]
 	}
