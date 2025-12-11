@@ -2,9 +2,9 @@ package orderedmap
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
+	"github.com/tableauio/loader/internal/loadutil"
 	"github.com/tableauio/loader/internal/options"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -24,7 +24,7 @@ func NewGenerator(gen *protogen.Plugin, g *protogen.GeneratedFile, message *prot
 	}
 }
 
-func (x *Generator) needGenerate() bool {
+func (x *Generator) NeedGenerate() bool {
 	return options.NeedGenOrderedMap(x.message.Desc, options.LangGO)
 }
 
@@ -32,20 +32,12 @@ func (x *Generator) messagerName() string {
 	return string(x.message.Desc.Name())
 }
 
-func (x *Generator) orderedMapPrefix(mapFd protoreflect.FieldDescriptor) string {
-	if mapFd.MapValue().Kind() == protoreflect.MessageKind {
-		localMsgProtoName := strings.TrimPrefix(string(mapFd.MapValue().Message().FullName()), string(x.message.Desc.FullName())+".")
-		return strings.ReplaceAll(localMsgProtoName, ".", "_")
-	}
-	return mapFd.MapValue().Kind().String()
-}
-
 func (x *Generator) mapType(mapFd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf("%s_OrderedMap_%sMap", x.messagerName(), x.orderedMapPrefix(mapFd))
+	return fmt.Sprintf("%s_OrderedMap_%sMap", x.messagerName(), helper.ParseLeveledMapPrefix(x.message.Desc, mapFd))
 }
 
 func (x *Generator) mapValueType(mapFd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf("%s_OrderedMap_%sValue", x.messagerName(), x.orderedMapPrefix(mapFd))
+	return fmt.Sprintf("%s_OrderedMap_%sValue", x.messagerName(), helper.ParseLeveledMapPrefix(x.message.Desc, mapFd))
 }
 
 func (x *Generator) mapValueFieldType(fd protoreflect.FieldDescriptor) string {
@@ -57,20 +49,20 @@ func (x *Generator) mapValueFieldType(fd protoreflect.FieldDescriptor) string {
 }
 
 func (x *Generator) GenOrderedMapTypeDef() {
-	if !x.needGenerate() {
+	if !x.NeedGenerate() {
 		return
 	}
 	x.g.P("// OrderedMap types.")
 	x.genOrderedMapTypeDef(x.message.Desc, 1, nil)
 }
 
-func (x *Generator) genOrderedMapTypeDef(md protoreflect.MessageDescriptor, depth int, keys helper.MapKeys) {
+func (x *Generator) genOrderedMapTypeDef(md protoreflect.MessageDescriptor, depth int, keys helper.MapKeySlice) {
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
 			nextKeys := keys.AddMapKey(helper.MapKey{
 				Type: helper.ParseMapKeyType(fd.MapKey()),
-				Name: helper.ParseMapFieldName(fd),
+				Name: helper.ParseMapFieldNameAsFuncParam(fd),
 			})
 			keyType := nextKeys[len(nextKeys)-1].Type
 			if keyType == "bool" {
@@ -95,7 +87,7 @@ func (x *Generator) genOrderedMapTypeDef(md protoreflect.MessageDescriptor, dept
 }
 
 func (x *Generator) GenOrderedMapField() {
-	if !x.needGenerate() {
+	if !x.NeedGenerate() {
 		return
 	}
 	md := x.message.Desc
@@ -109,14 +101,14 @@ func (x *Generator) GenOrderedMapField() {
 }
 
 func (x *Generator) GenOrderedMapLoader() {
-	if !x.needGenerate() {
+	if !x.NeedGenerate() {
 		return
 	}
 	x.g.P("// OrderedMap init.")
 	x.genOrderedMapLoader(x.message.Desc, 1, nil, "")
 }
 
-func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth int, keys helper.MapKeys, lastOrderedMapValue string) {
+func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth int, keys helper.MapKeySlice, lastOrderedMapValue string) {
 	message := helper.FindMessage(x.gen, md)
 	for _, field := range message.Fields {
 		fd := field.Desc
@@ -124,7 +116,7 @@ func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth
 			needConvertBool := len(keys) > 0 && keys[len(keys)-1].Type == "int"
 			nextKeys := keys.AddMapKey(helper.MapKey{
 				Type: helper.ParseMapKeyType(fd.MapKey()),
-				Name: helper.ParseMapFieldName(fd),
+				Name: helper.ParseMapFieldNameAsFuncParam(fd),
 			})
 			keyType := nextKeys[len(nextKeys)-1].Type
 			needConvertBoolNext := keyType == "bool"
@@ -171,13 +163,13 @@ func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth
 }
 
 func (x *Generator) GenOrderedMapGetters() {
-	if !x.needGenerate() {
+	if !x.NeedGenerate() {
 		return
 	}
 	x.genOrderedMapGetters(x.message.Desc, 1, nil)
 }
 
-func (x *Generator) genOrderedMapGetters(md protoreflect.MessageDescriptor, depth int, keys helper.MapKeys) {
+func (x *Generator) genOrderedMapGetters(md protoreflect.MessageDescriptor, depth int, keys helper.MapKeySlice) {
 	genGetterName := func(depth int) string {
 		getter := "GetOrderedMap"
 		if depth > 1 {
@@ -191,11 +183,11 @@ func (x *Generator) genOrderedMapGetters(md protoreflect.MessageDescriptor, dept
 			getter := genGetterName(depth)
 			orderedMap := x.mapType(fd)
 			if depth == 1 {
-				x.g.P("// ", getter, " returns the 1-level ordered map.")
+				x.g.P("// ", getter, " returns the ", loadutil.Ordinal(depth), "-level ordered map.")
 				x.g.P("func (x *", x.messagerName(), ") ", getter, "(", keys.GenGetParams(), ") *", orderedMap, "{")
 				x.g.P("return x.orderedMap ")
 			} else {
-				x.g.P("// ", getter, " finds value in the ", depth-1, "-level ordered map. It will return")
+				x.g.P("// ", getter, " finds value in the ", loadutil.Ordinal(depth-1), "-level ordered map. It will return")
 				x.g.P("// NotFound error if the key is not found.")
 				x.g.P("func (x *", x.messagerName(), ") ", getter, "(", keys.GenGetParams(), ") (*", orderedMap, ", error) {")
 				if depth == 2 {
@@ -226,7 +218,7 @@ func (x *Generator) genOrderedMapGetters(md protoreflect.MessageDescriptor, dept
 
 			nextKeys := keys.AddMapKey(helper.MapKey{
 				Type: helper.ParseMapKeyType(fd.MapKey()),
-				Name: helper.ParseMapFieldName(fd),
+				Name: helper.ParseMapFieldNameAsFuncParam(fd),
 			})
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
 				x.genOrderedMapGetters(fd.MapValue().Message(), depth+1, nextKeys)

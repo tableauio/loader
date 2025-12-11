@@ -126,6 +126,18 @@ class HeroConf;
 template <>
 const std::shared_ptr<HeroConf> Hub::Get<HeroConf>() const;
 
+class Fruit2Conf;
+template <>
+const std::shared_ptr<Fruit2Conf> Hub::Get<Fruit2Conf>() const;
+
+class Fruit3Conf;
+template <>
+const std::shared_ptr<Fruit3Conf> Hub::Get<Fruit3Conf>() const;
+
+class FruitConf;
+template <>
+const std::shared_ptr<FruitConf> Hub::Get<FruitConf>() const;
+
 class ItemConf;
 template <>
 const std::shared_ptr<ItemConf> Hub::Get<ItemConf>() const;
@@ -174,6 +186,9 @@ class MessagerContainer {
   std::time_t last_loaded_time_;
   std::shared_ptr<HeroBaseConf> hero_base_conf_;
   std::shared_ptr<HeroConf> hero_conf_;
+  std::shared_ptr<Fruit2Conf> fruit_2_conf_;
+  std::shared_ptr<Fruit3Conf> fruit_3_conf_;
+  std::shared_ptr<FruitConf> fruit_conf_;
   std::shared_ptr<ItemConf> item_conf_;
   std::shared_ptr<PatchMergeConf> patch_merge_conf_;
   std::shared_ptr<PatchReplaceConf> patch_replace_conf_;

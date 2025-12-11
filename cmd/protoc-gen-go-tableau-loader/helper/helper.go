@@ -37,7 +37,7 @@ func ParseIndexFieldNameAsFuncParam(gen *protogen.Plugin, fd protoreflect.FieldD
 	if fieldName == "" {
 		return fieldName
 	}
-	return escapeIdentifier(strings.ToLower(fieldName[:1]) + fieldName[1:])
+	return escapeIdentifier(fieldName)
 }
 
 // ParseGoType converts a FieldDescriptor to its Go type.
@@ -130,7 +130,7 @@ func ParseOrderedIndexKeyType(gen *protogen.Plugin, g *protogen.GeneratedFile, f
 	}
 }
 
-func ParseMapFieldName(fd protoreflect.FieldDescriptor) string {
+func ParseMapFieldNameAsKeyStructFieldName(fd protoreflect.FieldDescriptor) string {
 	opts := fd.Options().(*descriptorpb.FieldOptions)
 	fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
 	name := fdOpts.GetKey()
@@ -138,7 +138,15 @@ func ParseMapFieldName(fd protoreflect.FieldDescriptor) string {
 		valueFd := fd.MapValue().Message().Fields().Get(0)
 		name = string(valueFd.Name())
 	}
-	return escapeIdentifier(name)
+	return strcase.ToCamel(name)
+}
+
+func ParseMapFieldNameAsFuncParam(fd protoreflect.FieldDescriptor) string {
+	fieldName := ParseMapFieldNameAsKeyStructFieldName(fd)
+	if fieldName == "" {
+		return fieldName
+	}
+	return escapeIdentifier(fieldName)
 }
 
 func ParseMapValueType(gen *protogen.Plugin, g *protogen.GeneratedFile, fd protoreflect.FieldDescriptor) string {
@@ -242,41 +250,49 @@ func GetTypeEmptyValue(fd protoreflect.FieldDescriptor) string {
 	}
 }
 
+func ParseLeveledMapPrefix(md protoreflect.MessageDescriptor, mapFd protoreflect.FieldDescriptor) string {
+	if mapFd.MapValue().Kind() == protoreflect.MessageKind {
+		localMsgProtoName := strings.TrimPrefix(string(mapFd.MapValue().Message().FullName()), string(md.FullName())+".")
+		return strings.ReplaceAll(localMsgProtoName, ".", "_")
+	}
+	return mapFd.MapValue().Kind().String()
+}
+
 type MapKey struct {
 	Type      string
 	Name      string
 	FieldName string // multi-colunm index only
 }
 
-type MapKeys []MapKey
+type MapKeySlice []MapKey
 
-func (keys MapKeys) AddMapKey(newKey MapKey) MapKeys {
+func (s MapKeySlice) AddMapKey(newKey MapKey) MapKeySlice {
 	if newKey.Name == "" {
-		newKey.Name = fmt.Sprintf("key%d", len(keys)+1)
+		newKey.Name = fmt.Sprintf("key%d", len(s)+1)
 	}
-	for _, key := range keys {
+	for _, key := range s {
 		if key.Name == newKey.Name {
 			// rewrite to avoid name confict
-			newKey.Name = fmt.Sprintf("%s%d", newKey.Name, len(keys)+1)
+			newKey.Name = fmt.Sprintf("%s%d", newKey.Name, len(s)+1)
 			break
 		}
 	}
-	return append(keys, newKey)
+	return append(s, newKey)
 }
 
 // GenGetParams generates function parameters, which are the names listed in the function's definition.
-func (keys MapKeys) GenGetParams() string {
+func (s MapKeySlice) GenGetParams() string {
 	var params []string
-	for _, key := range keys {
+	for _, key := range s {
 		params = append(params, key.Name+" "+key.Type)
 	}
 	return strings.Join(params, ", ")
 }
 
 // GenGetArguments generates function arguments, which are the real values passed to the function.
-func (keys MapKeys) GenGetArguments() string {
+func (s MapKeySlice) GenGetArguments() string {
 	var params []string
-	for _, key := range keys {
+	for _, key := range s {
 		params = append(params, key.Name)
 	}
 	return strings.Join(params, ", ")

@@ -38,6 +38,7 @@ bool ItemConf::ProcessAfterLoad() {
   index_item_path_friend_id_map_.clear();
   index_use_effect_type_map_.clear();
   for (auto&& item1 : data_.item_map()) {
+    auto k1 = item1.first;
     {
       // Index: Type
       index_item_map_[item1.second.type()].push_back(&item1.second);
@@ -92,26 +93,29 @@ bool ItemConf::ProcessAfterLoad() {
     }
   }
   // Index(sort): Param<ID>@ItemInfo
+  auto index_item_info_map_sorter = [](const protoconf::ItemConf::Item* a,
+                                       const protoconf::ItemConf::Item* b) {
+    return a->id() < b->id();
+  };
   for (auto&& item : index_item_info_map_) {
-    std::sort(item.second.begin(), item.second.end(),
-              [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
-                return a->id() < b->id();
-              });
+    std::sort(item.second.begin(), item.second.end(), index_item_info_map_sorter);
   }
   // Index(sort): (ID,Name)<Type,UseEffectType>@AwardItem
+  auto index_award_item_map_sorter = [](const protoconf::ItemConf::Item* a,
+                                        const protoconf::ItemConf::Item* b) {
+    if (a->type() != b->type()) {
+      return a->type() < b->type();
+    }
+    return a->use_effect().type() < b->use_effect().type();
+  };
   for (auto&& item : index_award_item_map_) {
-    std::sort(item.second.begin(), item.second.end(),
-              [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
-                if (a->type() != b->type()) {
-                  return a->type() < b->type();
-                }
-                return a->use_effect().type() < b->use_effect().type();
-              });
+    std::sort(item.second.begin(), item.second.end(), index_award_item_map_sorter);
   }
   // OrderedIndex init.
   ordered_index_ext_type_map_.clear();
   ordered_index_param_ext_type_map_.clear();
   for (auto&& item1 : data_.item_map()) {
+    auto k1 = item1.first;
     {
       // OrderedIndex: ExtType@ExtType
       for (auto&& item2 : item1.second.ext_type_list()) {
@@ -129,11 +133,12 @@ bool ItemConf::ProcessAfterLoad() {
     }
   }
   // OrderedIndex(sort): (Param,ExtType)<ID>@ParamExtType
+  auto ordered_index_param_ext_type_map_sorter = [](const protoconf::ItemConf::Item* a,
+                                                    const protoconf::ItemConf::Item* b) {
+    return a->id() < b->id();
+  };
   for (auto&& item : ordered_index_param_ext_type_map_) {
-    std::sort(item.second.begin(), item.second.end(),
-              [](const protoconf::ItemConf::Item* a, const protoconf::ItemConf::Item* b) {
-                return a->id() < b->id();
-              });
+    std::sort(item.second.begin(), item.second.end(), ordered_index_param_ext_type_map_sorter);
   }
   return true;
 }
@@ -151,7 +156,7 @@ const ItemConf::OrderedMap_ItemMap* ItemConf::GetOrderedMap() const {
 }
 
 // Index: Type
-const ItemConf::Index_ItemMap& ItemConf::FindItem() const { return index_item_map_ ;}
+const ItemConf::Index_ItemMap& ItemConf::FindItemMap() const { return index_item_map_ ;}
 
 const ItemConf::Index_ItemVector* ItemConf::FindItem(protoconf::FruitType type) const {
   auto iter = index_item_map_.find(type);
@@ -170,7 +175,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItem(protoconf::FruitType ty
 }
 
 // Index: Param<ID>@ItemInfo
-const ItemConf::Index_ItemInfoMap& ItemConf::FindItemInfo() const { return index_item_info_map_ ;}
+const ItemConf::Index_ItemInfoMap& ItemConf::FindItemInfoMap() const { return index_item_info_map_ ;}
 
 const ItemConf::Index_ItemInfoVector* ItemConf::FindItemInfo(int32_t param) const {
   auto iter = index_item_info_map_.find(param);
@@ -189,7 +194,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItemInfo(int32_t param) cons
 }
 
 // Index: Default@ItemDefaultInfo
-const ItemConf::Index_ItemDefaultInfoMap& ItemConf::FindItemDefaultInfo() const { return index_item_default_info_map_ ;}
+const ItemConf::Index_ItemDefaultInfoMap& ItemConf::FindItemDefaultInfoMap() const { return index_item_default_info_map_ ;}
 
 const ItemConf::Index_ItemDefaultInfoVector* ItemConf::FindItemDefaultInfo(const std::string& default_) const {
   auto iter = index_item_default_info_map_.find(default_);
@@ -208,7 +213,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItemDefaultInfo(const std::s
 }
 
 // Index: ExtType@ItemExtInfo
-const ItemConf::Index_ItemExtInfoMap& ItemConf::FindItemExtInfo() const { return index_item_ext_info_map_ ;}
+const ItemConf::Index_ItemExtInfoMap& ItemConf::FindItemExtInfoMap() const { return index_item_ext_info_map_ ;}
 
 const ItemConf::Index_ItemExtInfoVector* ItemConf::FindItemExtInfo(protoconf::FruitType ext_type) const {
   auto iter = index_item_ext_info_map_.find(ext_type);
@@ -227,7 +232,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItemExtInfo(protoconf::Fruit
 }
 
 // Index: (ID,Name)<Type,UseEffectType>@AwardItem
-const ItemConf::Index_AwardItemMap& ItemConf::FindAwardItem() const { return index_award_item_map_ ;}
+const ItemConf::Index_AwardItemMap& ItemConf::FindAwardItemMap() const { return index_award_item_map_ ;}
 
 const ItemConf::Index_AwardItemVector* ItemConf::FindAwardItem(uint32_t id, const std::string& name) const {
   auto iter = index_award_item_map_.find({id, name});
@@ -246,7 +251,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstAwardItem(uint32_t id, const
 }
 
 // Index: (ID,Type,Param,ExtType)@SpecialItem
-const ItemConf::Index_SpecialItemMap& ItemConf::FindSpecialItem() const { return index_special_item_map_ ;}
+const ItemConf::Index_SpecialItemMap& ItemConf::FindSpecialItemMap() const { return index_special_item_map_ ;}
 
 const ItemConf::Index_SpecialItemVector* ItemConf::FindSpecialItem(uint32_t id, protoconf::FruitType type, int32_t param, protoconf::FruitType ext_type) const {
   auto iter = index_special_item_map_.find({id, type, param, ext_type});
@@ -265,7 +270,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstSpecialItem(uint32_t id, pro
 }
 
 // Index: PathDir@ItemPathDir
-const ItemConf::Index_ItemPathDirMap& ItemConf::FindItemPathDir() const { return index_item_path_dir_map_ ;}
+const ItemConf::Index_ItemPathDirMap& ItemConf::FindItemPathDirMap() const { return index_item_path_dir_map_ ;}
 
 const ItemConf::Index_ItemPathDirVector* ItemConf::FindItemPathDir(const std::string& dir) const {
   auto iter = index_item_path_dir_map_.find(dir);
@@ -284,7 +289,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItemPathDir(const std::strin
 }
 
 // Index: PathName@ItemPathName
-const ItemConf::Index_ItemPathNameMap& ItemConf::FindItemPathName() const { return index_item_path_name_map_ ;}
+const ItemConf::Index_ItemPathNameMap& ItemConf::FindItemPathNameMap() const { return index_item_path_name_map_ ;}
 
 const ItemConf::Index_ItemPathNameVector* ItemConf::FindItemPathName(const std::string& name) const {
   auto iter = index_item_path_name_map_.find(name);
@@ -303,7 +308,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItemPathName(const std::stri
 }
 
 // Index: PathFriendID@ItemPathFriendID
-const ItemConf::Index_ItemPathFriendIDMap& ItemConf::FindItemPathFriendID() const { return index_item_path_friend_id_map_ ;}
+const ItemConf::Index_ItemPathFriendIDMap& ItemConf::FindItemPathFriendIDMap() const { return index_item_path_friend_id_map_ ;}
 
 const ItemConf::Index_ItemPathFriendIDVector* ItemConf::FindItemPathFriendID(uint32_t id) const {
   auto iter = index_item_path_friend_id_map_.find(id);
@@ -322,7 +327,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItemPathFriendID(uint32_t id
 }
 
 // Index: UseEffectType@UseEffectType
-const ItemConf::Index_UseEffectTypeMap& ItemConf::FindUseEffectType() const { return index_use_effect_type_map_ ;}
+const ItemConf::Index_UseEffectTypeMap& ItemConf::FindUseEffectTypeMap() const { return index_use_effect_type_map_ ;}
 
 const ItemConf::Index_UseEffectTypeVector* ItemConf::FindUseEffectType(protoconf::UseEffect::Type type) const {
   auto iter = index_use_effect_type_map_.find(type);
@@ -341,7 +346,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstUseEffectType(protoconf::Use
 }
 
 // OrderedIndex: ExtType@ExtType
-const ItemConf::OrderedIndex_ExtTypeMap& ItemConf::FindExtType() const { return ordered_index_ext_type_map_ ;}
+const ItemConf::OrderedIndex_ExtTypeMap& ItemConf::FindExtTypeMap() const { return ordered_index_ext_type_map_ ;}
 
 const ItemConf::OrderedIndex_ExtTypeVector* ItemConf::FindExtType(protoconf::FruitType ext_type) const {
   auto iter = ordered_index_ext_type_map_.find(ext_type);
@@ -360,7 +365,7 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstExtType(protoconf::FruitType
 }
 
 // OrderedIndex: (Param,ExtType)<ID>@ParamExtType
-const ItemConf::OrderedIndex_ParamExtTypeMap& ItemConf::FindParamExtType() const { return ordered_index_param_ext_type_map_ ;}
+const ItemConf::OrderedIndex_ParamExtTypeMap& ItemConf::FindParamExtTypeMap() const { return ordered_index_param_ext_type_map_ ;}
 
 const ItemConf::OrderedIndex_ParamExtTypeVector* ItemConf::FindParamExtType(int32_t param, protoconf::FruitType ext_type) const {
   auto iter = ordered_index_param_ext_type_map_.find({param, ext_type});

@@ -52,13 +52,23 @@ type LevelMessage struct {
 
 	// Current level message's all index fields
 	Indexes, OrderedIndexes []*LevelIndex
+
+	// depth of message hierarchy
+	Depth, MapDepth int
 }
 
-func (l *LevelMessage) NeedGen() bool {
+func (l *LevelMessage) NeedGenIndex() bool {
 	if l == nil {
 		return false
 	}
-	return len(l.Indexes) != 0 || len(l.OrderedIndexes) != 0 || l.NextLevel.NeedGen()
+	return len(l.Indexes) != 0 || l.NextLevel.NeedGenIndex()
+}
+
+func (l *LevelMessage) NeedGenOrderedIndex() bool {
+	if l == nil {
+		return false
+	}
+	return len(l.OrderedIndexes) != 0 || l.NextLevel.NeedGenOrderedIndex()
 }
 
 type LevelIndex struct {
@@ -77,21 +87,24 @@ func (l *LevelIndex) Name() string {
 	return name
 }
 
-func parseLevelMessage(md protoreflect.MessageDescriptor) *LevelMessage {
-	levelInfo := &LevelMessage{}
+func parseLevelMessage(md protoreflect.MessageDescriptor, depth, mapDepth int) *LevelMessage {
+	levelMsg := &LevelMessage{
+		Depth:    depth,
+		MapDepth: mapDepth,
+	}
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() && fd.MapValue().Kind() == protoreflect.MessageKind {
-			levelInfo.NextLevel = parseLevelMessage(fd.MapValue().Message())
-			levelInfo.FD = fd
-			return levelInfo
+			levelMsg.NextLevel = parseLevelMessage(fd.MapValue().Message(), depth+1, mapDepth+1)
+			levelMsg.FD = fd
+			return levelMsg
 		} else if fd.IsList() && fd.Kind() == protoreflect.MessageKind {
-			levelInfo.NextLevel = parseLevelMessage(fd.Message())
-			levelInfo.FD = fd
-			return levelInfo
+			levelMsg.NextLevel = parseLevelMessage(fd.Message(), depth+1, mapDepth)
+			levelMsg.FD = fd
+			return levelMsg
 		}
 	}
-	return &LevelMessage{}
+	return levelMsg
 }
 
 // parseRecursively parses multi-column index related info.
@@ -169,7 +182,7 @@ func parseCols(cols []string, prefix string, md protoreflect.MessageDescriptor, 
 
 func ParseIndexDescriptor(md protoreflect.MessageDescriptor) *IndexDescriptor {
 	descriptor := &IndexDescriptor{
-		LevelMessage: parseLevelMessage(md),
+		LevelMessage: parseLevelMessage(md, 1, 1),
 	}
 	indexes, orderedIndexes := ParseWSOptionIndex(md)
 	// parse indexes into level message

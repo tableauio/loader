@@ -2,7 +2,6 @@ package orderedmap
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/options"
@@ -30,20 +29,12 @@ func (x *Generator) messagerName() string {
 	return string(x.message.Desc.Name())
 }
 
-func (x *Generator) orderedMapPrefix(mapFd protoreflect.FieldDescriptor) string {
-	if mapFd.MapValue().Kind() == protoreflect.MessageKind {
-		localMsgProtoName := strings.TrimPrefix(string(mapFd.MapValue().Message().FullName()), string(x.message.Desc.FullName())+".")
-		return strings.ReplaceAll(localMsgProtoName, ".", "_")
-	}
-	return mapFd.MapValue().Kind().String()
-}
-
 func (x *Generator) mapType(mapFd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf("OrderedMap_%sMap", x.orderedMapPrefix(mapFd))
+	return fmt.Sprintf("OrderedMap_%sMap", helper.ParseLeveledMapPrefix(x.message.Desc, mapFd))
 }
 
 func (x *Generator) mapValueType(mapFd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf("OrderedMap_%sValue", x.orderedMapPrefix(mapFd))
+	return fmt.Sprintf("OrderedMap_%sValue", helper.ParseLeveledMapPrefix(x.message.Desc, mapFd))
 }
 
 func (x *Generator) mapValueFieldType(fd protoreflect.FieldDescriptor) string {
@@ -64,7 +55,7 @@ func (x *Generator) GenHppOrderedMapGetters() {
 	x.genHppOrderedMapGetters(x.message.Desc, 1, nil)
 }
 
-func (x *Generator) genHppOrderedMapGetters(md protoreflect.MessageDescriptor, depth int, keys helper.MapKeys) {
+func (x *Generator) genHppOrderedMapGetters(md protoreflect.MessageDescriptor, depth int, keys helper.MapKeySlice) {
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
@@ -150,7 +141,7 @@ func (x *Generator) GenOrderedMapGetters() {
 	x.genOrderedMapGetters(x.message.Desc, 1, nil)
 }
 
-func (x *Generator) genOrderedMapGetters(md protoreflect.MessageDescriptor, depth int, keys helper.MapKeys) {
+func (x *Generator) genOrderedMapGetters(md protoreflect.MessageDescriptor, depth int, keys helper.MapKeySlice) {
 	messagerName := x.messagerName()
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)

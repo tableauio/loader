@@ -41,7 +41,7 @@ func (x *PatchReplaceConf) Data() *protoconf.PatchReplaceConf {
 	return nil
 }
 
-// Load fills PatchReplaceConf's inner message from file in the specified directory and format.
+// Load loads PatchReplaceConf's content in the given dir, based on format and messager options.
 func (x *PatchReplaceConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
@@ -58,7 +58,7 @@ func (x *PatchReplaceConf) Load(dir string, format format.Format, opts *load.Mes
 	return x.processAfterLoad()
 }
 
-// Store writes PatchReplaceConf's inner message to file in the specified directory and format.
+// Store stores PatchReplaceConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *PatchReplaceConf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
@@ -107,7 +107,7 @@ func (x *PatchMergeConf) Data() *protoconf.PatchMergeConf {
 	return nil
 }
 
-// Load fills PatchMergeConf's inner message from file in the specified directory and format.
+// Load loads PatchMergeConf's content in the given dir, based on format and messager options.
 func (x *PatchMergeConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
@@ -124,7 +124,7 @@ func (x *PatchMergeConf) Load(dir string, format format.Format, opts *load.Messa
 	return x.processAfterLoad()
 }
 
-// Store writes PatchMergeConf's inner message to file in the specified directory and format.
+// Store stores PatchMergeConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *PatchMergeConf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
@@ -148,7 +148,7 @@ func (x *PatchMergeConf) originalMessage() proto.Message {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return
+// Get1 finds value in the 1st-level map. It will return
 // NotFound error if the key is not found.
 func (x *PatchMergeConf) Get1(id uint32) (*protoconf.Item, error) {
 	d := x.Data().GetItemMap()
@@ -184,7 +184,7 @@ func (x *RecursivePatchConf) Data() *protoconf.RecursivePatchConf {
 	return nil
 }
 
-// Load fills RecursivePatchConf's inner message from file in the specified directory and format.
+// Load loads RecursivePatchConf's content in the given dir, based on format and messager options.
 func (x *RecursivePatchConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
@@ -201,7 +201,7 @@ func (x *RecursivePatchConf) Load(dir string, format format.Format, opts *load.M
 	return x.processAfterLoad()
 }
 
-// Store writes RecursivePatchConf's inner message to file in the specified directory and format.
+// Store stores RecursivePatchConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *RecursivePatchConf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
@@ -225,7 +225,7 @@ func (x *RecursivePatchConf) originalMessage() proto.Message {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return
+// Get1 finds value in the 1st-level map. It will return
 // NotFound error if the key is not found.
 func (x *RecursivePatchConf) Get1(shopId uint32) (*protoconf.RecursivePatchConf_Shop, error) {
 	d := x.Data().GetShopMap()
@@ -236,7 +236,7 @@ func (x *RecursivePatchConf) Get1(shopId uint32) (*protoconf.RecursivePatchConf_
 	}
 }
 
-// Get2 finds value in the 2-level map. It will return
+// Get2 finds value in the 2nd-level map. It will return
 // NotFound error if the key is not found.
 func (x *RecursivePatchConf) Get2(shopId uint32, goodsId uint32) (*protoconf.RecursivePatchConf_Shop_Goods, error) {
 	conf, err := x.Get1(shopId)
@@ -251,7 +251,7 @@ func (x *RecursivePatchConf) Get2(shopId uint32, goodsId uint32) (*protoconf.Rec
 	}
 }
 
-// Get3 finds value in the 3-level map. It will return
+// Get3 finds value in the 3rd-level map. It will return
 // NotFound error if the key is not found.
 func (x *RecursivePatchConf) Get3(shopId uint32, goodsId uint32, type_ uint32) (*protoconf.RecursivePatchConf_Shop_Goods_Currency, error) {
 	conf, err := x.Get2(shopId, goodsId)
@@ -266,7 +266,7 @@ func (x *RecursivePatchConf) Get3(shopId uint32, goodsId uint32, type_ uint32) (
 	}
 }
 
-// Get4 finds value in the 4-level map. It will return
+// Get4 finds value in the 4th-level map. It will return
 // NotFound error if the key is not found.
 func (x *RecursivePatchConf) Get4(shopId uint32, goodsId uint32, type_ uint32, key4 int32) (int32, error) {
 	conf, err := x.Get3(shopId, goodsId, type_)

@@ -9,7 +9,7 @@ import "common_conf.proto";
 
 option go_package = "github.com/tableauio/loader/test/go-tableau-loader/protoconf";
 option (tableau.workbook) = {
-  name: "Test.xlsx"
+  name: "Item.xlsx"
 };
 
 message ItemConf {

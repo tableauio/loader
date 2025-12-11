@@ -41,38 +41,55 @@ bool ActivityConf::ProcessAfterLoad() {
   // Index init.
   index_activity_map_.clear();
   index_chapter_map_.clear();
+  index_chapter_map1_.clear();
   index_named_chapter_map_.clear();
+  index_named_chapter_map1_.clear();
   index_award_map_.clear();
+  index_award_map1_.clear();
+  index_award_map2_.clear();
   for (auto&& item1 : data_.activity_map()) {
+    auto k1 = item1.first;
     {
       // Index: ActivityName
       index_activity_map_[item1.second.activity_name()].push_back(&item1.second);
     }
     for (auto&& item2 : item1.second.chapter_map()) {
+      auto k2 = item2.first;
       {
         // Index: ChapterID
         index_chapter_map_[item2.second.chapter_id()].push_back(&item2.second);
+        index_chapter_map1_[k1][item2.second.chapter_id()].push_back(&item2.second);
       }
       {
         // Index: ChapterName<AwardID>@NamedChapter
         index_named_chapter_map_[item2.second.chapter_name()].push_back(&item2.second);
+        index_named_chapter_map1_[k1][item2.second.chapter_name()].push_back(&item2.second);
       }
       for (auto&& item3 : item2.second.section_map()) {
+        auto k3 = item3.first;
         for (auto&& item4 : item3.second.section_item_list()) {
           {
             // Index: SectionItemID@Award
             index_award_map_[item4.id()].push_back(&item4);
+            index_award_map1_[k1][item4.id()].push_back(&item4);
+            index_award_map2_[{k1, k2}][item4.id()].push_back(&item4);
           }
         }
       }
     }
   }
   // Index(sort): ChapterName<AwardID>@NamedChapter
+  auto index_named_chapter_map_sorter = [](const protoconf::ActivityConf::Activity::Chapter* a,
+                                           const protoconf::ActivityConf::Activity::Chapter* b) {
+    return a->award_id() < b->award_id();
+  };
   for (auto&& item : index_named_chapter_map_) {
-    std::sort(item.second.begin(), item.second.end(),
-              [](const protoconf::ActivityConf::Activity::Chapter* a, const protoconf::ActivityConf::Activity::Chapter* b) {
-                return a->award_id() < b->award_id();
-              });
+    std::sort(item.second.begin(), item.second.end(), index_named_chapter_map_sorter);
+  }
+  for (auto&& item : index_named_chapter_map1_) {
+    for (auto&& item1 : item.second) {
+      std::sort(item1.second.begin(), item1.second.end(), index_named_chapter_map_sorter);
+    }
   }
   return true;
 }
@@ -162,7 +179,7 @@ const ActivityConf::OrderedMap_int32Map* ActivityConf::GetOrderedMap(uint64_t ac
 }
 
 // Index: ActivityName
-const ActivityConf::Index_ActivityMap& ActivityConf::FindActivity() const { return index_activity_map_ ;}
+const ActivityConf::Index_ActivityMap& ActivityConf::FindActivityMap() const { return index_activity_map_ ;}
 
 const ActivityConf::Index_ActivityVector* ActivityConf::FindActivity(const std::string& activity_name) const {
   auto iter = index_activity_map_.find(activity_name);
@@ -181,7 +198,7 @@ const protoconf::ActivityConf::Activity* ActivityConf::FindFirstActivity(const s
 }
 
 // Index: ChapterID
-const ActivityConf::Index_ChapterMap& ActivityConf::FindChapter() const { return index_chapter_map_ ;}
+const ActivityConf::Index_ChapterMap& ActivityConf::FindChapterMap() const { return index_chapter_map_ ;}
 
 const ActivityConf::Index_ChapterVector* ActivityConf::FindChapter(uint32_t chapter_id) const {
   auto iter = index_chapter_map_.find(chapter_id);
@@ -199,8 +216,36 @@ const protoconf::ActivityConf::Activity::Chapter* ActivityConf::FindFirstChapter
   return conf->front();
 }
 
+const ActivityConf::Index_ChapterMap* ActivityConf::FindChapterMap(uint64_t activity_id) const {
+  auto iter = index_chapter_map1_.find(activity_id);
+  if (iter == index_chapter_map1_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const ActivityConf::Index_ChapterVector* ActivityConf::FindChapter(uint64_t activity_id, uint32_t chapter_id) const {
+  auto map = FindChapterMap(activity_id);
+  if (map == nullptr) {
+    return nullptr;
+  }
+  auto iter = map->find(chapter_id);
+  if (iter == map->end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::ActivityConf::Activity::Chapter* ActivityConf::FindFirstChapter(uint64_t activity_id, uint32_t chapter_id) const {
+  auto conf = FindChapter(activity_id, chapter_id);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
 // Index: ChapterName<AwardID>@NamedChapter
-const ActivityConf::Index_NamedChapterMap& ActivityConf::FindNamedChapter() const { return index_named_chapter_map_ ;}
+const ActivityConf::Index_NamedChapterMap& ActivityConf::FindNamedChapterMap() const { return index_named_chapter_map_ ;}
 
 const ActivityConf::Index_NamedChapterVector* ActivityConf::FindNamedChapter(const std::string& chapter_name) const {
   auto iter = index_named_chapter_map_.find(chapter_name);
@@ -218,8 +263,36 @@ const protoconf::ActivityConf::Activity::Chapter* ActivityConf::FindFirstNamedCh
   return conf->front();
 }
 
+const ActivityConf::Index_NamedChapterMap* ActivityConf::FindNamedChapterMap(uint64_t activity_id) const {
+  auto iter = index_named_chapter_map1_.find(activity_id);
+  if (iter == index_named_chapter_map1_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const ActivityConf::Index_NamedChapterVector* ActivityConf::FindNamedChapter(uint64_t activity_id, const std::string& chapter_name) const {
+  auto map = FindNamedChapterMap(activity_id);
+  if (map == nullptr) {
+    return nullptr;
+  }
+  auto iter = map->find(chapter_name);
+  if (iter == map->end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::ActivityConf::Activity::Chapter* ActivityConf::FindFirstNamedChapter(uint64_t activity_id, const std::string& chapter_name) const {
+  auto conf = FindNamedChapter(activity_id, chapter_name);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
 // Index: SectionItemID@Award
-const ActivityConf::Index_AwardMap& ActivityConf::FindAward() const { return index_award_map_ ;}
+const ActivityConf::Index_AwardMap& ActivityConf::FindAwardMap() const { return index_award_map_ ;}
 
 const ActivityConf::Index_AwardVector* ActivityConf::FindAward(uint32_t id) const {
   auto iter = index_award_map_.find(id);
@@ -231,6 +304,62 @@ const ActivityConf::Index_AwardVector* ActivityConf::FindAward(uint32_t id) cons
 
 const protoconf::Section::SectionItem* ActivityConf::FindFirstAward(uint32_t id) const {
   auto conf = FindAward(id);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+const ActivityConf::Index_AwardMap* ActivityConf::FindAwardMap(uint64_t activity_id) const {
+  auto iter = index_award_map1_.find(activity_id);
+  if (iter == index_award_map1_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const ActivityConf::Index_AwardVector* ActivityConf::FindAward(uint64_t activity_id, uint32_t id) const {
+  auto map = FindAwardMap(activity_id);
+  if (map == nullptr) {
+    return nullptr;
+  }
+  auto iter = map->find(id);
+  if (iter == map->end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::Section::SectionItem* ActivityConf::FindFirstAward(uint64_t activity_id, uint32_t id) const {
+  auto conf = FindAward(activity_id, id);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+const ActivityConf::Index_AwardMap* ActivityConf::FindAwardMap(uint64_t activity_id, uint32_t chapter_id) const {
+  auto iter = index_award_map2_.find({activity_id, chapter_id});
+  if (iter == index_award_map2_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const ActivityConf::Index_AwardVector* ActivityConf::FindAward(uint64_t activity_id, uint32_t chapter_id, uint32_t id) const {
+  auto map = FindAwardMap(activity_id, chapter_id);
+  if (map == nullptr) {
+    return nullptr;
+  }
+  auto iter = map->find(id);
+  if (iter == map->end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::Section::SectionItem* ActivityConf::FindFirstAward(uint64_t activity_id, uint32_t chapter_id, uint32_t id) const {
+  auto conf = FindAward(activity_id, chapter_id, id);
   if (conf == nullptr || conf->empty()) {
     return nullptr;
   }
@@ -299,20 +428,22 @@ bool TaskConf::ProcessAfterLoad() {
   // Index init.
   index_task_map_.clear();
   for (auto&& item1 : data_.task_map()) {
+    auto k1 = item1.first;
     {
       // Index: ActivityID<Goal,ID>
       index_task_map_[item1.second.activity_id()].push_back(&item1.second);
     }
   }
   // Index(sort): ActivityID<Goal,ID>
+  auto index_task_map_sorter = [](const protoconf::TaskConf::Task* a,
+                                  const protoconf::TaskConf::Task* b) {
+    if (a->goal() != b->goal()) {
+      return a->goal() < b->goal();
+    }
+    return a->id() < b->id();
+  };
   for (auto&& item : index_task_map_) {
-    std::sort(item.second.begin(), item.second.end(),
-              [](const protoconf::TaskConf::Task* a, const protoconf::TaskConf::Task* b) {
-                if (a->goal() != b->goal()) {
-                  return a->goal() < b->goal();
-                }
-                return a->id() < b->id();
-              });
+    std::sort(item.second.begin(), item.second.end(), index_task_map_sorter);
   }
   // OrderedIndex init.
   ordered_index_ordered_task_map_.clear();
@@ -320,6 +451,7 @@ bool TaskConf::ProcessAfterLoad() {
   ordered_index_sorted_task_expiry_map_.clear();
   ordered_index_activity_expiry_map_.clear();
   for (auto&& item1 : data_.task_map()) {
+    auto k1 = item1.first;
     {
       // OrderedIndex: Goal<ID>@OrderedTask
       ordered_index_ordered_task_map_[item1.second.goal()].push_back(&item1.second);
@@ -339,21 +471,23 @@ bool TaskConf::ProcessAfterLoad() {
     }
   }
   // OrderedIndex(sort): Goal<ID>@OrderedTask
+  auto ordered_index_ordered_task_map_sorter = [](const protoconf::TaskConf::Task* a,
+                                                  const protoconf::TaskConf::Task* b) {
+    return a->id() < b->id();
+  };
   for (auto&& item : ordered_index_ordered_task_map_) {
-    std::sort(item.second.begin(), item.second.end(),
-              [](const protoconf::TaskConf::Task* a, const protoconf::TaskConf::Task* b) {
-                return a->id() < b->id();
-              });
+    std::sort(item.second.begin(), item.second.end(), ordered_index_ordered_task_map_sorter);
   }
   // OrderedIndex(sort): Expiry<Goal,ID>@SortedTaskExpiry
+  auto ordered_index_sorted_task_expiry_map_sorter = [](const protoconf::TaskConf::Task* a,
+                                                        const protoconf::TaskConf::Task* b) {
+    if (a->goal() != b->goal()) {
+      return a->goal() < b->goal();
+    }
+    return a->id() < b->id();
+  };
   for (auto&& item : ordered_index_sorted_task_expiry_map_) {
-    std::sort(item.second.begin(), item.second.end(),
-              [](const protoconf::TaskConf::Task* a, const protoconf::TaskConf::Task* b) {
-                if (a->goal() != b->goal()) {
-                  return a->goal() < b->goal();
-                }
-                return a->id() < b->id();
-              });
+    std::sort(item.second.begin(), item.second.end(), ordered_index_sorted_task_expiry_map_sorter);
   }
   return true;
 }
@@ -367,7 +501,7 @@ const protoconf::TaskConf::Task* TaskConf::Get(int64_t id) const {
 }
 
 // Index: ActivityID<Goal,ID>
-const TaskConf::Index_TaskMap& TaskConf::FindTask() const { return index_task_map_ ;}
+const TaskConf::Index_TaskMap& TaskConf::FindTaskMap() const { return index_task_map_ ;}
 
 const TaskConf::Index_TaskVector* TaskConf::FindTask(int64_t activity_id) const {
   auto iter = index_task_map_.find(activity_id);
@@ -386,7 +520,7 @@ const protoconf::TaskConf::Task* TaskConf::FindFirstTask(int64_t activity_id) co
 }
 
 // OrderedIndex: Goal<ID>@OrderedTask
-const TaskConf::OrderedIndex_OrderedTaskMap& TaskConf::FindOrderedTask() const { return ordered_index_ordered_task_map_ ;}
+const TaskConf::OrderedIndex_OrderedTaskMap& TaskConf::FindOrderedTaskMap() const { return ordered_index_ordered_task_map_ ;}
 
 const TaskConf::OrderedIndex_OrderedTaskVector* TaskConf::FindOrderedTask(int64_t goal) const {
   auto iter = ordered_index_ordered_task_map_.find(goal);
@@ -405,7 +539,7 @@ const protoconf::TaskConf::Task* TaskConf::FindFirstOrderedTask(int64_t goal) co
 }
 
 // OrderedIndex: Expiry@TaskExpiry
-const TaskConf::OrderedIndex_TaskExpiryMap& TaskConf::FindTaskExpiry() const { return ordered_index_task_expiry_map_ ;}
+const TaskConf::OrderedIndex_TaskExpiryMap& TaskConf::FindTaskExpiryMap() const { return ordered_index_task_expiry_map_ ;}
 
 const TaskConf::OrderedIndex_TaskExpiryVector* TaskConf::FindTaskExpiry(int64_t expiry) const {
   auto iter = ordered_index_task_expiry_map_.find(expiry);
@@ -424,7 +558,7 @@ const protoconf::TaskConf::Task* TaskConf::FindFirstTaskExpiry(int64_t expiry) c
 }
 
 // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
-const TaskConf::OrderedIndex_SortedTaskExpiryMap& TaskConf::FindSortedTaskExpiry() const { return ordered_index_sorted_task_expiry_map_ ;}
+const TaskConf::OrderedIndex_SortedTaskExpiryMap& TaskConf::FindSortedTaskExpiryMap() const { return ordered_index_sorted_task_expiry_map_ ;}
 
 const TaskConf::OrderedIndex_SortedTaskExpiryVector* TaskConf::FindSortedTaskExpiry(int64_t expiry) const {
   auto iter = ordered_index_sorted_task_expiry_map_.find(expiry);
@@ -443,7 +577,7 @@ const protoconf::TaskConf::Task* TaskConf::FindFirstSortedTaskExpiry(int64_t exp
 }
 
 // OrderedIndex: (Expiry,ActivityID)@ActivityExpiry
-const TaskConf::OrderedIndex_ActivityExpiryMap& TaskConf::FindActivityExpiry() const { return ordered_index_activity_expiry_map_ ;}
+const TaskConf::OrderedIndex_ActivityExpiryMap& TaskConf::FindActivityExpiryMap() const { return ordered_index_activity_expiry_map_ ;}
 
 const TaskConf::OrderedIndex_ActivityExpiryVector* TaskConf::FindActivityExpiry(int64_t expiry, int64_t activity_id) const {
   auto iter = ordered_index_activity_expiry_map_.find({expiry, activity_id});

@@ -34,8 +34,12 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 			},
 			want: &IndexDescriptor{
 				LevelMessage: &LevelMessage{
-					FD: fd[*protoconf.ItemConf]("item_map"),
+					Depth:    1,
+					MapDepth: 1,
+					FD:       fd[*protoconf.ItemConf]("item_map"),
 					NextLevel: &LevelMessage{
+						Depth:    2,
+						MapDepth: 2,
 						Indexes: []*LevelIndex{
 							{
 								Index: &Index{
@@ -242,6 +246,53 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								},
 							},
 						},
+						OrderedIndexes: []*LevelIndex{
+							{
+								Index: &Index{
+									Cols: []string{"ExtType"},
+									Name: "ExtType",
+								},
+								MD: md[*protoconf.ItemConf_Item](),
+								ColFields: []*LevelField{
+									{
+										FD: fd[*protoconf.ItemConf_Item]("ext_type_list"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											fd[*protoconf.ItemConf_Item]("ext_type_list"),
+										},
+									},
+								},
+							},
+							{
+								Index: &Index{
+									Cols:       []string{"Param", "ExtType"},
+									SortedCols: []string{"ID"},
+									Name:       "ParamExtType",
+								},
+								MD: md[*protoconf.ItemConf_Item](),
+								ColFields: []*LevelField{
+									{
+										FD: fd[*protoconf.ItemConf_Item]("param_list"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											fd[*protoconf.ItemConf_Item]("param_list"),
+										},
+									},
+									{
+										FD: fd[*protoconf.ItemConf_Item]("ext_type_list"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											fd[*protoconf.ItemConf_Item]("ext_type_list"),
+										},
+									},
+								},
+								SortedColFields: []*LevelField{
+									{
+										FD: fd[*protoconf.ItemConf_Item]("id"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											fd[*protoconf.ItemConf_Item]("id"),
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -253,10 +304,16 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 			},
 			want: &IndexDescriptor{
 				LevelMessage: &LevelMessage{
-					FD: fd[*protoconf.HeroConf]("hero_map"),
+					Depth:    1,
+					MapDepth: 1,
+					FD:       fd[*protoconf.HeroConf]("hero_map"),
 					NextLevel: &LevelMessage{
-						FD: fd[*protoconf.HeroConf_Hero]("attr_map"),
+						Depth:    2,
+						MapDepth: 2,
+						FD:       fd[*protoconf.HeroConf_Hero]("attr_map"),
 						NextLevel: &LevelMessage{
+							Depth:    3,
+							MapDepth: 3,
 							Indexes: []*LevelIndex{
 								{
 									Index: &Index{
@@ -286,9 +343,13 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 			},
 			want: &IndexDescriptor{
 				LevelMessage: &LevelMessage{
-					FD: fd[*protoconf.ActivityConf]("activity_map"),
+					Depth:    1,
+					MapDepth: 1,
+					FD:       fd[*protoconf.ActivityConf]("activity_map"),
 					NextLevel: &LevelMessage{
-						FD: fd[*protoconf.ActivityConf_Activity]("chapter_map"),
+						Depth:    2,
+						MapDepth: 2,
+						FD:       fd[*protoconf.ActivityConf_Activity]("chapter_map"),
 						Indexes: []*LevelIndex{
 							{
 								Index: &Index{
@@ -307,7 +368,9 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 							},
 						},
 						NextLevel: &LevelMessage{
-							FD: fd[*protoconf.ActivityConf_Activity_Chapter]("section_map"),
+							Depth:    3,
+							MapDepth: 3,
+							FD:       fd[*protoconf.ActivityConf_Activity_Chapter]("section_map"),
 							Indexes: []*LevelIndex{
 								{
 									Index: &Index{
@@ -350,9 +413,13 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								},
 							},
 							NextLevel: &LevelMessage{
-								FD: fd[*protoconf.Section]("section_item_list"),
+								Depth:    4,
+								MapDepth: 4,
+								FD:       fd[*protoconf.Section]("section_item_list"),
 								NextLevel: &LevelMessage{
-									FD: fd[*protoconf.Section_SectionItem]("decompose_item_list"),
+									Depth:    5,
+									MapDepth: 4,
+									FD:       fd[*protoconf.Section_SectionItem]("decompose_item_list"),
 									Indexes: []*LevelIndex{
 										{
 											Index: &Index{
@@ -370,7 +437,10 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 											},
 										},
 									},
-									NextLevel: &LevelMessage{},
+									NextLevel: &LevelMessage{
+										Depth:    6,
+										MapDepth: 4,
+									},
 								},
 							},
 						},
@@ -385,8 +455,12 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 			},
 			want: &IndexDescriptor{
 				LevelMessage: &LevelMessage{
-					FD: fd[*protoconf.TaskConf]("task_map"),
+					Depth:    1,
+					MapDepth: 1,
+					FD:       fd[*protoconf.TaskConf]("task_map"),
 					NextLevel: &LevelMessage{
+						Depth:    2,
+						MapDepth: 2,
 						Indexes: []*LevelIndex{
 							{
 								Index: &Index{
@@ -485,6 +559,27 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 										FD: fd[*protoconf.TaskConf_Task]("id"),
 										LeveledFDList: []protoreflect.FieldDescriptor{
 											fd[*protoconf.TaskConf_Task]("id"),
+										},
+									},
+								},
+							},
+							{
+								Index: &Index{
+									Cols: []string{"Expiry", "ActivityID"},
+									Name: "ActivityExpiry",
+								},
+								MD: md[*protoconf.TaskConf_Task](),
+								ColFields: []*LevelField{
+									{
+										FD: fd[*protoconf.TaskConf_Task]("expiry"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											fd[*protoconf.TaskConf_Task]("expiry"),
+										},
+									},
+									{
+										FD: fd[*protoconf.TaskConf_Task]("activity_id"),
+										LeveledFDList: []protoreflect.FieldDescriptor{
+											fd[*protoconf.TaskConf_Task]("activity_id"),
 										},
 									},
 								},
