@@ -8,6 +8,7 @@ import (
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/orderedmap"
 	"github.com/tableauio/loader/internal/extensions"
 	"github.com/tableauio/loader/internal/index"
+	"github.com/tableauio/loader/internal/loadutil"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -102,7 +103,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("}")
 	g.P()
 
-	g.P("// Load fills ", messagerName, "'s inner message from file in the specified directory and format.")
+	g.P("// Load loads ", messagerName, "'s content in the given dir, based on format and messager options.")
 	g.P("func (x *", messagerName, ") Load(dir string, format ", helper.FormatPackage.Ident("Format"), " , opts *", helper.LoadPackage.Ident("MessagerOptions"), ") error {")
 	g.P("start := ", helper.TimePackage.Ident("Now"), "()")
 	g.P("defer func ()  {")
@@ -120,7 +121,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("}")
 	g.P()
 
-	g.P("// Store writes ", messagerName, "'s inner message to file in the specified directory and format.")
+	g.P("// Store stores ", messagerName, "'s content to file in the specified directory and format.")
 	g.P("// Available formats: JSON, Bin, and Text.")
 	g.P("func (x *", messagerName, ") Store(dir string, format ", helper.FormatPackage.Ident("Format"), " , options ...", helper.StorePackage.Ident("Option"), ") error {")
 	g.P("return ", helper.StorePackage.Ident("Store"), "(x.Data(), dir, format, options...)")
@@ -173,7 +174,7 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 				Name: helper.ParseMapFieldNameAsFuncParam(fd),
 			})
 			getter := fmt.Sprintf("Get%v", depth)
-			g.P("// ", getter, " finds value in the ", depth, "-level map. It will return")
+			g.P("// ", getter, " finds value in the ", loadutil.Ordinal(depth), "-level map. It will return")
 			g.P("// NotFound error if the key is not found.")
 			g.P("func (x *", messagerName, ") ", getter, "(", keys.GenGetParams(), ") (", helper.ParseMapValueType(gen, g, fd), ", error) {")
 

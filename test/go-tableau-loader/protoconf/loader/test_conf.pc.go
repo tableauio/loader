@@ -84,7 +84,7 @@ func (x *ActivityConf) Data() *protoconf.ActivityConf {
 	return nil
 }
 
-// Load fills ActivityConf's inner message from file in the specified directory and format.
+// Load loads ActivityConf's content in the given dir, based on format and messager options.
 func (x *ActivityConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
@@ -101,7 +101,7 @@ func (x *ActivityConf) Load(dir string, format format.Format, opts *load.Message
 	return x.processAfterLoad()
 }
 
-// Store writes ActivityConf's inner message to file in the specified directory and format.
+// Store stores ActivityConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *ActivityConf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
@@ -231,7 +231,7 @@ func (x *ActivityConf) processAfterLoad() error {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return
+// Get1 finds value in the 1st-level map. It will return
 // NotFound error if the key is not found.
 func (x *ActivityConf) Get1(activityId uint64) (*protoconf.ActivityConf_Activity, error) {
 	d := x.Data().GetActivityMap()
@@ -242,7 +242,7 @@ func (x *ActivityConf) Get1(activityId uint64) (*protoconf.ActivityConf_Activity
 	}
 }
 
-// Get2 finds value in the 2-level map. It will return
+// Get2 finds value in the 2nd-level map. It will return
 // NotFound error if the key is not found.
 func (x *ActivityConf) Get2(activityId uint64, chapterId uint32) (*protoconf.ActivityConf_Activity_Chapter, error) {
 	conf, err := x.Get1(activityId)
@@ -257,7 +257,7 @@ func (x *ActivityConf) Get2(activityId uint64, chapterId uint32) (*protoconf.Act
 	}
 }
 
-// Get3 finds value in the 3-level map. It will return
+// Get3 finds value in the 3rd-level map. It will return
 // NotFound error if the key is not found.
 func (x *ActivityConf) Get3(activityId uint64, chapterId uint32, sectionId uint32) (*protoconf.Section, error) {
 	conf, err := x.Get2(activityId, chapterId)
@@ -272,7 +272,7 @@ func (x *ActivityConf) Get3(activityId uint64, chapterId uint32, sectionId uint3
 	}
 }
 
-// Get4 finds value in the 4-level map. It will return
+// Get4 finds value in the 4th-level map. It will return
 // NotFound error if the key is not found.
 func (x *ActivityConf) Get4(activityId uint64, chapterId uint32, sectionId uint32, key4 uint32) (int32, error) {
 	conf, err := x.Get3(activityId, chapterId, sectionId)
@@ -287,12 +287,12 @@ func (x *ActivityConf) Get4(activityId uint64, chapterId uint32, sectionId uint3
 	}
 }
 
-// GetOrderedMap returns the 1-level ordered map.
+// GetOrderedMap returns the 1st-level ordered map.
 func (x *ActivityConf) GetOrderedMap() *ActivityConf_OrderedMap_ActivityMap {
 	return x.orderedMap
 }
 
-// GetOrderedMap1 finds value in the 1-level ordered map. It will return
+// GetOrderedMap1 finds value in the 1st-level ordered map. It will return
 // NotFound error if the key is not found.
 func (x *ActivityConf) GetOrderedMap1(activityId uint64) (*ActivityConf_OrderedMap_Activity_ChapterMap, error) {
 	conf := x.orderedMap
@@ -303,7 +303,7 @@ func (x *ActivityConf) GetOrderedMap1(activityId uint64) (*ActivityConf_OrderedM
 	}
 }
 
-// GetOrderedMap2 finds value in the 2-level ordered map. It will return
+// GetOrderedMap2 finds value in the 2nd-level ordered map. It will return
 // NotFound error if the key is not found.
 func (x *ActivityConf) GetOrderedMap2(activityId uint64, chapterId uint32) (*ActivityConf_OrderedMap_protoconf_SectionMap, error) {
 	conf, err := x.GetOrderedMap1(activityId)
@@ -317,7 +317,7 @@ func (x *ActivityConf) GetOrderedMap2(activityId uint64, chapterId uint32) (*Act
 	}
 }
 
-// GetOrderedMap3 finds value in the 3-level ordered map. It will return
+// GetOrderedMap3 finds value in the 3rd-level ordered map. It will return
 // NotFound error if the key is not found.
 func (x *ActivityConf) GetOrderedMap3(activityId uint64, chapterId uint32, sectionId uint32) (*ActivityConf_OrderedMap_int32Map, error) {
 	conf, err := x.GetOrderedMap2(activityId, chapterId)
@@ -333,7 +333,7 @@ func (x *ActivityConf) GetOrderedMap3(activityId uint64, chapterId uint32, secti
 
 // Index: ActivityName
 
-// FindActivityMap finds the index (ActivityName) to value (protoconf.ActivityConf_Activity) map.
+// FindActivityMap finds the index key (ActivityName) to value (protoconf.ActivityConf_Activity) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ActivityConf) FindActivityMap() ActivityConf_Index_ActivityMap {
 	return x.indexActivityMap
@@ -356,7 +356,7 @@ func (x *ActivityConf) FindFirstActivity(activityName string) *protoconf.Activit
 
 // Index: ChapterID
 
-// FindChapterMap finds the index (ChapterID) to value (protoconf.ActivityConf_Activity_Chapter) map.
+// FindChapterMap finds the index key (ChapterID) to value (protoconf.ActivityConf_Activity_Chapter) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ActivityConf) FindChapterMap() ActivityConf_Index_ChapterMap {
 	return x.indexChapterMap
@@ -377,20 +377,20 @@ func (x *ActivityConf) FindFirstChapter(chapterId uint32) *protoconf.ActivityCon
 	return nil
 }
 
-// FindChapterMap1 finds the index (ChapterID) to value (protoconf.ActivityConf_Activity_Chapter) 1-level map
-// specified by (activityId).
+// FindChapterMap1 finds the index key (ChapterID) to value (protoconf.ActivityConf_Activity_Chapter),
+// which is the 1st-level map specified by (activityId).
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ActivityConf) FindChapterMap1(activityId uint64) ActivityConf_Index_ChapterMap {
 	return x.indexChapterMap1[activityId]
 }
 
-// FindChapter1 finds a slice of all values of the given key in the 1-level map
+// FindChapter1 finds a slice of all values of the given key in the 1st-level map
 // specified by (activityId).
 func (x *ActivityConf) FindChapter1(activityId uint64, chapterId uint32) []*protoconf.ActivityConf_Activity_Chapter {
 	return x.FindChapterMap1(activityId)[chapterId]
 }
 
-// FindFirstChapter1 finds the first value of the given key in the 1-level map
+// FindFirstChapter1 finds the first value of the given key in the 1st-level map
 // specified by (activityId), or nil if no value found.
 func (x *ActivityConf) FindFirstChapter1(activityId uint64, chapterId uint32) *protoconf.ActivityConf_Activity_Chapter {
 	val := x.FindChapter1(activityId, chapterId)
@@ -402,7 +402,7 @@ func (x *ActivityConf) FindFirstChapter1(activityId uint64, chapterId uint32) *p
 
 // Index: ChapterName<AwardID>@NamedChapter
 
-// FindNamedChapterMap finds the index (ChapterName<AwardID>@NamedChapter) to value (protoconf.ActivityConf_Activity_Chapter) map.
+// FindNamedChapterMap finds the index key (ChapterName<AwardID>@NamedChapter) to value (protoconf.ActivityConf_Activity_Chapter) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ActivityConf) FindNamedChapterMap() ActivityConf_Index_NamedChapterMap {
 	return x.indexNamedChapterMap
@@ -423,20 +423,20 @@ func (x *ActivityConf) FindFirstNamedChapter(chapterName string) *protoconf.Acti
 	return nil
 }
 
-// FindNamedChapterMap1 finds the index (ChapterName<AwardID>@NamedChapter) to value (protoconf.ActivityConf_Activity_Chapter) 1-level map
-// specified by (activityId).
+// FindNamedChapterMap1 finds the index key (ChapterName<AwardID>@NamedChapter) to value (protoconf.ActivityConf_Activity_Chapter),
+// which is the 1st-level map specified by (activityId).
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ActivityConf) FindNamedChapterMap1(activityId uint64) ActivityConf_Index_NamedChapterMap {
 	return x.indexNamedChapterMap1[activityId]
 }
 
-// FindNamedChapter1 finds a slice of all values of the given key in the 1-level map
+// FindNamedChapter1 finds a slice of all values of the given key in the 1st-level map
 // specified by (activityId).
 func (x *ActivityConf) FindNamedChapter1(activityId uint64, chapterName string) []*protoconf.ActivityConf_Activity_Chapter {
 	return x.FindNamedChapterMap1(activityId)[chapterName]
 }
 
-// FindFirstNamedChapter1 finds the first value of the given key in the 1-level map
+// FindFirstNamedChapter1 finds the first value of the given key in the 1st-level map
 // specified by (activityId), or nil if no value found.
 func (x *ActivityConf) FindFirstNamedChapter1(activityId uint64, chapterName string) *protoconf.ActivityConf_Activity_Chapter {
 	val := x.FindNamedChapter1(activityId, chapterName)
@@ -448,7 +448,7 @@ func (x *ActivityConf) FindFirstNamedChapter1(activityId uint64, chapterName str
 
 // Index: SectionItemID@Award
 
-// FindAwardMap finds the index (SectionItemID@Award) to value (protoconf.Section_SectionItem) map.
+// FindAwardMap finds the index key (SectionItemID@Award) to value (protoconf.Section_SectionItem) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ActivityConf) FindAwardMap() ActivityConf_Index_AwardMap {
 	return x.indexAwardMap
@@ -469,20 +469,20 @@ func (x *ActivityConf) FindFirstAward(id uint32) *protoconf.Section_SectionItem 
 	return nil
 }
 
-// FindAwardMap1 finds the index (SectionItemID@Award) to value (protoconf.Section_SectionItem) 1-level map
-// specified by (activityId).
+// FindAwardMap1 finds the index key (SectionItemID@Award) to value (protoconf.Section_SectionItem),
+// which is the 1st-level map specified by (activityId).
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ActivityConf) FindAwardMap1(activityId uint64) ActivityConf_Index_AwardMap {
 	return x.indexAwardMap1[activityId]
 }
 
-// FindAward1 finds a slice of all values of the given key in the 1-level map
+// FindAward1 finds a slice of all values of the given key in the 1st-level map
 // specified by (activityId).
 func (x *ActivityConf) FindAward1(activityId uint64, id uint32) []*protoconf.Section_SectionItem {
 	return x.FindAwardMap1(activityId)[id]
 }
 
-// FindFirstAward1 finds the first value of the given key in the 1-level map
+// FindFirstAward1 finds the first value of the given key in the 1st-level map
 // specified by (activityId), or nil if no value found.
 func (x *ActivityConf) FindFirstAward1(activityId uint64, id uint32) *protoconf.Section_SectionItem {
 	val := x.FindAward1(activityId, id)
@@ -492,20 +492,20 @@ func (x *ActivityConf) FindFirstAward1(activityId uint64, id uint32) *protoconf.
 	return nil
 }
 
-// FindAwardMap2 finds the index (SectionItemID@Award) to value (protoconf.Section_SectionItem) 2-level map
-// specified by (activityId, chapterId).
+// FindAwardMap2 finds the index key (SectionItemID@Award) to value (protoconf.Section_SectionItem),
+// which is the 2nd-level map specified by (activityId, chapterId).
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *ActivityConf) FindAwardMap2(activityId uint64, chapterId uint32) ActivityConf_Index_AwardMap {
 	return x.indexAwardMap2[ActivityConf_LevelIndex_Activity_ChapterKey{activityId, chapterId}]
 }
 
-// FindAward2 finds a slice of all values of the given key in the 2-level map
+// FindAward2 finds a slice of all values of the given key in the 2nd-level map
 // specified by (activityId, chapterId).
 func (x *ActivityConf) FindAward2(activityId uint64, chapterId uint32, id uint32) []*protoconf.Section_SectionItem {
 	return x.FindAwardMap2(activityId, chapterId)[id]
 }
 
-// FindFirstAward2 finds the first value of the given key in the 2-level map
+// FindFirstAward2 finds the first value of the given key in the 2nd-level map
 // specified by (activityId, chapterId), or nil if no value found.
 func (x *ActivityConf) FindFirstAward2(activityId uint64, chapterId uint32, id uint32) *protoconf.Section_SectionItem {
 	val := x.FindAward2(activityId, chapterId, id)
@@ -540,7 +540,7 @@ func (x *ChapterConf) Data() *protoconf.ChapterConf {
 	return nil
 }
 
-// Load fills ChapterConf's inner message from file in the specified directory and format.
+// Load loads ChapterConf's content in the given dir, based on format and messager options.
 func (x *ChapterConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
@@ -557,7 +557,7 @@ func (x *ChapterConf) Load(dir string, format format.Format, opts *load.Messager
 	return x.processAfterLoad()
 }
 
-// Store writes ChapterConf's inner message to file in the specified directory and format.
+// Store stores ChapterConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *ChapterConf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
@@ -581,7 +581,7 @@ func (x *ChapterConf) originalMessage() proto.Message {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return
+// Get1 finds value in the 1st-level map. It will return
 // NotFound error if the key is not found.
 func (x *ChapterConf) Get1(id uint64) (*protoconf.ChapterConf_Chapter, error) {
 	d := x.Data().GetChapterMap()
@@ -617,7 +617,7 @@ func (x *ThemeConf) Data() *protoconf.ThemeConf {
 	return nil
 }
 
-// Load fills ThemeConf's inner message from file in the specified directory and format.
+// Load loads ThemeConf's content in the given dir, based on format and messager options.
 func (x *ThemeConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
@@ -634,7 +634,7 @@ func (x *ThemeConf) Load(dir string, format format.Format, opts *load.MessagerOp
 	return x.processAfterLoad()
 }
 
-// Store writes ThemeConf's inner message to file in the specified directory and format.
+// Store stores ThemeConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *ThemeConf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
@@ -658,7 +658,7 @@ func (x *ThemeConf) originalMessage() proto.Message {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return
+// Get1 finds value in the 1st-level map. It will return
 // NotFound error if the key is not found.
 func (x *ThemeConf) Get1(name string) (*protoconf.ThemeConf_Theme, error) {
 	d := x.Data().GetThemeMap()
@@ -669,7 +669,7 @@ func (x *ThemeConf) Get1(name string) (*protoconf.ThemeConf_Theme, error) {
 	}
 }
 
-// Get2 finds value in the 2-level map. It will return
+// Get2 finds value in the 2nd-level map. It will return
 // NotFound error if the key is not found.
 func (x *ThemeConf) Get2(name string, param string) (string, error) {
 	conf, err := x.Get1(name)
@@ -743,7 +743,7 @@ func (x *TaskConf) Data() *protoconf.TaskConf {
 	return nil
 }
 
-// Load fills TaskConf's inner message from file in the specified directory and format.
+// Load loads TaskConf's content in the given dir, based on format and messager options.
 func (x *TaskConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
@@ -760,7 +760,7 @@ func (x *TaskConf) Load(dir string, format format.Format, opts *load.MessagerOpt
 	return x.processAfterLoad()
 }
 
-// Store writes TaskConf's inner message to file in the specified directory and format.
+// Store stores TaskConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *TaskConf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
@@ -866,7 +866,7 @@ func (x *TaskConf) processAfterLoad() error {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return
+// Get1 finds value in the 1st-level map. It will return
 // NotFound error if the key is not found.
 func (x *TaskConf) Get1(id int64) (*protoconf.TaskConf_Task, error) {
 	d := x.Data().GetTaskMap()
@@ -879,7 +879,7 @@ func (x *TaskConf) Get1(id int64) (*protoconf.TaskConf_Task, error) {
 
 // Index: ActivityID<Goal,ID>
 
-// FindTaskMap finds the index (ActivityID<Goal,ID>) to value (protoconf.TaskConf_Task) map.
+// FindTaskMap finds the index key (ActivityID<Goal,ID>) to value (protoconf.TaskConf_Task) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *TaskConf) FindTaskMap() TaskConf_Index_TaskMap {
 	return x.indexTaskMap
@@ -902,7 +902,7 @@ func (x *TaskConf) FindFirstTask(activityId int64) *protoconf.TaskConf_Task {
 
 // OrderedIndex: Goal<ID>@OrderedTask
 
-// FindOrderedTaskMap finds the ordered index (Goal<ID>@OrderedTask) to value (protoconf.TaskConf_Task) treemap.
+// FindOrderedTaskMap finds the ordered index key (Goal<ID>@OrderedTask) to value (protoconf.TaskConf_Task) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *TaskConf) FindOrderedTaskMap() *TaskConf_OrderedIndex_OrderedTaskMap {
 	return x.orderedIndexOrderedTaskMap
@@ -926,7 +926,7 @@ func (x *TaskConf) FindFirstOrderedTask(goal int64) *protoconf.TaskConf_Task {
 
 // OrderedIndex: Expiry@TaskExpiry
 
-// FindTaskExpiryMap finds the ordered index (Expiry@TaskExpiry) to value (protoconf.TaskConf_Task) treemap.
+// FindTaskExpiryMap finds the ordered index key (Expiry@TaskExpiry) to value (protoconf.TaskConf_Task) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *TaskConf) FindTaskExpiryMap() *TaskConf_OrderedIndex_TaskExpiryMap {
 	return x.orderedIndexTaskExpiryMap
@@ -950,7 +950,7 @@ func (x *TaskConf) FindFirstTaskExpiry(expiry int64) *protoconf.TaskConf_Task {
 
 // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
 
-// FindSortedTaskExpiryMap finds the ordered index (Expiry<Goal,ID>@SortedTaskExpiry) to value (protoconf.TaskConf_Task) treemap.
+// FindSortedTaskExpiryMap finds the ordered index key (Expiry<Goal,ID>@SortedTaskExpiry) to value (protoconf.TaskConf_Task) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *TaskConf) FindSortedTaskExpiryMap() *TaskConf_OrderedIndex_SortedTaskExpiryMap {
 	return x.orderedIndexSortedTaskExpiryMap
@@ -974,7 +974,7 @@ func (x *TaskConf) FindFirstSortedTaskExpiry(expiry int64) *protoconf.TaskConf_T
 
 // OrderedIndex: (Expiry,ActivityID)@ActivityExpiry
 
-// FindActivityExpiryMap finds the ordered index ((Expiry,ActivityID)@ActivityExpiry) to value (protoconf.TaskConf_Task) treemap.
+// FindActivityExpiryMap finds the ordered index key ((Expiry,ActivityID)@ActivityExpiry) to value (protoconf.TaskConf_Task) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *TaskConf) FindActivityExpiryMap() *TaskConf_OrderedIndex_ActivityExpiryMap {
 	return x.orderedIndexActivityExpiryMap

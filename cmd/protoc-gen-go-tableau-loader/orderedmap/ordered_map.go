@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
+	"github.com/tableauio/loader/internal/loadutil"
 	"github.com/tableauio/loader/internal/options"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -182,11 +183,11 @@ func (x *Generator) genOrderedMapGetters(md protoreflect.MessageDescriptor, dept
 			getter := genGetterName(depth)
 			orderedMap := x.mapType(fd)
 			if depth == 1 {
-				x.g.P("// ", getter, " returns the 1-level ordered map.")
+				x.g.P("// ", getter, " returns the ", loadutil.Ordinal(depth), "-level ordered map.")
 				x.g.P("func (x *", x.messagerName(), ") ", getter, "(", keys.GenGetParams(), ") *", orderedMap, "{")
 				x.g.P("return x.orderedMap ")
 			} else {
-				x.g.P("// ", getter, " finds value in the ", depth-1, "-level ordered map. It will return")
+				x.g.P("// ", getter, " finds value in the ", loadutil.Ordinal(depth-1), "-level ordered map. It will return")
 				x.g.P("// NotFound error if the key is not found.")
 				x.g.P("func (x *", x.messagerName(), ") ", getter, "(", keys.GenGetParams(), ") (*", orderedMap, ", error) {")
 				if depth == 2 {

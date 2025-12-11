@@ -50,7 +50,7 @@ func (x *HeroConf) Data() *protoconf.HeroConf {
 	return nil
 }
 
-// Load fills HeroConf's inner message from file in the specified directory and format.
+// Load loads HeroConf's content in the given dir, based on format and messager options.
 func (x *HeroConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
@@ -67,7 +67,7 @@ func (x *HeroConf) Load(dir string, format format.Format, opts *load.MessagerOpt
 	return x.processAfterLoad()
 }
 
-// Store writes HeroConf's inner message to file in the specified directory and format.
+// Store stores HeroConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *HeroConf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
@@ -114,7 +114,7 @@ func (x *HeroConf) processAfterLoad() error {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return
+// Get1 finds value in the 1st-level map. It will return
 // NotFound error if the key is not found.
 func (x *HeroConf) Get1(name string) (*protoconf.HeroConf_Hero, error) {
 	d := x.Data().GetHeroMap()
@@ -125,7 +125,7 @@ func (x *HeroConf) Get1(name string) (*protoconf.HeroConf_Hero, error) {
 	}
 }
 
-// Get2 finds value in the 2-level map. It will return
+// Get2 finds value in the 2nd-level map. It will return
 // NotFound error if the key is not found.
 func (x *HeroConf) Get2(name string, title string) (*protoconf.HeroConf_Hero_Attr, error) {
 	conf, err := x.Get1(name)
@@ -142,7 +142,7 @@ func (x *HeroConf) Get2(name string, title string) (*protoconf.HeroConf_Hero_Att
 
 // Index: Title
 
-// FindAttrMap finds the index (Title) to value (protoconf.HeroConf_Hero_Attr) map.
+// FindAttrMap finds the index key (Title) to value (protoconf.HeroConf_Hero_Attr) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *HeroConf) FindAttrMap() HeroConf_Index_AttrMap {
 	return x.indexAttrMap
@@ -163,20 +163,20 @@ func (x *HeroConf) FindFirstAttr(title string) *protoconf.HeroConf_Hero_Attr {
 	return nil
 }
 
-// FindAttrMap1 finds the index (Title) to value (protoconf.HeroConf_Hero_Attr) 1-level map
-// specified by (name).
+// FindAttrMap1 finds the index key (Title) to value (protoconf.HeroConf_Hero_Attr),
+// which is the 1st-level map specified by (name).
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *HeroConf) FindAttrMap1(name string) HeroConf_Index_AttrMap {
 	return x.indexAttrMap1[name]
 }
 
-// FindAttr1 finds a slice of all values of the given key in the 1-level map
+// FindAttr1 finds a slice of all values of the given key in the 1st-level map
 // specified by (name).
 func (x *HeroConf) FindAttr1(name string, title string) []*protoconf.HeroConf_Hero_Attr {
 	return x.FindAttrMap1(name)[title]
 }
 
-// FindFirstAttr1 finds the first value of the given key in the 1-level map
+// FindFirstAttr1 finds the first value of the given key in the 1st-level map
 // specified by (name), or nil if no value found.
 func (x *HeroConf) FindFirstAttr1(name string, title string) *protoconf.HeroConf_Hero_Attr {
 	val := x.FindAttr1(name, title)
@@ -218,7 +218,7 @@ func (x *HeroBaseConf) Data() *protoconf.HeroBaseConf {
 	return nil
 }
 
-// Load fills HeroBaseConf's inner message from file in the specified directory and format.
+// Load loads HeroBaseConf's content in the given dir, based on format and messager options.
 func (x *HeroBaseConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
@@ -235,7 +235,7 @@ func (x *HeroBaseConf) Load(dir string, format format.Format, opts *load.Message
 	return x.processAfterLoad()
 }
 
-// Store writes HeroBaseConf's inner message to file in the specified directory and format.
+// Store stores HeroBaseConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *HeroBaseConf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
@@ -278,7 +278,7 @@ func (x *HeroBaseConf) processAfterLoad() error {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return
+// Get1 finds value in the 1st-level map. It will return
 // NotFound error if the key is not found.
 func (x *HeroBaseConf) Get1(name string) (*base.Hero, error) {
 	d := x.Data().GetHeroMap()
@@ -289,7 +289,7 @@ func (x *HeroBaseConf) Get1(name string) (*base.Hero, error) {
 	}
 }
 
-// Get2 finds value in the 2-level map. It will return
+// Get2 finds value in the 2nd-level map. It will return
 // NotFound error if the key is not found.
 func (x *HeroBaseConf) Get2(name string, id string) (*base.Item, error) {
 	conf, err := x.Get1(name)
@@ -304,12 +304,12 @@ func (x *HeroBaseConf) Get2(name string, id string) (*base.Item, error) {
 	}
 }
 
-// GetOrderedMap returns the 1-level ordered map.
+// GetOrderedMap returns the 1st-level ordered map.
 func (x *HeroBaseConf) GetOrderedMap() *HeroBaseConf_OrderedMap_base_HeroMap {
 	return x.orderedMap
 }
 
-// GetOrderedMap1 finds value in the 1-level ordered map. It will return
+// GetOrderedMap1 finds value in the 1st-level ordered map. It will return
 // NotFound error if the key is not found.
 func (x *HeroBaseConf) GetOrderedMap1(name string) (*HeroBaseConf_OrderedMap_base_ItemMap, error) {
 	conf := x.orderedMap

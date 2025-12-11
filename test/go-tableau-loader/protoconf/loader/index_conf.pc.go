@@ -49,7 +49,7 @@ func (x *FruitConf) Data() *protoconf.FruitConf {
 	return nil
 }
 
-// Load fills FruitConf's inner message from file in the specified directory and format.
+// Load loads FruitConf's content in the given dir, based on format and messager options.
 func (x *FruitConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
@@ -66,7 +66,7 @@ func (x *FruitConf) Load(dir string, format format.Format, opts *load.MessagerOp
 	return x.processAfterLoad()
 }
 
-// Store writes FruitConf's inner message to file in the specified directory and format.
+// Store stores FruitConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *FruitConf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
@@ -131,7 +131,7 @@ func (x *FruitConf) processAfterLoad() error {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return
+// Get1 finds value in the 1st-level map. It will return
 // NotFound error if the key is not found.
 func (x *FruitConf) Get1(fruitType int32) (*protoconf.FruitConf_Fruit, error) {
 	d := x.Data().GetFruitMap()
@@ -142,7 +142,7 @@ func (x *FruitConf) Get1(fruitType int32) (*protoconf.FruitConf_Fruit, error) {
 	}
 }
 
-// Get2 finds value in the 2-level map. It will return
+// Get2 finds value in the 2nd-level map. It will return
 // NotFound error if the key is not found.
 func (x *FruitConf) Get2(fruitType int32, id int32) (*protoconf.FruitConf_Fruit_Item, error) {
 	conf, err := x.Get1(fruitType)
@@ -159,7 +159,7 @@ func (x *FruitConf) Get2(fruitType int32, id int32) (*protoconf.FruitConf_Fruit_
 
 // OrderedIndex: Price<ID>
 
-// FindItemMap finds the ordered index (Price<ID>) to value (protoconf.FruitConf_Fruit_Item) treemap.
+// FindItemMap finds the ordered index key (Price<ID>) to value (protoconf.FruitConf_Fruit_Item) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *FruitConf) FindItemMap() *FruitConf_OrderedIndex_ItemMap {
 	return x.orderedIndexItemMap
@@ -181,21 +181,21 @@ func (x *FruitConf) FindFirstItem(price int32) *protoconf.FruitConf_Fruit_Item {
 	return nil
 }
 
-// FindItemMap1 finds the index (Price<ID>) to value (protoconf.FruitConf_Fruit_Item) 1-level treemap
-// specified by (fruitType).
+// FindItemMap1 finds the index key (Price<ID>) to value (protoconf.FruitConf_Fruit_Item),
+// which is the 1st-level treemap specified by (fruitType).
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *FruitConf) FindItemMap1(fruitType int32) *FruitConf_OrderedIndex_ItemMap {
 	return x.orderedIndexItemMap1[fruitType]
 }
 
-// FindItem1 finds a slice of all values of the given key in the 1-level treemap
+// FindItem1 finds a slice of all values of the given key in the 1st-level treemap
 // specified by (fruitType).
 func (x *FruitConf) FindItem1(fruitType int32, price int32) []*protoconf.FruitConf_Fruit_Item {
 	val, _ := x.FindItemMap1(fruitType).Get(price)
 	return val
 }
 
-// FindFirstItem1 finds the first value of the given key in the 1-level treemap
+// FindFirstItem1 finds the first value of the given key in the 1st-level treemap
 // specified by (fruitType), or nil if no value found.
 func (x *FruitConf) FindFirstItem1(fruitType int32, price int32) *protoconf.FruitConf_Fruit_Item {
 	val := x.FindItem1(fruitType, price)
@@ -246,7 +246,7 @@ func (x *Fruit2Conf) Data() *protoconf.Fruit2Conf {
 	return nil
 }
 
-// Load fills Fruit2Conf's inner message from file in the specified directory and format.
+// Load loads Fruit2Conf's content in the given dir, based on format and messager options.
 func (x *Fruit2Conf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
@@ -263,7 +263,7 @@ func (x *Fruit2Conf) Load(dir string, format format.Format, opts *load.MessagerO
 	return x.processAfterLoad()
 }
 
-// Store writes Fruit2Conf's inner message to file in the specified directory and format.
+// Store stores Fruit2Conf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *Fruit2Conf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
@@ -358,7 +358,7 @@ func (x *Fruit2Conf) processAfterLoad() error {
 	return nil
 }
 
-// Get1 finds value in the 1-level map. It will return
+// Get1 finds value in the 1st-level map. It will return
 // NotFound error if the key is not found.
 func (x *Fruit2Conf) Get1(fruitType int32) (*protoconf.Fruit2Conf_Fruit, error) {
 	d := x.Data().GetFruitMap()
@@ -371,7 +371,7 @@ func (x *Fruit2Conf) Get1(fruitType int32) (*protoconf.Fruit2Conf_Fruit, error) 
 
 // Index: CountryName
 
-// FindCountryMap finds the index (CountryName) to value (protoconf.Fruit2Conf_Fruit_Country) map.
+// FindCountryMap finds the index key (CountryName) to value (protoconf.Fruit2Conf_Fruit_Country) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *Fruit2Conf) FindCountryMap() Fruit2Conf_Index_CountryMap {
 	return x.indexCountryMap
@@ -394,7 +394,7 @@ func (x *Fruit2Conf) FindFirstCountry(name string) *protoconf.Fruit2Conf_Fruit_C
 
 // Index: CountryItemAttrName
 
-// FindAttrMap finds the index (CountryItemAttrName) to value (protoconf.Fruit2Conf_Fruit_Country_Item_Attr) map.
+// FindAttrMap finds the index key (CountryItemAttrName) to value (protoconf.Fruit2Conf_Fruit_Country_Item_Attr) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *Fruit2Conf) FindAttrMap() Fruit2Conf_Index_AttrMap {
 	return x.indexAttrMap
@@ -415,20 +415,20 @@ func (x *Fruit2Conf) FindFirstAttr(name string) *protoconf.Fruit2Conf_Fruit_Coun
 	return nil
 }
 
-// FindAttrMap1 finds the index (CountryItemAttrName) to value (protoconf.Fruit2Conf_Fruit_Country_Item_Attr) 1-level map
-// specified by (fruitType).
+// FindAttrMap1 finds the index key (CountryItemAttrName) to value (protoconf.Fruit2Conf_Fruit_Country_Item_Attr),
+// which is the 1st-level map specified by (fruitType).
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *Fruit2Conf) FindAttrMap1(fruitType int32) Fruit2Conf_Index_AttrMap {
 	return x.indexAttrMap1[fruitType]
 }
 
-// FindAttr1 finds a slice of all values of the given key in the 1-level map
+// FindAttr1 finds a slice of all values of the given key in the 1st-level map
 // specified by (fruitType).
 func (x *Fruit2Conf) FindAttr1(fruitType int32, name string) []*protoconf.Fruit2Conf_Fruit_Country_Item_Attr {
 	return x.FindAttrMap1(fruitType)[name]
 }
 
-// FindFirstAttr1 finds the first value of the given key in the 1-level map
+// FindFirstAttr1 finds the first value of the given key in the 1st-level map
 // specified by (fruitType), or nil if no value found.
 func (x *Fruit2Conf) FindFirstAttr1(fruitType int32, name string) *protoconf.Fruit2Conf_Fruit_Country_Item_Attr {
 	val := x.FindAttr1(fruitType, name)
@@ -440,7 +440,7 @@ func (x *Fruit2Conf) FindFirstAttr1(fruitType int32, name string) *protoconf.Fru
 
 // OrderedIndex: CountryItemPrice<CountryItemID>
 
-// FindItemMap finds the ordered index (CountryItemPrice<CountryItemID>) to value (protoconf.Fruit2Conf_Fruit_Country_Item) treemap.
+// FindItemMap finds the ordered index key (CountryItemPrice<CountryItemID>) to value (protoconf.Fruit2Conf_Fruit_Country_Item) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *Fruit2Conf) FindItemMap() *Fruit2Conf_OrderedIndex_ItemMap {
 	return x.orderedIndexItemMap
@@ -462,21 +462,21 @@ func (x *Fruit2Conf) FindFirstItem(price int32) *protoconf.Fruit2Conf_Fruit_Coun
 	return nil
 }
 
-// FindItemMap1 finds the index (CountryItemPrice<CountryItemID>) to value (protoconf.Fruit2Conf_Fruit_Country_Item) 1-level treemap
-// specified by (fruitType).
+// FindItemMap1 finds the index key (CountryItemPrice<CountryItemID>) to value (protoconf.Fruit2Conf_Fruit_Country_Item),
+// which is the 1st-level treemap specified by (fruitType).
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *Fruit2Conf) FindItemMap1(fruitType int32) *Fruit2Conf_OrderedIndex_ItemMap {
 	return x.orderedIndexItemMap1[fruitType]
 }
 
-// FindItem1 finds a slice of all values of the given key in the 1-level treemap
+// FindItem1 finds a slice of all values of the given key in the 1st-level treemap
 // specified by (fruitType).
 func (x *Fruit2Conf) FindItem1(fruitType int32, price int32) []*protoconf.Fruit2Conf_Fruit_Country_Item {
 	val, _ := x.FindItemMap1(fruitType).Get(price)
 	return val
 }
 
-// FindFirstItem1 finds the first value of the given key in the 1-level treemap
+// FindFirstItem1 finds the first value of the given key in the 1st-level treemap
 // specified by (fruitType), or nil if no value found.
 func (x *Fruit2Conf) FindFirstItem1(fruitType int32, price int32) *protoconf.Fruit2Conf_Fruit_Country_Item {
 	val := x.FindItem1(fruitType, price)
@@ -525,7 +525,7 @@ func (x *Fruit3Conf) Data() *protoconf.Fruit3Conf {
 	return nil
 }
 
-// Load fills Fruit3Conf's inner message from file in the specified directory and format.
+// Load loads Fruit3Conf's content in the given dir, based on format and messager options.
 func (x *Fruit3Conf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
 	start := time.Now()
 	defer func() {
@@ -542,7 +542,7 @@ func (x *Fruit3Conf) Load(dir string, format format.Format, opts *load.MessagerO
 	return x.processAfterLoad()
 }
 
-// Store writes Fruit3Conf's inner message to file in the specified directory and format.
+// Store stores Fruit3Conf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *Fruit3Conf) Store(dir string, format format.Format, options ...store.Option) error {
 	return store.Store(x.Data(), dir, format, options...)
@@ -620,7 +620,7 @@ func (x *Fruit3Conf) processAfterLoad() error {
 
 // Index: CountryName
 
-// FindCountryMap finds the index (CountryName) to value (protoconf.Fruit3Conf_Fruit_Country) map.
+// FindCountryMap finds the index key (CountryName) to value (protoconf.Fruit3Conf_Fruit_Country) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *Fruit3Conf) FindCountryMap() Fruit3Conf_Index_CountryMap {
 	return x.indexCountryMap
@@ -643,7 +643,7 @@ func (x *Fruit3Conf) FindFirstCountry(name string) *protoconf.Fruit3Conf_Fruit_C
 
 // Index: CountryItemAttrName
 
-// FindAttrMap finds the index (CountryItemAttrName) to value (protoconf.Fruit3Conf_Fruit_Country_Item_Attr) map.
+// FindAttrMap finds the index key (CountryItemAttrName) to value (protoconf.Fruit3Conf_Fruit_Country_Item_Attr) map.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *Fruit3Conf) FindAttrMap() Fruit3Conf_Index_AttrMap {
 	return x.indexAttrMap
@@ -666,7 +666,7 @@ func (x *Fruit3Conf) FindFirstAttr(name string) *protoconf.Fruit3Conf_Fruit_Coun
 
 // OrderedIndex: CountryItemPrice<CountryItemID>
 
-// FindItemMap finds the ordered index (CountryItemPrice<CountryItemID>) to value (protoconf.Fruit3Conf_Fruit_Country_Item) treemap.
+// FindItemMap finds the ordered index key (CountryItemPrice<CountryItemID>) to value (protoconf.Fruit3Conf_Fruit_Country_Item) treemap.
 // One key may correspond to multiple values, which are contained by a slice.
 func (x *Fruit3Conf) FindItemMap() *Fruit3Conf_OrderedIndex_ItemMap {
 	return x.orderedIndexItemMap
