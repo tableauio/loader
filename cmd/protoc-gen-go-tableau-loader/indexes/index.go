@@ -36,8 +36,8 @@ func (x *Generator) indexContainerName(index *index.LevelIndex, i int) string {
 	return fmt.Sprintf("index%sMap%d", strcase.ToCamel(index.Name()), i)
 }
 
-func (x *Generator) indexKeys(index *index.LevelIndex) helper.MapKeys {
-	var keys helper.MapKeys
+func (x *Generator) indexKeys(index *index.LevelIndex) helper.MapKeySlice {
+	var keys helper.MapKeySlice
 	for _, field := range index.ColFields {
 		keys = keys.AddMapKey(helper.MapKey{
 			Type:      helper.ParseGoType(x.gen, x.g, field.FD),
@@ -167,7 +167,7 @@ func (x *Generator) genOneIndexLoader(index *index.LevelIndex, depth int, parent
 	x.g.P("}")
 }
 
-func (x *Generator) generateOneMulticolumnIndex(depth int, index *index.LevelIndex, parentDataName string, keys helper.MapKeys) {
+func (x *Generator) generateOneMulticolumnIndex(depth int, index *index.LevelIndex, parentDataName string, keys helper.MapKeySlice) {
 	cursor := len(keys)
 	if cursor >= len(index.ColFields) {
 		keyType := x.indexMapKeyType(index)

@@ -55,7 +55,7 @@ func (x *Generator) GenHppOrderedMapGetters() {
 	x.genHppOrderedMapGetters(x.message.Desc, 1, nil)
 }
 
-func (x *Generator) genHppOrderedMapGetters(md protoreflect.MessageDescriptor, depth int, keys helper.MapKeys) {
+func (x *Generator) genHppOrderedMapGetters(md protoreflect.MessageDescriptor, depth int, keys helper.MapKeySlice) {
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
@@ -141,7 +141,7 @@ func (x *Generator) GenOrderedMapGetters() {
 	x.genOrderedMapGetters(x.message.Desc, 1, nil)
 }
 
-func (x *Generator) genOrderedMapGetters(md protoreflect.MessageDescriptor, depth int, keys helper.MapKeys) {
+func (x *Generator) genOrderedMapGetters(md protoreflect.MessageDescriptor, depth int, keys helper.MapKeySlice) {
 	messagerName := x.messagerName()
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)

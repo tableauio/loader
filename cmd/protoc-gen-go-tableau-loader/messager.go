@@ -164,7 +164,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	indexGenerator.GenIndexFinders()
 }
 
-func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message, depth int, keys helper.MapKeys, messagerName string) {
+func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message, depth int, keys helper.MapKeySlice, messagerName string) {
 	for _, field := range message.Fields {
 		fd := field.Desc
 		if fd.IsMap() {

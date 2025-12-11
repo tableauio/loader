@@ -41,8 +41,8 @@ func (x *Generator) orderedIndexContainerName(index *index.LevelIndex, i int) st
 	return fmt.Sprintf("ordered_index_%s_map%d_", strcase.ToSnake(index.Name()), i)
 }
 
-func (x *Generator) orderedIndexKeys(index *index.LevelIndex) helper.MapKeys {
-	var keys helper.MapKeys
+func (x *Generator) orderedIndexKeys(index *index.LevelIndex) helper.MapKeySlice {
+	var keys helper.MapKeySlice
 	for _, field := range index.ColFields {
 		keys = keys.AddMapKey(helper.MapKey{
 			Type: helper.ParseOrderedIndexKeyType(field.FD),
@@ -192,7 +192,7 @@ func (x *Generator) genOneCppOrderedIndexLoader(depth int, ident int, index *ind
 	x.g.P(helper.Indent(ident), "}")
 }
 
-func (x *Generator) generateOneCppMulticolumnOrderedIndex(depth, ident int, index *index.LevelIndex, parentDataName string, keys helper.MapKeys) {
+func (x *Generator) generateOneCppMulticolumnOrderedIndex(depth, ident int, index *index.LevelIndex, parentDataName string, keys helper.MapKeySlice) {
 	cursor := len(keys)
 	if cursor >= len(index.ColFields) {
 		keyType := x.orderedIndexMapKeyType(index)

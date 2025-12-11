@@ -46,8 +46,8 @@ func (x *Generator) mapCtor(index *index.LevelIndex) string {
 	}
 }
 
-func (x *Generator) orderedIndexKeys(index *index.LevelIndex) helper.MapKeys {
-	var keys helper.MapKeys
+func (x *Generator) orderedIndexKeys(index *index.LevelIndex) helper.MapKeySlice {
+	var keys helper.MapKeySlice
 	for _, field := range index.ColFields {
 		keys = keys.AddMapKey(helper.MapKey{
 			Type:      helper.ParseOrderedIndexKeyType(x.gen, x.g, field.FD),
@@ -191,7 +191,7 @@ func (x *Generator) genOneOrderedIndexLoader(index *index.LevelIndex, depth int,
 	x.g.P("}")
 }
 
-func (x *Generator) generateOneMulticolumnOrderedIndex(depth int, index *index.LevelIndex, parentDataName string, keys helper.MapKeys) {
+func (x *Generator) generateOneMulticolumnOrderedIndex(depth int, index *index.LevelIndex, parentDataName string, keys helper.MapKeySlice) {
 	cursor := len(keys)
 	if cursor >= len(index.ColFields) {
 		keyType := x.orderedIndexMapKeyType(index)

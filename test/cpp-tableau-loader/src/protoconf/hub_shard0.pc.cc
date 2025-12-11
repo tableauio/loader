@@ -6,6 +6,7 @@
 #include "hub.pc.h"
 
 #include "hero_conf.pc.h"
+#include "index_conf.pc.h"
 #include "item_conf.pc.h"
 
 namespace tableau {

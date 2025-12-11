@@ -220,10 +220,6 @@ func (h *Hub) GetHeroBaseConf() *HeroBaseConf {
 	return h.mc.Load().GetHeroBaseConf()
 }
 
-func (h *Hub) GetItemConf() *ItemConf {
-	return h.mc.Load().GetItemConf()
-}
-
 func (h *Hub) GetFruitConf() *FruitConf {
 	return h.mc.Load().GetFruitConf()
 }
@@ -234,6 +230,10 @@ func (h *Hub) GetFruit2Conf() *Fruit2Conf {
 
 func (h *Hub) GetFruit3Conf() *Fruit3Conf {
 	return h.mc.Load().GetFruit3Conf()
+}
+
+func (h *Hub) GetItemConf() *ItemConf {
+	return h.mc.Load().GetItemConf()
 }
 
 func (h *Hub) GetPatchReplaceConf() *PatchReplaceConf {

@@ -41,8 +41,8 @@ func (x *Generator) indexContainerName(index *index.LevelIndex, i int) string {
 	return fmt.Sprintf("index_%s_map%d_", strcase.ToSnake(index.Name()), i)
 }
 
-func (x *Generator) indexKeys(index *index.LevelIndex) helper.MapKeys {
-	var keys helper.MapKeys
+func (x *Generator) indexKeys(index *index.LevelIndex) helper.MapKeySlice {
+	var keys helper.MapKeySlice
 	for _, field := range index.ColFields {
 		keys = keys.AddMapKey(helper.MapKey{
 			Type: helper.ParseCppType(field.FD),
@@ -202,7 +202,7 @@ func (x *Generator) genOneCppIndexLoader(depth int, ident int, index *index.Leve
 	x.g.P(helper.Indent(ident), "}")
 }
 
-func (x *Generator) generateOneCppMulticolumnIndex(depth, ident int, index *index.LevelIndex, parentDataName string, keys helper.MapKeys) {
+func (x *Generator) generateOneCppMulticolumnIndex(depth, ident int, index *index.LevelIndex, parentDataName string, keys helper.MapKeySlice) {
 	cursor := len(keys)
 	if cursor >= len(index.ColFields) {
 		keyType := x.indexMapKeyType(index)

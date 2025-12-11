@@ -112,7 +112,7 @@ func genHppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P()
 }
 
-func genHppMapGetters(depth int, keys helper.MapKeys, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
+func genHppMapGetters(depth int, keys helper.MapKeySlice, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor) {
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
@@ -186,7 +186,7 @@ func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	indexGenerator.GenCppIndexFinders()
 }
 
-func genCppMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys helper.MapKeys, messagerName string) {
+func genCppMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys helper.MapKeySlice, messagerName string) {
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {

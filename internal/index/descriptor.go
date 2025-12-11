@@ -88,23 +88,23 @@ func (l *LevelIndex) Name() string {
 }
 
 func parseLevelMessage(md protoreflect.MessageDescriptor, depth, mapDepth int) *LevelMessage {
-	levelInfo := &LevelMessage{
+	levelMsg := &LevelMessage{
 		Depth:    depth,
 		MapDepth: mapDepth,
 	}
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() && fd.MapValue().Kind() == protoreflect.MessageKind {
-			levelInfo.NextLevel = parseLevelMessage(fd.MapValue().Message(), depth+1, mapDepth+1)
-			levelInfo.FD = fd
-			return levelInfo
+			levelMsg.NextLevel = parseLevelMessage(fd.MapValue().Message(), depth+1, mapDepth+1)
+			levelMsg.FD = fd
+			return levelMsg
 		} else if fd.IsList() && fd.Kind() == protoreflect.MessageKind {
-			levelInfo.NextLevel = parseLevelMessage(fd.Message(), depth+1, mapDepth)
-			levelInfo.FD = fd
-			return levelInfo
+			levelMsg.NextLevel = parseLevelMessage(fd.Message(), depth+1, mapDepth)
+			levelMsg.FD = fd
+			return levelMsg
 		}
 	}
-	return levelInfo
+	return levelMsg
 }
 
 // parseRecursively parses multi-column index related info.

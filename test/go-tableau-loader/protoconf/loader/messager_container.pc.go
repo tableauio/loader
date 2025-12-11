@@ -15,10 +15,10 @@ type MessagerContainer struct {
 	// all messagers as fields for fast access
 	heroConf           *HeroConf
 	heroBaseConf       *HeroBaseConf
-	itemConf           *ItemConf
 	fruitConf          *FruitConf
 	fruit2Conf         *Fruit2Conf
 	fruit3Conf         *Fruit3Conf
+	itemConf           *ItemConf
 	patchReplaceConf   *PatchReplaceConf
 	patchMergeConf     *PatchMergeConf
 	recursivePatchConf *RecursivePatchConf
@@ -34,10 +34,10 @@ func newMessagerContainer(messagerMap MessagerMap) *MessagerContainer {
 		loadedTime:         time.Now(),
 		heroConf:           GetMessager[*HeroConf](messagerMap),
 		heroBaseConf:       GetMessager[*HeroBaseConf](messagerMap),
-		itemConf:           GetMessager[*ItemConf](messagerMap),
 		fruitConf:          GetMessager[*FruitConf](messagerMap),
 		fruit2Conf:         GetMessager[*Fruit2Conf](messagerMap),
 		fruit3Conf:         GetMessager[*Fruit3Conf](messagerMap),
+		itemConf:           GetMessager[*ItemConf](messagerMap),
 		patchReplaceConf:   GetMessager[*PatchReplaceConf](messagerMap),
 		patchMergeConf:     GetMessager[*PatchMergeConf](messagerMap),
 		recursivePatchConf: GetMessager[*RecursivePatchConf](messagerMap),
@@ -70,10 +70,6 @@ func (mc *MessagerContainer) GetHeroBaseConf() *HeroBaseConf {
 	return mc.heroBaseConf
 }
 
-func (mc *MessagerContainer) GetItemConf() *ItemConf {
-	return mc.itemConf
-}
-
 func (mc *MessagerContainer) GetFruitConf() *FruitConf {
 	return mc.fruitConf
 }
@@ -84,6 +80,10 @@ func (mc *MessagerContainer) GetFruit2Conf() *Fruit2Conf {
 
 func (mc *MessagerContainer) GetFruit3Conf() *Fruit3Conf {
 	return mc.fruit3Conf
+}
+
+func (mc *MessagerContainer) GetItemConf() *ItemConf {
+	return mc.itemConf
 }
 
 func (mc *MessagerContainer) GetPatchReplaceConf() *PatchReplaceConf {

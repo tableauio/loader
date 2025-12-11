@@ -264,35 +264,35 @@ type MapKey struct {
 	FieldName string // multi-colunm index only
 }
 
-type MapKeys []MapKey
+type MapKeySlice []MapKey
 
-func (keys MapKeys) AddMapKey(newKey MapKey) MapKeys {
+func (s MapKeySlice) AddMapKey(newKey MapKey) MapKeySlice {
 	if newKey.Name == "" {
-		newKey.Name = fmt.Sprintf("key%d", len(keys)+1)
+		newKey.Name = fmt.Sprintf("key%d", len(s)+1)
 	}
-	for _, key := range keys {
+	for _, key := range s {
 		if key.Name == newKey.Name {
 			// rewrite to avoid name confict
-			newKey.Name = fmt.Sprintf("%s%d", newKey.Name, len(keys)+1)
+			newKey.Name = fmt.Sprintf("%s%d", newKey.Name, len(s)+1)
 			break
 		}
 	}
-	return append(keys, newKey)
+	return append(s, newKey)
 }
 
 // GenGetParams generates function parameters, which are the names listed in the function's definition.
-func (keys MapKeys) GenGetParams() string {
+func (s MapKeySlice) GenGetParams() string {
 	var params []string
-	for _, key := range keys {
+	for _, key := range s {
 		params = append(params, key.Name+" "+key.Type)
 	}
 	return strings.Join(params, ", ")
 }
 
 // GenGetArguments generates function arguments, which are the real values passed to the function.
-func (keys MapKeys) GenGetArguments() string {
+func (s MapKeySlice) GenGetArguments() string {
 	var params []string
-	for _, key := range keys {
+	for _, key := range s {
 		params = append(params, key.Name)
 	}
 	return strings.Join(params, ", ")

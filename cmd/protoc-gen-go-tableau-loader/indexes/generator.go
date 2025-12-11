@@ -17,7 +17,7 @@ type Generator struct {
 
 	// level message
 	maxDepth int
-	keys     helper.MapKeys
+	keys     helper.MapKeySlice
 	mapFds   []protoreflect.FieldDescriptor
 }
 
