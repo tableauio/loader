@@ -269,8 +269,8 @@ func (x *Generator) genIndexFinders() {
 			x.g.P("// Index: ", index.Index)
 			x.g.P()
 
-			x.g.P("// Find", index.Name(), "Map finds the index key (", index.Index, ") to value (", x.mapValueType(index), ") map.")
-			x.g.P("// One key may correspond to multiple values, which are contained by a slice.")
+			x.g.P("// Find", index.Name(), "Map finds the index: key(", index.Index, ") to value(", x.mapValueType(index), ") map.")
+			x.g.P("// One key may correspond to multiple values, which are represented by a slice.")
 			x.g.P("func (x *", messagerName, ") Find", index.Name(), "Map() ", x.indexMapType(index), " {")
 			x.g.P("return x.", indexContainerName)
 			x.g.P("}")
@@ -279,7 +279,7 @@ func (x *Generator) genIndexFinders() {
 			keys := x.indexKeys(index)
 			params := keys.GenGetParams()
 			args := keys.GenGetArguments()
-			x.g.P("// Find", index.Name(), " finds a slice of all values of the given key.")
+			x.g.P("// Find", index.Name(), " finds a slice of all values of the given key(s).")
 			x.g.P("func (x *", messagerName, ") Find", index.Name(), "(", params, ") []*", x.mapValueType(index), " {")
 			if len(index.ColFields) == 1 {
 				x.g.P("return x.", indexContainerName, "[", args, "]")
@@ -289,7 +289,7 @@ func (x *Generator) genIndexFinders() {
 			x.g.P("}")
 			x.g.P()
 
-			x.g.P("// FindFirst", index.Name(), " finds the first value of the given key,")
+			x.g.P("// FindFirst", index.Name(), " finds the first value of the given key(s),")
 			x.g.P("// or nil if no value found.")
 			x.g.P("func (x *", messagerName, ") FindFirst", index.Name(), "(", params, ") *", x.mapValueType(index), " {")
 			x.g.P("val := x.Find", index.Name(), "(", args, ")")
@@ -309,9 +309,9 @@ func (x *Generator) genIndexFinders() {
 				partParams := partKeys.GenGetParams()
 				partArgs := partKeys.GenGetArguments()
 
-				x.g.P("// Find", index.Name(), "Map", i, " finds the index key (", index.Index, ") to value (", x.mapValueType(index), "),")
-				x.g.P("// which is the ", loadutil.Ordinal(i), "-level map specified by (", partArgs, ").")
-				x.g.P("// One key may correspond to multiple values, which are contained by a slice.")
+				x.g.P("// Find", index.Name(), "Map", i, " finds the index: key(", index.Index, ") to value(", x.mapValueType(index), "),")
+				x.g.P("// which is the upper ", loadutil.Ordinal(i), "-level map specified by (", partArgs, ").")
+				x.g.P("// One key may correspond to multiple values, which are represented by a slice.")
 				x.g.P("func (x *", messagerName, ") Find", index.Name(), "Map", i, "(", partParams, ") ", x.indexMapType(index), " {")
 				if len(partKeys) == 1 {
 					x.g.P("return x.", indexContainerName, "[", partArgs, "]")
@@ -322,7 +322,7 @@ func (x *Generator) genIndexFinders() {
 				x.g.P("}")
 				x.g.P()
 
-				x.g.P("// Find", index.Name(), i, " finds a slice of all values of the given key in the ", loadutil.Ordinal(i), "-level map")
+				x.g.P("// Find", index.Name(), i, " finds a slice of all values of the given key(s) in the upper ", loadutil.Ordinal(i), "-level map")
 				x.g.P("// specified by (", partArgs, ").")
 				x.g.P("func (x *", messagerName, ") Find", index.Name(), i, "(", partParams, ", ", params, ") []*", x.mapValueType(index), " {")
 				if len(index.ColFields) == 1 {
@@ -333,7 +333,7 @@ func (x *Generator) genIndexFinders() {
 				x.g.P("}")
 				x.g.P()
 
-				x.g.P("// FindFirst", index.Name(), i, " finds the first value of the given key in the ", loadutil.Ordinal(i), "-level map")
+				x.g.P("// FindFirst", index.Name(), i, " finds the first value of the given key(s) in the upper ", loadutil.Ordinal(i), "-level map")
 				x.g.P("// specified by (", partArgs, "), or nil if no value found.")
 				x.g.P("func (x *", messagerName, ") FindFirst", index.Name(), i, "(", partParams, ", ", params, ") *", x.mapValueType(index), " {")
 				x.g.P("val := x.Find", index.Name(), i, "(", partArgs, ", ", args, ")")

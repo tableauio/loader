@@ -8,6 +8,7 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/index"
+	"github.com/tableauio/loader/internal/loadutil"
 	"github.com/tableauio/loader/internal/options"
 )
 
@@ -96,8 +97,8 @@ func (x *Generator) genHppIndexFinders() {
 			}
 			x.g.P(helper.Indent(1), "using ", vectorType, " = std::vector<const ", valueType, "*>;")
 			x.g.P(helper.Indent(1), "using ", mapType, " = std::unordered_map<", keyType, ", ", vectorType, hasher, ">;")
-			x.g.P(helper.Indent(1), "// Finds the index (", index.Index, ") to value (", vectorType, ") hash map.")
-			x.g.P(helper.Indent(1), "// One key may correspond to multiple values, which are contained by a vector.")
+			x.g.P(helper.Indent(1), "// Finds the index: key(", index.Index, ") to value(", vectorType, ") hashmap.")
+			x.g.P(helper.Indent(1), "// One key may correspond to multiple values, which are represented by a vector.")
 			x.g.P(helper.Indent(1), "const ", mapType, "& Find", index.Name(), "Map() const;")
 			x.g.P(helper.Indent(1), "// Finds a vector of all values of the given key(s).")
 			x.g.P(helper.Indent(1), "const ", vectorType, "* Find", index.Name(), "(", keys.GenGetParams(), ") const;")
@@ -108,13 +109,13 @@ func (x *Generator) genHppIndexFinders() {
 					break
 				}
 				partKeys := x.keys[:i]
-				x.g.P(helper.Indent(1), "// Finds the index (", index.Index, ") to value (", vectorType, ") hash map")
-				x.g.P(helper.Indent(1), "// specified by (", partKeys.GenGetArguments(), ").")
-				x.g.P(helper.Indent(1), "// One key may correspond to multiple values, which are contained by a vector.")
+				x.g.P(helper.Indent(1), "// Finds the index: key(", index.Index, ") to value(", vectorType, "),")
+				x.g.P(helper.Indent(1), "// which is the upper ", loadutil.Ordinal(i), "-level hashmap specified by (", partKeys.GenGetArguments(), ").")
+				x.g.P(helper.Indent(1), "// One key may correspond to multiple values, which are represented by a vector.")
 				x.g.P(helper.Indent(1), "const ", mapType, "* Find", index.Name(), "Map(", partKeys.GenGetParams(), ") const;")
-				x.g.P(helper.Indent(1), "// Finds a vector of all values of the given key(s) specified by (", partKeys.GenGetArguments(), ").")
+				x.g.P(helper.Indent(1), "// Finds a vector of all values of the given key(s) in the upper ", loadutil.Ordinal(i), "-level hashmap specified by (", partKeys.GenGetArguments(), ").")
 				x.g.P(helper.Indent(1), "const ", vectorType, "* Find", index.Name(), "(", partKeys.GenGetParams(), ", ", keys.GenGetParams(), ") const;")
-				x.g.P(helper.Indent(1), "// Finds the first value of the given key(s) specified by (", partKeys.GenGetArguments(), ").")
+				x.g.P(helper.Indent(1), "// Finds the first value of the given key(s) in the upper ", loadutil.Ordinal(i), "-level hashmap specified by (", partKeys.GenGetArguments(), ").")
 				x.g.P(helper.Indent(1), "const ", valueType, "* FindFirst", index.Name(), "(", partKeys.GenGetParams(), ", ", keys.GenGetParams(), ") const;")
 			}
 			x.g.P()

@@ -300,8 +300,8 @@ func (x *Generator) genOrderedIndexFinders() {
 			x.g.P("// OrderedIndex: ", index.Index)
 			x.g.P()
 
-			x.g.P("// Find", index.Name(), "Map finds the ordered index key (", index.Index, ") to value (", x.mapValueType(index), ") treemap.")
-			x.g.P("// One key may correspond to multiple values, which are contained by a slice.")
+			x.g.P("// Find", index.Name(), "Map finds the ordered index: key(", index.Index, ") to value(", x.mapValueType(index), ") treemap.")
+			x.g.P("// One key may correspond to multiple values, which are represented by a slice.")
 			x.g.P("func (x *", messagerName, ") Find", index.Name(), "Map() *", x.orderedIndexMapType(index), " {")
 			x.g.P("return x.", indexContainerName)
 			x.g.P("}")
@@ -310,7 +310,7 @@ func (x *Generator) genOrderedIndexFinders() {
 			keys := x.orderedIndexKeys(index)
 			params := keys.GenGetParams()
 			args := keys.GenGetArguments()
-			x.g.P("// Find", index.Name(), " finds a slice of all values of the given key.")
+			x.g.P("// Find", index.Name(), " finds a slice of all values of the given key(s).")
 			x.g.P("func (x *", messagerName, ") Find", index.Name(), "(", params, ") []*", x.mapValueType(index), " {")
 			if len(index.ColFields) == 1 {
 				x.g.P("val, _ := x.", indexContainerName, ".Get(", args, ")")
@@ -321,7 +321,7 @@ func (x *Generator) genOrderedIndexFinders() {
 			x.g.P("}")
 			x.g.P()
 
-			x.g.P("// FindFirst", index.Name(), " finds the first value of the given key,")
+			x.g.P("// FindFirst", index.Name(), " finds the first value of the given key(s),")
 			x.g.P("// or nil if no value found.")
 			x.g.P("func (x *", messagerName, ") FindFirst", index.Name(), "(", params, ") *", x.mapValueType(index), " {")
 			x.g.P("val := x.Find", index.Name(), "(", args, ")")
@@ -341,9 +341,9 @@ func (x *Generator) genOrderedIndexFinders() {
 				partParams := partKeys.GenGetParams()
 				partArgs := partKeys.GenGetArguments()
 
-				x.g.P("// Find", index.Name(), "Map", i, " finds the index key (", index.Index, ") to value (", x.mapValueType(index), "),")
-				x.g.P("// which is the ", loadutil.Ordinal(i), "-level treemap specified by (", partArgs, ").")
-				x.g.P("// One key may correspond to multiple values, which are contained by a slice.")
+				x.g.P("// Find", index.Name(), "Map", i, " finds the index: key(", index.Index, ") to value(", x.mapValueType(index), "),")
+				x.g.P("// which is the upper ", loadutil.Ordinal(i), "-level treemap specified by (", partArgs, ").")
+				x.g.P("// One key may correspond to multiple values, which are represented by a slice.")
 				x.g.P("func (x *", messagerName, ") Find", index.Name(), "Map", i, "(", partParams, ") *", x.orderedIndexMapType(index), " {")
 				if len(partKeys) == 1 {
 					x.g.P("return x.", orderedIndexContainerName, "[", partArgs, "]")
@@ -354,7 +354,7 @@ func (x *Generator) genOrderedIndexFinders() {
 				x.g.P("}")
 				x.g.P()
 
-				x.g.P("// Find", index.Name(), i, " finds a slice of all values of the given key in the ", loadutil.Ordinal(i), "-level treemap")
+				x.g.P("// Find", index.Name(), i, " finds a slice of all values of the given key(s) in the upper ", loadutil.Ordinal(i), "-level treemap")
 				x.g.P("// specified by (", partArgs, ").")
 				x.g.P("func (x *", messagerName, ") Find", index.Name(), i, "(", partParams, ", ", params, ") []*", x.mapValueType(index), " {")
 				if len(index.ColFields) == 1 {
@@ -366,7 +366,7 @@ func (x *Generator) genOrderedIndexFinders() {
 				x.g.P("}")
 				x.g.P()
 
-				x.g.P("// FindFirst", index.Name(), i, " finds the first value of the given key in the ", loadutil.Ordinal(i), "-level treemap")
+				x.g.P("// FindFirst", index.Name(), i, " finds the first value of the given key(s) in the upper ", loadutil.Ordinal(i), "-level treemap")
 				x.g.P("// specified by (", partArgs, "), or nil if no value found.")
 				x.g.P("func (x *", messagerName, ") FindFirst", index.Name(), i, "(", partParams, ", ", params, ") *", x.mapValueType(index), " {")
 				x.g.P("val := x.Find", index.Name(), i, "(", partArgs, ", ", args, ")")

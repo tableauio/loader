@@ -159,19 +159,19 @@ func (x *FruitConf) Get2(fruitType int32, id int32) (*protoconf.FruitConf_Fruit_
 
 // OrderedIndex: Price<ID>
 
-// FindItemMap finds the ordered index key (Price<ID>) to value (protoconf.FruitConf_Fruit_Item) treemap.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindItemMap finds the ordered index: key(Price<ID>) to value(protoconf.FruitConf_Fruit_Item) treemap.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *FruitConf) FindItemMap() *FruitConf_OrderedIndex_ItemMap {
 	return x.orderedIndexItemMap
 }
 
-// FindItem finds a slice of all values of the given key.
+// FindItem finds a slice of all values of the given key(s).
 func (x *FruitConf) FindItem(price int32) []*protoconf.FruitConf_Fruit_Item {
 	val, _ := x.orderedIndexItemMap.Get(price)
 	return val
 }
 
-// FindFirstItem finds the first value of the given key,
+// FindFirstItem finds the first value of the given key(s),
 // or nil if no value found.
 func (x *FruitConf) FindFirstItem(price int32) *protoconf.FruitConf_Fruit_Item {
 	val := x.FindItem(price)
@@ -181,21 +181,21 @@ func (x *FruitConf) FindFirstItem(price int32) *protoconf.FruitConf_Fruit_Item {
 	return nil
 }
 
-// FindItemMap1 finds the index key (Price<ID>) to value (protoconf.FruitConf_Fruit_Item),
-// which is the 1st-level treemap specified by (fruitType).
-// One key may correspond to multiple values, which are contained by a slice.
+// FindItemMap1 finds the index: key(Price<ID>) to value(protoconf.FruitConf_Fruit_Item),
+// which is the upper 1st-level treemap specified by (fruitType).
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *FruitConf) FindItemMap1(fruitType int32) *FruitConf_OrderedIndex_ItemMap {
 	return x.orderedIndexItemMap1[fruitType]
 }
 
-// FindItem1 finds a slice of all values of the given key in the 1st-level treemap
+// FindItem1 finds a slice of all values of the given key(s) in the upper 1st-level treemap
 // specified by (fruitType).
 func (x *FruitConf) FindItem1(fruitType int32, price int32) []*protoconf.FruitConf_Fruit_Item {
 	val, _ := x.FindItemMap1(fruitType).Get(price)
 	return val
 }
 
-// FindFirstItem1 finds the first value of the given key in the 1st-level treemap
+// FindFirstItem1 finds the first value of the given key(s) in the upper 1st-level treemap
 // specified by (fruitType), or nil if no value found.
 func (x *FruitConf) FindFirstItem1(fruitType int32, price int32) *protoconf.FruitConf_Fruit_Item {
 	val := x.FindItem1(fruitType, price)
@@ -371,18 +371,18 @@ func (x *Fruit2Conf) Get1(fruitType int32) (*protoconf.Fruit2Conf_Fruit, error) 
 
 // Index: CountryName
 
-// FindCountryMap finds the index key (CountryName) to value (protoconf.Fruit2Conf_Fruit_Country) map.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindCountryMap finds the index: key(CountryName) to value(protoconf.Fruit2Conf_Fruit_Country) map.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *Fruit2Conf) FindCountryMap() Fruit2Conf_Index_CountryMap {
 	return x.indexCountryMap
 }
 
-// FindCountry finds a slice of all values of the given key.
+// FindCountry finds a slice of all values of the given key(s).
 func (x *Fruit2Conf) FindCountry(name string) []*protoconf.Fruit2Conf_Fruit_Country {
 	return x.indexCountryMap[name]
 }
 
-// FindFirstCountry finds the first value of the given key,
+// FindFirstCountry finds the first value of the given key(s),
 // or nil if no value found.
 func (x *Fruit2Conf) FindFirstCountry(name string) *protoconf.Fruit2Conf_Fruit_Country {
 	val := x.FindCountry(name)
@@ -394,18 +394,18 @@ func (x *Fruit2Conf) FindFirstCountry(name string) *protoconf.Fruit2Conf_Fruit_C
 
 // Index: CountryItemAttrName
 
-// FindAttrMap finds the index key (CountryItemAttrName) to value (protoconf.Fruit2Conf_Fruit_Country_Item_Attr) map.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindAttrMap finds the index: key(CountryItemAttrName) to value(protoconf.Fruit2Conf_Fruit_Country_Item_Attr) map.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *Fruit2Conf) FindAttrMap() Fruit2Conf_Index_AttrMap {
 	return x.indexAttrMap
 }
 
-// FindAttr finds a slice of all values of the given key.
+// FindAttr finds a slice of all values of the given key(s).
 func (x *Fruit2Conf) FindAttr(name string) []*protoconf.Fruit2Conf_Fruit_Country_Item_Attr {
 	return x.indexAttrMap[name]
 }
 
-// FindFirstAttr finds the first value of the given key,
+// FindFirstAttr finds the first value of the given key(s),
 // or nil if no value found.
 func (x *Fruit2Conf) FindFirstAttr(name string) *protoconf.Fruit2Conf_Fruit_Country_Item_Attr {
 	val := x.FindAttr(name)
@@ -415,20 +415,20 @@ func (x *Fruit2Conf) FindFirstAttr(name string) *protoconf.Fruit2Conf_Fruit_Coun
 	return nil
 }
 
-// FindAttrMap1 finds the index key (CountryItemAttrName) to value (protoconf.Fruit2Conf_Fruit_Country_Item_Attr),
-// which is the 1st-level map specified by (fruitType).
-// One key may correspond to multiple values, which are contained by a slice.
+// FindAttrMap1 finds the index: key(CountryItemAttrName) to value(protoconf.Fruit2Conf_Fruit_Country_Item_Attr),
+// which is the upper 1st-level map specified by (fruitType).
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *Fruit2Conf) FindAttrMap1(fruitType int32) Fruit2Conf_Index_AttrMap {
 	return x.indexAttrMap1[fruitType]
 }
 
-// FindAttr1 finds a slice of all values of the given key in the 1st-level map
+// FindAttr1 finds a slice of all values of the given key(s) in the upper 1st-level map
 // specified by (fruitType).
 func (x *Fruit2Conf) FindAttr1(fruitType int32, name string) []*protoconf.Fruit2Conf_Fruit_Country_Item_Attr {
 	return x.FindAttrMap1(fruitType)[name]
 }
 
-// FindFirstAttr1 finds the first value of the given key in the 1st-level map
+// FindFirstAttr1 finds the first value of the given key(s) in the upper 1st-level map
 // specified by (fruitType), or nil if no value found.
 func (x *Fruit2Conf) FindFirstAttr1(fruitType int32, name string) *protoconf.Fruit2Conf_Fruit_Country_Item_Attr {
 	val := x.FindAttr1(fruitType, name)
@@ -440,19 +440,19 @@ func (x *Fruit2Conf) FindFirstAttr1(fruitType int32, name string) *protoconf.Fru
 
 // OrderedIndex: CountryItemPrice<CountryItemID>
 
-// FindItemMap finds the ordered index key (CountryItemPrice<CountryItemID>) to value (protoconf.Fruit2Conf_Fruit_Country_Item) treemap.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindItemMap finds the ordered index: key(CountryItemPrice<CountryItemID>) to value(protoconf.Fruit2Conf_Fruit_Country_Item) treemap.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *Fruit2Conf) FindItemMap() *Fruit2Conf_OrderedIndex_ItemMap {
 	return x.orderedIndexItemMap
 }
 
-// FindItem finds a slice of all values of the given key.
+// FindItem finds a slice of all values of the given key(s).
 func (x *Fruit2Conf) FindItem(price int32) []*protoconf.Fruit2Conf_Fruit_Country_Item {
 	val, _ := x.orderedIndexItemMap.Get(price)
 	return val
 }
 
-// FindFirstItem finds the first value of the given key,
+// FindFirstItem finds the first value of the given key(s),
 // or nil if no value found.
 func (x *Fruit2Conf) FindFirstItem(price int32) *protoconf.Fruit2Conf_Fruit_Country_Item {
 	val := x.FindItem(price)
@@ -462,21 +462,21 @@ func (x *Fruit2Conf) FindFirstItem(price int32) *protoconf.Fruit2Conf_Fruit_Coun
 	return nil
 }
 
-// FindItemMap1 finds the index key (CountryItemPrice<CountryItemID>) to value (protoconf.Fruit2Conf_Fruit_Country_Item),
-// which is the 1st-level treemap specified by (fruitType).
-// One key may correspond to multiple values, which are contained by a slice.
+// FindItemMap1 finds the index: key(CountryItemPrice<CountryItemID>) to value(protoconf.Fruit2Conf_Fruit_Country_Item),
+// which is the upper 1st-level treemap specified by (fruitType).
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *Fruit2Conf) FindItemMap1(fruitType int32) *Fruit2Conf_OrderedIndex_ItemMap {
 	return x.orderedIndexItemMap1[fruitType]
 }
 
-// FindItem1 finds a slice of all values of the given key in the 1st-level treemap
+// FindItem1 finds a slice of all values of the given key(s) in the upper 1st-level treemap
 // specified by (fruitType).
 func (x *Fruit2Conf) FindItem1(fruitType int32, price int32) []*protoconf.Fruit2Conf_Fruit_Country_Item {
 	val, _ := x.FindItemMap1(fruitType).Get(price)
 	return val
 }
 
-// FindFirstItem1 finds the first value of the given key in the 1st-level treemap
+// FindFirstItem1 finds the first value of the given key(s) in the upper 1st-level treemap
 // specified by (fruitType), or nil if no value found.
 func (x *Fruit2Conf) FindFirstItem1(fruitType int32, price int32) *protoconf.Fruit2Conf_Fruit_Country_Item {
 	val := x.FindItem1(fruitType, price)
@@ -620,18 +620,18 @@ func (x *Fruit3Conf) processAfterLoad() error {
 
 // Index: CountryName
 
-// FindCountryMap finds the index key (CountryName) to value (protoconf.Fruit3Conf_Fruit_Country) map.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindCountryMap finds the index: key(CountryName) to value(protoconf.Fruit3Conf_Fruit_Country) map.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *Fruit3Conf) FindCountryMap() Fruit3Conf_Index_CountryMap {
 	return x.indexCountryMap
 }
 
-// FindCountry finds a slice of all values of the given key.
+// FindCountry finds a slice of all values of the given key(s).
 func (x *Fruit3Conf) FindCountry(name string) []*protoconf.Fruit3Conf_Fruit_Country {
 	return x.indexCountryMap[name]
 }
 
-// FindFirstCountry finds the first value of the given key,
+// FindFirstCountry finds the first value of the given key(s),
 // or nil if no value found.
 func (x *Fruit3Conf) FindFirstCountry(name string) *protoconf.Fruit3Conf_Fruit_Country {
 	val := x.FindCountry(name)
@@ -643,18 +643,18 @@ func (x *Fruit3Conf) FindFirstCountry(name string) *protoconf.Fruit3Conf_Fruit_C
 
 // Index: CountryItemAttrName
 
-// FindAttrMap finds the index key (CountryItemAttrName) to value (protoconf.Fruit3Conf_Fruit_Country_Item_Attr) map.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindAttrMap finds the index: key(CountryItemAttrName) to value(protoconf.Fruit3Conf_Fruit_Country_Item_Attr) map.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *Fruit3Conf) FindAttrMap() Fruit3Conf_Index_AttrMap {
 	return x.indexAttrMap
 }
 
-// FindAttr finds a slice of all values of the given key.
+// FindAttr finds a slice of all values of the given key(s).
 func (x *Fruit3Conf) FindAttr(name string) []*protoconf.Fruit3Conf_Fruit_Country_Item_Attr {
 	return x.indexAttrMap[name]
 }
 
-// FindFirstAttr finds the first value of the given key,
+// FindFirstAttr finds the first value of the given key(s),
 // or nil if no value found.
 func (x *Fruit3Conf) FindFirstAttr(name string) *protoconf.Fruit3Conf_Fruit_Country_Item_Attr {
 	val := x.FindAttr(name)
@@ -666,19 +666,19 @@ func (x *Fruit3Conf) FindFirstAttr(name string) *protoconf.Fruit3Conf_Fruit_Coun
 
 // OrderedIndex: CountryItemPrice<CountryItemID>
 
-// FindItemMap finds the ordered index key (CountryItemPrice<CountryItemID>) to value (protoconf.Fruit3Conf_Fruit_Country_Item) treemap.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindItemMap finds the ordered index: key(CountryItemPrice<CountryItemID>) to value(protoconf.Fruit3Conf_Fruit_Country_Item) treemap.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *Fruit3Conf) FindItemMap() *Fruit3Conf_OrderedIndex_ItemMap {
 	return x.orderedIndexItemMap
 }
 
-// FindItem finds a slice of all values of the given key.
+// FindItem finds a slice of all values of the given key(s).
 func (x *Fruit3Conf) FindItem(price int32) []*protoconf.Fruit3Conf_Fruit_Country_Item {
 	val, _ := x.orderedIndexItemMap.Get(price)
 	return val
 }
 
-// FindFirstItem finds the first value of the given key,
+// FindFirstItem finds the first value of the given key(s),
 // or nil if no value found.
 func (x *Fruit3Conf) FindFirstItem(price int32) *protoconf.Fruit3Conf_Fruit_Country_Item {
 	val := x.FindItem(price)

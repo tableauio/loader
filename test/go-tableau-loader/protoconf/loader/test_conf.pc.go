@@ -333,18 +333,18 @@ func (x *ActivityConf) GetOrderedMap3(activityId uint64, chapterId uint32, secti
 
 // Index: ActivityName
 
-// FindActivityMap finds the index key (ActivityName) to value (protoconf.ActivityConf_Activity) map.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindActivityMap finds the index: key(ActivityName) to value(protoconf.ActivityConf_Activity) map.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *ActivityConf) FindActivityMap() ActivityConf_Index_ActivityMap {
 	return x.indexActivityMap
 }
 
-// FindActivity finds a slice of all values of the given key.
+// FindActivity finds a slice of all values of the given key(s).
 func (x *ActivityConf) FindActivity(activityName string) []*protoconf.ActivityConf_Activity {
 	return x.indexActivityMap[activityName]
 }
 
-// FindFirstActivity finds the first value of the given key,
+// FindFirstActivity finds the first value of the given key(s),
 // or nil if no value found.
 func (x *ActivityConf) FindFirstActivity(activityName string) *protoconf.ActivityConf_Activity {
 	val := x.FindActivity(activityName)
@@ -356,18 +356,18 @@ func (x *ActivityConf) FindFirstActivity(activityName string) *protoconf.Activit
 
 // Index: ChapterID
 
-// FindChapterMap finds the index key (ChapterID) to value (protoconf.ActivityConf_Activity_Chapter) map.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindChapterMap finds the index: key(ChapterID) to value(protoconf.ActivityConf_Activity_Chapter) map.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *ActivityConf) FindChapterMap() ActivityConf_Index_ChapterMap {
 	return x.indexChapterMap
 }
 
-// FindChapter finds a slice of all values of the given key.
+// FindChapter finds a slice of all values of the given key(s).
 func (x *ActivityConf) FindChapter(chapterId uint32) []*protoconf.ActivityConf_Activity_Chapter {
 	return x.indexChapterMap[chapterId]
 }
 
-// FindFirstChapter finds the first value of the given key,
+// FindFirstChapter finds the first value of the given key(s),
 // or nil if no value found.
 func (x *ActivityConf) FindFirstChapter(chapterId uint32) *protoconf.ActivityConf_Activity_Chapter {
 	val := x.FindChapter(chapterId)
@@ -377,20 +377,20 @@ func (x *ActivityConf) FindFirstChapter(chapterId uint32) *protoconf.ActivityCon
 	return nil
 }
 
-// FindChapterMap1 finds the index key (ChapterID) to value (protoconf.ActivityConf_Activity_Chapter),
-// which is the 1st-level map specified by (activityId).
-// One key may correspond to multiple values, which are contained by a slice.
+// FindChapterMap1 finds the index: key(ChapterID) to value(protoconf.ActivityConf_Activity_Chapter),
+// which is the upper 1st-level map specified by (activityId).
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *ActivityConf) FindChapterMap1(activityId uint64) ActivityConf_Index_ChapterMap {
 	return x.indexChapterMap1[activityId]
 }
 
-// FindChapter1 finds a slice of all values of the given key in the 1st-level map
+// FindChapter1 finds a slice of all values of the given key(s) in the upper 1st-level map
 // specified by (activityId).
 func (x *ActivityConf) FindChapter1(activityId uint64, chapterId uint32) []*protoconf.ActivityConf_Activity_Chapter {
 	return x.FindChapterMap1(activityId)[chapterId]
 }
 
-// FindFirstChapter1 finds the first value of the given key in the 1st-level map
+// FindFirstChapter1 finds the first value of the given key(s) in the upper 1st-level map
 // specified by (activityId), or nil if no value found.
 func (x *ActivityConf) FindFirstChapter1(activityId uint64, chapterId uint32) *protoconf.ActivityConf_Activity_Chapter {
 	val := x.FindChapter1(activityId, chapterId)
@@ -402,18 +402,18 @@ func (x *ActivityConf) FindFirstChapter1(activityId uint64, chapterId uint32) *p
 
 // Index: ChapterName<AwardID>@NamedChapter
 
-// FindNamedChapterMap finds the index key (ChapterName<AwardID>@NamedChapter) to value (protoconf.ActivityConf_Activity_Chapter) map.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindNamedChapterMap finds the index: key(ChapterName<AwardID>@NamedChapter) to value(protoconf.ActivityConf_Activity_Chapter) map.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *ActivityConf) FindNamedChapterMap() ActivityConf_Index_NamedChapterMap {
 	return x.indexNamedChapterMap
 }
 
-// FindNamedChapter finds a slice of all values of the given key.
+// FindNamedChapter finds a slice of all values of the given key(s).
 func (x *ActivityConf) FindNamedChapter(chapterName string) []*protoconf.ActivityConf_Activity_Chapter {
 	return x.indexNamedChapterMap[chapterName]
 }
 
-// FindFirstNamedChapter finds the first value of the given key,
+// FindFirstNamedChapter finds the first value of the given key(s),
 // or nil if no value found.
 func (x *ActivityConf) FindFirstNamedChapter(chapterName string) *protoconf.ActivityConf_Activity_Chapter {
 	val := x.FindNamedChapter(chapterName)
@@ -423,20 +423,20 @@ func (x *ActivityConf) FindFirstNamedChapter(chapterName string) *protoconf.Acti
 	return nil
 }
 
-// FindNamedChapterMap1 finds the index key (ChapterName<AwardID>@NamedChapter) to value (protoconf.ActivityConf_Activity_Chapter),
-// which is the 1st-level map specified by (activityId).
-// One key may correspond to multiple values, which are contained by a slice.
+// FindNamedChapterMap1 finds the index: key(ChapterName<AwardID>@NamedChapter) to value(protoconf.ActivityConf_Activity_Chapter),
+// which is the upper 1st-level map specified by (activityId).
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *ActivityConf) FindNamedChapterMap1(activityId uint64) ActivityConf_Index_NamedChapterMap {
 	return x.indexNamedChapterMap1[activityId]
 }
 
-// FindNamedChapter1 finds a slice of all values of the given key in the 1st-level map
+// FindNamedChapter1 finds a slice of all values of the given key(s) in the upper 1st-level map
 // specified by (activityId).
 func (x *ActivityConf) FindNamedChapter1(activityId uint64, chapterName string) []*protoconf.ActivityConf_Activity_Chapter {
 	return x.FindNamedChapterMap1(activityId)[chapterName]
 }
 
-// FindFirstNamedChapter1 finds the first value of the given key in the 1st-level map
+// FindFirstNamedChapter1 finds the first value of the given key(s) in the upper 1st-level map
 // specified by (activityId), or nil if no value found.
 func (x *ActivityConf) FindFirstNamedChapter1(activityId uint64, chapterName string) *protoconf.ActivityConf_Activity_Chapter {
 	val := x.FindNamedChapter1(activityId, chapterName)
@@ -448,18 +448,18 @@ func (x *ActivityConf) FindFirstNamedChapter1(activityId uint64, chapterName str
 
 // Index: SectionItemID@Award
 
-// FindAwardMap finds the index key (SectionItemID@Award) to value (protoconf.Section_SectionItem) map.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindAwardMap finds the index: key(SectionItemID@Award) to value(protoconf.Section_SectionItem) map.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *ActivityConf) FindAwardMap() ActivityConf_Index_AwardMap {
 	return x.indexAwardMap
 }
 
-// FindAward finds a slice of all values of the given key.
+// FindAward finds a slice of all values of the given key(s).
 func (x *ActivityConf) FindAward(id uint32) []*protoconf.Section_SectionItem {
 	return x.indexAwardMap[id]
 }
 
-// FindFirstAward finds the first value of the given key,
+// FindFirstAward finds the first value of the given key(s),
 // or nil if no value found.
 func (x *ActivityConf) FindFirstAward(id uint32) *protoconf.Section_SectionItem {
 	val := x.FindAward(id)
@@ -469,20 +469,20 @@ func (x *ActivityConf) FindFirstAward(id uint32) *protoconf.Section_SectionItem 
 	return nil
 }
 
-// FindAwardMap1 finds the index key (SectionItemID@Award) to value (protoconf.Section_SectionItem),
-// which is the 1st-level map specified by (activityId).
-// One key may correspond to multiple values, which are contained by a slice.
+// FindAwardMap1 finds the index: key(SectionItemID@Award) to value(protoconf.Section_SectionItem),
+// which is the upper 1st-level map specified by (activityId).
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *ActivityConf) FindAwardMap1(activityId uint64) ActivityConf_Index_AwardMap {
 	return x.indexAwardMap1[activityId]
 }
 
-// FindAward1 finds a slice of all values of the given key in the 1st-level map
+// FindAward1 finds a slice of all values of the given key(s) in the upper 1st-level map
 // specified by (activityId).
 func (x *ActivityConf) FindAward1(activityId uint64, id uint32) []*protoconf.Section_SectionItem {
 	return x.FindAwardMap1(activityId)[id]
 }
 
-// FindFirstAward1 finds the first value of the given key in the 1st-level map
+// FindFirstAward1 finds the first value of the given key(s) in the upper 1st-level map
 // specified by (activityId), or nil if no value found.
 func (x *ActivityConf) FindFirstAward1(activityId uint64, id uint32) *protoconf.Section_SectionItem {
 	val := x.FindAward1(activityId, id)
@@ -492,20 +492,20 @@ func (x *ActivityConf) FindFirstAward1(activityId uint64, id uint32) *protoconf.
 	return nil
 }
 
-// FindAwardMap2 finds the index key (SectionItemID@Award) to value (protoconf.Section_SectionItem),
-// which is the 2nd-level map specified by (activityId, chapterId).
-// One key may correspond to multiple values, which are contained by a slice.
+// FindAwardMap2 finds the index: key(SectionItemID@Award) to value(protoconf.Section_SectionItem),
+// which is the upper 2nd-level map specified by (activityId, chapterId).
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *ActivityConf) FindAwardMap2(activityId uint64, chapterId uint32) ActivityConf_Index_AwardMap {
 	return x.indexAwardMap2[ActivityConf_LevelIndex_Activity_ChapterKey{activityId, chapterId}]
 }
 
-// FindAward2 finds a slice of all values of the given key in the 2nd-level map
+// FindAward2 finds a slice of all values of the given key(s) in the upper 2nd-level map
 // specified by (activityId, chapterId).
 func (x *ActivityConf) FindAward2(activityId uint64, chapterId uint32, id uint32) []*protoconf.Section_SectionItem {
 	return x.FindAwardMap2(activityId, chapterId)[id]
 }
 
-// FindFirstAward2 finds the first value of the given key in the 2nd-level map
+// FindFirstAward2 finds the first value of the given key(s) in the upper 2nd-level map
 // specified by (activityId, chapterId), or nil if no value found.
 func (x *ActivityConf) FindFirstAward2(activityId uint64, chapterId uint32, id uint32) *protoconf.Section_SectionItem {
 	val := x.FindAward2(activityId, chapterId, id)
@@ -879,18 +879,18 @@ func (x *TaskConf) Get1(id int64) (*protoconf.TaskConf_Task, error) {
 
 // Index: ActivityID<Goal,ID>
 
-// FindTaskMap finds the index key (ActivityID<Goal,ID>) to value (protoconf.TaskConf_Task) map.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindTaskMap finds the index: key(ActivityID<Goal,ID>) to value(protoconf.TaskConf_Task) map.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *TaskConf) FindTaskMap() TaskConf_Index_TaskMap {
 	return x.indexTaskMap
 }
 
-// FindTask finds a slice of all values of the given key.
+// FindTask finds a slice of all values of the given key(s).
 func (x *TaskConf) FindTask(activityId int64) []*protoconf.TaskConf_Task {
 	return x.indexTaskMap[activityId]
 }
 
-// FindFirstTask finds the first value of the given key,
+// FindFirstTask finds the first value of the given key(s),
 // or nil if no value found.
 func (x *TaskConf) FindFirstTask(activityId int64) *protoconf.TaskConf_Task {
 	val := x.FindTask(activityId)
@@ -902,19 +902,19 @@ func (x *TaskConf) FindFirstTask(activityId int64) *protoconf.TaskConf_Task {
 
 // OrderedIndex: Goal<ID>@OrderedTask
 
-// FindOrderedTaskMap finds the ordered index key (Goal<ID>@OrderedTask) to value (protoconf.TaskConf_Task) treemap.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindOrderedTaskMap finds the ordered index: key(Goal<ID>@OrderedTask) to value(protoconf.TaskConf_Task) treemap.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *TaskConf) FindOrderedTaskMap() *TaskConf_OrderedIndex_OrderedTaskMap {
 	return x.orderedIndexOrderedTaskMap
 }
 
-// FindOrderedTask finds a slice of all values of the given key.
+// FindOrderedTask finds a slice of all values of the given key(s).
 func (x *TaskConf) FindOrderedTask(goal int64) []*protoconf.TaskConf_Task {
 	val, _ := x.orderedIndexOrderedTaskMap.Get(goal)
 	return val
 }
 
-// FindFirstOrderedTask finds the first value of the given key,
+// FindFirstOrderedTask finds the first value of the given key(s),
 // or nil if no value found.
 func (x *TaskConf) FindFirstOrderedTask(goal int64) *protoconf.TaskConf_Task {
 	val := x.FindOrderedTask(goal)
@@ -926,19 +926,19 @@ func (x *TaskConf) FindFirstOrderedTask(goal int64) *protoconf.TaskConf_Task {
 
 // OrderedIndex: Expiry@TaskExpiry
 
-// FindTaskExpiryMap finds the ordered index key (Expiry@TaskExpiry) to value (protoconf.TaskConf_Task) treemap.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindTaskExpiryMap finds the ordered index: key(Expiry@TaskExpiry) to value(protoconf.TaskConf_Task) treemap.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *TaskConf) FindTaskExpiryMap() *TaskConf_OrderedIndex_TaskExpiryMap {
 	return x.orderedIndexTaskExpiryMap
 }
 
-// FindTaskExpiry finds a slice of all values of the given key.
+// FindTaskExpiry finds a slice of all values of the given key(s).
 func (x *TaskConf) FindTaskExpiry(expiry int64) []*protoconf.TaskConf_Task {
 	val, _ := x.orderedIndexTaskExpiryMap.Get(expiry)
 	return val
 }
 
-// FindFirstTaskExpiry finds the first value of the given key,
+// FindFirstTaskExpiry finds the first value of the given key(s),
 // or nil if no value found.
 func (x *TaskConf) FindFirstTaskExpiry(expiry int64) *protoconf.TaskConf_Task {
 	val := x.FindTaskExpiry(expiry)
@@ -950,19 +950,19 @@ func (x *TaskConf) FindFirstTaskExpiry(expiry int64) *protoconf.TaskConf_Task {
 
 // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
 
-// FindSortedTaskExpiryMap finds the ordered index key (Expiry<Goal,ID>@SortedTaskExpiry) to value (protoconf.TaskConf_Task) treemap.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindSortedTaskExpiryMap finds the ordered index: key(Expiry<Goal,ID>@SortedTaskExpiry) to value(protoconf.TaskConf_Task) treemap.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *TaskConf) FindSortedTaskExpiryMap() *TaskConf_OrderedIndex_SortedTaskExpiryMap {
 	return x.orderedIndexSortedTaskExpiryMap
 }
 
-// FindSortedTaskExpiry finds a slice of all values of the given key.
+// FindSortedTaskExpiry finds a slice of all values of the given key(s).
 func (x *TaskConf) FindSortedTaskExpiry(expiry int64) []*protoconf.TaskConf_Task {
 	val, _ := x.orderedIndexSortedTaskExpiryMap.Get(expiry)
 	return val
 }
 
-// FindFirstSortedTaskExpiry finds the first value of the given key,
+// FindFirstSortedTaskExpiry finds the first value of the given key(s),
 // or nil if no value found.
 func (x *TaskConf) FindFirstSortedTaskExpiry(expiry int64) *protoconf.TaskConf_Task {
 	val := x.FindSortedTaskExpiry(expiry)
@@ -974,19 +974,19 @@ func (x *TaskConf) FindFirstSortedTaskExpiry(expiry int64) *protoconf.TaskConf_T
 
 // OrderedIndex: (Expiry,ActivityID)@ActivityExpiry
 
-// FindActivityExpiryMap finds the ordered index key ((Expiry,ActivityID)@ActivityExpiry) to value (protoconf.TaskConf_Task) treemap.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindActivityExpiryMap finds the ordered index: key((Expiry,ActivityID)@ActivityExpiry) to value(protoconf.TaskConf_Task) treemap.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *TaskConf) FindActivityExpiryMap() *TaskConf_OrderedIndex_ActivityExpiryMap {
 	return x.orderedIndexActivityExpiryMap
 }
 
-// FindActivityExpiry finds a slice of all values of the given key.
+// FindActivityExpiry finds a slice of all values of the given key(s).
 func (x *TaskConf) FindActivityExpiry(expiry int64, activityId int64) []*protoconf.TaskConf_Task {
 	val, _ := x.orderedIndexActivityExpiryMap.Get(TaskConf_OrderedIndex_ActivityExpiryKey{expiry, activityId})
 	return val
 }
 
-// FindFirstActivityExpiry finds the first value of the given key,
+// FindFirstActivityExpiry finds the first value of the given key(s),
 // or nil if no value found.
 func (x *TaskConf) FindFirstActivityExpiry(expiry int64, activityId int64) *protoconf.TaskConf_Task {
 	val := x.FindActivityExpiry(expiry, activityId)

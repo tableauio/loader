@@ -142,18 +142,18 @@ func (x *HeroConf) Get2(name string, title string) (*protoconf.HeroConf_Hero_Att
 
 // Index: Title
 
-// FindAttrMap finds the index key (Title) to value (protoconf.HeroConf_Hero_Attr) map.
-// One key may correspond to multiple values, which are contained by a slice.
+// FindAttrMap finds the index: key(Title) to value(protoconf.HeroConf_Hero_Attr) map.
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *HeroConf) FindAttrMap() HeroConf_Index_AttrMap {
 	return x.indexAttrMap
 }
 
-// FindAttr finds a slice of all values of the given key.
+// FindAttr finds a slice of all values of the given key(s).
 func (x *HeroConf) FindAttr(title string) []*protoconf.HeroConf_Hero_Attr {
 	return x.indexAttrMap[title]
 }
 
-// FindFirstAttr finds the first value of the given key,
+// FindFirstAttr finds the first value of the given key(s),
 // or nil if no value found.
 func (x *HeroConf) FindFirstAttr(title string) *protoconf.HeroConf_Hero_Attr {
 	val := x.FindAttr(title)
@@ -163,20 +163,20 @@ func (x *HeroConf) FindFirstAttr(title string) *protoconf.HeroConf_Hero_Attr {
 	return nil
 }
 
-// FindAttrMap1 finds the index key (Title) to value (protoconf.HeroConf_Hero_Attr),
-// which is the 1st-level map specified by (name).
-// One key may correspond to multiple values, which are contained by a slice.
+// FindAttrMap1 finds the index: key(Title) to value(protoconf.HeroConf_Hero_Attr),
+// which is the upper 1st-level map specified by (name).
+// One key may correspond to multiple values, which are represented by a slice.
 func (x *HeroConf) FindAttrMap1(name string) HeroConf_Index_AttrMap {
 	return x.indexAttrMap1[name]
 }
 
-// FindAttr1 finds a slice of all values of the given key in the 1st-level map
+// FindAttr1 finds a slice of all values of the given key(s) in the upper 1st-level map
 // specified by (name).
 func (x *HeroConf) FindAttr1(name string, title string) []*protoconf.HeroConf_Hero_Attr {
 	return x.FindAttrMap1(name)[title]
 }
 
-// FindFirstAttr1 finds the first value of the given key in the 1st-level map
+// FindFirstAttr1 finds the first value of the given key(s) in the upper 1st-level map
 // specified by (name), or nil if no value found.
 func (x *HeroConf) FindFirstAttr1(name string, title string) *protoconf.HeroConf_Hero_Attr {
 	val := x.FindAttr1(name, title)
