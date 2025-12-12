@@ -16,7 +16,7 @@ message HeroConf {
     ordered_map: true
     index: "Title"
     lang_options: { key: "Index" value: "go" }
-    lang_options: { key: "OrderedMap" value: "cpp" }
+    lang_options: { key: "OrderedMap" value: "cpp cs" }
   };
   map<string, Hero> hero_map = 1 [(tableau.field) = { key: "Name" layout: LAYOUT_VERTICAL }];
   message Hero {
