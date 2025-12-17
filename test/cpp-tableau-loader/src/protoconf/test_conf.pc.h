@@ -19,6 +19,7 @@ class ActivityConf : public Messager {
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::ActivityConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
+  virtual ~ActivityConf() = default;
 
  private:
   virtual bool ProcessAfterLoad() override final;
@@ -176,6 +177,7 @@ class ChapterConf : public Messager {
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::ChapterConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
+  virtual ~ChapterConf() = default;
 
  public:
   const protoconf::ChapterConf::Chapter* Get(uint64_t id) const;
@@ -191,6 +193,7 @@ class ThemeConf : public Messager {
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::ThemeConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
+  virtual ~ThemeConf() = default;
 
  public:
   const protoconf::ThemeConf::Theme* Get(const std::string& name) const;
@@ -207,6 +210,7 @@ class TaskConf : public Messager {
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::TaskConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
+  virtual ~TaskConf() = default;
 
  private:
   virtual bool ProcessAfterLoad() override final;

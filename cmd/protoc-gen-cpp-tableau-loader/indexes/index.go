@@ -300,7 +300,7 @@ func (x *Generator) genCppIndexFinders() {
 			messagerName := x.messagerName()
 
 			x.g.P("// Index: ", index.Index)
-			x.g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Find", index.Name(), "Map() const { return ", indexContainerName, " ;}")
+			x.g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Find", index.Name(), "Map() const { return ", indexContainerName, "; }")
 			x.g.P()
 
 			keys := x.indexKeys(index)

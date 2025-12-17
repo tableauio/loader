@@ -19,6 +19,7 @@ class FruitConf : public Messager {
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::FruitConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
+  virtual ~FruitConf() = default;
 
  private:
   virtual bool ProcessAfterLoad() override final;
@@ -63,6 +64,7 @@ class Fruit2Conf : public Messager {
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::Fruit2Conf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
+  virtual ~Fruit2Conf() = default;
 
  private:
   virtual bool ProcessAfterLoad() override final;
@@ -146,6 +148,7 @@ class Fruit3Conf : public Messager {
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::Fruit3Conf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
+  virtual ~Fruit3Conf() = default;
 
  private:
   virtual bool ProcessAfterLoad() override final;
@@ -203,6 +206,138 @@ class Fruit3Conf : public Messager {
   OrderedIndex_ItemMap ordered_index_item_map_;
 };
 
+class Fruit4Conf : public Messager {
+ public:
+  static const std::string& Name() { return kProtoName; }
+  virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
+  const protoconf::Fruit4Conf& Data() const { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
+  virtual ~Fruit4Conf() = default;
+
+ private:
+  virtual bool ProcessAfterLoad() override final;
+
+ public:
+  const protoconf::Fruit4Conf::Fruit* Get(int32_t fruit_type) const;
+  const protoconf::Fruit4Conf::Fruit::Country* Get(int32_t fruit_type, int32_t id) const;
+  const protoconf::Fruit4Conf::Fruit::Country::Item* Get(int32_t fruit_type, int32_t id, int32_t id3) const;
+
+ private:
+  static const std::string kProtoName;
+  protoconf::Fruit4Conf data_;
+
+  // LevelIndex keys.
+ public:
+  struct LevelIndex_Fruit_CountryKey {
+    int32_t fruit_type;
+    int32_t id;
+#if __cplusplus >= 202002L
+    bool operator==(const LevelIndex_Fruit_CountryKey& other) const = default;
+#else
+    bool operator==(const LevelIndex_Fruit_CountryKey& other) const {
+      return std::tie(fruit_type, id) == std::tie(other.fruit_type, other.id);
+    }
+#endif
+  };
+  struct LevelIndex_Fruit_CountryKeyHasher {
+    std::size_t operator()(const LevelIndex_Fruit_CountryKey& key) const {
+      return util::SugaredHashCombine(key.fruit_type, key.id);
+    }
+  };
+
+  // Index accessers.
+  // Index: CountryName
+ public:
+  using Index_CountryVector = std::vector<const protoconf::Fruit4Conf::Fruit::Country*>;
+  using Index_CountryMap = std::unordered_map<std::string, Index_CountryVector>;
+  // Finds the index: key(CountryName) to value(Index_CountryVector) hashmap.
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_CountryMap& FindCountryMap() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_CountryVector* FindCountry(const std::string& name) const;
+  // Finds the first value of the given key(s).
+  const protoconf::Fruit4Conf::Fruit::Country* FindFirstCountry(const std::string& name) const;
+  // Finds the index: key(CountryName) to value(Index_CountryVector),
+  // which is the upper 1st-level hashmap specified by (fruit_type).
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_CountryMap* FindCountryMap(int32_t fruit_type) const;
+  // Finds a vector of all values of the given key(s) in the upper 1st-level hashmap specified by (fruit_type).
+  const Index_CountryVector* FindCountry(int32_t fruit_type, const std::string& name) const;
+  // Finds the first value of the given key(s) in the upper 1st-level hashmap specified by (fruit_type).
+  const protoconf::Fruit4Conf::Fruit::Country* FindFirstCountry(int32_t fruit_type, const std::string& name) const;
+
+ private:
+  Index_CountryMap index_country_map_;
+  std::unordered_map<int32_t, Index_CountryMap> index_country_map1_;
+
+  // Index: CountryItemAttrName
+ public:
+  using Index_AttrVector = std::vector<const protoconf::Fruit4Conf::Fruit::Country::Item::Attr*>;
+  using Index_AttrMap = std::unordered_map<std::string, Index_AttrVector>;
+  // Finds the index: key(CountryItemAttrName) to value(Index_AttrVector) hashmap.
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_AttrMap& FindAttrMap() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_AttrVector* FindAttr(const std::string& name) const;
+  // Finds the first value of the given key(s).
+  const protoconf::Fruit4Conf::Fruit::Country::Item::Attr* FindFirstAttr(const std::string& name) const;
+  // Finds the index: key(CountryItemAttrName) to value(Index_AttrVector),
+  // which is the upper 1st-level hashmap specified by (fruit_type).
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_AttrMap* FindAttrMap(int32_t fruit_type) const;
+  // Finds a vector of all values of the given key(s) in the upper 1st-level hashmap specified by (fruit_type).
+  const Index_AttrVector* FindAttr(int32_t fruit_type, const std::string& name) const;
+  // Finds the first value of the given key(s) in the upper 1st-level hashmap specified by (fruit_type).
+  const protoconf::Fruit4Conf::Fruit::Country::Item::Attr* FindFirstAttr(int32_t fruit_type, const std::string& name) const;
+  // Finds the index: key(CountryItemAttrName) to value(Index_AttrVector),
+  // which is the upper 2nd-level hashmap specified by (fruit_type, id).
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_AttrMap* FindAttrMap(int32_t fruit_type, int32_t id) const;
+  // Finds a vector of all values of the given key(s) in the upper 2nd-level hashmap specified by (fruit_type, id).
+  const Index_AttrVector* FindAttr(int32_t fruit_type, int32_t id, const std::string& name) const;
+  // Finds the first value of the given key(s) in the upper 2nd-level hashmap specified by (fruit_type, id).
+  const protoconf::Fruit4Conf::Fruit::Country::Item::Attr* FindFirstAttr(int32_t fruit_type, int32_t id, const std::string& name) const;
+
+ private:
+  Index_AttrMap index_attr_map_;
+  std::unordered_map<int32_t, Index_AttrMap> index_attr_map1_;
+  std::unordered_map<LevelIndex_Fruit_CountryKey, Index_AttrMap, LevelIndex_Fruit_CountryKeyHasher> index_attr_map2_;
+
+  // OrderedIndex accessers.
+  // OrderedIndex: CountryItemPrice<CountryItemID>
+ public:
+  using OrderedIndex_ItemVector = std::vector<const protoconf::Fruit4Conf::Fruit::Country::Item*>;
+  using OrderedIndex_ItemMap = std::map<int32_t, OrderedIndex_ItemVector>;
+  // Finds the ordered index: key(CountryItemPrice<CountryItemID>) to value(OrderedIndex_ItemVector) map.
+  // One key may correspond to multiple values, which are represented by a vector.
+  const OrderedIndex_ItemMap& FindItemMap() const;
+  // Finds a vector of all values of the given key(s).
+  const OrderedIndex_ItemVector* FindItem(int32_t price) const;
+  // Finds the first value of the given key(s).
+  const protoconf::Fruit4Conf::Fruit::Country::Item* FindFirstItem(int32_t price) const;
+  // Finds the ordered index: key(CountryItemPrice<CountryItemID>) to value(OrderedIndex_ItemVector),
+  // which is the upper 1st-level map specified by (fruit_type).
+  // One key may correspond to multiple values, which are represented by a vector.
+  const OrderedIndex_ItemMap* FindItemMap(int32_t fruit_type) const;
+  // Finds a vector of all values of the given key(s) in the upper 1st-level map specified by (fruit_type).
+  const OrderedIndex_ItemVector* FindItem(int32_t fruit_type, int32_t price) const;
+  // Finds the first value of the given key(s) in the upper 1st-level map specified by (fruit_type).
+  const protoconf::Fruit4Conf::Fruit::Country::Item* FindFirstItem(int32_t fruit_type, int32_t price) const;
+  // Finds the ordered index: key(CountryItemPrice<CountryItemID>) to value(OrderedIndex_ItemVector),
+  // which is the upper 2nd-level map specified by (fruit_type, id).
+  // One key may correspond to multiple values, which are represented by a vector.
+  const OrderedIndex_ItemMap* FindItemMap(int32_t fruit_type, int32_t id) const;
+  // Finds a vector of all values of the given key(s) in the upper 2nd-level map specified by (fruit_type, id).
+  const OrderedIndex_ItemVector* FindItem(int32_t fruit_type, int32_t id, int32_t price) const;
+  // Finds the first value of the given key(s) in the upper 2nd-level map specified by (fruit_type, id).
+  const protoconf::Fruit4Conf::Fruit::Country::Item* FindFirstItem(int32_t fruit_type, int32_t id, int32_t price) const;
+
+ private:
+  OrderedIndex_ItemMap ordered_index_item_map_;
+  std::unordered_map<int32_t, OrderedIndex_ItemMap> ordered_index_item_map1_;
+  std::unordered_map<LevelIndex_Fruit_CountryKey, OrderedIndex_ItemMap, LevelIndex_Fruit_CountryKeyHasher> ordered_index_item_map2_;
+};
+
 }  // namespace tableau
 
 namespace protoconf {
@@ -210,4 +345,5 @@ namespace protoconf {
 using FruitConfMgr = tableau::FruitConf;
 using Fruit2ConfMgr = tableau::Fruit2Conf;
 using Fruit3ConfMgr = tableau::Fruit3Conf;
+using Fruit4ConfMgr = tableau::Fruit4Conf;
 }  // namespace protoconf

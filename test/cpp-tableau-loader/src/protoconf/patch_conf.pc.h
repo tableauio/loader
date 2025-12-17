@@ -19,6 +19,7 @@ class PatchReplaceConf : public Messager {
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::PatchReplaceConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
+  virtual ~PatchReplaceConf() = default;
 
 
  private:
@@ -32,6 +33,7 @@ class PatchMergeConf : public Messager {
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::PatchMergeConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
+  virtual ~PatchMergeConf() = default;
 
  public:
   const protoconf::Item* Get(uint32_t id) const;
@@ -47,6 +49,7 @@ class RecursivePatchConf : public Messager {
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::RecursivePatchConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
+  virtual ~RecursivePatchConf() = default;
 
  public:
   const protoconf::RecursivePatchConf::Shop* Get(uint32_t shop_id) const;

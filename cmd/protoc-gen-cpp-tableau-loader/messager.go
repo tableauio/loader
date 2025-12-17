@@ -92,6 +92,7 @@ func genHppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	g.P(helper.Indent(1), "virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;")
 	g.P(helper.Indent(1), "const ", cppFullName, "& Data() const { return data_; }")
 	g.P(helper.Indent(1), "const google::protobuf::Message* Message() const override { return &data_; }")
+	g.P(helper.Indent(1), "virtual ~", message.Desc.Name(), "() = default;")
 	g.P()
 
 	if orderedMapGenerator.NeedGenerate() || indexGenerator.NeedGenerate() {
