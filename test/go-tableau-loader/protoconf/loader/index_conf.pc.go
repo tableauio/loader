@@ -191,7 +191,11 @@ func (x *FruitConf) FindItemMap1(fruitType int32) *FruitConf_OrderedIndex_ItemMa
 // FindItem1 finds a slice of all values of the given key(s) in the upper 1st-level treemap
 // specified by (fruitType).
 func (x *FruitConf) FindItem1(fruitType int32, price int32) []*protoconf.FruitConf_Fruit_Item {
-	val, _ := x.FindItemMap1(fruitType).Get(price)
+	m := x.FindItemMap1(fruitType)
+	if m == nil {
+		return nil
+	}
+	val, _ := m.Get(price)
 	return val
 }
 
@@ -472,7 +476,11 @@ func (x *Fruit2Conf) FindItemMap1(fruitType int32) *Fruit2Conf_OrderedIndex_Item
 // FindItem1 finds a slice of all values of the given key(s) in the upper 1st-level treemap
 // specified by (fruitType).
 func (x *Fruit2Conf) FindItem1(fruitType int32, price int32) []*protoconf.Fruit2Conf_Fruit_Country_Item {
-	val, _ := x.FindItemMap1(fruitType).Get(price)
+	m := x.FindItemMap1(fruitType)
+	if m == nil {
+		return nil
+	}
+	val, _ := m.Get(price)
 	return val
 }
 
