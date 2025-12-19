@@ -357,10 +357,14 @@ func (x *Generator) genOrderedIndexFinders() {
 				x.g.P("// Find", index.Name(), i, " finds a slice of all values of the given key(s) in the upper ", loadutil.Ordinal(i), "-level treemap")
 				x.g.P("// specified by (", partArgs, ").")
 				x.g.P("func (x *", messagerName, ") Find", index.Name(), i, "(", partParams, ", ", params, ") []*", x.mapValueType(index), " {")
+				x.g.P("m := x.Find", index.Name(), "Map", i, "(", partArgs, ")")
+				x.g.P("if m == nil {")
+				x.g.P("return nil")
+				x.g.P("}")
 				if len(index.ColFields) == 1 {
-					x.g.P("val, _ := x.Find", index.Name(), "Map", i, "(", partArgs, ").Get(", args, ")")
+					x.g.P("val, _ := m.Get(", args, ")")
 				} else {
-					x.g.P("val, _ := x.Find", index.Name(), "Map", i, "(", partArgs, ").Get(", x.orderedIndexMapKeyType(index), "{", args, "})")
+					x.g.P("val, _ := m.Get(", x.orderedIndexMapKeyType(index), "{", args, "})")
 				}
 				x.g.P("return val")
 				x.g.P("}")

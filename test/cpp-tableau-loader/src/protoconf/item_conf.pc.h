@@ -13,7 +13,7 @@
 #include "item_conf.pb.h"
 
 namespace tableau {
-class ItemConf : public Messager {
+class ItemConf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
@@ -21,7 +21,7 @@ class ItemConf : public Messager {
   const google::protobuf::Message* Message() const override { return &data_; }
 
  private:
-  virtual bool ProcessAfterLoad() override final;
+  virtual bool ProcessAfterLoad() override;
 
  public:
   const protoconf::ItemConf::Item* Get(uint32_t id) const;

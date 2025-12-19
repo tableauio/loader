@@ -290,7 +290,7 @@ func (x *Generator) genCppOrderedIndexFinders() {
 			messagerName := x.messagerName()
 
 			x.g.P("// OrderedIndex: ", index.Index)
-			x.g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Find", index.Name(), "Map() const { return ", indexContainerName, " ;}")
+			x.g.P("const ", messagerName, "::", mapType, "& ", messagerName, "::Find", index.Name(), "Map() const { return ", indexContainerName, "; }")
 			x.g.P()
 
 			keys := x.orderedIndexKeys(index)

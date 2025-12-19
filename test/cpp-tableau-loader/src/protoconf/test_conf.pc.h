@@ -13,7 +13,7 @@
 #include "test_conf.pb.h"
 
 namespace tableau {
-class ActivityConf : public Messager {
+class ActivityConf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
@@ -21,7 +21,7 @@ class ActivityConf : public Messager {
   const google::protobuf::Message* Message() const override { return &data_; }
 
  private:
-  virtual bool ProcessAfterLoad() override final;
+  virtual bool ProcessAfterLoad() override;
 
  public:
   const protoconf::ActivityConf::Activity* Get(uint64_t activity_id) const;
@@ -170,7 +170,7 @@ class ActivityConf : public Messager {
   std::unordered_map<LevelIndex_Activity_ChapterKey, Index_AwardMap, LevelIndex_Activity_ChapterKeyHasher> index_award_map2_;
 };
 
-class ChapterConf : public Messager {
+class ChapterConf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
@@ -185,7 +185,7 @@ class ChapterConf : public Messager {
   protoconf::ChapterConf data_;
 };
 
-class ThemeConf : public Messager {
+class ThemeConf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
@@ -201,7 +201,7 @@ class ThemeConf : public Messager {
   protoconf::ThemeConf data_;
 };
 
-class TaskConf : public Messager {
+class TaskConf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
@@ -209,7 +209,7 @@ class TaskConf : public Messager {
   const google::protobuf::Message* Message() const override { return &data_; }
 
  private:
-  virtual bool ProcessAfterLoad() override final;
+  virtual bool ProcessAfterLoad() override;
 
  public:
   const protoconf::TaskConf::Task* Get(int64_t id) const;

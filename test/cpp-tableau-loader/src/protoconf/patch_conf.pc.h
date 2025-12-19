@@ -13,7 +13,7 @@
 #include "patch_conf.pb.h"
 
 namespace tableau {
-class PatchReplaceConf : public Messager {
+class PatchReplaceConf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
@@ -26,7 +26,7 @@ class PatchReplaceConf : public Messager {
   protoconf::PatchReplaceConf data_;
 };
 
-class PatchMergeConf : public Messager {
+class PatchMergeConf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
@@ -41,7 +41,7 @@ class PatchMergeConf : public Messager {
   protoconf::PatchMergeConf data_;
 };
 
-class RecursivePatchConf : public Messager {
+class RecursivePatchConf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
