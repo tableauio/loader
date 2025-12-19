@@ -13,16 +13,15 @@
 #include "hero_conf.pb.h"
 
 namespace tableau {
-class HeroConf : public Messager {
+class HeroConf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::HeroConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
-  virtual ~HeroConf() = default;
 
  private:
-  virtual bool ProcessAfterLoad() override final;
+  virtual bool ProcessAfterLoad() override;
 
  public:
   const protoconf::HeroConf::Hero* Get(const std::string& name) const;
@@ -45,13 +44,12 @@ class HeroConf : public Messager {
   OrderedMap_HeroMap ordered_map_;
 };
 
-class HeroBaseConf : public Messager {
+class HeroBaseConf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::HeroBaseConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
-  virtual ~HeroBaseConf() = default;
 
  public:
   const base::Hero* Get(const std::string& name) const;

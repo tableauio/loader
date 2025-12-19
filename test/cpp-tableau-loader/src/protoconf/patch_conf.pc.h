@@ -13,13 +13,12 @@
 #include "patch_conf.pb.h"
 
 namespace tableau {
-class PatchReplaceConf : public Messager {
+class PatchReplaceConf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::PatchReplaceConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
-  virtual ~PatchReplaceConf() = default;
 
 
  private:
@@ -27,13 +26,12 @@ class PatchReplaceConf : public Messager {
   protoconf::PatchReplaceConf data_;
 };
 
-class PatchMergeConf : public Messager {
+class PatchMergeConf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::PatchMergeConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
-  virtual ~PatchMergeConf() = default;
 
  public:
   const protoconf::Item* Get(uint32_t id) const;
@@ -43,13 +41,12 @@ class PatchMergeConf : public Messager {
   protoconf::PatchMergeConf data_;
 };
 
-class RecursivePatchConf : public Messager {
+class RecursivePatchConf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::RecursivePatchConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
-  virtual ~RecursivePatchConf() = default;
 
  public:
   const protoconf::RecursivePatchConf::Shop* Get(uint32_t shop_id) const;

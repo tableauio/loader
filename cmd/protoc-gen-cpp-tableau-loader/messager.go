@@ -86,18 +86,17 @@ func genHppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	orderedMapGenerator := orderedmap.NewGenerator(g, message)
 	indexGenerator := indexes.NewGenerator(g, indexDescriptor, message)
 
-	g.P("class ", message.Desc.Name(), " : public Messager {")
+	g.P("class ", message.Desc.Name(), " final : public Messager {")
 	g.P(" public:")
 	g.P(helper.Indent(1), "static const std::string& Name() { return kProtoName; }")
 	g.P(helper.Indent(1), "virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;")
 	g.P(helper.Indent(1), "const ", cppFullName, "& Data() const { return data_; }")
 	g.P(helper.Indent(1), "const google::protobuf::Message* Message() const override { return &data_; }")
-	g.P(helper.Indent(1), "virtual ~", message.Desc.Name(), "() = default;")
 	g.P()
 
 	if orderedMapGenerator.NeedGenerate() || indexGenerator.NeedGenerate() {
 		g.P(" private:")
-		g.P(helper.Indent(1), "virtual bool ProcessAfterLoad() override final;")
+		g.P(helper.Indent(1), "virtual bool ProcessAfterLoad() override;")
 		g.P()
 	}
 

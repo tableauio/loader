@@ -13,16 +13,15 @@
 #include "index_conf.pb.h"
 
 namespace tableau {
-class FruitConf : public Messager {
+class FruitConf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::FruitConf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
-  virtual ~FruitConf() = default;
 
  private:
-  virtual bool ProcessAfterLoad() override final;
+  virtual bool ProcessAfterLoad() override;
 
  public:
   const protoconf::FruitConf::Fruit* Get(int32_t fruit_type) const;
@@ -58,16 +57,15 @@ class FruitConf : public Messager {
   std::unordered_map<int32_t, OrderedIndex_ItemMap> ordered_index_item_map1_;
 };
 
-class Fruit2Conf : public Messager {
+class Fruit2Conf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::Fruit2Conf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
-  virtual ~Fruit2Conf() = default;
 
  private:
-  virtual bool ProcessAfterLoad() override final;
+  virtual bool ProcessAfterLoad() override;
 
  public:
   const protoconf::Fruit2Conf::Fruit* Get(int32_t fruit_type) const;
@@ -142,16 +140,15 @@ class Fruit2Conf : public Messager {
   std::unordered_map<int32_t, OrderedIndex_ItemMap> ordered_index_item_map1_;
 };
 
-class Fruit3Conf : public Messager {
+class Fruit3Conf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::Fruit3Conf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
-  virtual ~Fruit3Conf() = default;
 
  private:
-  virtual bool ProcessAfterLoad() override final;
+  virtual bool ProcessAfterLoad() override;
 
 
  private:
@@ -206,16 +203,15 @@ class Fruit3Conf : public Messager {
   OrderedIndex_ItemMap ordered_index_item_map_;
 };
 
-class Fruit4Conf : public Messager {
+class Fruit4Conf final : public Messager {
  public:
   static const std::string& Name() { return kProtoName; }
   virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
   const protoconf::Fruit4Conf& Data() const { return data_; }
   const google::protobuf::Message* Message() const override { return &data_; }
-  virtual ~Fruit4Conf() = default;
 
  private:
-  virtual bool ProcessAfterLoad() override final;
+  virtual bool ProcessAfterLoad() override;
 
  public:
   const protoconf::Fruit4Conf::Fruit* Get(int32_t fruit_type) const;
