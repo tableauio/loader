@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
-const version = "0.10.1"
+const version = "0.11.0"
 
 // specify protobuf namespace
 var namespace *string

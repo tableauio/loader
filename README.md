@@ -46,7 +46,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 ## Go
 
-- Install: **go1.18** or above
+- Install: **go1.21** or above
 - Install protoc-gen-go: `go install google.golang.org/protobuf/cmd/protoc-gen-go@latest`
 - Change dir: `cd test/go-tableau-loader`
 - Generate protoconf: `bash ./gen.sh`

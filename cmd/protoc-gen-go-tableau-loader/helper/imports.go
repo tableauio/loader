@@ -6,7 +6,6 @@ const (
 	FormatPackage  = protogen.GoImportPath("github.com/tableauio/tableau/format")
 	LoadPackage    = protogen.GoImportPath("github.com/tableauio/tableau/load")
 	StorePackage   = protogen.GoImportPath("github.com/tableauio/tableau/store")
-	Errors         = protogen.GoImportPath("github.com/pkg/errors")
 	TreeMapPackage = protogen.GoImportPath("github.com/tableauio/loader/pkg/treemap")
 	PairPackage    = protogen.GoImportPath("github.com/tableauio/loader/pkg/pair")
 	TimePackage    = protogen.GoImportPath("time")
