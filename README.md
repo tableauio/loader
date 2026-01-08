@@ -19,6 +19,11 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
     - Change dir to **loader** repo
     - Run: `.\init.bat`
 
+### References
+
+- [NMAKE Reference](https://learn.microsoft.com/en-us/cpp/build/reference/nmake-reference?view=msvc-170)
+- [Use the Microsoft C++ Build Tools from the command line](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170)
+
 ## C++
 
 ### Dev at Linux
