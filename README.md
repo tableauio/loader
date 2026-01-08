@@ -12,9 +12,17 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
   - macOS or Linux: `bash init.sh`
   - Windows: 
     - Install [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/)
-    - Environment Setup: Open the appropriate `Developer Command Prompt for VS 2022` from the *Start* menu to ensure `cl.exe` and other build tools are in your `PATH`.
+    - Build tools require specific environment variables to function. The easiest way to run it is through a specialized terminal: 
+      - **Developer Command Prompt**: Open the Start menu, search for **Developer Command Prompt for VS 2022**, and launch it.
+      - **Developer PowerShell**: Search for **Developer PowerShell for VS 2022** and launch it.
+      - **Verify Installation**: Type `cl /?` and `nmake /?` in the command prompt. If installed correctly, it will display the version and usage options. 
     - Change dir to **loader** repo
     - Run: `.\init.bat`
+
+### References
+
+- [NMAKE Reference](https://learn.microsoft.com/en-us/cpp/build/reference/nmake-reference?view=msvc-170)
+- [Use the Microsoft C++ Build Tools from the command line](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170)
 
 ## C++
 
@@ -31,7 +39,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 ### Dev at Windows
 
-- Change dir: `cd test\cpp-tableau-loader`
+- Change dir: `cd test\cpp-tableau-loader`, or change directory with Drive, e.g.: `cd /D D:\GitHub\loader\test\cpp-tableau-loader`
 - Generate protoconf: `.\gen.bat`
 - CMake:
   - C++17: `cmake -S . -B build -G "NMake Makefiles"`
