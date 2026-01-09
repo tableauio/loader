@@ -142,6 +142,8 @@ int main() {
     ATOM_ERROR("protobuf hub load failed: %s", tableau::GetErrMsg().c_str());
     return 1;
   }
+  auto time = Hub::Instance().GetLastLoadedTime();
+  ATOM_DEBUG("load time: %d", time);
   auto msger_map = Hub::Instance().GetMessagerMap();
   for (auto&& item : *msger_map) {
     auto&& stats = item.second->GetStats();

@@ -71,7 +71,7 @@ class Hub {
   const U* GetOrderedMap(Args... args) const;
 
   // GetLastLoadedTime returns the time when hub's msger_container_ was last set.
-  inline std::time_t GetLastLoadedTime() const;
+  std::time_t GetLastLoadedTime() const;
 
  private:
   std::shared_ptr<MessagerMap> InternalLoad(const std::filesystem::path& dir, Format fmt = Format::kJSON,
