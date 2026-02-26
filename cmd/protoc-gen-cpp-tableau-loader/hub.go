@@ -18,10 +18,7 @@ var tpl = template.Must(template.New("").Funcs(template.FuncMap{
 func generateHub(gen *protogen.Plugin) {
 	protofiles := helper.ParseProtoFiles(gen)
 	// detect real shard num
-	realShardNum := *shards
-	if realShardNum > len(protofiles) {
-		realShardNum = len(protofiles)
-	}
+	realShardNum := min(*shards, len(protofiles))
 	if realShardNum <= 1 {
 		realShardNum = 0
 	}
