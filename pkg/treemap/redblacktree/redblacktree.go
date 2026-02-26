@@ -20,11 +20,6 @@ type Tree[K comparable, V any] struct {
 	Less func(K, K) bool
 }
 
-type Lesser[T any] interface {
-	comparable
-	Less(other T) bool
-}
-
 // Node is a single element within the tree
 type Node[K, V any] struct {
 	Key    K
