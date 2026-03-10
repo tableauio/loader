@@ -124,3 +124,25 @@ func (x *Generator) GenCppIndexFinders() {
 	x.genCppIndexFinders()
 	x.genCppOrderedIndexFinders()
 }
+
+// needMapKeyForIndex checks if the map key variable at the given mapDepth
+// is needed by any subsequent regular index's leveled containers.
+func (x *Generator) needMapKeyForIndex(mapDepth int) bool {
+	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
+		if len(levelMessage.Indexes) > 0 && levelMessage.MapDepth-2 >= mapDepth {
+			return true
+		}
+	}
+	return false
+}
+
+// needMapKeyForOrderedIndex checks if the map key variable at the given mapDepth
+// is needed by any subsequent ordered index's leveled containers.
+func (x *Generator) needMapKeyForOrderedIndex(mapDepth int) bool {
+	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
+		if len(levelMessage.OrderedIndexes) > 0 && levelMessage.MapDepth-2 >= mapDepth {
+			return true
+		}
+	}
+	return false
+}

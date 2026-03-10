@@ -27,7 +27,6 @@ bool FruitConf::ProcessAfterLoad() {
   for (auto&& item1 : data_.fruit_map()) {
     auto k1 = item1.first;
     for (auto&& item2 : item1.second.item_map()) {
-      auto k2 = item2.first;
       {
         // OrderedIndex: Price<ID>
         ordered_index_item_map_[item2.second.price()].push_back(&item2.second);
@@ -141,7 +140,6 @@ bool Fruit2Conf::ProcessAfterLoad() {
         index_country_map_[item2.name()].push_back(&item2);
       }
       for (auto&& item3 : item2.item_map()) {
-        auto k2 = item3.first;
         for (auto&& item4 : item3.second.attr_list()) {
           {
             // Index: CountryItemAttrName
@@ -159,7 +157,6 @@ bool Fruit2Conf::ProcessAfterLoad() {
     auto k1 = item1.first;
     for (auto&& item2 : item1.second.country_list()) {
       for (auto&& item3 : item2.item_map()) {
-        auto k2 = item3.first;
         {
           // OrderedIndex: CountryItemPrice<CountryItemID>
           ordered_index_item_map_[item3.second.price()].push_back(&item3.second);
@@ -326,7 +323,6 @@ bool Fruit3Conf::ProcessAfterLoad() {
         index_country_map_[item2.name()].push_back(&item2);
       }
       for (auto&& item3 : item2.item_map()) {
-        auto k1 = item3.first;
         for (auto&& item4 : item3.second.attr_list()) {
           {
             // Index: CountryItemAttrName
@@ -341,7 +337,6 @@ bool Fruit3Conf::ProcessAfterLoad() {
   for (auto&& item1 : data_.fruit_list()) {
     for (auto&& item2 : item1.country_list()) {
       for (auto&& item3 : item2.item_map()) {
-        auto k1 = item3.first;
         {
           // OrderedIndex: CountryItemPrice<CountryItemID>
           ordered_index_item_map_[item3.second.price()].push_back(&item3.second);
@@ -444,7 +439,6 @@ bool Fruit4Conf::ProcessAfterLoad() {
         index_country_map1_[k1][item2.second.name()].push_back(&item2.second);
       }
       for (auto&& item3 : item2.second.item_map()) {
-        auto k3 = item3.first;
         for (auto&& item4 : item3.second.attr_list()) {
           {
             // Index: CountryItemAttrName
@@ -465,7 +459,6 @@ bool Fruit4Conf::ProcessAfterLoad() {
     for (auto&& item2 : item1.second.country_map()) {
       auto k2 = item2.first;
       for (auto&& item3 : item2.second.item_map()) {
-        auto k3 = item3.first;
         {
           // OrderedIndex: CountryItemPrice<CountryItemID>
           ordered_index_item_map_[item3.second.price()].push_back(&item3.second);

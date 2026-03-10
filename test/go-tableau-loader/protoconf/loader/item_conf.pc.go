@@ -179,8 +179,7 @@ func (x *ItemConf) processAfterLoad() error {
 	x.indexItemPathNameMap = make(ItemConf_Index_ItemPathNameMap)
 	x.indexItemPathFriendIdMap = make(ItemConf_Index_ItemPathFriendIDMap)
 	x.indexUseEffectTypeMap = make(ItemConf_Index_UseEffectTypeMap)
-	for k1, v1 := range x.data.GetItemMap() {
-		_ = k1
+	for _, v1 := range x.data.GetItemMap() {
 		{
 			// Index: Type
 			key := v1.GetType()
@@ -266,8 +265,7 @@ func (x *ItemConf) processAfterLoad() error {
 	// OrderedIndex init.
 	x.orderedIndexExtTypeMap = treemap.New[protoconf.FruitType, []*protoconf.ItemConf_Item]()
 	x.orderedIndexParamExtTypeMap = treemap.New2[ItemConf_OrderedIndex_ParamExtTypeKey, []*protoconf.ItemConf_Item]()
-	for k1, v1 := range x.data.GetItemMap() {
-		_ = k1
+	for _, v1 := range x.data.GetItemMap() {
 		{
 			// OrderedIndex: ExtType@ExtType
 			for _, v2 := range v1.GetExtTypeList() {

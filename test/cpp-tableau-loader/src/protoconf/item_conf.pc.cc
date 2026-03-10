@@ -38,7 +38,6 @@ bool ItemConf::ProcessAfterLoad() {
   index_item_path_friend_id_map_.clear();
   index_use_effect_type_map_.clear();
   for (auto&& item1 : data_.item_map()) {
-    auto k1 = item1.first;
     {
       // Index: Type
       index_item_map_[item1.second.type()].push_back(&item1.second);
@@ -115,7 +114,6 @@ bool ItemConf::ProcessAfterLoad() {
   ordered_index_ext_type_map_.clear();
   ordered_index_param_ext_type_map_.clear();
   for (auto&& item1 : data_.item_map()) {
-    auto k1 = item1.first;
     {
       // OrderedIndex: ExtType@ExtType
       for (auto&& item2 : item1.second.ext_type_list()) {

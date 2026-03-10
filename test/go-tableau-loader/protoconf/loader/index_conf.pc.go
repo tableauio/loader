@@ -96,9 +96,7 @@ func (x *FruitConf) processAfterLoad() error {
 	x.orderedIndexItemMap = treemap.New[int32, []*protoconf.FruitConf_Fruit_Item]()
 	x.orderedIndexItemMap1 = make(map[int32]*FruitConf_OrderedIndex_ItemMap)
 	for k1, v1 := range x.data.GetFruitMap() {
-		_ = k1
-		for k2, v2 := range v1.GetItemMap() {
-			_ = k2
+		for _, v2 := range v1.GetItemMap() {
 			{
 				// OrderedIndex: Price<ID>
 				key := v2.GetPrice()
@@ -298,15 +296,13 @@ func (x *Fruit2Conf) processAfterLoad() error {
 	x.indexAttrMap = make(Fruit2Conf_Index_AttrMap)
 	x.indexAttrMap1 = make(map[int32]Fruit2Conf_Index_AttrMap)
 	for k1, v1 := range x.data.GetFruitMap() {
-		_ = k1
 		for _, v2 := range v1.GetCountryList() {
 			{
 				// Index: CountryName
 				key := v2.GetName()
 				x.indexCountryMap[key] = append(x.indexCountryMap[key], v2)
 			}
-			for k2, v3 := range v2.GetItemMap() {
-				_ = k2
+			for _, v3 := range v2.GetItemMap() {
 				for _, v4 := range v3.GetAttrList() {
 					{
 						// Index: CountryItemAttrName
@@ -325,10 +321,8 @@ func (x *Fruit2Conf) processAfterLoad() error {
 	x.orderedIndexItemMap = treemap.New[int32, []*protoconf.Fruit2Conf_Fruit_Country_Item]()
 	x.orderedIndexItemMap1 = make(map[int32]*Fruit2Conf_OrderedIndex_ItemMap)
 	for k1, v1 := range x.data.GetFruitMap() {
-		_ = k1
 		for _, v2 := range v1.GetCountryList() {
-			for k2, v3 := range v2.GetItemMap() {
-				_ = k2
+			for _, v3 := range v2.GetItemMap() {
 				{
 					// OrderedIndex: CountryItemPrice<CountryItemID>
 					key := v3.GetPrice()
@@ -586,8 +580,7 @@ func (x *Fruit3Conf) processAfterLoad() error {
 				key := v2.GetName()
 				x.indexCountryMap[key] = append(x.indexCountryMap[key], v2)
 			}
-			for k1, v3 := range v2.GetItemMap() {
-				_ = k1
+			for _, v3 := range v2.GetItemMap() {
 				for _, v4 := range v3.GetAttrList() {
 					{
 						// Index: CountryItemAttrName
@@ -602,8 +595,7 @@ func (x *Fruit3Conf) processAfterLoad() error {
 	x.orderedIndexItemMap = treemap.New[int32, []*protoconf.Fruit3Conf_Fruit_Country_Item]()
 	for _, v1 := range x.data.GetFruitList() {
 		for _, v2 := range v1.GetCountryList() {
-			for k1, v3 := range v2.GetItemMap() {
-				_ = k1
+			for _, v3 := range v2.GetItemMap() {
 				{
 					// OrderedIndex: CountryItemPrice<CountryItemID>
 					key := v3.GetPrice()
@@ -796,9 +788,7 @@ func (x *Fruit4Conf) processAfterLoad() error {
 	x.indexAttrMap1 = make(map[int32]Fruit4Conf_Index_AttrMap)
 	x.indexAttrMap2 = make(map[Fruit4Conf_LevelIndex_Fruit_CountryKey]Fruit4Conf_Index_AttrMap)
 	for k1, v1 := range x.data.GetFruitMap() {
-		_ = k1
 		for k2, v2 := range v1.GetCountryMap() {
-			_ = k2
 			{
 				// Index: CountryName
 				key := v2.GetName()
@@ -808,8 +798,7 @@ func (x *Fruit4Conf) processAfterLoad() error {
 				}
 				x.indexCountryMap1[k1][key] = append(x.indexCountryMap1[k1][key], v2)
 			}
-			for k3, v3 := range v2.GetItemMap() {
-				_ = k3
+			for _, v3 := range v2.GetItemMap() {
 				for _, v4 := range v3.GetAttrList() {
 					{
 						// Index: CountryItemAttrName
@@ -834,11 +823,8 @@ func (x *Fruit4Conf) processAfterLoad() error {
 	x.orderedIndexItemMap1 = make(map[int32]*Fruit4Conf_OrderedIndex_ItemMap)
 	x.orderedIndexItemMap2 = make(map[Fruit4Conf_LevelIndex_Fruit_CountryKey]*Fruit4Conf_OrderedIndex_ItemMap)
 	for k1, v1 := range x.data.GetFruitMap() {
-		_ = k1
 		for k2, v2 := range v1.GetCountryMap() {
-			_ = k2
-			for k3, v3 := range v2.GetItemMap() {
-				_ = k3
+			for _, v3 := range v2.GetItemMap() {
 				{
 					// OrderedIndex: CountryItemPrice<CountryItemID>
 					key := v3.GetPrice()
