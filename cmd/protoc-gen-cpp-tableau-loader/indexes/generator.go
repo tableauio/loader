@@ -84,6 +84,8 @@ func (x *Generator) GenHppIndexFinders() {
 	if !x.NeedGenerate() {
 		return
 	}
+	// maxDepth-3: since maxDepth is the MapDepth of the deepest index level, and LevelIndex keys
+	// start from the 2nd map level onward, the number of LevelIndex key types is (maxDepth - 2 - 1) = maxDepth - 3.
 	for i := 1; i <= x.maxDepth-3 && i <= len(x.mapFds)-1; i++ {
 		if i == 1 {
 			x.g.P()
@@ -129,7 +131,7 @@ func (x *Generator) GenCppIndexFinders() {
 // is needed by any subsequent regular index's leveled containers.
 func (x *Generator) needMapKeyForIndex(mapDepth int) bool {
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		if len(levelMessage.Indexes) > 0 && levelMessage.MapDepth-2 >= mapDepth {
+		if len(levelMessage.Indexes) > 0 && levelMessage.NumLeveledContainers() >= mapDepth {
 			return true
 		}
 	}
@@ -140,7 +142,7 @@ func (x *Generator) needMapKeyForIndex(mapDepth int) bool {
 // is needed by any subsequent ordered index's leveled containers.
 func (x *Generator) needMapKeyForOrderedIndex(mapDepth int) bool {
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		if len(levelMessage.OrderedIndexes) > 0 && levelMessage.MapDepth-2 >= mapDepth {
+		if len(levelMessage.OrderedIndexes) > 0 && levelMessage.NumLeveledContainers() >= mapDepth {
 			return true
 		}
 	}

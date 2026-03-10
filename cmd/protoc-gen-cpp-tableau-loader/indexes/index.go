@@ -104,7 +104,7 @@ func (x *Generator) genHppIndexFinders() {
 			x.g.P(helper.Indent(1), "const ", vectorType, "* Find", index.Name(), "(", keys.GenGetParams(), ") const;")
 			x.g.P(helper.Indent(1), "// Finds the first value of the given key(s).")
 			x.g.P(helper.Indent(1), "const ", valueType, "* FindFirst", index.Name(), "(", keys.GenGetParams(), ") const;")
-			for i := 1; i <= levelMessage.MapDepth-2; i++ {
+			for i := 1; i <= levelMessage.NumLeveledContainers(); i++ {
 				if i > len(x.keys) {
 					break
 				}
@@ -122,7 +122,7 @@ func (x *Generator) genHppIndexFinders() {
 
 			x.g.P(" private:")
 			x.g.P(helper.Indent(1), mapType, " ", x.indexContainerName(index, 0), ";")
-			for i := 1; i <= levelMessage.MapDepth-2; i++ {
+			for i := 1; i <= levelMessage.NumLeveledContainers(); i++ {
 				if i > len(x.keys) {
 					break
 				}
@@ -146,7 +146,7 @@ func (x *Generator) genIndexLoader() {
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
 			x.g.P(helper.Indent(1), x.indexContainerName(index, 0), ".clear();")
-			for i := 1; i <= levelMessage.MapDepth-2; i++ {
+			for i := 1; i <= levelMessage.NumLeveledContainers(); i++ {
 				if i > len(x.keys) {
 					break
 				}
@@ -157,7 +157,7 @@ func (x *Generator) genIndexLoader() {
 	parentDataName := "data_"
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.Indexes {
-			x.genOneCppIndexLoader(levelMessage.MapDepth, levelMessage.Depth, index, parentDataName)
+			x.genOneCppIndexLoader(levelMessage, index, parentDataName)
 		}
 		itemName := fmt.Sprintf("item%d", levelMessage.Depth)
 		if levelMessage.FD == nil {
@@ -178,7 +178,8 @@ func (x *Generator) genIndexLoader() {
 	}
 }
 
-func (x *Generator) genOneCppIndexLoader(depth int, ident int, index *index.LevelIndex, parentDataName string) {
+func (x *Generator) genOneCppIndexLoader(levelMessage *index.LevelMessage, index *index.LevelIndex, parentDataName string) {
+	ident := levelMessage.Depth
 	x.g.P(helper.Indent(ident), "{")
 	x.g.P(helper.Indent(ident+1), "// Index: ", index.Index)
 	if len(index.ColFields) == 1 {
@@ -186,31 +187,31 @@ func (x *Generator) genOneCppIndexLoader(depth int, ident int, index *index.Leve
 		field := index.ColFields[0] // just take the first field
 		fieldName, _ := x.parseKeyFieldNameAndSuffix(field)
 		if field.FD.IsList() {
-			itemName := fmt.Sprintf("item%d", depth)
+			itemName := fmt.Sprintf("item%d", levelMessage.MapDepth)
 			x.g.P(helper.Indent(ident+1), "for (auto&& ", itemName, " : ", parentDataName, fieldName, ") {")
 			key := itemName
 			if field.FD.Enum() != nil {
 				key = "static_cast<" + helper.ParseCppType(field.FD) + ">(" + key + ")"
 			}
-			x.genLoader(depth, ident+2, index, key, parentDataName)
+			x.genLoader(levelMessage, index, ident+2, key, parentDataName)
 			x.g.P(helper.Indent(ident+1), "}")
 		} else {
 			key := parentDataName + fieldName
-			x.genLoader(depth, ident+1, index, key, parentDataName)
+			x.genLoader(levelMessage, index, ident+1, key, parentDataName)
 		}
 	} else {
 		// multi-column index
-		x.generateOneCppMulticolumnIndex(depth, ident, index, parentDataName, nil)
+		x.generateOneCppMulticolumnIndex(levelMessage, index, ident, parentDataName, nil)
 	}
 	x.g.P(helper.Indent(ident), "}")
 }
 
-func (x *Generator) generateOneCppMulticolumnIndex(depth, ident int, index *index.LevelIndex, parentDataName string, keys helper.MapKeySlice) {
+func (x *Generator) generateOneCppMulticolumnIndex(levelMessage *index.LevelMessage, index *index.LevelIndex, ident int, parentDataName string, keys helper.MapKeySlice) {
 	cursor := len(keys)
 	if cursor >= len(index.ColFields) {
 		keyType := x.indexMapKeyType(index)
 		x.g.P(helper.Indent(ident+1), keyType, " key{", keys.GenGetArguments(), "};")
-		x.genLoader(depth, ident+1, index, "key", parentDataName)
+		x.genLoader(levelMessage, index, ident+1, "key", parentDataName)
 		return
 	}
 	field := index.ColFields[cursor]
@@ -223,18 +224,18 @@ func (x *Generator) generateOneCppMulticolumnIndex(depth, ident int, index *inde
 			key = "static_cast<" + helper.ParseCppType(field.FD) + ">(" + key + ")"
 		}
 		keys = keys.AddMapKey(helper.MapKey{Name: key})
-		x.generateOneCppMulticolumnIndex(depth, ident+1, index, parentDataName, keys)
+		x.generateOneCppMulticolumnIndex(levelMessage, index, ident+1, parentDataName, keys)
 		x.g.P(helper.Indent(ident+1), "}")
 	} else {
 		key := parentDataName + fieldName
 		keys = keys.AddMapKey(helper.MapKey{Name: key})
-		x.generateOneCppMulticolumnIndex(depth, ident, index, parentDataName, keys)
+		x.generateOneCppMulticolumnIndex(levelMessage, index, ident, parentDataName, keys)
 	}
 }
 
-func (x *Generator) genLoader(depth, ident int, index *index.LevelIndex, key, parentDataName string) {
+func (x *Generator) genLoader(levelMessage *index.LevelMessage, index *index.LevelIndex, ident int, key, parentDataName string) {
 	x.g.P(helper.Indent(ident), x.indexContainerName(index, 0), "[", key, "].push_back(&", parentDataName, ");")
-	for i := 1; i <= depth-2; i++ {
+	for i := 1; i <= levelMessage.NumLeveledContainers(); i++ {
 		if i > len(x.keys) {
 			break
 		}
@@ -275,7 +276,8 @@ func (x *Generator) genIndexSorter() {
 				x.g.P(helper.Indent(1), "for (auto&& item : ", indexContainerName, ") {")
 				x.g.P(helper.Indent(2), "std::sort(item.second.begin(), item.second.end(), ", indexContainerName, "sorter);")
 				x.g.P(helper.Indent(1), "}")
-				for i := 1; i <= levelMessage.MapDepth-2; i++ {
+				// Iterate all leveled containers.
+				for i := 1; i <= levelMessage.NumLeveledContainers(); i++ {
 					if i > len(x.keys) {
 						break
 					}
@@ -330,7 +332,7 @@ func (x *Generator) genCppIndexFinders() {
 			x.g.P("}")
 			x.g.P()
 
-			for i := 1; i <= levelMessage.MapDepth-2; i++ {
+			for i := 1; i <= levelMessage.NumLeveledContainers(); i++ {
 				if i > len(x.keys) {
 					break
 				}
