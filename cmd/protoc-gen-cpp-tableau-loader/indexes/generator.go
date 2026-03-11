@@ -84,18 +84,22 @@ func (x *Generator) GenHppIndexFinders() {
 	if !x.NeedGenerate() {
 		return
 	}
-	// maxDepth-2: since maxDepth is the 0-based MapDepth of the deepest index level, and LevelIndex keys
-	// start from the 2nd map level onward, the number of LevelIndex key types is (maxDepth - 1 - 1) = maxDepth - 2.
-	for i := 1; i <= x.maxDepth-2 && i <= len(x.mapFds)-1; i++ {
-		if i == 1 {
+	// The loop generates LevelIndex key types for upper-level map containers.
+	//  - i < x.maxDepth-2: maxDepth is the 0-based MapDepth of the deepest level that has indexes.
+	//    LevelIndex keys start from the 2nd map level (mapFds[1]) onward, so the count is maxDepth-2.
+	//    This ensures we only generate key types up to the deepest level that actually has indexes.
+	//  - i < len(x.mapFds)-1: defensive bound check to prevent out-of-range access on x.mapFds[i+1].
+	//    In practice, maxDepth <= len(x.mapFds) always holds, so maxDepth-2 <= len(x.mapFds)-2 < len(x.mapFds)-1.
+	for i := 0; i < x.maxDepth-2 && i < len(x.mapFds)-1; i++ {
+		if i == 0 {
 			x.g.P()
 			x.g.P(helper.Indent(1), "// LevelIndex keys.")
 			x.g.P(" public:")
 		}
-		fd := x.mapFds[i]
+		fd := x.mapFds[i+1]
 		keyType := x.levelKeyType(fd)
 		x.g.P(helper.Indent(1), "struct ", keyType, " {")
-		keys := x.keys[:i+1]
+		keys := x.keys[:i+2]
 		for _, key := range keys {
 			x.g.P(helper.Indent(2), key.Type, " ", key.Name, ";")
 		}

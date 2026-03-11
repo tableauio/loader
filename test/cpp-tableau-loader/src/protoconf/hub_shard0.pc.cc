@@ -36,6 +36,11 @@ const std::shared_ptr<Fruit4Conf> Hub::Get<Fruit4Conf>() const {
 }
 
 template <>
+const std::shared_ptr<Fruit5Conf> Hub::Get<Fruit5Conf>() const {
+  return GetMessagerContainerWithProvider()->fruit_5_conf_;
+}
+
+template <>
 const std::shared_ptr<FruitConf> Hub::Get<FruitConf>() const {
   return GetMessagerContainerWithProvider()->fruit_conf_;
 }
@@ -51,6 +56,7 @@ void MessagerContainer::InitShard0() {
   fruit_2_conf_ = std::dynamic_pointer_cast<Fruit2Conf>(GetMessager(Fruit2Conf::Name()));
   fruit_3_conf_ = std::dynamic_pointer_cast<Fruit3Conf>(GetMessager(Fruit3Conf::Name()));
   fruit_4_conf_ = std::dynamic_pointer_cast<Fruit4Conf>(GetMessager(Fruit4Conf::Name()));
+  fruit_5_conf_ = std::dynamic_pointer_cast<Fruit5Conf>(GetMessager(Fruit5Conf::Name()));
   fruit_conf_ = std::dynamic_pointer_cast<FruitConf>(GetMessager(FruitConf::Name()));
   item_conf_ = std::dynamic_pointer_cast<ItemConf>(GetMessager(ItemConf::Name()));
 }
@@ -61,6 +67,7 @@ void Registry::InitShard0() {
   Register<Fruit2Conf>();
   Register<Fruit3Conf>();
   Register<Fruit4Conf>();
+  Register<Fruit5Conf>();
   Register<FruitConf>();
   Register<ItemConf>();
 }

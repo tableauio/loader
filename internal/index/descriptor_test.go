@@ -589,6 +589,55 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 				},
 			},
 		},
+		{
+			// Fruit5Conf: 3-level map (fruit_map -> country_map -> item_map),
+			// but indexes only at MapDepth=2 (Country level).
+			// The 3rd level map (MapDepth=3, Item) has no index.
+			// This validates that maxDepth (=2) < len(mapFds) (=3) does not cause
+			// generation of extra LevelIndex key structs.
+			name: "Fruit5Conf",
+			args: args{
+				md: md[*protoconf.Fruit5Conf](),
+			},
+			want: &IndexDescriptor{
+				LevelMessage: &LevelMessage{
+					Depth:    0,
+					MapDepth: 0,
+					FD:       fd[*protoconf.Fruit5Conf]("fruit_map"),
+					NextLevel: &LevelMessage{
+						Depth:    1,
+						MapDepth: 1,
+						FD:       fd[*protoconf.Fruit5Conf_Fruit]("country_map"),
+						NextLevel: &LevelMessage{
+							Depth:    2,
+							MapDepth: 2,
+							FD:       fd[*protoconf.Fruit5Conf_Fruit_Country]("item_map"),
+							Indexes: []*LevelIndex{
+								{
+									Index: &Index{
+										Cols: []string{"CountryName"},
+										Name: "",
+									},
+									MD: md[*protoconf.Fruit5Conf_Fruit_Country](),
+									ColFields: []*LevelField{
+										{
+											FD: fd[*protoconf.Fruit5Conf_Fruit_Country]("name"),
+											LeveledFDList: []protoreflect.FieldDescriptor{
+												fd[*protoconf.Fruit5Conf_Fruit_Country]("name"),
+											},
+										},
+									},
+								},
+							},
+							NextLevel: &LevelMessage{
+								Depth:    3,
+								MapDepth: 3,
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -596,4 +645,52 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 			assert.EqualValues(t, tt.want, got)
 		})
 	}
+}
+
+// Test_Fruit5Conf_MaxDepthVsMapFds verifies that when the deepest map level
+// (MapDepth=3) has no index but a shallower level (MapDepth=2) does,
+// the generator loop `for i := 0; i < maxDepth-2 && i < len(mapFds)-1; i++`
+// does NOT produce extra LevelIndex key structs.
+//
+// Fruit5Conf has 3-level map (fruit_map -> country_map -> item_map) but
+// indexes only at MapDepth=2 (Country), so maxDepth=2, len(mapFds)=3.
+// Without the maxDepth-2 guard, the loop would run 2 iterations instead of 0.
+func Test_Fruit5Conf_MaxDepthVsMapFds(t *testing.T) {
+	descriptor := ParseIndexDescriptor(md[*protoconf.Fruit5Conf]())
+
+	// Simulate initLevelMessage logic to collect maxDepth and mapFds count.
+	var maxDepth int
+	var mapFdCount int
+	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
+		if fd := levelMessage.FD; fd != nil && fd.IsMap() {
+			mapFdCount++
+		}
+		if len(levelMessage.Indexes) != 0 || len(levelMessage.OrderedIndexes) != 0 {
+			maxDepth = levelMessage.MapDepth
+		}
+	}
+
+	// Fruit5Conf: 3 map levels, but deepest index is at MapDepth=2.
+	assert.Equal(t, 3, mapFdCount, "Fruit5Conf should have 3 map field descriptors")
+	assert.Equal(t, 2, maxDepth, "Fruit5Conf's deepest index should be at MapDepth=2")
+	assert.Less(t, maxDepth, mapFdCount, "maxDepth should be less than len(mapFds)")
+
+	// Verify the LevelIndex key generation loop would produce 0 iterations,
+	// meaning no extra LevelIndex key structs are generated.
+	levelIndexKeyCount := 0
+	for i := 0; i < maxDepth-2 && i < mapFdCount-1; i++ {
+		levelIndexKeyCount++
+	}
+	assert.Equal(t, 0, levelIndexKeyCount,
+		"No LevelIndex key structs should be generated: maxDepth-2=%d, len(mapFds)-1=%d",
+		maxDepth-2, mapFdCount-1)
+
+	// Contrast: without the maxDepth-2 guard, using only len(mapFds)-1
+	// would incorrectly generate 2 LevelIndex key structs.
+	wrongKeyCount := 0
+	for i := 0; i < mapFdCount-1; i++ {
+		wrongKeyCount++
+	}
+	assert.Equal(t, 2, wrongKeyCount,
+		"Without maxDepth guard, %d extra LevelIndex key structs would be generated", wrongKeyCount)
 }

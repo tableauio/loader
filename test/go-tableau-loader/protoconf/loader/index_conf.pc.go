@@ -1106,6 +1106,186 @@ func (x *Fruit4Conf) FindFirstItem2(fruitType int32, id int32, price int32) *pro
 	return nil
 }
 
+// Index types.
+// Index: CountryName
+type Fruit5Conf_Index_CountryMap = map[string][]*protoconf.Fruit5Conf_Fruit_Country
+
+// Fruit5Conf is a wrapper around protobuf message: protoconf.Fruit5Conf.
+//
+// It is designed for three goals:
+//
+//  1. Easy use: simple yet powerful accessers.
+//  2. Elegant API: concise and clean functions.
+//  3. Extensibility: Map, OrdererdMap, Index, OrderedIndex...
+type Fruit5Conf struct {
+	UnimplementedMessager
+	data, originalData *protoconf.Fruit5Conf
+	indexCountryMap    Fruit5Conf_Index_CountryMap
+	indexCountryMap1   map[int32]Fruit5Conf_Index_CountryMap
+}
+
+// Name returns the Fruit5Conf's message name.
+func (x *Fruit5Conf) Name() string {
+	return string((*protoconf.Fruit5Conf)(nil).ProtoReflect().Descriptor().Name())
+}
+
+// Data returns the Fruit5Conf's inner message data.
+func (x *Fruit5Conf) Data() *protoconf.Fruit5Conf {
+	if x != nil {
+		return x.data
+	}
+	return nil
+}
+
+// Load loads Fruit5Conf's content in the given dir, based on format and messager options.
+func (x *Fruit5Conf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
+	start := time.Now()
+	defer func() {
+		x.Stats.Duration = time.Since(start)
+	}()
+	x.data = &protoconf.Fruit5Conf{}
+	err := load.LoadMessagerInDir(x.data, dir, format, opts)
+	if err != nil {
+		return err
+	}
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.Fruit5Conf)
+	}
+	return x.processAfterLoad()
+}
+
+// Store stores Fruit5Conf's content to file in the specified directory and format.
+// Available formats: JSON, Bin, and Text.
+func (x *Fruit5Conf) Store(dir string, format format.Format, options ...store.Option) error {
+	return store.Store(x.Data(), dir, format, options...)
+}
+
+// Message returns the Fruit5Conf's inner message data.
+func (x *Fruit5Conf) Message() proto.Message {
+	return x.Data()
+}
+
+// Messager returns the current messager.
+func (x *Fruit5Conf) Messager() Messager {
+	return x
+}
+
+// originalMessage returns the Fruit5Conf's original inner message.
+func (x *Fruit5Conf) originalMessage() proto.Message {
+	if x != nil {
+		return x.originalData
+	}
+	return nil
+}
+
+// processAfterLoad runs after this messager is loaded.
+func (x *Fruit5Conf) processAfterLoad() error {
+	// Index init.
+	x.indexCountryMap = make(Fruit5Conf_Index_CountryMap)
+	x.indexCountryMap1 = make(map[int32]Fruit5Conf_Index_CountryMap)
+	for k1, v1 := range x.data.GetFruitMap() {
+		for _, v2 := range v1.GetCountryMap() {
+			{
+				// Index: CountryName
+				key := v2.GetName()
+				x.indexCountryMap[key] = append(x.indexCountryMap[key], v2)
+				if x.indexCountryMap1[k1] == nil {
+					x.indexCountryMap1[k1] = make(Fruit5Conf_Index_CountryMap)
+				}
+				x.indexCountryMap1[k1][key] = append(x.indexCountryMap1[k1][key], v2)
+			}
+		}
+	}
+	return nil
+}
+
+// Get1 finds value in the 1st-level map. It will return
+// NotFound error if the key is not found.
+func (x *Fruit5Conf) Get1(fruitType int32) (*protoconf.Fruit5Conf_Fruit, error) {
+	d := x.Data().GetFruitMap()
+	if val, ok := d[fruitType]; !ok {
+		return nil, fmt.Errorf("fruitType(%v) %w", fruitType, ErrNotFound)
+	} else {
+		return val, nil
+	}
+}
+
+// Get2 finds value in the 2nd-level map. It will return
+// NotFound error if the key is not found.
+func (x *Fruit5Conf) Get2(fruitType int32, id int32) (*protoconf.Fruit5Conf_Fruit_Country, error) {
+	conf, err := x.Get1(fruitType)
+	if err != nil {
+		return nil, err
+	}
+	d := conf.GetCountryMap()
+	if val, ok := d[id]; !ok {
+		return nil, fmt.Errorf("id(%v) %w", id, ErrNotFound)
+	} else {
+		return val, nil
+	}
+}
+
+// Get3 finds value in the 3rd-level map. It will return
+// NotFound error if the key is not found.
+func (x *Fruit5Conf) Get3(fruitType int32, id int32, id3 int32) (*protoconf.Fruit5Conf_Fruit_Country_Item, error) {
+	conf, err := x.Get2(fruitType, id)
+	if err != nil {
+		return nil, err
+	}
+	d := conf.GetItemMap()
+	if val, ok := d[id3]; !ok {
+		return nil, fmt.Errorf("id3(%v) %w", id3, ErrNotFound)
+	} else {
+		return val, nil
+	}
+}
+
+// Index: CountryName
+
+// FindCountryMap finds the index: key(CountryName) to value(protoconf.Fruit5Conf_Fruit_Country) map.
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *Fruit5Conf) FindCountryMap() Fruit5Conf_Index_CountryMap {
+	return x.indexCountryMap
+}
+
+// FindCountry finds a slice of all values of the given key(s).
+func (x *Fruit5Conf) FindCountry(name string) []*protoconf.Fruit5Conf_Fruit_Country {
+	return x.indexCountryMap[name]
+}
+
+// FindFirstCountry finds the first value of the given key(s),
+// or nil if no value found.
+func (x *Fruit5Conf) FindFirstCountry(name string) *protoconf.Fruit5Conf_Fruit_Country {
+	val := x.FindCountry(name)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// FindCountryMap1 finds the index: key(CountryName) to value(protoconf.Fruit5Conf_Fruit_Country),
+// which is the upper 1st-level map specified by (fruitType).
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *Fruit5Conf) FindCountryMap1(fruitType int32) Fruit5Conf_Index_CountryMap {
+	return x.indexCountryMap1[fruitType]
+}
+
+// FindCountry1 finds a slice of all values of the given key(s) in the upper 1st-level map
+// specified by (fruitType).
+func (x *Fruit5Conf) FindCountry1(fruitType int32, name string) []*protoconf.Fruit5Conf_Fruit_Country {
+	return x.FindCountryMap1(fruitType)[name]
+}
+
+// FindFirstCountry1 finds the first value of the given key(s) in the upper 1st-level map
+// specified by (fruitType), or nil if no value found.
+func (x *Fruit5Conf) FindFirstCountry1(fruitType int32, name string) *protoconf.Fruit5Conf_Fruit_Country {
+	val := x.FindCountry1(fruitType, name)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
 func init() {
 	Register(func() Messager {
 		return new(FruitConf)
@@ -1118,5 +1298,8 @@ func init() {
 	})
 	Register(func() Messager {
 		return new(Fruit4Conf)
+	})
+	Register(func() Messager {
+		return new(Fruit5Conf)
 	})
 }
