@@ -16,9 +16,8 @@ type Generator struct {
 	message    *protogen.Message
 
 	// level message
-	maxDepth int
-	keys     helper.MapKeySlice
-	mapFds   []protoreflect.FieldDescriptor
+	keys   helper.MapKeySlice
+	mapFds []protoreflect.FieldDescriptor
 }
 
 func NewGenerator(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, message *protogen.Message) *Generator {
@@ -35,15 +34,17 @@ func NewGenerator(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *i
 func (x *Generator) initLevelMessage() {
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		if fd := levelMessage.FD; fd != nil && fd.IsMap() {
+			// Only collect map keys/fds when a deeper level has an index or ordered index,
+			// because these keys are used solely for building upper-level (leveled) containers.
+			if !levelMessage.NextLevel.NeedGenAnyIndex() {
+				continue
+			}
 			x.keys = x.keys.AddMapKey(helper.MapKey{
 				Type:      helper.ParseMapKeyType(fd.MapKey()),
 				Name:      helper.ParseMapFieldNameAsFuncParam(fd),
 				FieldName: helper.ParseMapFieldNameAsKeyStructFieldName(fd),
 			})
 			x.mapFds = append(x.mapFds, fd)
-		}
-		if len(levelMessage.Indexes) != 0 || len(levelMessage.OrderedIndexes) != 0 {
-			x.maxDepth = levelMessage.MapDepth
 		}
 	}
 }
@@ -88,12 +89,11 @@ func (x *Generator) GenIndexTypeDef() {
 		return
 	}
 	// The loop generates LevelIndex key types for upper-level map containers.
-	//  - i < x.maxDepth-2: maxDepth is the 0-based MapDepth of the deepest level that has indexes.
-	//    LevelIndex keys start from the 2nd map level (mapFds[1]) onward, so the count is maxDepth-2.
-	//    This ensures we only generate key types up to the deepest level that actually has indexes.
-	//  - i < len(x.mapFds)-1: defensive bound check to prevent out-of-range access on x.mapFds[i+1].
-	//    In practice, maxDepth <= len(x.mapFds) always holds, so maxDepth-2 <= len(x.mapFds)-2 < len(x.mapFds)-1.
-	for i := 0; i < x.maxDepth-2 && i < len(x.mapFds)-1; i++ {
+	// initLevelMessage only collects map keys/fds for levels whose deeper
+	// levels have indexes, so len(x.mapFds) already reflects the effective
+	// depth. LevelIndex keys start from the 2nd map level (mapFds[1]) onward,
+	// so the count is len(x.mapFds)-2.
+	for i := 0; i < len(x.mapFds)-2; i++ {
 		if i == 0 {
 			x.g.P()
 			x.g.P("// LevelIndex keys.")

@@ -87,6 +87,12 @@ func (l *LevelMessage) NeedGenOrderedIndex() bool {
 	return len(l.OrderedIndexes) != 0 || l.NextLevel.NeedGenOrderedIndex()
 }
 
+// NeedGenAnyIndex reports whether this level or any deeper level has
+// at least one index (regular or ordered).
+func (l *LevelMessage) NeedGenAnyIndex() bool {
+	return l.NeedGenIndex() || l.NeedGenOrderedIndex()
+}
+
 type LevelIndex struct {
 	*Index
 	MD              protoreflect.MessageDescriptor

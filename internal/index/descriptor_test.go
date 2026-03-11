@@ -593,8 +593,9 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 			// Fruit5Conf: 3-level map (fruit_map -> country_map -> item_map),
 			// but indexes only at MapDepth=2 (Country level).
 			// The 3rd level map (MapDepth=3, Item) has no index.
-			// This validates that maxDepth (=2) < len(mapFds) (=3) does not cause
-			// generation of extra LevelIndex key structs.
+			// This validates that initLevelMessage only collects map keys/fds
+			// up to the deepest level that has indexes, so len(mapFds) == 2
+			// (not 3), preventing generation of extra LevelIndex key structs.
 			name: "Fruit5Conf",
 			args: args{
 				md: md[*protoconf.Fruit5Conf](),
@@ -647,50 +648,50 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 	}
 }
 
-// Test_Fruit5Conf_MaxDepthVsMapFds verifies that when the deepest map level
-// (MapDepth=3) has no index but a shallower level (MapDepth=2) does,
-// the generator loop `for i := 0; i < maxDepth-2 && i < len(mapFds)-1; i++`
-// does NOT produce extra LevelIndex key structs.
+// Test_Fruit5Conf_MapFdsCollection verifies that initLevelMessage only collects
+// map keys/fds up to the deepest level that has indexes. This eliminates the
+// need for a separate maxDepth variable.
 //
 // Fruit5Conf has 3-level map (fruit_map -> country_map -> item_map) but
-// indexes only at MapDepth=2 (Country), so maxDepth=2, len(mapFds)=3.
-// Without the maxDepth-2 guard, the loop would run 2 iterations instead of 0.
-func Test_Fruit5Conf_MaxDepthVsMapFds(t *testing.T) {
+// indexes only at MapDepth=2 (Country). The new initLevelMessage logic skips
+// item_map (MapDepth=2) because its NextLevel has no indexes, so
+// len(mapFds) == 2 (== former maxDepth), and the loop `for i := 0; i < len(mapFds)-2`
+// produces 0 iterations — no extra LevelIndex key structs.
+func Test_Fruit5Conf_MapFdsCollection(t *testing.T) {
 	descriptor := ParseIndexDescriptor(md[*protoconf.Fruit5Conf]())
 
-	// Simulate initLevelMessage logic to collect maxDepth and mapFds count.
-	var maxDepth int
-	var mapFdCount int
+	// Simulate the new initLevelMessage logic: only collect map keys/fds
+	// when the next level has any index (NeedGenAnyIndex).
+	var collectedMapFdCount int
+	var totalMapFdCount int
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		if fd := levelMessage.FD; fd != nil && fd.IsMap() {
-			mapFdCount++
-		}
-		if len(levelMessage.Indexes) != 0 || len(levelMessage.OrderedIndexes) != 0 {
-			maxDepth = levelMessage.MapDepth
+			totalMapFdCount++
+			if levelMessage.NextLevel.NeedGenAnyIndex() {
+				collectedMapFdCount++
+			}
 		}
 	}
 
-	// Fruit5Conf: 3 map levels, but deepest index is at MapDepth=2.
-	assert.Equal(t, 3, mapFdCount, "Fruit5Conf should have 3 map field descriptors")
-	assert.Equal(t, 2, maxDepth, "Fruit5Conf's deepest index should be at MapDepth=2")
-	assert.Less(t, maxDepth, mapFdCount, "maxDepth should be less than len(mapFds)")
+	// Fruit5Conf: 3 total map levels, but only 2 collected (item_map is excluded).
+	assert.Equal(t, 3, totalMapFdCount, "Fruit5Conf should have 3 total map field descriptors")
+	assert.Equal(t, 2, collectedMapFdCount,
+		"Only 2 map fds should be collected (item_map excluded because its NextLevel has no indexes)")
 
-	// Verify the LevelIndex key generation loop would produce 0 iterations,
-	// meaning no extra LevelIndex key structs are generated.
+	// Verify the LevelIndex key generation loop produces 0 iterations.
 	levelIndexKeyCount := 0
-	for i := 0; i < maxDepth-2 && i < mapFdCount-1; i++ {
+	for i := 0; i < collectedMapFdCount-2; i++ {
 		levelIndexKeyCount++
 	}
 	assert.Equal(t, 0, levelIndexKeyCount,
-		"No LevelIndex key structs should be generated: maxDepth-2=%d, len(mapFds)-1=%d",
-		maxDepth-2, mapFdCount-1)
+		"No LevelIndex key structs should be generated: len(mapFds)-2=%d", collectedMapFdCount-2)
 
-	// Contrast: without the maxDepth-2 guard, using only len(mapFds)-1
-	// would incorrectly generate 2 LevelIndex key structs.
+	// Contrast: if all 3 map fds were collected without filtering,
+	// the loop would incorrectly generate 1 extra LevelIndex key struct.
 	wrongKeyCount := 0
-	for i := 0; i < mapFdCount-1; i++ {
+	for i := 0; i < totalMapFdCount-2; i++ {
 		wrongKeyCount++
 	}
-	assert.Equal(t, 2, wrongKeyCount,
-		"Without maxDepth guard, %d extra LevelIndex key structs would be generated", wrongKeyCount)
+	assert.Equal(t, 1, wrongKeyCount,
+		"Without filtering, %d extra LevelIndex key struct(s) would be generated", wrongKeyCount)
 }
