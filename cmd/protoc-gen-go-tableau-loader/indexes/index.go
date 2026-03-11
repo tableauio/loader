@@ -84,9 +84,6 @@ func (x *Generator) genIndexField() {
 		for _, index := range levelMessage.Indexes {
 			x.g.P(x.indexContainerName(index, 0), " ", x.indexMapType(index))
 			for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
-				if i >= len(x.keys) {
-					break
-				}
 				if i == 0 {
 					x.g.P(x.indexContainerName(index, i+1), " map[", x.keys[0].Type, "]", x.indexMapType(index))
 				} else {
@@ -108,9 +105,6 @@ func (x *Generator) genIndexLoader() {
 		for _, index := range levelMessage.Indexes {
 			x.g.P("x.", x.indexContainerName(index, 0), " = make(", x.indexMapType(index), ")")
 			for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
-				if i >= len(x.keys) {
-					break
-				}
 				if i == 0 {
 					x.g.P("x.", x.indexContainerName(index, i+1), " = make(map[", x.keys[0].Type, "]", x.indexMapType(index), ")")
 				} else {
@@ -198,9 +192,6 @@ func (x *Generator) genIndexLoaderCommon(levelMessage *index.LevelMessage, index
 	indexContainerName := x.indexContainerName(index, 0)
 	x.g.P("x.", indexContainerName, "[key] = append(x.", indexContainerName, "[key], ", parentDataName, ")")
 	for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
-		if i >= len(x.keys) {
-			break
-		}
 		indexContainerName := x.indexContainerName(index, i+1)
 		if i == 0 {
 			x.g.P("if x.", indexContainerName, "[k1] == nil {")
@@ -248,9 +239,6 @@ func (x *Generator) genIndexSorter() {
 				x.g.P("}")
 				// Iterate all leveled containers.
 				for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
-					if i >= len(x.keys) {
-						break
-					}
 					x.g.P("for _, itemMap := range x.", x.indexContainerName(index, i+1), " {")
 					x.g.P("for _, itemList := range itemMap {")
 					x.g.P(helper.SortPackage.Ident("Slice"), "(itemList, ", indexContainerName, "Sorter(itemList))")
@@ -305,9 +293,6 @@ func (x *Generator) genIndexFinders() {
 			x.g.P()
 
 			for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
-				if i >= len(x.keys) {
-					break
-				}
 				indexContainerName := x.indexContainerName(index, i+1)
 				partKeys := x.keys[:i+1]
 				partParams := partKeys.GenGetParams()

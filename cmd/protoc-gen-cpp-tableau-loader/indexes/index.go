@@ -105,9 +105,6 @@ func (x *Generator) genHppIndexFinders() {
 			x.g.P(helper.Indent(1), "// Finds the first value of the given key(s).")
 			x.g.P(helper.Indent(1), "const ", valueType, "* FindFirst", index.Name(), "(", keys.GenGetParams(), ") const;")
 			for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
-				if i >= len(x.keys) {
-					break
-				}
 				partKeys := x.keys[:i+1]
 				x.g.P(helper.Indent(1), "// Finds the index: key(", index.Index, ") to value(", vectorType, "),")
 				x.g.P(helper.Indent(1), "// which is the upper ", loadutil.Ordinal(i+1), "-level hashmap specified by (", partKeys.GenGetArguments(), ").")
@@ -123,9 +120,6 @@ func (x *Generator) genHppIndexFinders() {
 			x.g.P(" private:")
 			x.g.P(helper.Indent(1), mapType, " ", x.indexContainerName(index, 0), ";")
 			for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
-				if i >= len(x.keys) {
-					break
-				}
 				if i == 0 {
 					x.g.P(helper.Indent(1), "std::unordered_map<", x.keys[0].Type, ", ", mapType, "> ", x.indexContainerName(index, i+1), ";")
 				} else {
@@ -147,9 +141,6 @@ func (x *Generator) genIndexLoader() {
 		for _, index := range levelMessage.Indexes {
 			x.g.P(helper.Indent(1), x.indexContainerName(index, 0), ".clear();")
 			for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
-				if i >= len(x.keys) {
-					break
-				}
 				x.g.P(helper.Indent(1), x.indexContainerName(index, i+1), ".clear();")
 			}
 		}
@@ -236,9 +227,6 @@ func (x *Generator) generateOneCppMulticolumnIndex(levelMessage *index.LevelMess
 func (x *Generator) genLoader(levelMessage *index.LevelMessage, index *index.LevelIndex, ident int, key, parentDataName string) {
 	x.g.P(helper.Indent(ident), x.indexContainerName(index, 0), "[", key, "].push_back(&", parentDataName, ");")
 	for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
-		if i >= len(x.keys) {
-			break
-		}
 		if i == 0 {
 			x.g.P(helper.Indent(ident), x.indexContainerName(index, i+1), "[k1][", key, "].push_back(&", parentDataName, ");")
 		} else {
@@ -278,9 +266,6 @@ func (x *Generator) genIndexSorter() {
 				x.g.P(helper.Indent(1), "}")
 				// Iterate all leveled containers.
 				for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
-					if i >= len(x.keys) {
-						break
-					}
 					x.g.P(helper.Indent(1), "for (auto&& item : ", x.indexContainerName(index, i+1), ") {")
 					x.g.P(helper.Indent(2), "for (auto&& item1 : item.second) {")
 					x.g.P(helper.Indent(3), "std::sort(item1.second.begin(), item1.second.end(), ", indexContainerName, "sorter);")
@@ -333,9 +318,6 @@ func (x *Generator) genCppIndexFinders() {
 			x.g.P()
 
 			for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
-				if i >= len(x.keys) {
-					break
-				}
 				indexContainerName := x.indexContainerName(index, i+1)
 				partKeys := x.keys[:i+1]
 				partParams := partKeys.GenGetParams()
