@@ -149,8 +149,8 @@ func (x *Generator) genOrderedIndexLoader() {
 		for _, index := range levelMessage.OrderedIndexes {
 			x.genOneOrderedIndexLoader(levelMessage, index, parentDataName)
 		}
-		keyName := fmt.Sprintf("k%d", levelMessage.MapDepth)
-		valueName := fmt.Sprintf("v%d", levelMessage.Depth)
+		keyName := fmt.Sprintf("k%d", levelMessage.MapDepth+1)
+		valueName := fmt.Sprintf("v%d", levelMessage.Depth+1)
 		if levelMessage.FD == nil {
 			break
 		}
@@ -179,7 +179,7 @@ func (x *Generator) genOneOrderedIndexLoader(levelMessage *index.LevelMessage, i
 		field := index.ColFields[0] // just take the first field
 		fieldName, suffix := x.parseKeyFieldNameAndSuffix(field)
 		if field.FD.IsList() {
-			valueName := fmt.Sprintf("v%d", levelMessage.MapDepth)
+			valueName := fmt.Sprintf("v%d", levelMessage.MapDepth+1)
 			x.g.P("for _ , ", valueName, " := range ", parentDataName, fieldName, " {")
 			x.g.P("key := ", valueName, suffix)
 			x.genOrderedIndexLoaderCommon(levelMessage, index, parentDataName)

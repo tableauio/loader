@@ -34,12 +34,12 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 			},
 			want: &IndexDescriptor{
 				LevelMessage: &LevelMessage{
-					Depth:    1,
-					MapDepth: 1,
+					Depth:    0,
+					MapDepth: 0,
 					FD:       fd[*protoconf.ItemConf]("item_map"),
 					NextLevel: &LevelMessage{
-						Depth:    2,
-						MapDepth: 2,
+						Depth:    1,
+						MapDepth: 1,
 						Indexes: []*LevelIndex{
 							{
 								Index: &Index{
@@ -304,16 +304,16 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 			},
 			want: &IndexDescriptor{
 				LevelMessage: &LevelMessage{
-					Depth:    1,
-					MapDepth: 1,
+					Depth:    0,
+					MapDepth: 0,
 					FD:       fd[*protoconf.HeroConf]("hero_map"),
 					NextLevel: &LevelMessage{
-						Depth:    2,
-						MapDepth: 2,
+						Depth:    1,
+						MapDepth: 1,
 						FD:       fd[*protoconf.HeroConf_Hero]("attr_map"),
 						NextLevel: &LevelMessage{
-							Depth:    3,
-							MapDepth: 3,
+							Depth:    2,
+							MapDepth: 2,
 							Indexes: []*LevelIndex{
 								{
 									Index: &Index{
@@ -343,12 +343,12 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 			},
 			want: &IndexDescriptor{
 				LevelMessage: &LevelMessage{
-					Depth:    1,
-					MapDepth: 1,
+					Depth:    0,
+					MapDepth: 0,
 					FD:       fd[*protoconf.ActivityConf]("activity_map"),
 					NextLevel: &LevelMessage{
-						Depth:    2,
-						MapDepth: 2,
+						Depth:    1,
+						MapDepth: 1,
 						FD:       fd[*protoconf.ActivityConf_Activity]("chapter_map"),
 						Indexes: []*LevelIndex{
 							{
@@ -368,8 +368,8 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 							},
 						},
 						NextLevel: &LevelMessage{
-							Depth:    3,
-							MapDepth: 3,
+							Depth:    2,
+							MapDepth: 2,
 							FD:       fd[*protoconf.ActivityConf_Activity_Chapter]("section_map"),
 							Indexes: []*LevelIndex{
 								{
@@ -413,12 +413,12 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 								},
 							},
 							NextLevel: &LevelMessage{
-								Depth:    4,
-								MapDepth: 4,
+								Depth:    3,
+								MapDepth: 3,
 								FD:       fd[*protoconf.Section]("section_item_list"),
 								NextLevel: &LevelMessage{
-									Depth:    5,
-									MapDepth: 4,
+									Depth:    4,
+									MapDepth: 3,
 									FD:       fd[*protoconf.Section_SectionItem]("decompose_item_list"),
 									Indexes: []*LevelIndex{
 										{
@@ -438,8 +438,8 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 										},
 									},
 									NextLevel: &LevelMessage{
-										Depth:    6,
-										MapDepth: 4,
+										Depth:    5,
+										MapDepth: 3,
 									},
 								},
 							},
@@ -455,12 +455,12 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 			},
 			want: &IndexDescriptor{
 				LevelMessage: &LevelMessage{
-					Depth:    1,
-					MapDepth: 1,
+					Depth:    0,
+					MapDepth: 0,
 					FD:       fd[*protoconf.TaskConf]("task_map"),
 					NextLevel: &LevelMessage{
-						Depth:    2,
-						MapDepth: 2,
+						Depth:    1,
+						MapDepth: 1,
 						Indexes: []*LevelIndex{
 							{
 								Index: &Index{

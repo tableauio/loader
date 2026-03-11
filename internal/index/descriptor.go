@@ -53,19 +53,24 @@ type LevelMessage struct {
 	// Current level message's all index fields
 	Indexes, OrderedIndexes []*LevelIndex
 
-	// depth of message hierarchy
-	Depth, MapDepth int
+	// Depth is the 0-based depth of message hierarchy.
+	// For example, the top-level message has Depth=0, the next level has Depth=1, and so on.
+	Depth int
+	// MapDepth is the 0-based map depth of message hierarchy.
+	// It only increments when the next level is a map field.
+	// For example, the top-level message has MapDepth=0, the next level (if map) has MapDepth=1, and so on.
+	MapDepth int
 }
 
 // NumLeveledContainers returns the number of upper-level index containers
-// for this level message. It equals MapDepth - 2 because:
-//   - MapDepth is 1-based (starts from 1 for the first map level)
+// for this level message. It equals MapDepth - 1 because:
+//   - MapDepth is 0-based (starts from 0 for the top-level message)
 //   - The current level itself is excluded (only parent levels count)
 //
-// For example, a 3-level nested map (MapDepth=3) has 1 upper-level container (keyed by k1),
-// and a 4-level nested map (MapDepth=4) has 2 upper-level containers (keyed by k1 and {k1, k2}).
+// For example, a 3-level nested map (MapDepth=2) has 1 upper-level container (keyed by k1),
+// and a 4-level nested map (MapDepth=3) has 2 upper-level containers (keyed by k1 and {k1, k2}).
 func (l *LevelMessage) NumLeveledContainers() int {
-	return l.MapDepth - 2
+	return l.MapDepth - 1
 }
 
 func (l *LevelMessage) NeedGenIndex() bool {
@@ -193,7 +198,7 @@ func parseCols(cols []string, prefix string, md protoreflect.MessageDescriptor, 
 
 func ParseIndexDescriptor(md protoreflect.MessageDescriptor) *IndexDescriptor {
 	descriptor := &IndexDescriptor{
-		LevelMessage: parseLevelMessage(md, 1, 1),
+		LevelMessage: parseLevelMessage(md, 0, 0),
 	}
 	indexes, orderedIndexes := ParseWSOptionIndex(md)
 	// parse indexes into level message

@@ -125,8 +125,8 @@ func (x *Generator) genIndexLoader() {
 		for _, index := range levelMessage.Indexes {
 			x.genOneIndexLoader(levelMessage, index, parentDataName)
 		}
-		keyName := fmt.Sprintf("k%d", levelMessage.MapDepth)
-		valueName := fmt.Sprintf("v%d", levelMessage.Depth)
+		keyName := fmt.Sprintf("k%d", levelMessage.MapDepth+1)
+		valueName := fmt.Sprintf("v%d", levelMessage.Depth+1)
 		if levelMessage.FD == nil {
 			break
 		}
@@ -155,7 +155,7 @@ func (x *Generator) genOneIndexLoader(levelMessage *index.LevelMessage, index *i
 		field := index.ColFields[0] // just take the first field
 		fieldName, _ := x.parseKeyFieldNameAndSuffix(field)
 		if field.FD.IsList() {
-			valueName := fmt.Sprintf("v%d", levelMessage.MapDepth)
+			valueName := fmt.Sprintf("v%d", levelMessage.MapDepth+1)
 			x.g.P("for _ , ", valueName, " := range ", parentDataName, fieldName, " {")
 			x.g.P("key := ", valueName)
 			x.genIndexLoaderCommon(levelMessage, index, parentDataName)

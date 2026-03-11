@@ -159,27 +159,27 @@ func (x *Generator) genIndexLoader() {
 		for _, index := range levelMessage.Indexes {
 			x.genOneCppIndexLoader(levelMessage, index, parentDataName)
 		}
-		itemName := fmt.Sprintf("item%d", levelMessage.Depth)
+		itemName := fmt.Sprintf("item%d", levelMessage.Depth+1)
 		if levelMessage.FD == nil {
 			break
 		}
 		if !levelMessage.NextLevel.NeedGenIndex() {
 			break
 		}
-		x.g.P(helper.Indent(levelMessage.Depth), "for (auto&& ", itemName, " : ", parentDataName, x.fieldGetter(levelMessage.FD), ") {")
+		x.g.P(helper.Indent(levelMessage.Depth+1), "for (auto&& ", itemName, " : ", parentDataName, x.fieldGetter(levelMessage.FD), ") {")
 		parentDataName = itemName
 		if levelMessage.FD.IsMap() {
 			if x.needMapKeyForIndex(levelMessage.MapDepth) {
-				x.g.P(helper.Indent(levelMessage.Depth+1), "auto k", levelMessage.MapDepth, " = ", itemName, ".first;")
+				x.g.P(helper.Indent(levelMessage.Depth+2), "auto k", levelMessage.MapDepth+1, " = ", itemName, ".first;")
 			}
 			parentDataName = itemName + ".second"
 		}
-		defer x.g.P(helper.Indent(levelMessage.Depth), "}")
+		defer x.g.P(helper.Indent(levelMessage.Depth+1), "}")
 	}
 }
 
 func (x *Generator) genOneCppIndexLoader(levelMessage *index.LevelMessage, index *index.LevelIndex, parentDataName string) {
-	ident := levelMessage.Depth
+	ident := levelMessage.Depth + 1
 	x.g.P(helper.Indent(ident), "{")
 	x.g.P(helper.Indent(ident+1), "// Index: ", index.Index)
 	if len(index.ColFields) == 1 {
@@ -187,7 +187,7 @@ func (x *Generator) genOneCppIndexLoader(levelMessage *index.LevelMessage, index
 		field := index.ColFields[0] // just take the first field
 		fieldName, _ := x.parseKeyFieldNameAndSuffix(field)
 		if field.FD.IsList() {
-			itemName := fmt.Sprintf("item%d", levelMessage.MapDepth)
+			itemName := fmt.Sprintf("item%d", levelMessage.MapDepth+1)
 			x.g.P(helper.Indent(ident+1), "for (auto&& ", itemName, " : ", parentDataName, fieldName, ") {")
 			key := itemName
 			if field.FD.Enum() != nil {

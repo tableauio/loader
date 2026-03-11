@@ -149,27 +149,27 @@ func (x *Generator) genOrderedIndexLoader() {
 		for _, index := range levelMessage.OrderedIndexes {
 			x.genOneCppOrderedIndexLoader(levelMessage, index, parentDataName)
 		}
-		itemName := fmt.Sprintf("item%d", levelMessage.Depth)
+		itemName := fmt.Sprintf("item%d", levelMessage.Depth+1)
 		if levelMessage.FD == nil {
 			break
 		}
 		if !levelMessage.NextLevel.NeedGenOrderedIndex() {
 			break
 		}
-		x.g.P(helper.Indent(levelMessage.Depth), "for (auto&& ", itemName, " : ", parentDataName, x.fieldGetter(levelMessage.FD), ") {")
+		x.g.P(helper.Indent(levelMessage.Depth+1), "for (auto&& ", itemName, " : ", parentDataName, x.fieldGetter(levelMessage.FD), ") {")
 		parentDataName = itemName
 		if levelMessage.FD.IsMap() {
 			if x.needMapKeyForOrderedIndex(levelMessage.MapDepth) {
-				x.g.P(helper.Indent(levelMessage.Depth+1), "auto k", levelMessage.MapDepth, " = ", itemName, ".first;")
+				x.g.P(helper.Indent(levelMessage.Depth+2), "auto k", levelMessage.MapDepth+1, " = ", itemName, ".first;")
 			}
 			parentDataName = itemName + ".second"
 		}
-		defer x.g.P(helper.Indent(levelMessage.Depth), "}")
+		defer x.g.P(helper.Indent(levelMessage.Depth+1), "}")
 	}
 }
 
 func (x *Generator) genOneCppOrderedIndexLoader(levelMessage *index.LevelMessage, index *index.LevelIndex, parentDataName string) {
-	ident := levelMessage.Depth
+	ident := levelMessage.Depth + 1
 	x.g.P(helper.Indent(ident), "{")
 	x.g.P(helper.Indent(ident+1), "// OrderedIndex: ", index.Index)
 	if len(index.ColFields) == 1 {
@@ -177,7 +177,7 @@ func (x *Generator) genOneCppOrderedIndexLoader(levelMessage *index.LevelMessage
 		field := index.ColFields[0] // just take the first field
 		fieldName, suffix := x.parseKeyFieldNameAndSuffix(field)
 		if field.FD.IsList() {
-			itemName := fmt.Sprintf("item%d", levelMessage.MapDepth)
+			itemName := fmt.Sprintf("item%d", levelMessage.MapDepth+1)
 			x.g.P(helper.Indent(ident+1), "for (auto&& ", itemName, " : ", parentDataName, fieldName, ") {")
 			key := itemName + suffix
 			if field.FD.Enum() != nil {
