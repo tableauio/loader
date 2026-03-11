@@ -93,6 +93,31 @@ func (l *LevelMessage) NeedGenAnyIndex() bool {
 	return l.NeedGenIndex() || l.NeedGenOrderedIndex()
 }
 
+// NeedMapKeyForIndex checks if the map key variable at this level is needed
+// by any deeper level's regular index's leveled containers.
+// It finds the first level whose MapDepth > l.MapDepth+1 (i.e., at least 2 map
+// levels deeper), then delegates to NeedGenIndex which recursively checks that
+// level and all deeper levels for indexes.
+func (l *LevelMessage) NeedMapKeyForIndex() bool {
+	for lm := l.NextLevel; lm != nil; lm = lm.NextLevel {
+		if lm.MapDepth > l.MapDepth+1 {
+			return lm.NeedGenIndex()
+		}
+	}
+	return false
+}
+
+// NeedMapKeyForOrderedIndex checks if the map key variable at this level is
+// needed by any deeper level's ordered index's leveled containers.
+func (l *LevelMessage) NeedMapKeyForOrderedIndex() bool {
+	for lm := l.NextLevel; lm != nil; lm = lm.NextLevel {
+		if lm.MapDepth > l.MapDepth+1 {
+			return lm.NeedGenOrderedIndex()
+		}
+	}
+	return false
+}
+
 type LevelIndex struct {
 	*Index
 	MD              protoreflect.MessageDescriptor

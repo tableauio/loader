@@ -158,7 +158,7 @@ func (x *Generator) genOrderedIndexLoader() {
 			break
 		}
 		if levelMessage.FD.IsMap() {
-			if x.needMapKeyForOrderedIndex(levelMessage.MapDepth) {
+			if levelMessage.NeedMapKeyForOrderedIndex() {
 				x.g.P("for ", keyName, ", ", valueName, " := range ", parentDataName, x.fieldGetter(levelMessage.FD), " {")
 			} else {
 				x.g.P("for _, ", valueName, " := range ", parentDataName, x.fieldGetter(levelMessage.FD), " {")

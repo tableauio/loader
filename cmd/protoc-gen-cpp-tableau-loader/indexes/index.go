@@ -169,7 +169,7 @@ func (x *Generator) genIndexLoader() {
 		x.g.P(helper.Indent(levelMessage.Depth+1), "for (auto&& ", itemName, " : ", parentDataName, x.fieldGetter(levelMessage.FD), ") {")
 		parentDataName = itemName
 		if levelMessage.FD.IsMap() {
-			if x.needMapKeyForIndex(levelMessage.MapDepth) {
+			if levelMessage.NeedMapKeyForIndex() {
 				x.g.P(helper.Indent(levelMessage.Depth+2), "auto k", levelMessage.MapDepth+1, " = ", itemName, ".first;")
 			}
 			parentDataName = itemName + ".second"

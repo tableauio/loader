@@ -159,7 +159,7 @@ func (x *Generator) genOrderedIndexLoader() {
 		x.g.P(helper.Indent(levelMessage.Depth+1), "for (auto&& ", itemName, " : ", parentDataName, x.fieldGetter(levelMessage.FD), ") {")
 		parentDataName = itemName
 		if levelMessage.FD.IsMap() {
-			if x.needMapKeyForOrderedIndex(levelMessage.MapDepth) {
+			if levelMessage.NeedMapKeyForOrderedIndex() {
 				x.g.P(helper.Indent(levelMessage.Depth+2), "auto k", levelMessage.MapDepth+1, " = ", itemName, ".first;")
 			}
 			parentDataName = itemName + ".second"

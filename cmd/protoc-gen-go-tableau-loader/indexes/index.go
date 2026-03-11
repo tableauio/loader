@@ -134,7 +134,7 @@ func (x *Generator) genIndexLoader() {
 			break
 		}
 		if levelMessage.FD.IsMap() {
-			if x.needMapKeyForIndex(levelMessage.MapDepth) {
+			if levelMessage.NeedMapKeyForIndex() {
 				x.g.P("for ", keyName, ", ", valueName, " := range ", parentDataName, x.fieldGetter(levelMessage.FD), " {")
 			} else {
 				x.g.P("for _, ", valueName, " := range ", parentDataName, x.fieldGetter(levelMessage.FD), " {")
