@@ -114,7 +114,7 @@ func (x *Generator) genOrderedIndexField() {
 				if i == 0 {
 					x.g.P(x.orderedIndexContainerName(index, i+1), " map[", x.keys[0].Type, "]*", x.orderedIndexMapType(index))
 				} else {
-					levelIndexKeyType := x.levelKeyType(x.mapFds[i])
+					levelIndexKeyType := x.levelKeyType(x.keys[i].Fd)
 					x.g.P(x.orderedIndexContainerName(index, i+1), " map[", levelIndexKeyType, "]*", x.orderedIndexMapType(index))
 				}
 			}
@@ -138,7 +138,7 @@ func (x *Generator) genOrderedIndexLoader() {
 				if i == 0 {
 					x.g.P("x.", x.orderedIndexContainerName(index, i+1), " = make(map[", x.keys[0].Type, "]*", x.orderedIndexMapType(index), ")")
 				} else {
-					levelIndexKeyType := x.levelKeyType(x.mapFds[i])
+					levelIndexKeyType := x.levelKeyType(x.keys[i].Fd)
 					x.g.P("x.", x.orderedIndexContainerName(index, i+1), " = make(map[", levelIndexKeyType, "]*", x.orderedIndexMapType(index), ")")
 				}
 			}
@@ -240,7 +240,7 @@ func (x *Generator) genOrderedIndexLoaderCommon(levelMessage *index.LevelMessage
 			for j := 1; j <= i+1; j++ {
 				fields = append(fields, fmt.Sprintf("k%d", j))
 			}
-			levelIndexKeyType := x.levelKeyType(x.mapFds[i])
+			levelIndexKeyType := x.levelKeyType(x.keys[i].Fd)
 			keyName := orderedIndexContainerName + "Keys"
 			x.g.P(keyName, " := ", levelIndexKeyType, "{", strings.Join(fields, ", "), "}")
 			x.g.P("if x.", orderedIndexContainerName, "[", keyName, "] == nil {")
@@ -352,7 +352,7 @@ func (x *Generator) genOrderedIndexFinders() {
 				if len(partKeys) == 1 {
 					x.g.P("return x.", orderedIndexContainerName, "[", partArgs, "]")
 				} else {
-					levelIndexKeyType := x.levelKeyType(x.mapFds[i])
+					levelIndexKeyType := x.levelKeyType(x.keys[i].Fd)
 					x.g.P("return x.", orderedIndexContainerName, "[", levelIndexKeyType, "{", partArgs, "}]")
 				}
 				x.g.P("}")

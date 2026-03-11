@@ -15,8 +15,7 @@ type Generator struct {
 	message    *protogen.Message
 
 	// level message
-	keys   helper.MapKeySlice
-	mapFds []protoreflect.FieldDescriptor
+	keys helper.MapKeySlice
 }
 
 func NewGenerator(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, message *protogen.Message) *Generator {
@@ -40,8 +39,8 @@ func (x *Generator) initLevelMessage() {
 			x.keys = x.keys.AddMapKey(helper.MapKey{
 				Type: helper.ParseMapKeyType(fd.MapKey()),
 				Name: helper.ParseMapFieldName(fd),
+				Fd:   fd,
 			})
-			x.mapFds = append(x.mapFds, fd)
 		}
 	}
 }
@@ -86,17 +85,17 @@ func (x *Generator) GenHppIndexFinders() {
 		return
 	}
 	// The loop generates LevelIndex key types for upper-level map containers.
-	// initLevelMessage only collects map keys/fds for levels whose deeper
-	// levels have indexes, so len(x.mapFds) already reflects the effective
-	// depth. LevelIndex keys start from the 2nd map level (mapFds[1]) onward,
-	// so the count is len(x.mapFds)-2.
-	for i := 0; i < len(x.mapFds)-2; i++ {
+	// initLevelMessage only collects map keys for levels whose deeper
+	// levels have indexes, so len(x.keys) already reflects the effective
+	// depth. LevelIndex keys start from the 2nd map level (keys[1]) onward,
+	// so the count is len(x.keys)-2.
+	for i := 0; i < len(x.keys)-2; i++ {
 		if i == 0 {
 			x.g.P()
 			x.g.P(helper.Indent(1), "// LevelIndex keys.")
 			x.g.P(" public:")
 		}
-		fd := x.mapFds[i+1]
+		fd := x.keys[i+1].Fd
 		keyType := x.levelKeyType(fd)
 		x.g.P(helper.Indent(1), "struct ", keyType, " {")
 		keys := x.keys[:i+2]

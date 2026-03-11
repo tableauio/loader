@@ -121,8 +121,8 @@ message Fruit4Conf {
 // Nesting: map -> map -> map
 // 3-level map but indexes only at the 2nd level (MapDepth=2).
 // The 3rd level map (MapDepth=3) has no index.
-// This tests that maxDepth (=2) < len(mapFds) (=3) does not cause
-// generation of extra LevelIndex key structs.
+// This tests that when indexes exist only at the 2nd level (not the 3rd),
+// no extra LevelIndex key structs are generated.
 message Fruit5Conf {
   option (tableau.worksheet) = {
     name: "Fruit5Conf"

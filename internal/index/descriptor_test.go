@@ -593,8 +593,8 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 			// Fruit5Conf: 3-level map (fruit_map -> country_map -> item_map),
 			// but indexes only at MapDepth=2 (Country level).
 			// The 3rd level map (MapDepth=3, Item) has no index.
-			// This validates that initLevelMessage only collects map keys/fds
-			// up to the deepest level that has indexes, so len(mapFds) == 2
+			// This validates that initLevelMessage only collects map keys
+			// for levels whose deeper levels have indexes, so len(keys) == 2
 			// (not 3), preventing generation of extra LevelIndex key structs.
 			name: "Fruit5Conf",
 			args: args{
@@ -648,48 +648,47 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 	}
 }
 
-// Test_Fruit5Conf_MapFdsCollection verifies that initLevelMessage only collects
-// map keys/fds up to the deepest level that has indexes. This eliminates the
-// need for a separate maxDepth variable.
+// Test_Fruit5Conf_MapKeysCollection verifies that initLevelMessage only collects
+// map keys for levels whose deeper levels have indexes.
 //
-// Fruit5Conf has 3-level map (fruit_map -> country_map -> item_map) but
-// indexes only at MapDepth=2 (Country). The new initLevelMessage logic skips
-// item_map (MapDepth=2) because its NextLevel has no indexes, so
-// len(mapFds) == 2 (== former maxDepth), and the loop `for i := 0; i < len(mapFds)-2`
-// produces 0 iterations — no extra LevelIndex key structs.
-func Test_Fruit5Conf_MapFdsCollection(t *testing.T) {
+// Fruit5Conf has a 3-level map (fruit_map -> country_map -> item_map) but
+// indexes only at MapDepth=2 (Country). initLevelMessage skips item_map
+// because its NextLevel has no indexes, so len(keys) == 2, and the loop
+// `for i := 0; i < len(keys)-2` produces 0 iterations — no extra
+// LevelIndex key structs are generated.
+func Test_Fruit5Conf_MapKeysCollection(t *testing.T) {
 	descriptor := ParseIndexDescriptor(md[*protoconf.Fruit5Conf]())
 
-	// Simulate the new initLevelMessage logic: only collect map keys/fds
+	// Simulate the initLevelMessage logic: only collect map keys
 	// when the next level has any index (NeedGenAnyIndex).
-	var collectedMapFdCount int
-	var totalMapFdCount int
+	var collectedMapKeyCount int
+	var totalMapKeyCount int
 	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		if fd := levelMessage.FD; fd != nil && fd.IsMap() {
-			totalMapFdCount++
+			totalMapKeyCount++
 			if levelMessage.NextLevel.NeedGenAnyIndex() {
-				collectedMapFdCount++
+				collectedMapKeyCount++
 			}
 		}
 	}
 
 	// Fruit5Conf: 3 total map levels, but only 2 collected (item_map is excluded).
-	assert.Equal(t, 3, totalMapFdCount, "Fruit5Conf should have 3 total map field descriptors")
-	assert.Equal(t, 2, collectedMapFdCount,
-		"Only 2 map fds should be collected (item_map excluded because its NextLevel has no indexes)")
+	assert.Equal(t, 3, totalMapKeyCount, "Fruit5Conf should have 3 total map levels")
+	assert.Equal(t, 2, collectedMapKeyCount,
+		"Only 2 map keys should be collected (item_map excluded because its NextLevel has no indexes)")
 
 	// Verify the LevelIndex key generation loop produces 0 iterations.
 	levelIndexKeyCount := 0
-	for i := 0; i < collectedMapFdCount-2; i++ {
+	for i := 0; i < collectedMapKeyCount-2; i++ {
 		levelIndexKeyCount++
 	}
 	assert.Equal(t, 0, levelIndexKeyCount,
-		"No LevelIndex key structs should be generated: len(mapFds)-2=%d", collectedMapFdCount-2)
+		"No LevelIndex key structs should be generated: len(keys)-2=%d", collectedMapKeyCount-2)
 
 	// Contrast: if all 3 map fds were collected without filtering,
 	// the loop would incorrectly generate 1 extra LevelIndex key struct.
 	wrongKeyCount := 0
-	for i := 0; i < totalMapFdCount-2; i++ {
+	for i := 0; i < totalMapKeyCount-2; i++ {
 		wrongKeyCount++
 	}
 	assert.Equal(t, 1, wrongKeyCount,

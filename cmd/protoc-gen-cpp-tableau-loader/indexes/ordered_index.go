@@ -119,7 +119,7 @@ func (x *Generator) genHppOrderedIndexFinders() {
 				if i == 0 {
 					x.g.P(helper.Indent(1), "std::unordered_map<", x.keys[0].Type, ", ", mapType, "> ", x.orderedIndexContainerName(index, i+1), ";")
 				} else {
-					levelIndexKeyType := x.levelKeyType(x.mapFds[i])
+					levelIndexKeyType := x.levelKeyType(x.keys[i].Fd)
 					x.g.P(helper.Indent(1), "std::unordered_map<", levelIndexKeyType, ", ", mapType, ", ", levelIndexKeyType, "Hasher> ", x.orderedIndexContainerName(index, i+1), ";")
 				}
 			}

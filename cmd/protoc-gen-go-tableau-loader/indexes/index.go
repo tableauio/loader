@@ -90,7 +90,7 @@ func (x *Generator) genIndexField() {
 				if i == 0 {
 					x.g.P(x.indexContainerName(index, i+1), " map[", x.keys[0].Type, "]", x.indexMapType(index))
 				} else {
-					levelIndexKeyType := x.levelKeyType(x.mapFds[i])
+					levelIndexKeyType := x.levelKeyType(x.keys[i].Fd)
 					x.g.P(x.indexContainerName(index, i+1), " map[", levelIndexKeyType, "]", x.indexMapType(index))
 				}
 			}
@@ -114,7 +114,7 @@ func (x *Generator) genIndexLoader() {
 				if i == 0 {
 					x.g.P("x.", x.indexContainerName(index, i+1), " = make(map[", x.keys[0].Type, "]", x.indexMapType(index), ")")
 				} else {
-					levelIndexKeyType := x.levelKeyType(x.mapFds[i])
+					levelIndexKeyType := x.levelKeyType(x.keys[i].Fd)
 					x.g.P("x.", x.indexContainerName(index, i+1), " = make(map[", levelIndexKeyType, "]", x.indexMapType(index), ")")
 				}
 			}
@@ -212,7 +212,7 @@ func (x *Generator) genIndexLoaderCommon(levelMessage *index.LevelMessage, index
 			for j := 1; j <= i+1; j++ {
 				fields = append(fields, fmt.Sprintf("k%d", j))
 			}
-			levelIndexKeyType := x.levelKeyType(x.mapFds[i])
+			levelIndexKeyType := x.levelKeyType(x.keys[i].Fd)
 			keyName := indexContainerName + "Keys"
 			x.g.P(keyName, " := ", levelIndexKeyType, "{", strings.Join(fields, ", "), "}")
 			x.g.P("if x.", indexContainerName, "[", keyName, "] == nil {")
@@ -320,7 +320,7 @@ func (x *Generator) genIndexFinders() {
 				if len(partKeys) == 1 {
 					x.g.P("return x.", indexContainerName, "[", partArgs, "]")
 				} else {
-					levelIndexKeyType := x.levelKeyType(x.mapFds[i])
+					levelIndexKeyType := x.levelKeyType(x.keys[i].Fd)
 					x.g.P("return x.", indexContainerName, "[", levelIndexKeyType, "{", partArgs, "}]")
 				}
 				x.g.P("}")
