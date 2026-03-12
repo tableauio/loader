@@ -89,20 +89,20 @@ func (x *Generator) GenIndexTypeDef() {
 	}
 	// Generate LevelIndex key structs for intermediate map levels.
 	//
-	// x.keys holds one entry per effective map level (only levels that lead to
-	// an index are included by initLevelMessage). For a 3-level map keyed by
+	// x.keys holds one entry per map level whose next level still needs an
+	// index (populated by initLevelMessage). For a 3-level map keyed by
 	// (k1, k2, k3) with an index at the deepest level, x.keys = [k1, k2, k3].
 	//
-	// The deepest level's key (k3) is the direct lookup key and does not need
-	// a LevelIndex struct. The top-level key (k1, i.e. keys[0]) is a plain map
-	// key and also does not need one. Only the intermediate levels (keys[1] …
-	// keys[len-2]) require a LevelIndex struct that bundles all ancestor keys:
+	// Level containers at depth 1 are keyed by a single scalar (k1), so no
+	// composite key struct is needed. Only depths ≥ 2 require a LevelIndex
+	// struct that bundles all ancestor keys up to that depth:
 	//
-	//   keys = [k1, k2, k3]  →  one struct for keys[1]=k2: { k1, k2 }
-	//   keys = [k1,k2,k3,k4] →  structs for keys[1]=k2: {k1,k2}
-	//                                        and keys[2]=k3: {k1,k2,k3}
+	//   keys = [k1, k2, k3]     → struct for depth 2: {k1, k2}
+	//   keys = [k1, k2, k3, k4] → struct for depth 2: {k1, k2}
+	//                             struct for depth 3: {k1, k2, k3}
 	//
-	// Hence the loop runs len(x.keys)-2 times (0 times when len ≤ 2).
+	// The loop starts at i=2 (depth 2) and creates a struct from keys[:i].
+	// It runs len(x.keys)-2 times (0 times when len ≤ 2).
 	for i := 2; i < len(x.keys); i++ {
 		if i == 2 {
 			x.g.P()
