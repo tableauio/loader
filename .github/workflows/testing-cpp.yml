@@ -23,8 +23,8 @@ jobs:
             cmake_config: cmake -S test/cpp-tableau-loader -B test/cpp-tableau-loader/build
             run_loader: ./bin/loader
           - os: windows-latest
-            init_script: .\init.bat
-            gen_script: test\cpp-tableau-loader\gen.bat
+            init_script: cmd /c init.bat
+            gen_script: cmd /c test\cpp-tableau-loader\gen.bat
             cmake_config: cmake -S test/cpp-tableau-loader -B test/cpp-tableau-loader/build -G "NMake Makefiles"
             run_loader: .\bin\loader.exe
 
