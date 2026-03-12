@@ -4,13 +4,14 @@
 set -e
 set -o pipefail
 
-shopt -s globstar
-
 cd "$(git rev-parse --show-toplevel)"
-PROTOC="./third_party/_submodules/protobuf/cmake/build/protoc"
+
+# Allow overriding protoc via environment variable.
+# Default to the locally compiled protoc for local development.
+PROTOC="${PROTOC:-./third_party/_submodules/protobuf/cmake/build/protoc}"
 PROTOBUF_PROTO="./third_party/_submodules/protobuf/src"
 TABLEAU_PROTO="./third_party/_submodules/tableau/proto"
-PLGUIN_DIR="./cmd/protoc-gen-go-tableau-loader"
+PLUGIN_DIR="./cmd/protoc-gen-go-tableau-loader"
 PROTOCONF_IN="./test/proto"
 PROTOCONF_OUT="./test/go-tableau-loader/protoconf"
 LOADER_OUT="$PROTOCONF_OUT/loader"
@@ -20,9 +21,12 @@ rm -rfv "$PROTOCONF_OUT" "$LOADER_OUT"
 mkdir -p "$PROTOCONF_OUT" "$LOADER_OUT"
 
 # build
-cd "${PLGUIN_DIR}" && go build && cd -
+cd "${PLUGIN_DIR}" && go build && cd -
 
-export PATH="${PLGUIN_DIR}:${PATH}"
+export PATH="$(pwd)/${PLUGIN_DIR}:${PATH}"
+
+# Collect all .proto files (use `find` for cross-platform compatibility).
+PROTO_FILES=$(find "$PROTOCONF_IN" -name "*.proto")
 
 ${PROTOC} \
     --go-tableau-loader_out="$LOADER_OUT" \
@@ -32,4 +36,4 @@ ${PROTOC} \
     --proto_path="$PROTOBUF_PROTO" \
     --proto_path="$TABLEAU_PROTO" \
     --proto_path="$PROTOCONF_IN" \
-    "$PROTOCONF_IN"/**/*.proto
+    $PROTO_FILES
