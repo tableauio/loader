@@ -27,37 +27,37 @@ endif()
 
 # google protobuf
 # Try to find protobuf from local submodule first, then fallback to system.
+# Protobuf's install.cmake generates config files under:
+#   - Linux:   build/lib64/cmake/protobuf/ (via CMAKE_INSTALL_LIBDIR)
+#   - Windows: build/cmake/                (MSVC uses "cmake" directly)
+# Setting CMAKE_PREFIX_PATH to the build dir allows CMake to search both layouts.
 set(LOCAL_PROTOBUF_BUILD_DIR "${PROJECT_SOURCE_DIR}/../../third_party/_submodules/protobuf/cmake/build")
 set(LOCAL_PROTOBUF_SRC_DIR "${PROJECT_SOURCE_DIR}/../../third_party/_submodules/protobuf/src")
 if(EXISTS "${LOCAL_PROTOBUF_BUILD_DIR}" AND EXISTS "${LOCAL_PROTOBUF_SRC_DIR}")
     message(STATUS "Found local protobuf submodule, using it preferentially.")
     list(PREPEND CMAKE_PREFIX_PATH "${LOCAL_PROTOBUF_BUILD_DIR}")
-    set(Protobuf_INCLUDE_DIR "${LOCAL_PROTOBUF_SRC_DIR}" CACHE PATH "Protobuf include dir" FORCE)
-    # Use static protobuf to avoid dynamic linking issues across all platforms.
-    set(Protobuf_USE_STATIC_LIBS ON)
 endif()
-find_package(Protobuf REQUIRED)
-message(STATUS "Using protobuf ${Protobuf_VERSION}")
 
-# When linking protobuf statically, PROTOBUF_USE_DLLS must not be defined,
-# otherwise symbols will be decorated with __declspec(dllimport) and cause LNK2019.
-if(Protobuf_USE_STATIC_LIBS)
-    remove_definitions(-DPROTOBUF_USE_DLLS)
-endif()
+# Use CONFIG mode explicitly to pick up protobuf's own protobuf-config.cmake
+# instead of CMake's built-in FindProtobuf.cmake module, which may not handle
+# the local build directory layout correctly.
+find_package(Protobuf CONFIG REQUIRED)
+message(STATUS "Using protobuf ${Protobuf_VERSION}")
 
 # loader
 SET(LOADER_SRC_DIR ${PROJECT_SOURCE_DIR}/src/)
 
 # include
-include_directories(${Protobuf_INCLUDE_DIRS} ${LOADER_SRC_DIR} ${LOADER_SRC_DIR}/protoconf)
+# protobuf::libprotobuf target already provides its include directories via
+# INTERFACE_INCLUDE_DIRECTORIES, so we only need to add our own source dirs.
+include_directories(${LOADER_SRC_DIR} ${LOADER_SRC_DIR}/protoconf)
 
 # add the executable
 add_executable(${PROJECT_NAME} ${PROTO_SOURCE} ${SOURCE})
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 # link libraries
-if(MSVC)
-    target_link_libraries(${PROJECT_NAME} protobuf::libprotobuf)
-else()
-    target_link_libraries(${PROJECT_NAME} protobuf::libprotobuf pthread stdc++fs)
+target_link_libraries(${PROJECT_NAME} protobuf::libprotobuf)
+if(NOT MSVC)
+    target_link_libraries(${PROJECT_NAME} pthread stdc++fs)
 endif()

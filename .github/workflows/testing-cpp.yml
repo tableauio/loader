@@ -19,7 +19,7 @@ jobs:
         include:
           - os: ubuntu-latest
             gen_script: bash gen.sh
-            cmake_config: cmake -S . -B build
+            cmake_config: cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Debug
             run_loader: ./bin/loader
           - os: windows-latest
             gen_script: cmd /c gen.bat
