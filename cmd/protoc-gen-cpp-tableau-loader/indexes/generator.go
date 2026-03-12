@@ -29,11 +29,11 @@ func NewGenerator(g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, 
 }
 
 func (x *Generator) initLevelMessage() {
-	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		if fd := levelMessage.FD; fd != nil && fd.IsMap() {
+	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
+		if fd := lm.FD; fd != nil && fd.IsMap() {
 			// Only collect map keys/fds when a deeper level has an index or ordered index,
 			// because these keys are used solely for building upper-level (leveled) containers.
-			if !levelMessage.NextLevel.NeedGenAnyIndex() {
+			if !lm.NextLevel.NeedGenAnyIndex() {
 				continue
 			}
 			x.keys = x.keys.AddMapKey(helper.MapKey{
