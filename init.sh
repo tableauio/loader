@@ -22,7 +22,9 @@ git submodule update --init --recursive
 # Refer: https://github.com/protocolbuffers/protobuf/blob/3.19.x/cmake/README.md#cmake-configuration
 cd cmake
 # use Debug version
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -Dprotobuf_BUILD_TESTS=OFF
+# -Dprotobuf_MSVC_STATIC_RUNTIME=OFF: use dynamic CRT (/MDd) to match the default MSVC runtime library setting.
+# This flag is only effective on Windows/MSVC and is ignored on other platforms.
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
 
 # Compile the code
 cmake --build build --parallel

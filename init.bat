@@ -15,7 +15,8 @@ REM Build and install the C++ Protocol Buffer runtime and the Protocol Buffer co
 REM Refer: https://github.com/protocolbuffers/protobuf/blob/3.19.x/cmake/README.md#cmake-configuration
 cd cmake
 REM use Debug version
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -Dprotobuf_BUILD_TESTS=OFF
+REM -Dprotobuf_MSVC_STATIC_RUNTIME=OFF: use dynamic CRT (/MDd) to match the default MSVC runtime library setting.
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
 
 REM Compile the code
 cmake --build build --parallel
