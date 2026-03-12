@@ -23,7 +23,7 @@ jobs:
             run_loader: ./bin/loader
           - os: windows-latest
             gen_script: cmd /c gen.bat
-            cmake_config: cmake -S . -B build -G "Ninja"
+            cmake_config: cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Debug
             run_loader: .\bin\loader.exe
 
     runs-on: ${{ matrix.os }}
