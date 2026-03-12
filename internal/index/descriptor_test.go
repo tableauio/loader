@@ -590,6 +590,101 @@ func Test_ParseIndexDescriptor(t *testing.T) {
 			},
 		},
 		{
+			// Fruit3Conf: list -> list -> map -> list
+			// indexes at Country level (L2) and Attr level (L4),
+			// ordered index at Item level (L3).
+			name: "Fruit3Conf",
+			args: args{
+				md: md[*protoconf.Fruit3Conf](),
+			},
+			want: &IndexDescriptor{
+				LevelMessage: &LevelMessage{
+					Depth:    0,
+					MapDepth: 0,
+					FD:       fd[*protoconf.Fruit3Conf]("fruit_list"),
+					NextLevel: &LevelMessage{
+						Depth:    1,
+						MapDepth: 0,
+						FD:       fd[*protoconf.Fruit3Conf_Fruit]("country_list"),
+						NextLevel: &LevelMessage{
+							Depth:    2,
+							MapDepth: 0,
+							FD:       fd[*protoconf.Fruit3Conf_Fruit_Country]("item_map"),
+							Indexes: []*LevelIndex{
+								{
+									Index: &Index{
+										Cols: []string{"CountryName"},
+										Name: "",
+									},
+									MD: md[*protoconf.Fruit3Conf_Fruit_Country](),
+									ColFields: []*LevelField{
+										{
+											FD: fd[*protoconf.Fruit3Conf_Fruit_Country]("name"),
+											LeveledFDList: []protoreflect.FieldDescriptor{
+												fd[*protoconf.Fruit3Conf_Fruit_Country]("name"),
+											},
+										},
+									},
+								},
+							},
+							NextLevel: &LevelMessage{
+								Depth:    3,
+								MapDepth: 1,
+								FD:       fd[*protoconf.Fruit3Conf_Fruit_Country_Item]("attr_list"),
+								OrderedIndexes: []*LevelIndex{
+									{
+										Index: &Index{
+											Cols:       []string{"CountryItemPrice"},
+											SortedCols: []string{"CountryItemID"},
+											Name:       "",
+										},
+										MD: md[*protoconf.Fruit3Conf_Fruit_Country_Item](),
+										ColFields: []*LevelField{
+											{
+												FD: fd[*protoconf.Fruit3Conf_Fruit_Country_Item]("price"),
+												LeveledFDList: []protoreflect.FieldDescriptor{
+													fd[*protoconf.Fruit3Conf_Fruit_Country_Item]("price"),
+												},
+											},
+										},
+										SortedColFields: []*LevelField{
+											{
+												FD: fd[*protoconf.Fruit3Conf_Fruit_Country_Item]("id"),
+												LeveledFDList: []protoreflect.FieldDescriptor{
+													fd[*protoconf.Fruit3Conf_Fruit_Country_Item]("id"),
+												},
+											},
+										},
+									},
+								},
+								NextLevel: &LevelMessage{
+									Depth:    4,
+									MapDepth: 1,
+									Indexes: []*LevelIndex{
+										{
+											Index: &Index{
+												Cols: []string{"CountryItemAttrName"},
+												Name: "",
+											},
+											MD: md[*protoconf.Fruit3Conf_Fruit_Country_Item_Attr](),
+											ColFields: []*LevelField{
+												{
+													FD: fd[*protoconf.Fruit3Conf_Fruit_Country_Item_Attr]("name"),
+													LeveledFDList: []protoreflect.FieldDescriptor{
+														fd[*protoconf.Fruit3Conf_Fruit_Country_Item_Attr]("name"),
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			// Fruit5Conf: 3-level map (fruit_map -> country_map -> item_map),
 			// but indexes only at MapDepth=2 (Country level).
 			// The 3rd level map (MapDepth=3, Item) has no index.
