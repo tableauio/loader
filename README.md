@@ -34,7 +34,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
   - C++17: `cmake -S . -B build`
   - C++20: `cmake -S . -B build -DCMAKE_CXX_STANDARD=20`
   - clang: `cmake -S . -B build -DCMAKE_CXX_COMPILER=clang++`
-- Build: `cmake --build build -j16`
+- Build: `cmake --build build --parallel`
 - Run: `./bin/loader`
 
 ### Dev at Windows
@@ -44,7 +44,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 - CMake:
   - C++17: `cmake -S . -B build -G "NMake Makefiles"`
   - C++20: `cmake -S . -B build -G "NMake Makefiles" -DCMAKE_CXX_STANDARD=20`
-- Build: `cmake --build build`
+- Build: `cmake --build build --parallel`
 - Run: `.\bin\loader.exe`
 
 ### References
@@ -58,7 +58,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 - Install protoc-gen-go: `go install google.golang.org/protobuf/cmd/protoc-gen-go@latest`
 - Change dir: `cd test/go-tableau-loader`
 - Generate protoconf: `bash ./gen.sh`
-- Build: `go build`
+- Run: `go run .`
 
 ### References
 

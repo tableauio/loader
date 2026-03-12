@@ -46,15 +46,20 @@ type LevelField struct {
 type LevelMessage struct {
 	NextLevel *LevelMessage
 
-	// Current level message's field which contains index fields.
-	// Only valid when NextLevel is not nil.
+	// FD is the container field (map or list) through which this level is entered
+	// from its parent. It is nil for the top-level (root) LevelMessage.
 	FD protoreflect.FieldDescriptor
 
 	// Current level message's all index fields
 	Indexes, OrderedIndexes []*LevelIndex
 
-	// depth of message hierarchy
-	Depth, MapDepth int
+	// Depth is the 0-based depth of message hierarchy.
+	// For example, the top-level message has Depth=0, the next level has Depth=1, and so on.
+	Depth int
+	// MapDepth is the 0-based map depth of message hierarchy.
+	// It only increments when the current level is entered via a map field (i.e., FD.IsMap()).
+	// For example, the top-level message has MapDepth=0, the next level (if entered via map) has MapDepth=1, and so on.
+	MapDepth int
 }
 
 func (l *LevelMessage) NeedGenIndex() bool {
@@ -69,6 +74,37 @@ func (l *LevelMessage) NeedGenOrderedIndex() bool {
 		return false
 	}
 	return len(l.OrderedIndexes) != 0 || l.NextLevel.NeedGenOrderedIndex()
+}
+
+// NeedGenAnyIndex reports whether this level or any deeper level has
+// at least one index (regular or ordered).
+func (l *LevelMessage) NeedGenAnyIndex() bool {
+	return l.NeedGenIndex() || l.NeedGenOrderedIndex()
+}
+
+// NeedMapKeyForIndex checks if the map key variable at this level is needed
+// by any deeper level's regular index's leveled containers.
+// It finds the first level whose MapDepth > l.MapDepth+1 (i.e., at least 2 map
+// levels deeper), then delegates to NeedGenIndex which recursively checks that
+// level and all deeper levels for indexes.
+func (l *LevelMessage) NeedMapKeyForIndex() bool {
+	for lm := l.NextLevel; lm != nil; lm = lm.NextLevel {
+		if lm.MapDepth > l.MapDepth {
+			return lm.NeedGenIndex()
+		}
+	}
+	return false
+}
+
+// NeedMapKeyForOrderedIndex checks if the map key variable at this level is
+// needed by any deeper level's ordered index's leveled containers.
+func (l *LevelMessage) NeedMapKeyForOrderedIndex() bool {
+	for lm := l.NextLevel; lm != nil; lm = lm.NextLevel {
+		if lm.MapDepth > l.MapDepth {
+			return lm.NeedGenOrderedIndex()
+		}
+	}
+	return false
 }
 
 type LevelIndex struct {
@@ -87,20 +123,19 @@ func (l *LevelIndex) Name() string {
 	return name
 }
 
-func parseLevelMessage(md protoreflect.MessageDescriptor, depth, mapDepth int) *LevelMessage {
+func parseLevelMessage(fd protoreflect.FieldDescriptor, md protoreflect.MessageDescriptor, depth, mapDepth int) *LevelMessage {
 	levelMsg := &LevelMessage{
+		FD:       fd,
 		Depth:    depth,
 		MapDepth: mapDepth,
 	}
 	for i := 0; i < md.Fields().Len(); i++ {
-		fd := md.Fields().Get(i)
-		if fd.IsMap() && fd.MapValue().Kind() == protoreflect.MessageKind {
-			levelMsg.NextLevel = parseLevelMessage(fd.MapValue().Message(), depth+1, mapDepth+1)
-			levelMsg.FD = fd
+		childFD := md.Fields().Get(i)
+		if childFD.IsMap() && childFD.MapValue().Kind() == protoreflect.MessageKind {
+			levelMsg.NextLevel = parseLevelMessage(childFD, childFD.MapValue().Message(), depth+1, mapDepth+1)
 			return levelMsg
-		} else if fd.IsList() && fd.Kind() == protoreflect.MessageKind {
-			levelMsg.NextLevel = parseLevelMessage(fd.Message(), depth+1, mapDepth)
-			levelMsg.FD = fd
+		} else if childFD.IsList() && childFD.Kind() == protoreflect.MessageKind {
+			levelMsg.NextLevel = parseLevelMessage(childFD, childFD.Message(), depth+1, mapDepth)
 			return levelMsg
 		}
 	}
@@ -108,7 +143,7 @@ func parseLevelMessage(md protoreflect.MessageDescriptor, depth, mapDepth int) *
 }
 
 // parseRecursively parses multi-column index related info.
-func parseRecursively(index *Index, prefix string, md protoreflect.MessageDescriptor, levelMessage *LevelMessage, ordered bool) {
+func parseRecursively(index *Index, prefix string, md protoreflect.MessageDescriptor, lm *LevelMessage, ordered bool) {
 	colFields := parseInSameLevel(index.Cols, prefix, md, nil)
 	sortedColFields := parseInSameLevel(index.SortedCols, prefix, md, nil)
 	if len(colFields) != 0 {
@@ -120,20 +155,20 @@ func parseRecursively(index *Index, prefix string, md protoreflect.MessageDescri
 			SortedColFields: sortedColFields,
 		}
 		if ordered {
-			levelMessage.OrderedIndexes = append(levelMessage.OrderedIndexes, levelIndex)
+			lm.OrderedIndexes = append(lm.OrderedIndexes, levelIndex)
 		} else {
-			levelMessage.Indexes = append(levelMessage.Indexes, levelIndex)
+			lm.Indexes = append(lm.Indexes, levelIndex)
 		}
-	} else if levelMessage != nil && levelMessage.NextLevel != nil {
+	} else if lm != nil && lm.NextLevel != nil {
 		// index invalid or belongs to deeper level
-		fd := levelMessage.FD
+		fd := lm.NextLevel.FD
 		opts := fd.Options().(*descriptorpb.FieldOptions)
 		fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
 		fieldOptName := fdOpts.GetName()
 		if fd.IsMap() {
-			parseRecursively(index, prefix+fieldOptName, fd.MapValue().Message(), levelMessage.NextLevel, ordered)
+			parseRecursively(index, prefix+fieldOptName, fd.MapValue().Message(), lm.NextLevel, ordered)
 		} else {
-			parseRecursively(index, prefix+fieldOptName, fd.Message(), levelMessage.NextLevel, ordered)
+			parseRecursively(index, prefix+fieldOptName, fd.Message(), lm.NextLevel, ordered)
 		}
 	}
 }
@@ -181,27 +216,25 @@ func parseCols(cols []string, prefix string, md protoreflect.MessageDescriptor, 
 }
 
 func ParseIndexDescriptor(md protoreflect.MessageDescriptor) *IndexDescriptor {
-	descriptor := &IndexDescriptor{
-		LevelMessage: parseLevelMessage(md, 1, 1),
-	}
+	levelMessage := parseLevelMessage(nil, md, 0, 0)
 	indexes, orderedIndexes := ParseWSOptionIndex(md)
 	// parse indexes into level message
 	for _, index := range indexes {
 		if len(index.Cols) == 0 {
 			continue
 		}
-		parseRecursively(index, "", md, descriptor.LevelMessage, false)
+		parseRecursively(index, "", md, levelMessage, false)
 	}
 	for _, index := range orderedIndexes {
 		if len(index.Cols) == 0 {
 			continue
 		}
-		parseRecursively(index, "", md, descriptor.LevelMessage, true)
+		parseRecursively(index, "", md, levelMessage, true)
 	}
 	// check duplicate index name
 	indexNameMap := map[string]*Index{}
-	for levelMessage := descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		allIndexes := append(levelMessage.Indexes, levelMessage.OrderedIndexes...)
+	for lm := levelMessage; lm != nil; lm = lm.NextLevel {
+		allIndexes := append(lm.Indexes, lm.OrderedIndexes...)
 		for _, index := range allIndexes {
 			name := index.Name()
 			if existingIndex, ok := indexNameMap[name]; ok {
@@ -211,5 +244,7 @@ func ParseIndexDescriptor(md protoreflect.MessageDescriptor) *IndexDescriptor {
 			}
 		}
 	}
-	return descriptor
+	return &IndexDescriptor{
+		LevelMessage: levelMessage.NextLevel,
+	}
 }

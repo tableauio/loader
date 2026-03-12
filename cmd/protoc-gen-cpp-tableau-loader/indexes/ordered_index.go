@@ -58,8 +58,8 @@ func (x *Generator) genHppOrderedIndexFinders() {
 		return
 	}
 	var once sync.Once
-	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		for _, index := range levelMessage.OrderedIndexes {
+	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
+		for _, index := range lm.OrderedIndexes {
 			x.g.P()
 			once.Do(func() { x.g.P(helper.Indent(1), "// OrderedIndex accessers.") })
 			x.g.P(helper.Indent(1), "// OrderedIndex: ", index.Index)
@@ -94,10 +94,7 @@ func (x *Generator) genHppOrderedIndexFinders() {
 			x.g.P(helper.Indent(1), "const ", vectorType, "* Find", index.Name(), "(", keys.GenGetParams(), ") const;")
 			x.g.P(helper.Indent(1), "// Finds the first value of the given key(s).")
 			x.g.P(helper.Indent(1), "const ", helper.ParseCppClassType(index.MD), "* FindFirst", index.Name(), "(", keys.GenGetParams(), ") const;")
-			for i := 1; i <= levelMessage.MapDepth-2; i++ {
-				if i > len(x.keys) {
-					break
-				}
+			for i := 1; i < lm.MapDepth; i++ {
 				partKeys := x.keys[:i]
 				x.g.P(helper.Indent(1), "// Finds the ordered index: key(", index.Index, ") to value(", vectorType, "),")
 				x.g.P(helper.Indent(1), "// which is the upper ", loadutil.Ordinal(i), "-level map specified by (", partKeys.GenGetArguments(), ").")
@@ -112,14 +109,11 @@ func (x *Generator) genHppOrderedIndexFinders() {
 
 			x.g.P(" private:")
 			x.g.P(helper.Indent(1), mapType, " ", x.orderedIndexContainerName(index, 0), ";")
-			for i := 1; i <= levelMessage.MapDepth-2; i++ {
-				if i > len(x.keys) {
-					break
-				}
+			for i := 1; i < lm.MapDepth; i++ {
 				if i == 1 {
 					x.g.P(helper.Indent(1), "std::unordered_map<", x.keys[0].Type, ", ", mapType, "> ", x.orderedIndexContainerName(index, i), ";")
 				} else {
-					levelIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+					levelIndexKeyType := x.levelKeyType(x.keys[i-1].Fd)
 					x.g.P(helper.Indent(1), "std::unordered_map<", levelIndexKeyType, ", ", mapType, ", ", levelIndexKeyType, "Hasher> ", x.orderedIndexContainerName(index, i), ";")
 				}
 			}
@@ -133,40 +127,37 @@ func (x *Generator) genOrderedIndexLoader() {
 	}
 	defer x.genOrderedIndexSorter()
 	x.g.P(helper.Indent(1), "// OrderedIndex init.")
-	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		for _, index := range levelMessage.OrderedIndexes {
+	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
+		for _, index := range lm.OrderedIndexes {
 			x.g.P(helper.Indent(1), x.orderedIndexContainerName(index, 0), ".clear();")
-			for i := 1; i <= levelMessage.MapDepth-2; i++ {
-				if i > len(x.keys) {
-					break
-				}
+			for i := 1; i < lm.MapDepth; i++ {
 				x.g.P(helper.Indent(1), x.orderedIndexContainerName(index, i), ".clear();")
 			}
 		}
 	}
 	parentDataName := "data_"
-	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		for _, index := range levelMessage.OrderedIndexes {
-			x.genOneCppOrderedIndexLoader(levelMessage.MapDepth, levelMessage.Depth, index, parentDataName)
-		}
-		itemName := fmt.Sprintf("item%d", levelMessage.Depth)
-		if levelMessage.FD == nil {
+	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
+		itemName := fmt.Sprintf("item%d", lm.Depth)
+		if !lm.NeedGenOrderedIndex() {
 			break
 		}
-		if !levelMessage.NextLevel.NeedGenOrderedIndex() {
-			break
-		}
-		x.g.P(helper.Indent(levelMessage.Depth), "for (auto&& ", itemName, " : ", parentDataName, x.fieldGetter(levelMessage.FD), ") {")
+		x.g.P(helper.Indent(lm.Depth), "for (auto&& ", itemName, " : ", parentDataName, x.fieldGetter(lm.FD), ") {")
 		parentDataName = itemName
-		if levelMessage.FD.IsMap() {
-			x.g.P(helper.Indent(levelMessage.Depth+1), "auto k", levelMessage.MapDepth, " = ", itemName, ".first;")
+		if lm.FD.IsMap() {
+			if lm.NeedMapKeyForOrderedIndex() {
+				x.g.P(helper.Indent(lm.Depth+1), "auto k", lm.MapDepth, " = ", itemName, ".first;")
+			}
 			parentDataName = itemName + ".second"
 		}
-		defer x.g.P(helper.Indent(levelMessage.Depth), "}")
+		defer x.g.P(helper.Indent(lm.Depth), "}")
+		for _, index := range lm.OrderedIndexes {
+			x.genOneCppOrderedIndexLoader(lm, index, parentDataName)
+		}
 	}
 }
 
-func (x *Generator) genOneCppOrderedIndexLoader(depth int, ident int, index *index.LevelIndex, parentDataName string) {
+func (x *Generator) genOneCppOrderedIndexLoader(lm *index.LevelMessage, index *index.LevelIndex, parentDataName string) {
+	ident := lm.Depth + 1
 	x.g.P(helper.Indent(ident), "{")
 	x.g.P(helper.Indent(ident+1), "// OrderedIndex: ", index.Index)
 	if len(index.ColFields) == 1 {
@@ -174,31 +165,31 @@ func (x *Generator) genOneCppOrderedIndexLoader(depth int, ident int, index *ind
 		field := index.ColFields[0] // just take the first field
 		fieldName, suffix := x.parseKeyFieldNameAndSuffix(field)
 		if field.FD.IsList() {
-			itemName := fmt.Sprintf("item%d", depth)
+			itemName := fmt.Sprintf("item%d", lm.MapDepth+1)
 			x.g.P(helper.Indent(ident+1), "for (auto&& ", itemName, " : ", parentDataName, fieldName, ") {")
 			key := itemName + suffix
 			if field.FD.Enum() != nil {
 				key = "static_cast<" + helper.ParseCppType(field.FD) + ">(" + key + ")"
 			}
-			x.genOrderedLoader(depth, ident+2, index, key, parentDataName)
+			x.genOrderedLoader(lm, index, ident+2, key, parentDataName)
 			x.g.P(helper.Indent(ident+1), "}")
 		} else {
 			key := parentDataName + fieldName + suffix
-			x.genOrderedLoader(depth, ident+1, index, key, parentDataName)
+			x.genOrderedLoader(lm, index, ident+1, key, parentDataName)
 		}
 	} else {
 		// multi-column index
-		x.generateOneCppMulticolumnOrderedIndex(depth, ident, index, parentDataName, nil)
+		x.generateOneCppMulticolumnOrderedIndex(lm, index, ident, parentDataName, nil)
 	}
 	x.g.P(helper.Indent(ident), "}")
 }
 
-func (x *Generator) generateOneCppMulticolumnOrderedIndex(depth, ident int, index *index.LevelIndex, parentDataName string, keys helper.MapKeySlice) {
+func (x *Generator) generateOneCppMulticolumnOrderedIndex(lm *index.LevelMessage, index *index.LevelIndex, ident int, parentDataName string, keys helper.MapKeySlice) {
 	cursor := len(keys)
 	if cursor >= len(index.ColFields) {
 		keyType := x.orderedIndexMapKeyType(index)
 		x.g.P(helper.Indent(ident+1), keyType, " key{", keys.GenGetArguments(), "};")
-		x.genOrderedLoader(depth, ident+1, index, "key", parentDataName)
+		x.genOrderedLoader(lm, index, ident+1, "key", parentDataName)
 		return
 	}
 	field := index.ColFields[cursor]
@@ -211,21 +202,18 @@ func (x *Generator) generateOneCppMulticolumnOrderedIndex(depth, ident int, inde
 			key = "static_cast<" + helper.ParseCppType(field.FD) + ">(" + key + ")"
 		}
 		keys = keys.AddMapKey(helper.MapKey{Name: key})
-		x.generateOneCppMulticolumnOrderedIndex(depth, ident+1, index, parentDataName, keys)
+		x.generateOneCppMulticolumnOrderedIndex(lm, index, ident+1, parentDataName, keys)
 		x.g.P(helper.Indent(ident+1), "}")
 	} else {
 		key := parentDataName + fieldName + suffix
 		keys = keys.AddMapKey(helper.MapKey{Name: key})
-		x.generateOneCppMulticolumnOrderedIndex(depth, ident, index, parentDataName, keys)
+		x.generateOneCppMulticolumnOrderedIndex(lm, index, ident, parentDataName, keys)
 	}
 }
 
-func (x *Generator) genOrderedLoader(depth, ident int, index *index.LevelIndex, key, parentDataName string) {
+func (x *Generator) genOrderedLoader(lm *index.LevelMessage, index *index.LevelIndex, ident int, key, parentDataName string) {
 	x.g.P(helper.Indent(ident), x.orderedIndexContainerName(index, 0), "[", key, "].push_back(&", parentDataName, ");")
-	for i := 1; i <= depth-2; i++ {
-		if i > len(x.keys) {
-			break
-		}
+	for i := 1; i < lm.MapDepth; i++ {
 		if i == 1 {
 			x.g.P(helper.Indent(ident), x.orderedIndexContainerName(index, i), "[k1][", key, "].push_back(&", parentDataName, ");")
 		} else {
@@ -239,8 +227,8 @@ func (x *Generator) genOrderedLoader(depth, ident int, index *index.LevelIndex, 
 }
 
 func (x *Generator) genOrderedIndexSorter() {
-	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		for _, index := range levelMessage.OrderedIndexes {
+	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
+		for _, index := range lm.OrderedIndexes {
 			if len(index.SortedColFields) != 0 {
 				valueType := x.mapValueType(index)
 				x.g.P(helper.Indent(1), "// OrderedIndex(sort): ", index.Index)
@@ -263,10 +251,8 @@ func (x *Generator) genOrderedIndexSorter() {
 				x.g.P(helper.Indent(1), "for (auto&& item : ", indexContainerName, ") {")
 				x.g.P(helper.Indent(2), "std::sort(item.second.begin(), item.second.end(), ", indexContainerName, "sorter);")
 				x.g.P(helper.Indent(1), "}")
-				for i := 1; i <= levelMessage.MapDepth-2; i++ {
-					if i > len(x.keys) {
-						break
-					}
+				// Iterate all leveled containers.
+				for i := 1; i < lm.MapDepth; i++ {
 					x.g.P(helper.Indent(1), "for (auto&& item : ", x.orderedIndexContainerName(index, i), ") {")
 					x.g.P(helper.Indent(2), "for (auto&& item1 : item.second) {")
 					x.g.P(helper.Indent(3), "std::sort(item1.second.begin(), item1.second.end(), ", indexContainerName, "sorter);")
@@ -282,8 +268,8 @@ func (x *Generator) genCppOrderedIndexFinders() {
 	if !x.needGenerateOrderedIndex() {
 		return
 	}
-	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		for _, index := range levelMessage.OrderedIndexes {
+	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
+		for _, index := range lm.OrderedIndexes {
 			vectorType := x.orderedIndexMapValueVectorType(index)
 			mapType := x.orderedIndexMapType(index)
 			indexContainerName := x.orderedIndexContainerName(index, 0)
@@ -318,10 +304,7 @@ func (x *Generator) genCppOrderedIndexFinders() {
 			x.g.P("}")
 			x.g.P()
 
-			for i := 1; i <= levelMessage.MapDepth-2; i++ {
-				if i > len(x.keys) {
-					break
-				}
+			for i := 1; i < lm.MapDepth; i++ {
 				indexContainerNameI := x.orderedIndexContainerName(index, i)
 				partKeys := x.keys[:i]
 				partParams := partKeys.GenGetParams()

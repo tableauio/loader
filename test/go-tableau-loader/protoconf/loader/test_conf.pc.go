@@ -167,14 +167,12 @@ func (x *ActivityConf) processAfterLoad() error {
 	x.indexAwardMap1 = make(map[uint64]ActivityConf_Index_AwardMap)
 	x.indexAwardMap2 = make(map[ActivityConf_LevelIndex_Activity_ChapterKey]ActivityConf_Index_AwardMap)
 	for k1, v1 := range x.data.GetActivityMap() {
-		_ = k1
 		{
 			// Index: ActivityName
 			key := v1.GetActivityName()
 			x.indexActivityMap[key] = append(x.indexActivityMap[key], v1)
 		}
 		for k2, v2 := range v1.GetChapterMap() {
-			_ = k2
 			{
 				// Index: ChapterID
 				key := v2.GetChapterId()
@@ -193,8 +191,7 @@ func (x *ActivityConf) processAfterLoad() error {
 				}
 				x.indexNamedChapterMap1[k1][key] = append(x.indexNamedChapterMap1[k1][key], v2)
 			}
-			for k3, v3 := range v2.GetSectionMap() {
-				_ = k3
+			for _, v3 := range v2.GetSectionMap() {
 				for _, v4 := range v3.GetSectionItemList() {
 					{
 						// Index: SectionItemID@Award
@@ -788,8 +785,7 @@ func (x *TaskConf) originalMessage() proto.Message {
 func (x *TaskConf) processAfterLoad() error {
 	// Index init.
 	x.indexTaskMap = make(TaskConf_Index_TaskMap)
-	for k1, v1 := range x.data.GetTaskMap() {
-		_ = k1
+	for _, v1 := range x.data.GetTaskMap() {
 		{
 			// Index: ActivityID<Goal,ID>
 			key := v1.GetActivityId()
@@ -813,8 +809,7 @@ func (x *TaskConf) processAfterLoad() error {
 	x.orderedIndexTaskExpiryMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
 	x.orderedIndexSortedTaskExpiryMap = treemap.New[int64, []*protoconf.TaskConf_Task]()
 	x.orderedIndexActivityExpiryMap = treemap.New2[TaskConf_OrderedIndex_ActivityExpiryKey, []*protoconf.TaskConf_Task]()
-	for k1, v1 := range x.data.GetTaskMap() {
-		_ = k1
+	for _, v1 := range x.data.GetTaskMap() {
 		{
 			// OrderedIndex: Goal<ID>@OrderedTask
 			key := v1.GetGoal()

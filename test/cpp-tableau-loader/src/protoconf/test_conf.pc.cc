@@ -66,7 +66,6 @@ bool ActivityConf::ProcessAfterLoad() {
         index_named_chapter_map1_[k1][item2.second.chapter_name()].push_back(&item2.second);
       }
       for (auto&& item3 : item2.second.section_map()) {
-        auto k3 = item3.first;
         for (auto&& item4 : item3.second.section_item_list()) {
           {
             // Index: SectionItemID@Award
@@ -428,7 +427,6 @@ bool TaskConf::ProcessAfterLoad() {
   // Index init.
   index_task_map_.clear();
   for (auto&& item1 : data_.task_map()) {
-    auto k1 = item1.first;
     {
       // Index: ActivityID<Goal,ID>
       index_task_map_[item1.second.activity_id()].push_back(&item1.second);
@@ -451,7 +449,6 @@ bool TaskConf::ProcessAfterLoad() {
   ordered_index_sorted_task_expiry_map_.clear();
   ordered_index_activity_expiry_map_.clear();
   for (auto&& item1 : data_.task_map()) {
-    auto k1 = item1.first;
     {
       // OrderedIndex: Goal<ID>@OrderedTask
       ordered_index_ordered_task_map_[item1.second.goal()].push_back(&item1.second);

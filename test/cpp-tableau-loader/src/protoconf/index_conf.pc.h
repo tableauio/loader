@@ -334,6 +334,51 @@ class Fruit4Conf final : public Messager {
   std::unordered_map<LevelIndex_Fruit_CountryKey, OrderedIndex_ItemMap, LevelIndex_Fruit_CountryKeyHasher> ordered_index_item_map2_;
 };
 
+class Fruit5Conf final : public Messager {
+ public:
+  static const std::string& Name() { return kProtoName; }
+  virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
+  const protoconf::Fruit5Conf& Data() const { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
+
+ private:
+  virtual bool ProcessAfterLoad() override;
+
+ public:
+  const protoconf::Fruit5Conf::Fruit* Get(int32_t fruit_type) const;
+  const protoconf::Fruit5Conf::Fruit::Country* Get(int32_t fruit_type, int32_t id) const;
+  const protoconf::Fruit5Conf::Fruit::Country::Item* Get(int32_t fruit_type, int32_t id, int32_t id3) const;
+
+ private:
+  static const std::string kProtoName;
+  protoconf::Fruit5Conf data_;
+
+  // Index accessers.
+  // Index: CountryName
+ public:
+  using Index_CountryVector = std::vector<const protoconf::Fruit5Conf::Fruit::Country*>;
+  using Index_CountryMap = std::unordered_map<std::string, Index_CountryVector>;
+  // Finds the index: key(CountryName) to value(Index_CountryVector) hashmap.
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_CountryMap& FindCountryMap() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_CountryVector* FindCountry(const std::string& name) const;
+  // Finds the first value of the given key(s).
+  const protoconf::Fruit5Conf::Fruit::Country* FindFirstCountry(const std::string& name) const;
+  // Finds the index: key(CountryName) to value(Index_CountryVector),
+  // which is the upper 1st-level hashmap specified by (fruit_type).
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_CountryMap* FindCountryMap(int32_t fruit_type) const;
+  // Finds a vector of all values of the given key(s) in the upper 1st-level hashmap specified by (fruit_type).
+  const Index_CountryVector* FindCountry(int32_t fruit_type, const std::string& name) const;
+  // Finds the first value of the given key(s) in the upper 1st-level hashmap specified by (fruit_type).
+  const protoconf::Fruit5Conf::Fruit::Country* FindFirstCountry(int32_t fruit_type, const std::string& name) const;
+
+ private:
+  Index_CountryMap index_country_map_;
+  std::unordered_map<int32_t, Index_CountryMap> index_country_map1_;
+};
+
 }  // namespace tableau
 
 namespace protoconf {
@@ -342,4 +387,5 @@ using FruitConfMgr = tableau::FruitConf;
 using Fruit2ConfMgr = tableau::Fruit2Conf;
 using Fruit3ConfMgr = tableau::Fruit3Conf;
 using Fruit4ConfMgr = tableau::Fruit4Conf;
+using Fruit5ConfMgr = tableau::Fruit5Conf;
 }  // namespace protoconf

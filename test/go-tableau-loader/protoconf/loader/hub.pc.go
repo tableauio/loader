@@ -211,12 +211,24 @@ func (h *Hub) GetLastLoadedTime() time.Time {
 	return h.mc.Load().GetLastLoadedTime()
 }
 
-func (h *Hub) GetHeroConf() *HeroConf {
-	return h.mc.Load().GetHeroConf()
+func (h *Hub) GetItemConf() *ItemConf {
+	return h.mc.Load().GetItemConf()
 }
 
-func (h *Hub) GetHeroBaseConf() *HeroBaseConf {
-	return h.mc.Load().GetHeroBaseConf()
+func (h *Hub) GetActivityConf() *ActivityConf {
+	return h.mc.Load().GetActivityConf()
+}
+
+func (h *Hub) GetChapterConf() *ChapterConf {
+	return h.mc.Load().GetChapterConf()
+}
+
+func (h *Hub) GetThemeConf() *ThemeConf {
+	return h.mc.Load().GetThemeConf()
+}
+
+func (h *Hub) GetTaskConf() *TaskConf {
+	return h.mc.Load().GetTaskConf()
 }
 
 func (h *Hub) GetFruitConf() *FruitConf {
@@ -235,8 +247,16 @@ func (h *Hub) GetFruit4Conf() *Fruit4Conf {
 	return h.mc.Load().GetFruit4Conf()
 }
 
-func (h *Hub) GetItemConf() *ItemConf {
-	return h.mc.Load().GetItemConf()
+func (h *Hub) GetFruit5Conf() *Fruit5Conf {
+	return h.mc.Load().GetFruit5Conf()
+}
+
+func (h *Hub) GetHeroConf() *HeroConf {
+	return h.mc.Load().GetHeroConf()
+}
+
+func (h *Hub) GetHeroBaseConf() *HeroBaseConf {
+	return h.mc.Load().GetHeroBaseConf()
 }
 
 func (h *Hub) GetPatchReplaceConf() *PatchReplaceConf {
@@ -249,20 +269,4 @@ func (h *Hub) GetPatchMergeConf() *PatchMergeConf {
 
 func (h *Hub) GetRecursivePatchConf() *RecursivePatchConf {
 	return h.mc.Load().GetRecursivePatchConf()
-}
-
-func (h *Hub) GetActivityConf() *ActivityConf {
-	return h.mc.Load().GetActivityConf()
-}
-
-func (h *Hub) GetChapterConf() *ChapterConf {
-	return h.mc.Load().GetChapterConf()
-}
-
-func (h *Hub) GetThemeConf() *ThemeConf {
-	return h.mc.Load().GetThemeConf()
-}
-
-func (h *Hub) GetTaskConf() *TaskConf {
-	return h.mc.Load().GetTaskConf()
 }

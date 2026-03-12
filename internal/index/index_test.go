@@ -15,18 +15,18 @@ func Test_parseIndex(t *testing.T) {
 			name:  "Single column with single sorted column and name",
 			input: "Column1<SortedCol1>@IndexName",
 			want: &Index{
-				Cols: []string{"Column1"},
+				Cols:       []string{"Column1"},
 				SortedCols: []string{"SortedCol1"},
-				Name: "IndexName",
+				Name:       "IndexName",
 			},
 		},
 		{
 			name:  "Multi-column with multi sorted column and name",
 			input: "( Column1 , Column2 )< SortedCol1 , SortedCol2 >@IndexName",
 			want: &Index{
-				Cols: []string{"Column1", "Column2"},
+				Cols:       []string{"Column1", "Column2"},
 				SortedCols: []string{"SortedCol1", "SortedCol2"},
-				Name: "IndexName",
+				Name:       "IndexName",
 			},
 		},
 		{
@@ -48,15 +48,15 @@ func Test_parseIndex(t *testing.T) {
 			name:  "Single column with single sorted column only",
 			input: "Column6<SortedCol>",
 			want: &Index{
-				Cols: []string{"Column6"},
+				Cols:       []string{"Column6"},
 				SortedCols: []string{"SortedCol"},
 			},
 		},
 		{
-			name:  "zinotest",
+			name:  "Single-column with multi sorted columns",
 			input: "ActivityID<Goal,ID>",
 			want: &Index{
-				Cols: []string{"ActivityID"},
+				Cols:       []string{"ActivityID"},
 				SortedCols: []string{"Goal", "ID"},
 			},
 		},
@@ -64,9 +64,9 @@ func Test_parseIndex(t *testing.T) {
 			name:  "Multi-column with spaces around commas",
 			input: "(Column7,  Column8,  Column9)<SortedCol7,  SortedCol8,  SortedCol9>@IndexName",
 			want: &Index{
-				Cols: []string{"Column7", "Column8", "Column9"},
+				Cols:       []string{"Column7", "Column8", "Column9"},
 				SortedCols: []string{"SortedCol7", "SortedCol8", "SortedCol9"},
-				Name: "IndexName",
+				Name:       "IndexName",
 			},
 		},
 		{

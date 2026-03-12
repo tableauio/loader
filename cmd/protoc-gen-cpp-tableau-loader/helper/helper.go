@@ -176,6 +176,7 @@ func ParseLeveledMapPrefix(md protoreflect.MessageDescriptor, mapFd protoreflect
 type MapKey struct {
 	Type string
 	Name string
+	Fd   protoreflect.FieldDescriptor // the map field descriptor this key belongs to
 }
 
 type MapKeySlice []MapKey

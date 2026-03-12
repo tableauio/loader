@@ -64,8 +64,8 @@ func (x *Generator) genOrderedIndexTypeDef() {
 		return
 	}
 	x.g.P("// OrderedIndex types.")
-	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		for _, index := range levelMessage.OrderedIndexes {
+	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
+		for _, index := range lm.OrderedIndexes {
 			x.g.P("// OrderedIndex: ", index.Index)
 			if len(index.ColFields) != 1 {
 				// multi-column index
@@ -104,17 +104,14 @@ func (x *Generator) genOrderedIndexField() {
 	if !x.needGenerateOrderedIndex() {
 		return
 	}
-	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		for _, index := range levelMessage.OrderedIndexes {
+	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
+		for _, index := range lm.OrderedIndexes {
 			x.g.P(x.orderedIndexContainerName(index, 0), " *", x.orderedIndexMapType(index))
-			for i := 1; i <= levelMessage.MapDepth-2; i++ {
-				if i > len(x.keys) {
-					break
-				}
+			for i := 1; i < lm.MapDepth; i++ {
 				if i == 1 {
 					x.g.P(x.orderedIndexContainerName(index, i), " map[", x.keys[0].Type, "]*", x.orderedIndexMapType(index))
 				} else {
-					levelIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+					levelIndexKeyType := x.levelKeyType(x.keys[i-1].Fd)
 					x.g.P(x.orderedIndexContainerName(index, i), " map[", levelIndexKeyType, "]*", x.orderedIndexMapType(index))
 				}
 			}
@@ -128,47 +125,44 @@ func (x *Generator) genOrderedIndexLoader() {
 	}
 	defer x.genOrderedIndexSorter()
 	x.g.P("// OrderedIndex init.")
-	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		for _, index := range levelMessage.OrderedIndexes {
+	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
+		for _, index := range lm.OrderedIndexes {
 			x.g.P("x.", x.orderedIndexContainerName(index, 0), " = ", helper.TreeMapPackage.Ident(x.mapCtor(index)), "[", x.orderedIndexMapKeyType(index), ", []*", x.mapValueType(index), "]()")
-			for i := 1; i <= levelMessage.MapDepth-2; i++ {
-				if i > len(x.keys) {
-					break
-				}
+			for i := 1; i < lm.MapDepth; i++ {
 				if i == 1 {
 					x.g.P("x.", x.orderedIndexContainerName(index, i), " = make(map[", x.keys[0].Type, "]*", x.orderedIndexMapType(index), ")")
 				} else {
-					levelIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+					levelIndexKeyType := x.levelKeyType(x.keys[i-1].Fd)
 					x.g.P("x.", x.orderedIndexContainerName(index, i), " = make(map[", levelIndexKeyType, "]*", x.orderedIndexMapType(index), ")")
 				}
 			}
 		}
 	}
 	parentDataName := "x.data"
-	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		for _, index := range levelMessage.OrderedIndexes {
-			x.genOneOrderedIndexLoader(index, levelMessage.MapDepth, parentDataName)
-		}
-		keyName := fmt.Sprintf("k%d", levelMessage.MapDepth)
-		valueName := fmt.Sprintf("v%d", levelMessage.Depth)
-		if levelMessage.FD == nil {
+	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
+		keyName := fmt.Sprintf("k%d", lm.MapDepth)
+		valueName := fmt.Sprintf("v%d", lm.Depth)
+		if !lm.NeedGenOrderedIndex() {
 			break
 		}
-		if !levelMessage.NextLevel.NeedGenOrderedIndex() {
-			break
-		}
-		if levelMessage.FD.IsMap() {
-			x.g.P("for ", keyName, ", ", valueName, " := range ", parentDataName, x.fieldGetter(levelMessage.FD), " {")
-			x.g.P("_ = ", keyName)
+		if lm.FD.IsMap() {
+			if lm.NeedMapKeyForOrderedIndex() {
+				x.g.P("for ", keyName, ", ", valueName, " := range ", parentDataName, x.fieldGetter(lm.FD), " {")
+			} else {
+				x.g.P("for _, ", valueName, " := range ", parentDataName, x.fieldGetter(lm.FD), " {")
+			}
 		} else {
-			x.g.P("for _ , ", valueName, " := range ", parentDataName, x.fieldGetter(levelMessage.FD), " {")
+			x.g.P("for _ , ", valueName, " := range ", parentDataName, x.fieldGetter(lm.FD), " {")
 		}
 		parentDataName = valueName
 		defer x.g.P("}")
+		for _, index := range lm.OrderedIndexes {
+			x.genOneOrderedIndexLoader(lm, index, parentDataName)
+		}
 	}
 }
 
-func (x *Generator) genOneOrderedIndexLoader(index *index.LevelIndex, depth int, parentDataName string) {
+func (x *Generator) genOneOrderedIndexLoader(lm *index.LevelMessage, index *index.LevelIndex, parentDataName string) {
 	x.g.P("{")
 	x.g.P("// OrderedIndex: ", index.Index)
 	if len(index.ColFields) == 1 {
@@ -176,28 +170,28 @@ func (x *Generator) genOneOrderedIndexLoader(index *index.LevelIndex, depth int,
 		field := index.ColFields[0] // just take the first field
 		fieldName, suffix := x.parseKeyFieldNameAndSuffix(field)
 		if field.FD.IsList() {
-			valueName := fmt.Sprintf("v%d", depth)
+			valueName := fmt.Sprintf("v%d", lm.MapDepth+1)
 			x.g.P("for _ , ", valueName, " := range ", parentDataName, fieldName, " {")
 			x.g.P("key := ", valueName, suffix)
-			x.genOrderedIndexLoaderCommon(depth, index, parentDataName)
+			x.genOrderedIndexLoaderCommon(lm, index, parentDataName)
 			x.g.P("}")
 		} else {
 			x.g.P("key := ", parentDataName, fieldName, suffix)
-			x.genOrderedIndexLoaderCommon(depth, index, parentDataName)
+			x.genOrderedIndexLoaderCommon(lm, index, parentDataName)
 		}
 	} else {
 		// multi-column index
-		x.generateOneMulticolumnOrderedIndex(depth, index, parentDataName, nil)
+		x.generateOneMulticolumnOrderedIndex(lm, index, parentDataName, nil)
 	}
 	x.g.P("}")
 }
 
-func (x *Generator) generateOneMulticolumnOrderedIndex(depth int, index *index.LevelIndex, parentDataName string, keys helper.MapKeySlice) {
+func (x *Generator) generateOneMulticolumnOrderedIndex(lm *index.LevelMessage, index *index.LevelIndex, parentDataName string, keys helper.MapKeySlice) {
 	cursor := len(keys)
 	if cursor >= len(index.ColFields) {
 		keyType := x.orderedIndexMapKeyType(index)
 		x.g.P("key := ", keyType, " {", keys.GenGetArguments(), "}")
-		x.genOrderedIndexLoaderCommon(depth, index, parentDataName)
+		x.genOrderedIndexLoaderCommon(lm, index, parentDataName)
 		return
 	}
 	field := index.ColFields[cursor]
@@ -207,23 +201,20 @@ func (x *Generator) generateOneMulticolumnOrderedIndex(depth int, index *index.L
 		x.g.P("for _, ", itemName, " := range ", parentDataName, fieldName, " {")
 		key := itemName + suffix
 		keys = keys.AddMapKey(helper.MapKey{Name: key})
-		x.generateOneMulticolumnOrderedIndex(depth, index, parentDataName, keys)
+		x.generateOneMulticolumnOrderedIndex(lm, index, parentDataName, keys)
 		x.g.P("}")
 	} else {
 		key := parentDataName + fieldName + suffix
 		keys = keys.AddMapKey(helper.MapKey{Name: key})
-		x.generateOneMulticolumnOrderedIndex(depth, index, parentDataName, keys)
+		x.generateOneMulticolumnOrderedIndex(lm, index, parentDataName, keys)
 	}
 }
 
-func (x *Generator) genOrderedIndexLoaderCommon(depth int, index *index.LevelIndex, parentDataName string) {
+func (x *Generator) genOrderedIndexLoaderCommon(lm *index.LevelMessage, index *index.LevelIndex, parentDataName string) {
 	indexContainerName := x.orderedIndexContainerName(index, 0)
 	x.g.P("value, _ := x.", indexContainerName, ".Get(key)")
 	x.g.P("x.", indexContainerName, ".Put(key, append(value, ", parentDataName, "))")
-	for i := 1; i <= depth-2; i++ {
-		if i > len(x.keys) {
-			break
-		}
+	for i := 1; i < lm.MapDepth; i++ {
 		orderedIndexContainerName := x.orderedIndexContainerName(index, i)
 		valueName := orderedIndexContainerName + "Value"
 		if i == 1 {
@@ -237,7 +228,7 @@ func (x *Generator) genOrderedIndexLoaderCommon(depth int, index *index.LevelInd
 			for j := 1; j <= i; j++ {
 				fields = append(fields, fmt.Sprintf("k%d", j))
 			}
-			levelIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+			levelIndexKeyType := x.levelKeyType(x.keys[i-1].Fd)
 			keyName := orderedIndexContainerName + "Keys"
 			x.g.P(keyName, " := ", levelIndexKeyType, "{", strings.Join(fields, ", "), "}")
 			x.g.P("if x.", orderedIndexContainerName, "[", keyName, "] == nil {")
@@ -250,8 +241,8 @@ func (x *Generator) genOrderedIndexLoaderCommon(depth int, index *index.LevelInd
 }
 
 func (x *Generator) genOrderedIndexSorter() {
-	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		for _, index := range levelMessage.OrderedIndexes {
+	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
+		for _, index := range lm.OrderedIndexes {
 			if len(index.SortedColFields) != 0 {
 				x.g.P("// OrderedIndex(sort): ", index.Index)
 				indexContainerName := x.orderedIndexContainerName(index, 0)
@@ -273,10 +264,8 @@ func (x *Generator) genOrderedIndexSorter() {
 				x.g.P(helper.SortPackage.Ident("Slice"), "(itemList, ", indexContainerName, "Sorter(itemList))")
 				x.g.P("return true")
 				x.g.P("})")
-				for i := 1; i <= levelMessage.MapDepth-2; i++ {
-					if i > len(x.keys) {
-						break
-					}
+				// Iterate all leveled containers.
+				for i := 1; i < lm.MapDepth; i++ {
 					x.g.P("for _, itemMap := range x.", x.orderedIndexContainerName(index, i), " {")
 					x.g.P("itemMap.Range(func(key ", x.orderedIndexMapKeyType(index), ", itemList []*", x.mapValueType(index), ") bool {")
 					x.g.P(helper.SortPackage.Ident("Slice"), "(itemList, ", indexContainerName, "Sorter(itemList))")
@@ -293,8 +282,8 @@ func (x *Generator) genOrderedIndexFinders() {
 	if !x.needGenerateOrderedIndex() {
 		return
 	}
-	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
-		for _, index := range levelMessage.OrderedIndexes {
+	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
+		for _, index := range lm.OrderedIndexes {
 			indexContainerName := x.orderedIndexContainerName(index, 0)
 			messagerName := x.messagerName()
 			x.g.P("// OrderedIndex: ", index.Index)
@@ -332,10 +321,7 @@ func (x *Generator) genOrderedIndexFinders() {
 			x.g.P("}")
 			x.g.P()
 
-			for i := 1; i <= levelMessage.MapDepth-2; i++ {
-				if i > len(x.keys) {
-					break
-				}
+			for i := 1; i < lm.MapDepth; i++ {
 				orderedIndexContainerName := x.orderedIndexContainerName(index, i)
 				partKeys := x.keys[:i]
 				partParams := partKeys.GenGetParams()
@@ -348,7 +334,7 @@ func (x *Generator) genOrderedIndexFinders() {
 				if len(partKeys) == 1 {
 					x.g.P("return x.", orderedIndexContainerName, "[", partArgs, "]")
 				} else {
-					levelIndexKeyType := x.levelKeyType(x.mapFds[i-1])
+					levelIndexKeyType := x.levelKeyType(x.keys[i-1].Fd)
 					x.g.P("return x.", orderedIndexContainerName, "[", levelIndexKeyType, "{", partArgs, "}]")
 				}
 				x.g.P("}")

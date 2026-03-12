@@ -97,9 +97,7 @@ func (x *HeroConf) processAfterLoad() error {
 	x.indexAttrMap = make(HeroConf_Index_AttrMap)
 	x.indexAttrMap1 = make(map[string]HeroConf_Index_AttrMap)
 	for k1, v1 := range x.data.GetHeroMap() {
-		_ = k1
-		for k2, v2 := range v1.GetAttrMap() {
-			_ = k2
+		for _, v2 := range v1.GetAttrMap() {
 			{
 				// Index: Title
 				key := v2.GetTitle()

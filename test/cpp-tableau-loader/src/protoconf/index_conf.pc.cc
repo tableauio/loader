@@ -27,7 +27,6 @@ bool FruitConf::ProcessAfterLoad() {
   for (auto&& item1 : data_.fruit_map()) {
     auto k1 = item1.first;
     for (auto&& item2 : item1.second.item_map()) {
-      auto k2 = item2.first;
       {
         // OrderedIndex: Price<ID>
         ordered_index_item_map_[item2.second.price()].push_back(&item2.second);
@@ -141,7 +140,6 @@ bool Fruit2Conf::ProcessAfterLoad() {
         index_country_map_[item2.name()].push_back(&item2);
       }
       for (auto&& item3 : item2.item_map()) {
-        auto k2 = item3.first;
         for (auto&& item4 : item3.second.attr_list()) {
           {
             // Index: CountryItemAttrName
@@ -159,7 +157,6 @@ bool Fruit2Conf::ProcessAfterLoad() {
     auto k1 = item1.first;
     for (auto&& item2 : item1.second.country_list()) {
       for (auto&& item3 : item2.item_map()) {
-        auto k2 = item3.first;
         {
           // OrderedIndex: CountryItemPrice<CountryItemID>
           ordered_index_item_map_[item3.second.price()].push_back(&item3.second);
@@ -326,7 +323,6 @@ bool Fruit3Conf::ProcessAfterLoad() {
         index_country_map_[item2.name()].push_back(&item2);
       }
       for (auto&& item3 : item2.item_map()) {
-        auto k1 = item3.first;
         for (auto&& item4 : item3.second.attr_list()) {
           {
             // Index: CountryItemAttrName
@@ -341,7 +337,6 @@ bool Fruit3Conf::ProcessAfterLoad() {
   for (auto&& item1 : data_.fruit_list()) {
     for (auto&& item2 : item1.country_list()) {
       for (auto&& item3 : item2.item_map()) {
-        auto k1 = item3.first;
         {
           // OrderedIndex: CountryItemPrice<CountryItemID>
           ordered_index_item_map_[item3.second.price()].push_back(&item3.second);
@@ -444,7 +439,6 @@ bool Fruit4Conf::ProcessAfterLoad() {
         index_country_map1_[k1][item2.second.name()].push_back(&item2.second);
       }
       for (auto&& item3 : item2.second.item_map()) {
-        auto k3 = item3.first;
         for (auto&& item4 : item3.second.attr_list()) {
           {
             // Index: CountryItemAttrName
@@ -465,7 +459,6 @@ bool Fruit4Conf::ProcessAfterLoad() {
     for (auto&& item2 : item1.second.country_map()) {
       auto k2 = item2.first;
       for (auto&& item3 : item2.second.item_map()) {
-        auto k3 = item3.first;
         {
           // OrderedIndex: CountryItemPrice<CountryItemID>
           ordered_index_item_map_[item3.second.price()].push_back(&item3.second);
@@ -719,6 +712,112 @@ const Fruit4Conf::OrderedIndex_ItemVector* Fruit4Conf::FindItem(int32_t fruit_ty
 
 const protoconf::Fruit4Conf::Fruit::Country::Item* Fruit4Conf::FindFirstItem(int32_t fruit_type, int32_t id, int32_t price) const {
   auto conf = FindItem(fruit_type, id, price);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+const std::string Fruit5Conf::kProtoName = protoconf::Fruit5Conf::GetDescriptor()->name();
+
+bool Fruit5Conf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
+  tableau::util::TimeProfiler profiler;
+  bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
+  bool ok = loaded ? ProcessAfterLoad() : false;
+  stats_.duration = profiler.Elapse();
+  return ok;
+}
+
+bool Fruit5Conf::ProcessAfterLoad() {
+  // Index init.
+  index_country_map_.clear();
+  index_country_map1_.clear();
+  for (auto&& item1 : data_.fruit_map()) {
+    auto k1 = item1.first;
+    for (auto&& item2 : item1.second.country_map()) {
+      {
+        // Index: CountryName
+        index_country_map_[item2.second.name()].push_back(&item2.second);
+        index_country_map1_[k1][item2.second.name()].push_back(&item2.second);
+      }
+    }
+  }
+  return true;
+}
+
+const protoconf::Fruit5Conf::Fruit* Fruit5Conf::Get(int32_t fruit_type) const {
+  auto iter = data_.fruit_map().find(fruit_type);
+  if (iter == data_.fruit_map().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::Fruit5Conf::Fruit::Country* Fruit5Conf::Get(int32_t fruit_type, int32_t id) const {
+  const auto* conf = Get(fruit_type);
+  if (conf == nullptr) {
+    return nullptr;
+  }
+  auto iter = conf->country_map().find(id);
+  if (iter == conf->country_map().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::Fruit5Conf::Fruit::Country::Item* Fruit5Conf::Get(int32_t fruit_type, int32_t id, int32_t id3) const {
+  const auto* conf = Get(fruit_type, id);
+  if (conf == nullptr) {
+    return nullptr;
+  }
+  auto iter = conf->item_map().find(id3);
+  if (iter == conf->item_map().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+// Index: CountryName
+const Fruit5Conf::Index_CountryMap& Fruit5Conf::FindCountryMap() const { return index_country_map_; }
+
+const Fruit5Conf::Index_CountryVector* Fruit5Conf::FindCountry(const std::string& name) const {
+  auto iter = index_country_map_.find(name);
+  if (iter == index_country_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::Fruit5Conf::Fruit::Country* Fruit5Conf::FindFirstCountry(const std::string& name) const {
+  auto conf = FindCountry(name);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+const Fruit5Conf::Index_CountryMap* Fruit5Conf::FindCountryMap(int32_t fruit_type) const {
+  auto iter = index_country_map1_.find(fruit_type);
+  if (iter == index_country_map1_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const Fruit5Conf::Index_CountryVector* Fruit5Conf::FindCountry(int32_t fruit_type, const std::string& name) const {
+  auto map = FindCountryMap(fruit_type);
+  if (map == nullptr) {
+    return nullptr;
+  }
+  auto iter = map->find(name);
+  if (iter == map->end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::Fruit5Conf::Fruit::Country* Fruit5Conf::FindFirstCountry(int32_t fruit_type, const std::string& name) const {
+  auto conf = FindCountry(fruit_type, name);
   if (conf == nullptr || conf->empty()) {
     return nullptr;
   }

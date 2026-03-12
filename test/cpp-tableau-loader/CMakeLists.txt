@@ -19,49 +19,45 @@ message(STATUS "Using C++${CMAKE_CXX_STANDARD} standard")
 
 if (MSVC)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /DNDEBUG")
+    # Use static CRT (/MT or /MTd) to match protobuf's default static runtime build.
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 else()
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -fPIC -Wno-deprecated -Wno-unused-variable -Wno-sign-compare -Wno-strict-aliasing -fno-strict-aliasing -DNDEBUG")
 endif()
 
-# root dir define
-SET(CMAKE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-SET(THRID_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../third_party)
-
 # google protobuf
-SET(PROTOBUF_ROOT_DIR ${THRID_PARTY_DIR}/_submodules/protobuf/)
-SET(PROTOBUF_SRC_DIR ${PROTOBUF_ROOT_DIR}/src/)
-SET(PROTOBUF_BUILD_DIR ${PROTOBUF_ROOT_DIR}/cmake/build/)
+# Try to find protobuf from local submodule first, then fallback to system.
+# Protobuf's install.cmake generates config files under:
+#   - Linux:   build/lib64/cmake/protobuf/ (via CMAKE_INSTALL_LIBDIR)
+#   - Windows: build/cmake/                (MSVC uses "cmake" directly)
+# Setting CMAKE_PREFIX_PATH to the build dir allows CMake to search both layouts.
+set(LOCAL_PROTOBUF_BUILD_DIR "${PROJECT_SOURCE_DIR}/../../third_party/_submodules/protobuf/cmake/build")
+set(LOCAL_PROTOBUF_SRC_DIR "${PROJECT_SOURCE_DIR}/../../third_party/_submodules/protobuf/src")
+if(EXISTS "${LOCAL_PROTOBUF_BUILD_DIR}" AND EXISTS "${LOCAL_PROTOBUF_SRC_DIR}")
+    message(STATUS "Found local protobuf submodule, using it preferentially.")
+    list(PREPEND CMAKE_PREFIX_PATH "${LOCAL_PROTOBUF_BUILD_DIR}")
+endif()
+
+# Use CONFIG mode explicitly to pick up protobuf's own protobuf-config.cmake
+# instead of CMake's built-in FindProtobuf.cmake module, which may not handle
+# the local build directory layout correctly.
+find_package(Protobuf CONFIG REQUIRED)
+message(STATUS "Using protobuf ${Protobuf_VERSION}")
+
 # loader
 SET(LOADER_SRC_DIR ${PROJECT_SOURCE_DIR}/src/)
 
-# protoconf
-SET(PROTOCONF_DIR ${TOOLS_DIR}/protoconf)
-SET(PROTOCONF_TOOL ${PROTOCONF_DIR}/protoconf)
-
-# common include
-SET(COMMON_INCLUDE_DIR
-    ${PROTOBUF_SRC_DIR}
-    ${LOADER_SRC_DIR}
-    )
-
-# common lib
-if(MSVC)
-    SET(COMMON_LIB
-        ${PROTOBUF_BUILD_DIR}/libprotobufd.lib
-        )
-    SET(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
-else()
-    SET(COMMON_LIB
-        ${PROTOBUF_BUILD_DIR}/libprotobufd.a
-        pthread
-        stdc++fs
-        )
-endif()
-
 # include
-include_directories(${COMMON_INCLUDE_DIR} ${LOADER_SRC_DIR}/protoconf)
+# protobuf::libprotobuf target already provides its include directories via
+# INTERFACE_INCLUDE_DIRECTORIES, so we only need to add our own source dirs.
+include_directories(${LOADER_SRC_DIR} ${LOADER_SRC_DIR}/protoconf)
 
 # add the executable
 add_executable(${PROJECT_NAME} ${PROTO_SOURCE} ${SOURCE})
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-target_link_libraries(${PROJECT_NAME} ${COMMON_LIB})
+
+# link libraries
+target_link_libraries(${PROJECT_NAME} protobuf::libprotobuf)
+if(NOT MSVC)
+    target_link_libraries(${PROJECT_NAME} pthread stdc++fs)
+endif()
