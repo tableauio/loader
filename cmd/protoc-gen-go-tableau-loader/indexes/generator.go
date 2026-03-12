@@ -36,7 +36,7 @@ func (x *Generator) initLevelMessage() {
 			// Only collect map keys/fds when a deeper level has an index or ordered index,
 			// because these keys are used solely for building upper-level (leveled) containers.
 			if !lm.NextLevel.NeedGenAnyIndex() {
-				continue
+				break
 			}
 			x.keys = x.keys.AddMapKey(helper.MapKey{
 				Type:      helper.ParseMapKeyType(fd.MapKey()),
@@ -103,14 +103,14 @@ func (x *Generator) GenIndexTypeDef() {
 	//                                        and keys[2]=k3: {k1,k2,k3}
 	//
 	// Hence the loop runs len(x.keys)-2 times (0 times when len ≤ 2).
-	for i := 0; i < len(x.keys)-2; i++ {
-		if i == 0 {
+	for i := 2; i < len(x.keys); i++ {
+		if i == 2 {
 			x.g.P()
 			x.g.P("// LevelIndex keys.")
 		}
-		fd := x.keys[i+1].Fd
+		fd := x.keys[i-1].Fd
 		keyType := x.levelKeyType(fd)
-		keys := x.keys[:i+2]
+		keys := x.keys[:i]
 		x.g.P("type ", keyType, " struct {")
 		for _, key := range keys {
 			x.g.P(key.FieldName, " ", key.Type)
