@@ -41,7 +41,7 @@ jobs:
 
       - name: Install dependencies (Ubuntu)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y cmake libprotobuf-dev protobuf-compiler
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
 
       - name: Install CMake (Windows)
         if: runner.os == 'Windows'
@@ -57,13 +57,9 @@ jobs:
         if: runner.os == 'Windows'
         run: choco install ninja
 
-      - name: Init submodules and build protobuf (Windows)
-        if: runner.os == 'Windows'
+      - name: Init submodules and build protobuf
+        shell: bash
         run: bash init.sh
-
-      - name: Init submodules (Ubuntu)
-        if: runner.os == 'Linux'
-        run: git submodule update --init --recursive
 
       - name: Generate protoconf
         working-directory: test/cpp-tableau-loader

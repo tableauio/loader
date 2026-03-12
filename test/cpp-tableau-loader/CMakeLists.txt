@@ -31,9 +31,17 @@ if(EXISTS "${LOCAL_PROTOBUF_BUILD_DIR}" AND EXISTS "${LOCAL_PROTOBUF_SRC_DIR}")
     message(STATUS "Found local protobuf submodule, using it preferentially.")
     list(PREPEND CMAKE_PREFIX_PATH "${LOCAL_PROTOBUF_BUILD_DIR}")
     set(Protobuf_INCLUDE_DIR "${LOCAL_PROTOBUF_SRC_DIR}" CACHE PATH "Protobuf include dir" FORCE)
+    # Use static protobuf to avoid dynamic linking issues across all platforms.
+    set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 find_package(Protobuf REQUIRED)
 message(STATUS "Using protobuf ${Protobuf_VERSION}")
+
+# When linking protobuf statically, PROTOBUF_USE_DLLS must not be defined,
+# otherwise symbols will be decorated with __declspec(dllimport) and cause LNK2019.
+if(Protobuf_USE_STATIC_LIBS)
+    remove_definitions(-DPROTOBUF_USE_DLLS)
+endif()
 
 # loader
 SET(LOADER_SRC_DIR ${PROJECT_SOURCE_DIR}/src/)
