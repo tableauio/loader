@@ -21,12 +21,12 @@ jobs:
             init_script: bash init.sh
             gen_script: bash test/cpp-tableau-loader/gen.sh
             cmake_config: cmake -S test/cpp-tableau-loader -B test/cpp-tableau-loader/build
-            run_loader: ./test/cpp-tableau-loader/bin/loader
+            run_loader: ./bin/loader
           - os: windows-latest
             init_script: .\init.bat
             gen_script: test\cpp-tableau-loader\gen.bat
             cmake_config: cmake -S test/cpp-tableau-loader -B test/cpp-tableau-loader/build -G "NMake Makefiles"
-            run_loader: .\test\cpp-tableau-loader\bin\loader.exe
+            run_loader: .\bin\loader.exe
 
     runs-on: ${{ matrix.os }}
 
@@ -43,7 +43,7 @@ jobs:
       - name: Install CMake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: "3.22.x"
+          cmake-version: "3.x"
 
       - name: Init protobuf
         shell: bash
@@ -60,4 +60,5 @@ jobs:
         run: cmake --build test/cpp-tableau-loader/build --parallel
 
       - name: Run loader
+        working-directory: test/cpp-tableau-loader
         run: ${{ matrix.run_loader }}
