@@ -25,10 +25,11 @@ jobs:
           - os: windows-latest
             init_script: cmd /c init.bat
             gen_script: cmd /c gen.bat
-            cmake_config: cmake -S . -B build -G "NMake Makefiles"
+            cmake_config: cmake -S . -B build -G "Ninja"
             run_loader: .\bin\loader.exe
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
 
     steps:
       - name: Checkout Code
@@ -50,6 +51,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Init protobuf
+        timeout-minutes: 20
         run: ${{ matrix.init_script }}
 
       - name: Generate protoconf
