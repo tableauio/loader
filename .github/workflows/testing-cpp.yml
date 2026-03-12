@@ -39,25 +39,30 @@ jobs:
           go-version: 1.21.x
           cache: true
 
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake libprotobuf-dev protobuf-compiler
+
       - name: Install CMake (Windows)
         if: runner.os == 'Windows'
         uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: "3.x"
 
-      - name: Install dependencies (Ubuntu)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y cmake libprotobuf-dev protobuf-compiler
-
-      - name: Setup MSVC (Windows only)
+      - name: Setup MSVC (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Install protobuf (Windows)
+      - name: Install Ninja (Windows)
         if: runner.os == 'Windows'
-        run: choco install protoc
+        run: choco install ninja
 
-      - name: Init submodules
+      - name: Init submodules and build protobuf (Windows)
+        if: runner.os == 'Windows'
+        run: bash init.sh
+
+      - name: Init submodules (Ubuntu)
+        if: runner.os == 'Linux'
         run: git submodule update --init --recursive
 
       - name: Generate protoconf

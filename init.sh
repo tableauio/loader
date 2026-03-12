@@ -22,8 +22,7 @@ git submodule update --init --recursive
 # Refer: https://github.com/protocolbuffers/protobuf/blob/3.19.x/cmake/README.md#cmake-configuration
 cd cmake
 # use Debug version
-cmake -S . -B build \
-    -DCMAKE_BUILD_TYPE=Debug
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -Dprotobuf_BUILD_TESTS=OFF
 
 # Compile the code
 cmake --build build --parallel
