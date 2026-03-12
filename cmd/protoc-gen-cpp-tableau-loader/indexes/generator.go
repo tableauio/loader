@@ -84,11 +84,22 @@ func (x *Generator) GenHppIndexFinders() {
 	if !x.NeedGenerate() {
 		return
 	}
-	// The loop generates LevelIndex key types for upper-level map containers.
-	// initLevelMessage only collects map keys for levels whose deeper
-	// levels have indexes, so len(x.keys) already reflects the effective
-	// depth. LevelIndex keys start from the 2nd map level (keys[1]) onward,
-	// so the count is len(x.keys)-2.
+	// Generate LevelIndex key structs for intermediate map levels.
+	//
+	// x.keys holds one entry per effective map level (only levels that lead to
+	// an index are included by initLevelMessage). For a 3-level map keyed by
+	// (k1, k2, k3) with an index at the deepest level, x.keys = [k1, k2, k3].
+	//
+	// The deepest level's key (k3) is the direct lookup key and does not need
+	// a LevelIndex struct. The top-level key (k1, i.e. keys[0]) is a plain map
+	// key and also does not need one. Only the intermediate levels (keys[1] …
+	// keys[len-2]) require a LevelIndex struct that bundles all ancestor keys:
+	//
+	//   keys = [k1, k2, k3]  →  one struct for keys[1]=k2: { k1, k2 }
+	//   keys = [k1,k2,k3,k4] →  structs for keys[1]=k2: {k1,k2}
+	//                                        and keys[2]=k3: {k1,k2,k3}
+	//
+	// Hence the loop runs len(x.keys)-2 times (0 times when len ≤ 2).
 	for i := 0; i < len(x.keys)-2; i++ {
 		if i == 0 {
 			x.g.P()

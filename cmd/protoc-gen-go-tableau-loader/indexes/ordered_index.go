@@ -107,7 +107,7 @@ func (x *Generator) genOrderedIndexField() {
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.OrderedIndexes {
 			x.g.P(x.orderedIndexContainerName(index, 0), " *", x.orderedIndexMapType(index))
-			for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
+			for i := 0; i < levelMessage.UpperMapLevels(); i++ {
 				if i == 0 {
 					x.g.P(x.orderedIndexContainerName(index, i+1), " map[", x.keys[0].Type, "]*", x.orderedIndexMapType(index))
 				} else {
@@ -128,7 +128,7 @@ func (x *Generator) genOrderedIndexLoader() {
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.OrderedIndexes {
 			x.g.P("x.", x.orderedIndexContainerName(index, 0), " = ", helper.TreeMapPackage.Ident(x.mapCtor(index)), "[", x.orderedIndexMapKeyType(index), ", []*", x.mapValueType(index), "]()")
-			for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
+			for i := 0; i < levelMessage.UpperMapLevels(); i++ {
 				if i == 0 {
 					x.g.P("x.", x.orderedIndexContainerName(index, i+1), " = make(map[", x.keys[0].Type, "]*", x.orderedIndexMapType(index), ")")
 				} else {
@@ -217,7 +217,7 @@ func (x *Generator) genOrderedIndexLoaderCommon(levelMessage *index.LevelMessage
 	indexContainerName := x.orderedIndexContainerName(index, 0)
 	x.g.P("value, _ := x.", indexContainerName, ".Get(key)")
 	x.g.P("x.", indexContainerName, ".Put(key, append(value, ", parentDataName, "))")
-	for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
+	for i := 0; i < levelMessage.UpperMapLevels(); i++ {
 		orderedIndexContainerName := x.orderedIndexContainerName(index, i+1)
 		valueName := orderedIndexContainerName + "Value"
 		if i == 0 {
@@ -268,7 +268,7 @@ func (x *Generator) genOrderedIndexSorter() {
 				x.g.P("return true")
 				x.g.P("})")
 				// Iterate all leveled containers.
-				for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
+				for i := 0; i < levelMessage.UpperMapLevels(); i++ {
 					x.g.P("for _, itemMap := range x.", x.orderedIndexContainerName(index, i+1), " {")
 					x.g.P("itemMap.Range(func(key ", x.orderedIndexMapKeyType(index), ", itemList []*", x.mapValueType(index), ") bool {")
 					x.g.P(helper.SortPackage.Ident("Slice"), "(itemList, ", indexContainerName, "Sorter(itemList))")
@@ -324,7 +324,7 @@ func (x *Generator) genOrderedIndexFinders() {
 			x.g.P("}")
 			x.g.P()
 
-			for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
+			for i := 0; i < levelMessage.UpperMapLevels(); i++ {
 				orderedIndexContainerName := x.orderedIndexContainerName(index, i+1)
 				partKeys := x.keys[:i+1]
 				partParams := partKeys.GenGetParams()

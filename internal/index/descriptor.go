@@ -62,14 +62,10 @@ type LevelMessage struct {
 	MapDepth int
 }
 
-// NumLeveledContainers returns the number of upper-level index containers
-// for this level message. It equals MapDepth - 1 because:
-//   - MapDepth is 0-based (starts from 0 for the top-level message)
-//   - The current level itself is excluded (only parent levels count)
-//
-// For example, a 3-level nested map (MapDepth=2) has 1 upper-level container (keyed by k1),
-// and a 4-level nested map (MapDepth=3) has 2 upper-level containers (keyed by k1 and {k1, k2}).
-func (l *LevelMessage) NumLeveledContainers() int {
+// UpperMapLevels returns the number of upper map levels above this level.
+// For example, an index at map depth 2 has 1 upper map layer (keyed by k1),
+// and an index at map depth 3 has 2 upper map levels (keyed by k1 and {k1, k2}).
+func (l *LevelMessage) UpperMapLevels() int {
 	return l.MapDepth - 1
 }
 

@@ -94,7 +94,7 @@ func (x *Generator) genHppOrderedIndexFinders() {
 			x.g.P(helper.Indent(1), "const ", vectorType, "* Find", index.Name(), "(", keys.GenGetParams(), ") const;")
 			x.g.P(helper.Indent(1), "// Finds the first value of the given key(s).")
 			x.g.P(helper.Indent(1), "const ", helper.ParseCppClassType(index.MD), "* FindFirst", index.Name(), "(", keys.GenGetParams(), ") const;")
-			for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
+			for i := 0; i < levelMessage.UpperMapLevels(); i++ {
 				partKeys := x.keys[:i+1]
 				x.g.P(helper.Indent(1), "// Finds the ordered index: key(", index.Index, ") to value(", vectorType, "),")
 				x.g.P(helper.Indent(1), "// which is the upper ", loadutil.Ordinal(i+1), "-level map specified by (", partKeys.GenGetArguments(), ").")
@@ -109,7 +109,7 @@ func (x *Generator) genHppOrderedIndexFinders() {
 
 			x.g.P(" private:")
 			x.g.P(helper.Indent(1), mapType, " ", x.orderedIndexContainerName(index, 0), ";")
-			for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
+			for i := 0; i < levelMessage.UpperMapLevels(); i++ {
 				if i == 0 {
 					x.g.P(helper.Indent(1), "std::unordered_map<", x.keys[0].Type, ", ", mapType, "> ", x.orderedIndexContainerName(index, i+1), ";")
 				} else {
@@ -130,7 +130,7 @@ func (x *Generator) genOrderedIndexLoader() {
 	for levelMessage := x.descriptor.LevelMessage; levelMessage != nil; levelMessage = levelMessage.NextLevel {
 		for _, index := range levelMessage.OrderedIndexes {
 			x.g.P(helper.Indent(1), x.orderedIndexContainerName(index, 0), ".clear();")
-			for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
+			for i := 0; i < levelMessage.UpperMapLevels(); i++ {
 				x.g.P(helper.Indent(1), x.orderedIndexContainerName(index, i+1), ".clear();")
 			}
 		}
@@ -216,7 +216,7 @@ func (x *Generator) generateOneCppMulticolumnOrderedIndex(levelMessage *index.Le
 
 func (x *Generator) genOrderedLoader(levelMessage *index.LevelMessage, index *index.LevelIndex, ident int, key, parentDataName string) {
 	x.g.P(helper.Indent(ident), x.orderedIndexContainerName(index, 0), "[", key, "].push_back(&", parentDataName, ");")
-	for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
+	for i := 0; i < levelMessage.UpperMapLevels(); i++ {
 		if i == 0 {
 			x.g.P(helper.Indent(ident), x.orderedIndexContainerName(index, i+1), "[k1][", key, "].push_back(&", parentDataName, ");")
 		} else {
@@ -255,7 +255,7 @@ func (x *Generator) genOrderedIndexSorter() {
 				x.g.P(helper.Indent(2), "std::sort(item.second.begin(), item.second.end(), ", indexContainerName, "sorter);")
 				x.g.P(helper.Indent(1), "}")
 				// Iterate all leveled containers.
-				for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
+				for i := 0; i < levelMessage.UpperMapLevels(); i++ {
 					x.g.P(helper.Indent(1), "for (auto&& item : ", x.orderedIndexContainerName(index, i+1), ") {")
 					x.g.P(helper.Indent(2), "for (auto&& item1 : item.second) {")
 					x.g.P(helper.Indent(3), "std::sort(item1.second.begin(), item1.second.end(), ", indexContainerName, "sorter);")
@@ -307,7 +307,7 @@ func (x *Generator) genCppOrderedIndexFinders() {
 			x.g.P("}")
 			x.g.P()
 
-			for i := 0; i < levelMessage.NumLeveledContainers(); i++ {
+			for i := 0; i < levelMessage.UpperMapLevels(); i++ {
 				indexContainerNameI := x.orderedIndexContainerName(index, i+1)
 				partKeys := x.keys[:i+1]
 				partParams := partKeys.GenGetParams()
