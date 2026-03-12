@@ -23,45 +23,31 @@ else()
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -fPIC -Wno-deprecated -Wno-unused-variable -Wno-sign-compare -Wno-strict-aliasing -fno-strict-aliasing -DNDEBUG")
 endif()
 
-# root dir define
-SET(CMAKE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-SET(THRID_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../third_party)
-
 # google protobuf
-SET(PROTOBUF_ROOT_DIR ${THRID_PARTY_DIR}/_submodules/protobuf/)
-SET(PROTOBUF_SRC_DIR ${PROTOBUF_ROOT_DIR}/src/)
-SET(PROTOBUF_BUILD_DIR ${PROTOBUF_ROOT_DIR}/cmake/build/)
+# Try to find protobuf from local submodule first, then fallback to system.
+set(LOCAL_PROTOBUF_BUILD_DIR "${PROJECT_SOURCE_DIR}/../../third_party/_submodules/protobuf/cmake/build")
+set(LOCAL_PROTOBUF_SRC_DIR "${PROJECT_SOURCE_DIR}/../../third_party/_submodules/protobuf/src")
+if(EXISTS "${LOCAL_PROTOBUF_BUILD_DIR}" AND EXISTS "${LOCAL_PROTOBUF_SRC_DIR}")
+    message(STATUS "Found local protobuf submodule, using it preferentially.")
+    list(PREPEND CMAKE_PREFIX_PATH "${LOCAL_PROTOBUF_BUILD_DIR}")
+    set(Protobuf_INCLUDE_DIR "${LOCAL_PROTOBUF_SRC_DIR}" CACHE PATH "Protobuf include dir" FORCE)
+endif()
+find_package(Protobuf REQUIRED)
+message(STATUS "Using protobuf ${Protobuf_VERSION}")
+
 # loader
 SET(LOADER_SRC_DIR ${PROJECT_SOURCE_DIR}/src/)
 
-# protoconf
-SET(PROTOCONF_DIR ${TOOLS_DIR}/protoconf)
-SET(PROTOCONF_TOOL ${PROTOCONF_DIR}/protoconf)
-
-# common include
-SET(COMMON_INCLUDE_DIR
-    ${PROTOBUF_SRC_DIR}
-    ${LOADER_SRC_DIR}
-    )
-
-# common lib
-if(MSVC)
-    SET(COMMON_LIB
-        ${PROTOBUF_BUILD_DIR}/libprotobufd.lib
-        )
-    SET(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
-else()
-    SET(COMMON_LIB
-        ${PROTOBUF_BUILD_DIR}/libprotobufd.a
-        pthread
-        stdc++fs
-        )
-endif()
-
 # include
-include_directories(${COMMON_INCLUDE_DIR} ${LOADER_SRC_DIR}/protoconf)
+include_directories(${Protobuf_INCLUDE_DIRS} ${LOADER_SRC_DIR} ${LOADER_SRC_DIR}/protoconf)
 
 # add the executable
 add_executable(${PROJECT_NAME} ${PROTO_SOURCE} ${SOURCE})
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-target_link_libraries(${PROJECT_NAME} ${COMMON_LIB})
+
+# link libraries
+if(MSVC)
+    target_link_libraries(${PROJECT_NAME} protobuf::libprotobuf)
+else()
+    target_link_libraries(${PROJECT_NAME} protobuf::libprotobuf pthread stdc++fs)
+endif()

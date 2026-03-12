@@ -18,12 +18,10 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            init_script: bash init.sh
             gen_script: bash gen.sh
             cmake_config: cmake -S . -B build
             run_loader: ./bin/loader
           - os: windows-latest
-            init_script: cmd /c init.bat
             gen_script: cmd /c gen.bat
             cmake_config: cmake -S . -B build -G "Ninja"
             run_loader: .\bin\loader.exe
@@ -41,18 +39,26 @@ jobs:
           go-version: 1.21.x
           cache: true
 
-      - name: Install CMake
+      - name: Install CMake (Windows)
+        if: runner.os == 'Windows'
         uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: "3.x"
+
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake libprotobuf-dev protobuf-compiler
 
       - name: Setup MSVC (Windows only)
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Init protobuf
-        timeout-minutes: 20
-        run: ${{ matrix.init_script }}
+      - name: Install protobuf (Windows)
+        if: runner.os == 'Windows'
+        run: choco install protoc
+
+      - name: Init submodules
+        run: git submodule update --init --recursive
 
       - name: Generate protoconf
         working-directory: test/cpp-tableau-loader
