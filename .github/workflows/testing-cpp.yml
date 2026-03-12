@@ -1,0 +1,63 @@
+name: Testing C++
+
+# Trigger on pushes, PRs (excluding documentation changes), and nightly.
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  schedule:
+    - cron: 0 0 * * * # daily at 00:00
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            init_script: bash init.sh
+            gen_script: bash test/cpp-tableau-loader/gen.sh
+            cmake_config: cmake -S test/cpp-tableau-loader -B test/cpp-tableau-loader/build
+            run_loader: ./test/cpp-tableau-loader/bin/loader
+          - os: windows-latest
+            init_script: .\init.bat
+            gen_script: test\cpp-tableau-loader\gen.bat
+            cmake_config: cmake -S test/cpp-tableau-loader -B test/cpp-tableau-loader/build -G "NMake Makefiles"
+            run_loader: .\test\cpp-tableau-loader\bin\loader.exe
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21.x
+          cache: true
+
+      - name: Install CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.22.x"
+
+      - name: Init protobuf
+        shell: bash
+        run: ${{ matrix.init_script }}
+
+      - name: Generate protoconf
+        shell: bash
+        run: ${{ matrix.gen_script }}
+
+      - name: CMake Configure
+        run: ${{ matrix.cmake_config }}
+
+      - name: CMake Build
+        run: cmake --build test/cpp-tableau-loader/build --parallel
+
+      - name: Run loader
+        run: ${{ matrix.run_loader }}
