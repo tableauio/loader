@@ -13,42 +13,42 @@ type MessagerContainer struct {
 	messagerMap MessagerMap
 	loadedTime  time.Time
 	// all messagers as fields for fast access
+	itemConf           *ItemConf
 	activityConf       *ActivityConf
 	chapterConf        *ChapterConf
 	themeConf          *ThemeConf
 	taskConf           *TaskConf
-	heroConf           *HeroConf
-	heroBaseConf       *HeroBaseConf
-	patchReplaceConf   *PatchReplaceConf
-	patchMergeConf     *PatchMergeConf
-	recursivePatchConf *RecursivePatchConf
 	fruitConf          *FruitConf
 	fruit2Conf         *Fruit2Conf
 	fruit3Conf         *Fruit3Conf
 	fruit4Conf         *Fruit4Conf
 	fruit5Conf         *Fruit5Conf
-	itemConf           *ItemConf
+	heroConf           *HeroConf
+	heroBaseConf       *HeroBaseConf
+	patchReplaceConf   *PatchReplaceConf
+	patchMergeConf     *PatchMergeConf
+	recursivePatchConf *RecursivePatchConf
 }
 
 func newMessagerContainer(messagerMap MessagerMap) *MessagerContainer {
 	return &MessagerContainer{
 		messagerMap:        messagerMap,
 		loadedTime:         time.Now(),
+		itemConf:           GetMessager[*ItemConf](messagerMap),
 		activityConf:       GetMessager[*ActivityConf](messagerMap),
 		chapterConf:        GetMessager[*ChapterConf](messagerMap),
 		themeConf:          GetMessager[*ThemeConf](messagerMap),
 		taskConf:           GetMessager[*TaskConf](messagerMap),
-		heroConf:           GetMessager[*HeroConf](messagerMap),
-		heroBaseConf:       GetMessager[*HeroBaseConf](messagerMap),
-		patchReplaceConf:   GetMessager[*PatchReplaceConf](messagerMap),
-		patchMergeConf:     GetMessager[*PatchMergeConf](messagerMap),
-		recursivePatchConf: GetMessager[*RecursivePatchConf](messagerMap),
 		fruitConf:          GetMessager[*FruitConf](messagerMap),
 		fruit2Conf:         GetMessager[*Fruit2Conf](messagerMap),
 		fruit3Conf:         GetMessager[*Fruit3Conf](messagerMap),
 		fruit4Conf:         GetMessager[*Fruit4Conf](messagerMap),
 		fruit5Conf:         GetMessager[*Fruit5Conf](messagerMap),
-		itemConf:           GetMessager[*ItemConf](messagerMap),
+		heroConf:           GetMessager[*HeroConf](messagerMap),
+		heroBaseConf:       GetMessager[*HeroBaseConf](messagerMap),
+		patchReplaceConf:   GetMessager[*PatchReplaceConf](messagerMap),
+		patchMergeConf:     GetMessager[*PatchMergeConf](messagerMap),
+		recursivePatchConf: GetMessager[*RecursivePatchConf](messagerMap),
 	}
 }
 
@@ -66,6 +66,10 @@ func (mc *MessagerContainer) GetLastLoadedTime() time.Time {
 
 // Auto-generated getters below
 
+func (mc *MessagerContainer) GetItemConf() *ItemConf {
+	return mc.itemConf
+}
+
 func (mc *MessagerContainer) GetActivityConf() *ActivityConf {
 	return mc.activityConf
 }
@@ -80,26 +84,6 @@ func (mc *MessagerContainer) GetThemeConf() *ThemeConf {
 
 func (mc *MessagerContainer) GetTaskConf() *TaskConf {
 	return mc.taskConf
-}
-
-func (mc *MessagerContainer) GetHeroConf() *HeroConf {
-	return mc.heroConf
-}
-
-func (mc *MessagerContainer) GetHeroBaseConf() *HeroBaseConf {
-	return mc.heroBaseConf
-}
-
-func (mc *MessagerContainer) GetPatchReplaceConf() *PatchReplaceConf {
-	return mc.patchReplaceConf
-}
-
-func (mc *MessagerContainer) GetPatchMergeConf() *PatchMergeConf {
-	return mc.patchMergeConf
-}
-
-func (mc *MessagerContainer) GetRecursivePatchConf() *RecursivePatchConf {
-	return mc.recursivePatchConf
 }
 
 func (mc *MessagerContainer) GetFruitConf() *FruitConf {
@@ -122,6 +106,22 @@ func (mc *MessagerContainer) GetFruit5Conf() *Fruit5Conf {
 	return mc.fruit5Conf
 }
 
-func (mc *MessagerContainer) GetItemConf() *ItemConf {
-	return mc.itemConf
+func (mc *MessagerContainer) GetHeroConf() *HeroConf {
+	return mc.heroConf
+}
+
+func (mc *MessagerContainer) GetHeroBaseConf() *HeroBaseConf {
+	return mc.heroBaseConf
+}
+
+func (mc *MessagerContainer) GetPatchReplaceConf() *PatchReplaceConf {
+	return mc.patchReplaceConf
+}
+
+func (mc *MessagerContainer) GetPatchMergeConf() *PatchMergeConf {
+	return mc.patchMergeConf
+}
+
+func (mc *MessagerContainer) GetRecursivePatchConf() *RecursivePatchConf {
+	return mc.recursivePatchConf
 }
