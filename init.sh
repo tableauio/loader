@@ -22,10 +22,9 @@ git submodule update --init --recursive
 # Refer: https://github.com/protocolbuffers/protobuf/blob/3.19.x/cmake/README.md#cmake-configuration
 cd cmake
 # use Debug version
-# -Dprotobuf_MSVC_STATIC_RUNTIME=OFF: use dynamic CRT (/MDd) to match the default MSVC runtime library setting.
-# -DCMAKE_MSVC_RUNTIME_LIBRARY: CMake 3.15+ standard way to control MSVC runtime library.
-# These flags are only effective on Windows/MSVC and are ignored on other platforms.
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -DCMAKE_MSVC_RUNTIME_LIBRARY="MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+# protobuf_MSVC_STATIC_RUNTIME defaults to ON, which uses static CRT (/MTd for Debug).
+# Our project's CMakeLists.txt also sets static CRT to match.
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -Dprotobuf_BUILD_TESTS=OFF
 
 # Compile the code
 cmake --build build --parallel

@@ -19,8 +19,8 @@ message(STATUS "Using C++${CMAKE_CXX_STANDARD} standard")
 
 if (MSVC)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /DNDEBUG")
-    # Use dynamic CRT (/MD or /MDd) to match protobuf's build configuration.
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+    # Use static CRT (/MT or /MTd) to match protobuf's default static runtime build.
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 else()
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -fPIC -Wno-deprecated -Wno-unused-variable -Wno-sign-compare -Wno-strict-aliasing -fno-strict-aliasing -DNDEBUG")
 endif()
