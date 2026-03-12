@@ -43,19 +43,13 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
 
-      - name: Install CMake (Windows)
+      - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: "3.x"
+        run: choco install cmake ninja -y
 
       - name: Setup MSVC (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Install Ninja (Windows)
-        if: runner.os == 'Windows'
-        run: choco install ninja
 
       - name: Init submodules and build protobuf
         shell: bash
