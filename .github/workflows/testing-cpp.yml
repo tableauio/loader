@@ -45,6 +45,10 @@ jobs:
         with:
           cmake-version: "3.x"
 
+      - name: Setup MSVC (Windows only)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Init protobuf
         shell: bash
         run: ${{ matrix.init_script }}
