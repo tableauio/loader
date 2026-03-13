@@ -4,7 +4,7 @@
 #include "logger.pc.h"
 #include "util.pc.h"
 {{ if not .Shards }}
-{{ range .Protofiles }}#include "{{ toSnake .Name }}.pc.h"
+{{ range .Protofiles }}#include "{{ .Name }}.pc.h"
 {{ end }}{{ end }}
 namespace tableau {
 std::once_flag Registry::once;

@@ -52,7 +52,6 @@ func (x *Generator) GenOrderedMapTypeDef() {
 	if !x.NeedGenerate() {
 		return
 	}
-	x.g.P("// OrderedMap types.")
 	x.genOrderedMapTypeDef(x.message.Desc, 1, nil)
 }
 
@@ -60,6 +59,9 @@ func (x *Generator) genOrderedMapTypeDef(md protoreflect.MessageDescriptor, dept
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
+			if depth == 1 {
+				x.g.P("// OrderedMap types.")
+			}
 			nextKeys := keys.AddMapKey(helper.MapKey{
 				Type: helper.ParseMapKeyType(fd.MapKey()),
 				Name: helper.ParseMapFieldNameAsFuncParam(fd),
@@ -81,7 +83,7 @@ func (x *Generator) genOrderedMapTypeDef(md protoreflect.MessageDescriptor, dept
 			}
 			x.g.P("type ", orderedMap, "= ", helper.TreeMapPackage.Ident("TreeMap"), "[", keyType, ", ", x.mapValueFieldType(fd), "]")
 			x.g.P()
-			return
+			break
 		}
 	}
 }
@@ -104,7 +106,6 @@ func (x *Generator) GenOrderedMapLoader() {
 	if !x.NeedGenerate() {
 		return
 	}
-	x.g.P("// OrderedMap init.")
 	x.genOrderedMapLoader(x.message.Desc, 1, nil, "")
 }
 
@@ -113,6 +114,9 @@ func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth
 	for _, field := range message.Fields {
 		fd := field.Desc
 		if fd.IsMap() {
+			if depth == 1 {
+				x.g.P("// OrderedMap init.")
+			}
 			needConvertBool := len(keys) > 0 && keys[len(keys)-1].Type == "int"
 			nextKeys := keys.AddMapKey(helper.MapKey{
 				Type: helper.ParseMapKeyType(fd.MapKey()),
