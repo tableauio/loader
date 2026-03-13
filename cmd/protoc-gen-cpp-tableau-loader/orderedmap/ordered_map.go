@@ -49,9 +49,6 @@ func (x *Generator) GenHppOrderedMapGetters() {
 	if !x.NeedGenerate() {
 		return
 	}
-	x.g.P()
-	x.g.P(helper.Indent(1), "// OrderedMap accessers.")
-	x.g.P(" public:")
 	x.genHppOrderedMapGetters(x.message.Desc, 1, nil)
 }
 
@@ -59,6 +56,11 @@ func (x *Generator) genHppOrderedMapGetters(md protoreflect.MessageDescriptor, d
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
+			if depth == 1 {
+				x.g.P()
+				x.g.P(helper.Indent(1), "// OrderedMap accessers.")
+				x.g.P(" public:")
+			}
 			nextKeys := keys.AddMapKey(helper.MapKey{
 				Type: helper.ParseMapKeyType(fd.MapKey()),
 				Name: helper.ParseMapFieldName(fd),
@@ -82,7 +84,7 @@ func (x *Generator) genHppOrderedMapGetters(md protoreflect.MessageDescriptor, d
 				x.g.P(" private:")
 				x.g.P(helper.Indent(1), orderedMap, " ordered_map_;")
 			}
-			return
+			break
 		}
 	}
 }
@@ -91,8 +93,6 @@ func (x *Generator) GenOrderedMapLoader() {
 	if !x.NeedGenerate() {
 		return
 	}
-	x.g.P(helper.Indent(1), "// OrderedMap init.")
-	x.g.P(helper.Indent(1), "ordered_map_.clear();")
 	x.genOrderedMapLoader(x.message.Desc, 1)
 }
 
@@ -100,6 +100,10 @@ func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
+			if depth == 1 {
+				x.g.P(helper.Indent(1), "// OrderedMap init.")
+				x.g.P(helper.Indent(1), "ordered_map_.clear();")
+			}
 			orderedMapValue := x.mapValueType(fd)
 			itemName := fmt.Sprintf("item%d", depth)
 

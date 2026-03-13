@@ -1,6 +1,6 @@
 #include "hub.pc.h"
 
-{{ range .Protofiles }}#include "{{ toSnake .Name }}.pc.h"
+{{ range .Protofiles }}#include "{{ .Name }}.pc.h"
 {{ end }}
 namespace tableau {{ "{" }}{{ range .Protofiles }}{{ range .Messagers }}
 template <>
