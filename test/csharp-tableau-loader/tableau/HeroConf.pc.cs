@@ -6,6 +6,9 @@
 // source: hero_conf.proto
 // </auto-generated>
 #nullable enable
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using pb = global::Google.Protobuf;
 namespace Tableau
 {
@@ -15,13 +18,13 @@ namespace Tableau
     public class HeroConf : Messager, IMessagerName
     {
         // OrderedMap types.
-        public class OrderedMap_Hero_AttrMap : SortedDictionary<string, Protoconf.HeroConf.Types.Hero.Types.Attr>;
+        public class OrderedMap_Hero_AttrMap : SortedDictionary<string, Protoconf.HeroConf.Types.Hero.Types.Attr> { }
 
         public class OrderedMap_HeroValue : Tuple<OrderedMap_Hero_AttrMap, Protoconf.HeroConf.Types.Hero>
         {
             public OrderedMap_HeroValue(OrderedMap_Hero_AttrMap item1, Protoconf.HeroConf.Types.Hero item2) : base(item1, item2) { }
         }
-        public class OrderedMap_HeroMap : SortedDictionary<string, OrderedMap_HeroValue>;
+        public class OrderedMap_HeroMap : SortedDictionary<string, OrderedMap_HeroValue> { }
 
         private OrderedMap_HeroMap _orderedMap = new OrderedMap_HeroMap();
 

@@ -5,6 +5,9 @@
 // - protoc                           v3.19.3
 // </auto-generated>
 #nullable enable
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using pb = global::Google.Protobuf;
 namespace Tableau
 {

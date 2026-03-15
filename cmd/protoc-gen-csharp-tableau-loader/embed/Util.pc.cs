@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 namespace Tableau
 {
     /// <summary>

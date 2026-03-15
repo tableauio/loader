@@ -166,7 +166,10 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md protorefl
 	}
 }
 
-const staticMessagerContent1 = `using pb = global::Google.Protobuf;
+const staticMessagerContent1 = `using System;
+using System.Collections.Generic;
+using System.Linq;
+using pb = global::Google.Protobuf;
 namespace Tableau
 {`
 

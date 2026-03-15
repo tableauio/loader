@@ -6,6 +6,9 @@
 // source: item_conf.proto
 // </auto-generated>
 #nullable enable
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using pb = global::Google.Protobuf;
 namespace Tableau
 {
@@ -15,28 +18,28 @@ namespace Tableau
     public class ItemConf : Messager, IMessagerName
     {
         // OrderedMap types.
-        public class OrderedMap_ItemMap : SortedDictionary<uint, Protoconf.ItemConf.Types.Item>;
+        public class OrderedMap_ItemMap : SortedDictionary<uint, Protoconf.ItemConf.Types.Item> { }
 
         private OrderedMap_ItemMap _orderedMap = new OrderedMap_ItemMap();
 
         // Index types.
         // Index: Type
-        public class Index_ItemMap : Dictionary<Protoconf.FruitType, List<Protoconf.ItemConf.Types.Item>>;
+        public class Index_ItemMap : Dictionary<Protoconf.FruitType, List<Protoconf.ItemConf.Types.Item>> { }
 
         private Index_ItemMap _indexItemMap = new Index_ItemMap();
 
         // Index: Param<ID>@ItemInfo
-        public class Index_ItemInfoMap : Dictionary<int, List<Protoconf.ItemConf.Types.Item>>;
+        public class Index_ItemInfoMap : Dictionary<int, List<Protoconf.ItemConf.Types.Item>> { }
 
         private Index_ItemInfoMap _indexItemInfoMap = new Index_ItemInfoMap();
 
         // Index: Default@ItemDefaultInfo
-        public class Index_ItemDefaultInfoMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>>;
+        public class Index_ItemDefaultInfoMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>> { }
 
         private Index_ItemDefaultInfoMap _indexItemDefaultInfoMap = new Index_ItemDefaultInfoMap();
 
         // Index: ExtType@ItemExtInfo
-        public class Index_ItemExtInfoMap : Dictionary<Protoconf.FruitType, List<Protoconf.ItemConf.Types.Item>>;
+        public class Index_ItemExtInfoMap : Dictionary<Protoconf.FruitType, List<Protoconf.ItemConf.Types.Item>> { }
 
         private Index_ItemExtInfoMap _indexItemExtInfoMap = new Index_ItemExtInfoMap();
 
@@ -59,7 +62,7 @@ namespace Tableau
                 (Id, Name).GetHashCode();
         }
 
-        public class Index_AwardItemMap : Dictionary<Index_AwardItemKey, List<Protoconf.ItemConf.Types.Item>>;
+        public class Index_AwardItemMap : Dictionary<Index_AwardItemKey, List<Protoconf.ItemConf.Types.Item>> { }
 
         private Index_AwardItemMap _indexAwardItemMap = new Index_AwardItemMap();
 
@@ -86,33 +89,33 @@ namespace Tableau
                 (Id, Type, Param, ExtType).GetHashCode();
         }
 
-        public class Index_SpecialItemMap : Dictionary<Index_SpecialItemKey, List<Protoconf.ItemConf.Types.Item>>;
+        public class Index_SpecialItemMap : Dictionary<Index_SpecialItemKey, List<Protoconf.ItemConf.Types.Item>> { }
 
         private Index_SpecialItemMap _indexSpecialItemMap = new Index_SpecialItemMap();
 
         // Index: PathDir@ItemPathDir
-        public class Index_ItemPathDirMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>>;
+        public class Index_ItemPathDirMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>> { }
 
         private Index_ItemPathDirMap _indexItemPathDirMap = new Index_ItemPathDirMap();
 
         // Index: PathName@ItemPathName
-        public class Index_ItemPathNameMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>>;
+        public class Index_ItemPathNameMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>> { }
 
         private Index_ItemPathNameMap _indexItemPathNameMap = new Index_ItemPathNameMap();
 
         // Index: PathFriendID@ItemPathFriendID
-        public class Index_ItemPathFriendIDMap : Dictionary<uint, List<Protoconf.ItemConf.Types.Item>>;
+        public class Index_ItemPathFriendIDMap : Dictionary<uint, List<Protoconf.ItemConf.Types.Item>> { }
 
         private Index_ItemPathFriendIDMap _indexItemPathFriendIdMap = new Index_ItemPathFriendIDMap();
 
         // Index: UseEffectType@UseEffectType
-        public class Index_UseEffectTypeMap : Dictionary<Protoconf.UseEffect.Types.Type, List<Protoconf.ItemConf.Types.Item>>;
+        public class Index_UseEffectTypeMap : Dictionary<Protoconf.UseEffect.Types.Type, List<Protoconf.ItemConf.Types.Item>> { }
 
         private Index_UseEffectTypeMap _indexUseEffectTypeMap = new Index_UseEffectTypeMap();
 
         // OrderedIndex types.
         // OrderedIndex: ExtType@ExtType
-        public class OrderedIndex_ExtTypeMap : SortedDictionary<Protoconf.FruitType, List<Protoconf.ItemConf.Types.Item>>;
+        public class OrderedIndex_ExtTypeMap : SortedDictionary<Protoconf.FruitType, List<Protoconf.ItemConf.Types.Item>> { }
 
         private OrderedIndex_ExtTypeMap _orderedIndexExtTypeMap = new OrderedIndex_ExtTypeMap();
 
@@ -132,7 +135,7 @@ namespace Tableau
                 (Param, ExtType).CompareTo((other.Param, other.ExtType));
         }
 
-        public class OrderedIndex_ParamExtTypeMap : SortedDictionary<OrderedIndex_ParamExtTypeKey, List<Protoconf.ItemConf.Types.Item>>;
+        public class OrderedIndex_ParamExtTypeMap : SortedDictionary<OrderedIndex_ParamExtTypeKey, List<Protoconf.ItemConf.Types.Item>> { }
 
         private OrderedIndex_ParamExtTypeMap _orderedIndexParamExtTypeMap = new OrderedIndex_ParamExtTypeMap();
 

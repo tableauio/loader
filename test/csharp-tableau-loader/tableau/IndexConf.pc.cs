@@ -6,6 +6,9 @@
 // source: index_conf.proto
 // </auto-generated>
 #nullable enable
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using pb = global::Google.Protobuf;
 namespace Tableau
 {
@@ -16,7 +19,7 @@ namespace Tableau
     {
         // OrderedIndex types.
         // OrderedIndex: Price<ID>
-        public class OrderedIndex_ItemMap : SortedDictionary<int, List<Protoconf.FruitConf.Types.Fruit.Types.Item>>;
+        public class OrderedIndex_ItemMap : SortedDictionary<int, List<Protoconf.FruitConf.Types.Fruit.Types.Item>> { }
 
         private OrderedIndex_ItemMap _orderedIndexItemMap = new OrderedIndex_ItemMap();
 
@@ -177,12 +180,12 @@ namespace Tableau
     {
         // Index types.
         // Index: CountryName
-        public class Index_CountryMap : Dictionary<string, List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country>>;
+        public class Index_CountryMap : Dictionary<string, List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country>> { }
 
         private Index_CountryMap _indexCountryMap = new Index_CountryMap();
 
         // Index: CountryItemAttrName
-        public class Index_AttrMap : Dictionary<string, List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>>;
+        public class Index_AttrMap : Dictionary<string, List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>> { }
 
         private Index_AttrMap _indexAttrMap = new Index_AttrMap();
 
@@ -190,7 +193,7 @@ namespace Tableau
 
         // OrderedIndex types.
         // OrderedIndex: CountryItemPrice<CountryItemID>
-        public class OrderedIndex_ItemMap : SortedDictionary<int, List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item>>;
+        public class OrderedIndex_ItemMap : SortedDictionary<int, List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item>> { }
 
         private OrderedIndex_ItemMap _orderedIndexItemMap = new OrderedIndex_ItemMap();
 
@@ -453,18 +456,18 @@ namespace Tableau
     {
         // Index types.
         // Index: CountryName
-        public class Index_CountryMap : Dictionary<string, List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country>>;
+        public class Index_CountryMap : Dictionary<string, List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country>> { }
 
         private Index_CountryMap _indexCountryMap = new Index_CountryMap();
 
         // Index: CountryItemAttrName
-        public class Index_AttrMap : Dictionary<string, List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>>;
+        public class Index_AttrMap : Dictionary<string, List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>> { }
 
         private Index_AttrMap _indexAttrMap = new Index_AttrMap();
 
         // OrderedIndex types.
         // OrderedIndex: CountryItemPrice<CountryItemID>
-        public class OrderedIndex_ItemMap : SortedDictionary<int, List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item>>;
+        public class OrderedIndex_ItemMap : SortedDictionary<int, List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item>> { }
 
         private OrderedIndex_ItemMap _orderedIndexItemMap = new OrderedIndex_ItemMap();
 
@@ -669,14 +672,14 @@ namespace Tableau
 
         // Index types.
         // Index: CountryName
-        public class Index_CountryMap : Dictionary<string, List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country>>;
+        public class Index_CountryMap : Dictionary<string, List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country>> { }
 
         private Index_CountryMap _indexCountryMap = new Index_CountryMap();
 
         private Dictionary<int, Index_CountryMap> _indexCountryMap1 = new Dictionary<int, Index_CountryMap>();
 
         // Index: CountryItemAttrName
-        public class Index_AttrMap : Dictionary<string, List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>>;
+        public class Index_AttrMap : Dictionary<string, List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>> { }
 
         private Index_AttrMap _indexAttrMap = new Index_AttrMap();
 
@@ -686,7 +689,7 @@ namespace Tableau
 
         // OrderedIndex types.
         // OrderedIndex: CountryItemPrice<CountryItemID>
-        public class OrderedIndex_ItemMap : SortedDictionary<int, List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item>>;
+        public class OrderedIndex_ItemMap : SortedDictionary<int, List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item>> { }
 
         private OrderedIndex_ItemMap _orderedIndexItemMap = new OrderedIndex_ItemMap();
 
@@ -1066,7 +1069,7 @@ namespace Tableau
     {
         // Index types.
         // Index: CountryName
-        public class Index_CountryMap : Dictionary<string, List<Protoconf.Fruit5Conf.Types.Fruit.Types.Country>>;
+        public class Index_CountryMap : Dictionary<string, List<Protoconf.Fruit5Conf.Types.Fruit.Types.Country>> { }
 
         private Index_CountryMap _indexCountryMap = new Index_CountryMap();
 

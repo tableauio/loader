@@ -6,6 +6,9 @@
 // source: patch_conf.proto
 // </auto-generated>
 #nullable enable
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using pb = global::Google.Protobuf;
 namespace Tableau
 {

@@ -86,7 +86,7 @@ func (x *Generator) genIndexTypeDef() {
 				x.g.P(helper.Indent(2), "}")
 				x.g.P()
 			}
-			x.g.P(helper.Indent(2), "public class ", mapType, " : Dictionary<", keyType, ", List<", valueType, ">>;")
+			x.g.P(helper.Indent(2), "public class ", mapType, " : Dictionary<", keyType, ", List<", valueType, ">> { }")
 			x.g.P()
 
 			x.g.P(helper.Indent(2), "private ", mapType, " ", x.indexContainerName(index, 0), " = new ", mapType, "();")

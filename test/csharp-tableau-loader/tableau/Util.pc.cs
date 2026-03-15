@@ -5,6 +5,8 @@
 // - protoc                           v3.19.3
 // </auto-generated>
 #nullable enable
+using System;
+using System.IO;
 namespace Tableau
 {
     /// <summary>

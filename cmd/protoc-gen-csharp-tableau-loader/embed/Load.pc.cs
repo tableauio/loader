@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
 using pb = global::Google.Protobuf;
 using pbr = global::Google.Protobuf.Reflection;
 namespace Tableau

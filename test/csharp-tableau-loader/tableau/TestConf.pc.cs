@@ -6,6 +6,9 @@
 // source: test_conf.proto
 // </auto-generated>
 #nullable enable
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using pb = global::Google.Protobuf;
 namespace Tableau
 {
@@ -15,25 +18,25 @@ namespace Tableau
     public class ActivityConf : Messager, IMessagerName
     {
         // OrderedMap types.
-        public class OrderedMap_int32Map : SortedDictionary<uint, int>;
+        public class OrderedMap_int32Map : SortedDictionary<uint, int> { }
 
         public class OrderedMap_protoconf_SectionValue : Tuple<OrderedMap_int32Map, Protoconf.Section>
         {
             public OrderedMap_protoconf_SectionValue(OrderedMap_int32Map item1, Protoconf.Section item2) : base(item1, item2) { }
         }
-        public class OrderedMap_protoconf_SectionMap : SortedDictionary<uint, OrderedMap_protoconf_SectionValue>;
+        public class OrderedMap_protoconf_SectionMap : SortedDictionary<uint, OrderedMap_protoconf_SectionValue> { }
 
         public class OrderedMap_Activity_ChapterValue : Tuple<OrderedMap_protoconf_SectionMap, Protoconf.ActivityConf.Types.Activity.Types.Chapter>
         {
             public OrderedMap_Activity_ChapterValue(OrderedMap_protoconf_SectionMap item1, Protoconf.ActivityConf.Types.Activity.Types.Chapter item2) : base(item1, item2) { }
         }
-        public class OrderedMap_Activity_ChapterMap : SortedDictionary<uint, OrderedMap_Activity_ChapterValue>;
+        public class OrderedMap_Activity_ChapterMap : SortedDictionary<uint, OrderedMap_Activity_ChapterValue> { }
 
         public class OrderedMap_ActivityValue : Tuple<OrderedMap_Activity_ChapterMap, Protoconf.ActivityConf.Types.Activity>
         {
             public OrderedMap_ActivityValue(OrderedMap_Activity_ChapterMap item1, Protoconf.ActivityConf.Types.Activity item2) : base(item1, item2) { }
         }
-        public class OrderedMap_ActivityMap : SortedDictionary<ulong, OrderedMap_ActivityValue>;
+        public class OrderedMap_ActivityMap : SortedDictionary<ulong, OrderedMap_ActivityValue> { }
 
         private OrderedMap_ActivityMap _orderedMap = new OrderedMap_ActivityMap();
 
@@ -59,26 +62,26 @@ namespace Tableau
 
         // Index types.
         // Index: ActivityName
-        public class Index_ActivityMap : Dictionary<string, List<Protoconf.ActivityConf.Types.Activity>>;
+        public class Index_ActivityMap : Dictionary<string, List<Protoconf.ActivityConf.Types.Activity>> { }
 
         private Index_ActivityMap _indexActivityMap = new Index_ActivityMap();
 
         // Index: ChapterID
-        public class Index_ChapterMap : Dictionary<uint, List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>>;
+        public class Index_ChapterMap : Dictionary<uint, List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>> { }
 
         private Index_ChapterMap _indexChapterMap = new Index_ChapterMap();
 
         private Dictionary<ulong, Index_ChapterMap> _indexChapterMap1 = new Dictionary<ulong, Index_ChapterMap>();
 
         // Index: ChapterName<AwardID>@NamedChapter
-        public class Index_NamedChapterMap : Dictionary<string, List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>>;
+        public class Index_NamedChapterMap : Dictionary<string, List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>> { }
 
         private Index_NamedChapterMap _indexNamedChapterMap = new Index_NamedChapterMap();
 
         private Dictionary<ulong, Index_NamedChapterMap> _indexNamedChapterMap1 = new Dictionary<ulong, Index_NamedChapterMap>();
 
         // Index: SectionItemID@Award
-        public class Index_AwardMap : Dictionary<uint, List<Protoconf.Section.Types.SectionItem>>;
+        public class Index_AwardMap : Dictionary<uint, List<Protoconf.Section.Types.SectionItem>> { }
 
         private Index_AwardMap _indexAwardMap = new Index_AwardMap();
 
@@ -611,23 +614,23 @@ namespace Tableau
     {
         // Index types.
         // Index: ActivityID<Goal,ID>
-        public class Index_TaskMap : Dictionary<long, List<Protoconf.TaskConf.Types.Task>>;
+        public class Index_TaskMap : Dictionary<long, List<Protoconf.TaskConf.Types.Task>> { }
 
         private Index_TaskMap _indexTaskMap = new Index_TaskMap();
 
         // OrderedIndex types.
         // OrderedIndex: Goal<ID>@OrderedTask
-        public class OrderedIndex_OrderedTaskMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>>;
+        public class OrderedIndex_OrderedTaskMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>> { }
 
         private OrderedIndex_OrderedTaskMap _orderedIndexOrderedTaskMap = new OrderedIndex_OrderedTaskMap();
 
         // OrderedIndex: Expiry@TaskExpiry
-        public class OrderedIndex_TaskExpiryMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>>;
+        public class OrderedIndex_TaskExpiryMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>> { }
 
         private OrderedIndex_TaskExpiryMap _orderedIndexTaskExpiryMap = new OrderedIndex_TaskExpiryMap();
 
         // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
-        public class OrderedIndex_SortedTaskExpiryMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>>;
+        public class OrderedIndex_SortedTaskExpiryMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>> { }
 
         private OrderedIndex_SortedTaskExpiryMap _orderedIndexSortedTaskExpiryMap = new OrderedIndex_SortedTaskExpiryMap();
 
@@ -647,7 +650,7 @@ namespace Tableau
                 (Expiry, ActivityId).CompareTo((other.Expiry, other.ActivityId));
         }
 
-        public class OrderedIndex_ActivityExpiryMap : SortedDictionary<OrderedIndex_ActivityExpiryKey, List<Protoconf.TaskConf.Types.Task>>;
+        public class OrderedIndex_ActivityExpiryMap : SortedDictionary<OrderedIndex_ActivityExpiryKey, List<Protoconf.TaskConf.Types.Task>> { }
 
         private OrderedIndex_ActivityExpiryMap _orderedIndexActivityExpiryMap = new OrderedIndex_ActivityExpiryMap();
 

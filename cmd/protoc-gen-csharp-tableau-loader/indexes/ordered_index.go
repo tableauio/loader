@@ -83,7 +83,7 @@ func (x *Generator) genOrderedIndexTypeDef() {
 				x.g.P(helper.Indent(2), "}")
 				x.g.P()
 			}
-			x.g.P(helper.Indent(2), "public class ", mapType, " : SortedDictionary<", keyType, ", List<", valueType, ">>;")
+			x.g.P(helper.Indent(2), "public class ", mapType, " : SortedDictionary<", keyType, ", List<", valueType, ">> { }")
 			x.g.P()
 
 			x.g.P(helper.Indent(2), "private ", mapType, " ", x.orderedIndexContainerName(index, 0), " = new ", mapType, "();")
