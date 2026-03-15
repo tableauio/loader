@@ -19,6 +19,42 @@
             return;
         }
 
+        var activityConf = hub.GetActivityConf();
+        if (activityConf is null)
+        {
+            Console.WriteLine("ActivityConf is null");
+        }
+        else
+        {
+            // error: not found
+            var notFound = activityConf.Get3(100001, 1, 999);
+            if (notFound is null)
+            {
+                Console.WriteLine("error: not found: ActivityConf.Get3(100001, 1, 999)");
+            }
+
+            // get section
+            var section = activityConf.Get3(100001, 1, 2);
+            if (section != null)
+            {
+                Console.WriteLine($"ActivityConf.Get3(100001, 1, 2): {section}");
+            }
+
+            // OrderedMap traversal
+            var activityOrderedMap = activityConf.GetOrderedMap();
+            foreach (var activityPair in activityOrderedMap)
+            {
+                Console.WriteLine($"activityId: {activityPair.Key}");
+                Console.WriteLine($"  - Activity Data: {activityPair.Value.Item2}");
+                var chapterOrderedMap = activityPair.Value.Item1;
+                foreach (var chapterPair in chapterOrderedMap)
+                {
+                    Console.WriteLine($"  chapterId: {chapterPair.Key}");
+                    Console.WriteLine($"    - Chapter Data: {chapterPair.Value.Item2}");
+                }
+            }
+        }
+
         var taskConf = hub.Get<Tableau.TaskConf>();
         if (taskConf is null)
         {
