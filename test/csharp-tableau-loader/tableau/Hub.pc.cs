@@ -11,33 +11,58 @@ namespace Tableau
     /// <summary>
     /// MessagerContainer holds all messager instances and provides fast access.
     /// </summary>
-    internal class MessagerContainer(in Dictionary<string, Messager>? messagerMap = null)
+    internal class MessagerContainer
     {
-        public Dictionary<string, Messager> MessagerMap = messagerMap ?? [];
-        public DateTime LastLoadedTime = DateTime.Now;
-        public ItemConf? ItemConf = InternalGet<ItemConf>(messagerMap);
-        public ActivityConf? ActivityConf = InternalGet<ActivityConf>(messagerMap);
-        public ChapterConf? ChapterConf = InternalGet<ChapterConf>(messagerMap);
-        public ThemeConf? ThemeConf = InternalGet<ThemeConf>(messagerMap);
-        public TaskConf? TaskConf = InternalGet<TaskConf>(messagerMap);
-        public FruitConf? FruitConf = InternalGet<FruitConf>(messagerMap);
-        public Fruit2Conf? Fruit2Conf = InternalGet<Fruit2Conf>(messagerMap);
-        public Fruit3Conf? Fruit3Conf = InternalGet<Fruit3Conf>(messagerMap);
-        public Fruit4Conf? Fruit4Conf = InternalGet<Fruit4Conf>(messagerMap);
-        public Fruit5Conf? Fruit5Conf = InternalGet<Fruit5Conf>(messagerMap);
-        public HeroConf? HeroConf = InternalGet<HeroConf>(messagerMap);
-        public HeroBaseConf? HeroBaseConf = InternalGet<HeroBaseConf>(messagerMap);
-        public PatchReplaceConf? PatchReplaceConf = InternalGet<PatchReplaceConf>(messagerMap);
-        public PatchMergeConf? PatchMergeConf = InternalGet<PatchMergeConf>(messagerMap);
-        public RecursivePatchConf? RecursivePatchConf = InternalGet<RecursivePatchConf>(messagerMap);
+        public Dictionary<string, Messager> MessagerMap;
+        public DateTime LastLoadedTime;
+        public ActivityConf? ActivityConf;
+        public ChapterConf? ChapterConf;
+        public ThemeConf? ThemeConf;
+        public TaskConf? TaskConf;
+        public FruitConf? FruitConf;
+        public Fruit2Conf? Fruit2Conf;
+        public Fruit3Conf? Fruit3Conf;
+        public Fruit4Conf? Fruit4Conf;
+        public Fruit5Conf? Fruit5Conf;
+        public ItemConf? ItemConf;
+        public PatchReplaceConf? PatchReplaceConf;
+        public PatchMergeConf? PatchMergeConf;
+        public RecursivePatchConf? RecursivePatchConf;
+        public HeroConf? HeroConf;
+        public HeroBaseConf? HeroBaseConf;
+
+        public MessagerContainer(Dictionary<string, Messager>? messagerMap = null)
+        {
+            MessagerMap = messagerMap ?? new Dictionary<string, Messager>();
+            LastLoadedTime = DateTime.Now;
+            ActivityConf = InternalGet<ActivityConf>(messagerMap);
+            ChapterConf = InternalGet<ChapterConf>(messagerMap);
+            ThemeConf = InternalGet<ThemeConf>(messagerMap);
+            TaskConf = InternalGet<TaskConf>(messagerMap);
+            FruitConf = InternalGet<FruitConf>(messagerMap);
+            Fruit2Conf = InternalGet<Fruit2Conf>(messagerMap);
+            Fruit3Conf = InternalGet<Fruit3Conf>(messagerMap);
+            Fruit4Conf = InternalGet<Fruit4Conf>(messagerMap);
+            Fruit5Conf = InternalGet<Fruit5Conf>(messagerMap);
+            ItemConf = InternalGet<ItemConf>(messagerMap);
+            PatchReplaceConf = InternalGet<PatchReplaceConf>(messagerMap);
+            PatchMergeConf = InternalGet<PatchMergeConf>(messagerMap);
+            RecursivePatchConf = InternalGet<RecursivePatchConf>(messagerMap);
+            HeroConf = InternalGet<HeroConf>(messagerMap);
+            HeroBaseConf = InternalGet<HeroBaseConf>(messagerMap);
+        }
 
         /// <summary>
         /// Get returns the messager of type T from the container.
         /// </summary>
-        public T? Get<T>() where T : Messager, IMessagerName => InternalGet<T>(MessagerMap);
+        public T? Get<T>() where T : Messager, IMessagerName, new() => InternalGet<T>(MessagerMap);
 
-        private static T? InternalGet<T>(in Dictionary<string, Messager>? messagerMap) where T : Messager, IMessagerName =>
-           messagerMap?.TryGetValue(T.Name(), out var messager) == true ? (T)messager : null;
+        private static T? InternalGet<T>(Dictionary<string, Messager>? messagerMap) where T : Messager, IMessagerName, new()
+        {
+            if (messagerMap == null) return null;
+            string name = new T().Name();
+            return messagerMap.TryGetValue(name, out var messager) ? (T)messager : null;
+        }
     }
 
     /// <summary>
@@ -70,10 +95,15 @@ namespace Tableau
     /// Hub is the messager manager. It manages loading, accessing, and storing
     /// all configuration messagers.
     /// </summary>
-    public class Hub(HubOptions? options = null)
+    public class Hub
     {
-        private readonly Atomic<MessagerContainer> _messagerContainer = new();
-        private readonly HubOptions? _options = options;
+        private readonly Atomic<MessagerContainer> _messagerContainer = new Atomic<MessagerContainer>();
+        private readonly HubOptions? _options;
+
+        public Hub(HubOptions? options = null)
+        {
+            _options = options;
+        }
 
         /// <summary>
         /// Load fills messages from files in the specified directory and format.
@@ -118,9 +148,7 @@ namespace Tableau
         /// <summary>
         /// Get returns the messager of type T from the hub.
         /// </summary>
-        public T? Get<T>() where T : Messager, IMessagerName => _messagerContainer.Value?.Get<T>();
-
-        public ItemConf? GetItemConf() => _messagerContainer.Value?.ItemConf;
+        public T? Get<T>() where T : Messager, IMessagerName, new() => _messagerContainer.Value?.Get<T>();
 
         public ActivityConf? GetActivityConf() => _messagerContainer.Value?.ActivityConf;
 
@@ -140,15 +168,17 @@ namespace Tableau
 
         public Fruit5Conf? GetFruit5Conf() => _messagerContainer.Value?.Fruit5Conf;
 
-        public HeroConf? GetHeroConf() => _messagerContainer.Value?.HeroConf;
-
-        public HeroBaseConf? GetHeroBaseConf() => _messagerContainer.Value?.HeroBaseConf;
+        public ItemConf? GetItemConf() => _messagerContainer.Value?.ItemConf;
 
         public PatchReplaceConf? GetPatchReplaceConf() => _messagerContainer.Value?.PatchReplaceConf;
 
         public PatchMergeConf? GetPatchMergeConf() => _messagerContainer.Value?.PatchMergeConf;
 
         public RecursivePatchConf? GetRecursivePatchConf() => _messagerContainer.Value?.RecursivePatchConf;
+
+        public HeroConf? GetHeroConf() => _messagerContainer.Value?.HeroConf;
+
+        public HeroBaseConf? GetHeroBaseConf() => _messagerContainer.Value?.HeroBaseConf;
 
         /// <summary>
         /// GetLastLoadedTime returns the time when hub's messager container was last set.
@@ -177,19 +207,18 @@ namespace Tableau
     /// </summary>
     public class Registry
     {
-        internal static readonly Dictionary<string, Func<Messager>> Registrar = [];
+        internal static readonly Dictionary<string, Func<Messager>> Registrar = new Dictionary<string, Func<Messager>>();
 
         /// <summary>
         /// Register registers a messager generator for type T.
         /// </summary>
-        public static void Register<T>() where T : Messager, IMessagerName, new() => Registrar[T.Name()] = () => new T();
+        public static void Register<T>() where T : Messager, IMessagerName, new() => Registrar[new T().Name()] = () => new T();
 
         /// <summary>
         /// Init registers all generated messagers.
         /// </summary>
         public static void Init()
         {
-            Register<ItemConf>();
             Register<ActivityConf>();
             Register<ChapterConf>();
             Register<ThemeConf>();
@@ -199,11 +228,12 @@ namespace Tableau
             Register<Fruit3Conf>();
             Register<Fruit4Conf>();
             Register<Fruit5Conf>();
-            Register<HeroConf>();
-            Register<HeroBaseConf>();
+            Register<ItemConf>();
             Register<PatchReplaceConf>();
             Register<PatchMergeConf>();
             Register<RecursivePatchConf>();
+            Register<HeroConf>();
+            Register<HeroBaseConf>();
         }
     }
 }

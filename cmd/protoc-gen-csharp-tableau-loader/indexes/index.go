@@ -89,14 +89,14 @@ func (x *Generator) genIndexTypeDef() {
 			x.g.P(helper.Indent(2), "public class ", mapType, " : Dictionary<", keyType, ", List<", valueType, ">>;")
 			x.g.P()
 
-			x.g.P(helper.Indent(2), "private ", mapType, " ", x.indexContainerName(index, 0), " = [];")
+			x.g.P(helper.Indent(2), "private ", mapType, " ", x.indexContainerName(index, 0), " = new ", mapType, "();")
 			x.g.P()
 			for i := 1; i < lm.MapDepth; i++ {
 				if i == 1 {
-					x.g.P(helper.Indent(2), "private Dictionary<", x.keys[0].Type, ", ", mapType, "> ", x.indexContainerName(index, i), " = [];")
+					x.g.P(helper.Indent(2), "private Dictionary<", x.keys[0].Type, ", ", mapType, "> ", x.indexContainerName(index, i), " = new Dictionary<", x.keys[0].Type, ", ", mapType, ">();")
 				} else {
 					levelIndexKeyType := x.levelKeyType(x.keys[i-1].Fd)
-					x.g.P(helper.Indent(2), "private Dictionary<", levelIndexKeyType, ", ", mapType, "> ", x.indexContainerName(index, i), " = [];")
+					x.g.P(helper.Indent(2), "private Dictionary<", levelIndexKeyType, ", ", mapType, "> ", x.indexContainerName(index, i), " = new Dictionary<", levelIndexKeyType, ", ", mapType, ">();")
 				}
 				x.g.P()
 			}
@@ -193,18 +193,19 @@ func (x *Generator) generateOneMulticolumnIndex(lm *index.LevelMessage, index *i
 }
 
 func (x *Generator) genLoader(lm *index.LevelMessage, index *index.LevelIndex, ident int, key, parentDataName string) {
+	valueType := x.mapValueType(index)
 	x.g.P(helper.Indent(ident), "{")
 	x.g.P(helper.Indent(ident+1), "var list = ", x.indexContainerName(index, 0), ".TryGetValue(", key, ", out var existingList) ?")
-	x.g.P(helper.Indent(ident+1), "existingList : ", x.indexContainerName(index, 0), "[", key, "] = [];")
+	x.g.P(helper.Indent(ident+1), "existingList : ", x.indexContainerName(index, 0), "[", key, "] = new List<", valueType, ">();")
 	x.g.P(helper.Indent(ident+1), "list.Add(", parentDataName, ");")
 	x.g.P(helper.Indent(ident), "}")
 	for i := 1; i < lm.MapDepth; i++ {
 		x.g.P(helper.Indent(ident), "{")
 		if i == 1 {
 			x.g.P(helper.Indent(ident+1), "var map = ", x.indexContainerName(index, i), ".TryGetValue(k1, out var existingMap) ?")
-			x.g.P(helper.Indent(ident+1), "existingMap : ", x.indexContainerName(index, i), "[k1] = [];")
+			x.g.P(helper.Indent(ident+1), "existingMap : ", x.indexContainerName(index, i), "[k1] = new ", x.indexMapType(index), "();")
 			x.g.P(helper.Indent(ident+1), "var list = map.TryGetValue(", key, ", out var existingList) ?")
-			x.g.P(helper.Indent(ident+1), "existingList : map[", key, "] = [];")
+			x.g.P(helper.Indent(ident+1), "existingList : map[", key, "] = new List<", valueType, ">();")
 			x.g.P(helper.Indent(ident+1), "list.Add(", parentDataName, ");")
 		} else {
 			var fields []string
@@ -214,9 +215,9 @@ func (x *Generator) genLoader(lm *index.LevelMessage, index *index.LevelIndex, i
 			levelIndexKeyType := x.levelKeyType(x.keys[i-1].Fd)
 			x.g.P(helper.Indent(ident+1), "var mapKey = new ", levelIndexKeyType, "(", strings.Join(fields, ", "), ");")
 			x.g.P(helper.Indent(ident+1), "var map = ", x.indexContainerName(index, i), ".TryGetValue(mapKey, out var existingMap) ?")
-			x.g.P(helper.Indent(ident+1), "existingMap : ", x.indexContainerName(index, i), "[mapKey] = [];")
+			x.g.P(helper.Indent(ident+1), "existingMap : ", x.indexContainerName(index, i), "[mapKey] = new ", x.indexMapType(index), "();")
 			x.g.P(helper.Indent(ident+1), "var list = map.TryGetValue(", key, ", out var existingList) ?")
-			x.g.P(helper.Indent(ident+1), "existingList : map[", key, "] = [];")
+			x.g.P(helper.Indent(ident+1), "existingList : map[", key, "] = new List<", valueType, ">();")
 			x.g.P(helper.Indent(ident+1), "list.Add(", parentDataName, ");")
 		}
 		x.g.P(helper.Indent(ident), "}")

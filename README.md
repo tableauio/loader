@@ -68,6 +68,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 ### Requirements
 
+- Unity 2022.3 LTS (C# 9)
 - dotnet-sdk-8.0
 
 ### Test

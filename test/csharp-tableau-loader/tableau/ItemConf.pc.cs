@@ -17,28 +17,28 @@ namespace Tableau
         // OrderedMap types.
         public class OrderedMap_ItemMap : SortedDictionary<uint, Protoconf.ItemConf.Types.Item>;
 
-        private OrderedMap_ItemMap _orderedMap = [];
+        private OrderedMap_ItemMap _orderedMap = new OrderedMap_ItemMap();
 
         // Index types.
         // Index: Type
         public class Index_ItemMap : Dictionary<Protoconf.FruitType, List<Protoconf.ItemConf.Types.Item>>;
 
-        private Index_ItemMap _indexItemMap = [];
+        private Index_ItemMap _indexItemMap = new Index_ItemMap();
 
         // Index: Param<ID>@ItemInfo
         public class Index_ItemInfoMap : Dictionary<int, List<Protoconf.ItemConf.Types.Item>>;
 
-        private Index_ItemInfoMap _indexItemInfoMap = [];
+        private Index_ItemInfoMap _indexItemInfoMap = new Index_ItemInfoMap();
 
         // Index: Default@ItemDefaultInfo
         public class Index_ItemDefaultInfoMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>>;
 
-        private Index_ItemDefaultInfoMap _indexItemDefaultInfoMap = [];
+        private Index_ItemDefaultInfoMap _indexItemDefaultInfoMap = new Index_ItemDefaultInfoMap();
 
         // Index: ExtType@ItemExtInfo
         public class Index_ItemExtInfoMap : Dictionary<Protoconf.FruitType, List<Protoconf.ItemConf.Types.Item>>;
 
-        private Index_ItemExtInfoMap _indexItemExtInfoMap = [];
+        private Index_ItemExtInfoMap _indexItemExtInfoMap = new Index_ItemExtInfoMap();
 
         // Index: (ID,Name)<Type,UseEffectType>@AwardItem
         public readonly struct Index_AwardItemKey : IEquatable<Index_AwardItemKey>
@@ -61,7 +61,7 @@ namespace Tableau
 
         public class Index_AwardItemMap : Dictionary<Index_AwardItemKey, List<Protoconf.ItemConf.Types.Item>>;
 
-        private Index_AwardItemMap _indexAwardItemMap = [];
+        private Index_AwardItemMap _indexAwardItemMap = new Index_AwardItemMap();
 
         // Index: (ID,Type,Param,ExtType)@SpecialItem
         public readonly struct Index_SpecialItemKey : IEquatable<Index_SpecialItemKey>
@@ -88,33 +88,33 @@ namespace Tableau
 
         public class Index_SpecialItemMap : Dictionary<Index_SpecialItemKey, List<Protoconf.ItemConf.Types.Item>>;
 
-        private Index_SpecialItemMap _indexSpecialItemMap = [];
+        private Index_SpecialItemMap _indexSpecialItemMap = new Index_SpecialItemMap();
 
         // Index: PathDir@ItemPathDir
         public class Index_ItemPathDirMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>>;
 
-        private Index_ItemPathDirMap _indexItemPathDirMap = [];
+        private Index_ItemPathDirMap _indexItemPathDirMap = new Index_ItemPathDirMap();
 
         // Index: PathName@ItemPathName
         public class Index_ItemPathNameMap : Dictionary<string, List<Protoconf.ItemConf.Types.Item>>;
 
-        private Index_ItemPathNameMap _indexItemPathNameMap = [];
+        private Index_ItemPathNameMap _indexItemPathNameMap = new Index_ItemPathNameMap();
 
         // Index: PathFriendID@ItemPathFriendID
         public class Index_ItemPathFriendIDMap : Dictionary<uint, List<Protoconf.ItemConf.Types.Item>>;
 
-        private Index_ItemPathFriendIDMap _indexItemPathFriendIdMap = [];
+        private Index_ItemPathFriendIDMap _indexItemPathFriendIdMap = new Index_ItemPathFriendIDMap();
 
         // Index: UseEffectType@UseEffectType
         public class Index_UseEffectTypeMap : Dictionary<Protoconf.UseEffect.Types.Type, List<Protoconf.ItemConf.Types.Item>>;
 
-        private Index_UseEffectTypeMap _indexUseEffectTypeMap = [];
+        private Index_UseEffectTypeMap _indexUseEffectTypeMap = new Index_UseEffectTypeMap();
 
         // OrderedIndex types.
         // OrderedIndex: ExtType@ExtType
         public class OrderedIndex_ExtTypeMap : SortedDictionary<Protoconf.FruitType, List<Protoconf.ItemConf.Types.Item>>;
 
-        private OrderedIndex_ExtTypeMap _orderedIndexExtTypeMap = [];
+        private OrderedIndex_ExtTypeMap _orderedIndexExtTypeMap = new OrderedIndex_ExtTypeMap();
 
         // OrderedIndex: (Param,ExtType)<ID>@ParamExtType
         public readonly struct OrderedIndex_ParamExtTypeKey : IComparable<OrderedIndex_ParamExtTypeKey>
@@ -134,14 +134,14 @@ namespace Tableau
 
         public class OrderedIndex_ParamExtTypeMap : SortedDictionary<OrderedIndex_ParamExtTypeKey, List<Protoconf.ItemConf.Types.Item>>;
 
-        private OrderedIndex_ParamExtTypeMap _orderedIndexParamExtTypeMap = [];
+        private OrderedIndex_ParamExtTypeMap _orderedIndexParamExtTypeMap = new OrderedIndex_ParamExtTypeMap();
 
         private Protoconf.ItemConf _data = new();
 
         /// <summary>
         /// Name returns the ItemConf's message name.
         /// </summary>
-        public static string Name() => Protoconf.ItemConf.Descriptor.Name;
+        public string Name() => Protoconf.ItemConf.Descriptor.Name;
 
         /// <summary>
         /// Load loads ItemConf's content in the given dir, based on format and messager options.
@@ -207,7 +207,7 @@ namespace Tableau
                     var key = item1.Value.Type;
                     {
                         var list = _indexItemMap.TryGetValue(key, out var existingList) ?
-                        existingList : _indexItemMap[key] = [];
+                        existingList : _indexItemMap[key] = new List<Protoconf.ItemConf.Types.Item>();
                         list.Add(item1.Value);
                     }
                 }
@@ -217,7 +217,7 @@ namespace Tableau
                     {
                         {
                             var list = _indexItemInfoMap.TryGetValue(item2, out var existingList) ?
-                            existingList : _indexItemInfoMap[item2] = [];
+                            existingList : _indexItemInfoMap[item2] = new List<Protoconf.ItemConf.Types.Item>();
                             list.Add(item1.Value);
                         }
                     }
@@ -227,7 +227,7 @@ namespace Tableau
                     var key = item1.Value.Default;
                     {
                         var list = _indexItemDefaultInfoMap.TryGetValue(key, out var existingList) ?
-                        existingList : _indexItemDefaultInfoMap[key] = [];
+                        existingList : _indexItemDefaultInfoMap[key] = new List<Protoconf.ItemConf.Types.Item>();
                         list.Add(item1.Value);
                     }
                 }
@@ -237,7 +237,7 @@ namespace Tableau
                     {
                         {
                             var list = _indexItemExtInfoMap.TryGetValue(item2, out var existingList) ?
-                            existingList : _indexItemExtInfoMap[item2] = [];
+                            existingList : _indexItemExtInfoMap[item2] = new List<Protoconf.ItemConf.Types.Item>();
                             list.Add(item1.Value);
                         }
                     }
@@ -247,7 +247,7 @@ namespace Tableau
                     var key = new Index_AwardItemKey(item1.Value.Id, item1.Value.Name);
                     {
                         var list = _indexAwardItemMap.TryGetValue(key, out var existingList) ?
-                        existingList : _indexAwardItemMap[key] = [];
+                        existingList : _indexAwardItemMap[key] = new List<Protoconf.ItemConf.Types.Item>();
                         list.Add(item1.Value);
                     }
                 }
@@ -260,7 +260,7 @@ namespace Tableau
                             var key = new Index_SpecialItemKey(item1.Value.Id, item1.Value.Type, indexItem2, indexItem3);
                             {
                                 var list = _indexSpecialItemMap.TryGetValue(key, out var existingList) ?
-                                existingList : _indexSpecialItemMap[key] = [];
+                                existingList : _indexSpecialItemMap[key] = new List<Protoconf.ItemConf.Types.Item>();
                                 list.Add(item1.Value);
                             }
                         }
@@ -271,7 +271,7 @@ namespace Tableau
                     var key = item1.Value.Path?.Dir ?? "";
                     {
                         var list = _indexItemPathDirMap.TryGetValue(key, out var existingList) ?
-                        existingList : _indexItemPathDirMap[key] = [];
+                        existingList : _indexItemPathDirMap[key] = new List<Protoconf.ItemConf.Types.Item>();
                         list.Add(item1.Value);
                     }
                 }
@@ -281,7 +281,7 @@ namespace Tableau
                     {
                         {
                             var list = _indexItemPathNameMap.TryGetValue(item2, out var existingList) ?
-                            existingList : _indexItemPathNameMap[item2] = [];
+                            existingList : _indexItemPathNameMap[item2] = new List<Protoconf.ItemConf.Types.Item>();
                             list.Add(item1.Value);
                         }
                     }
@@ -291,7 +291,7 @@ namespace Tableau
                     var key = item1.Value.Path?.Friend?.Id ?? 0;
                     {
                         var list = _indexItemPathFriendIdMap.TryGetValue(key, out var existingList) ?
-                        existingList : _indexItemPathFriendIdMap[key] = [];
+                        existingList : _indexItemPathFriendIdMap[key] = new List<Protoconf.ItemConf.Types.Item>();
                         list.Add(item1.Value);
                     }
                 }
@@ -300,7 +300,7 @@ namespace Tableau
                     var key = item1.Value.UseEffect?.Type ?? 0;
                     {
                         var list = _indexUseEffectTypeMap.TryGetValue(key, out var existingList) ?
-                        existingList : _indexUseEffectTypeMap[key] = [];
+                        existingList : _indexUseEffectTypeMap[key] = new List<Protoconf.ItemConf.Types.Item>();
                         list.Add(item1.Value);
                     }
                 }
@@ -331,7 +331,7 @@ namespace Tableau
                         var key = item2;
                         {
                             var list = _orderedIndexExtTypeMap.TryGetValue(key, out var existingList) ?
-                            existingList : _orderedIndexExtTypeMap[key] = [];
+                            existingList : _orderedIndexExtTypeMap[key] = new List<Protoconf.ItemConf.Types.Item>();
                             list.Add(item1.Value);
                         }
                     }
@@ -345,7 +345,7 @@ namespace Tableau
                             var key = new OrderedIndex_ParamExtTypeKey(indexItem0, indexItem1);
                             {
                                 var list = _orderedIndexParamExtTypeMap.TryGetValue(key, out var existingList) ?
-                                existingList : _orderedIndexParamExtTypeMap[key] = [];
+                                existingList : _orderedIndexParamExtTypeMap[key] = new List<Protoconf.ItemConf.Types.Item>();
                                 list.Add(item1.Value);
                             }
                         }

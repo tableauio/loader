@@ -70,13 +70,15 @@ func (x *Generator) genOrderedMapTypeDef(md protoreflect.MessageDescriptor, dept
 			if nextMapFD != nil {
 				currValueType := helper.ParseCsharpType(fd.MapValue())
 				nextOrderedMap := x.mapType(nextMapFD)
-				x.g.P(helper.Indent(2), "public class ", orderedMapValue, "(", nextOrderedMap, " item1, ", currValueType, " item2)")
-				x.g.P(helper.Indent(3), ": Tuple<", nextOrderedMap, ", ", currValueType, ">(item1, item2);")
+				x.g.P(helper.Indent(2), "public class ", orderedMapValue, " : Tuple<", nextOrderedMap, ", ", currValueType, ">")
+				x.g.P(helper.Indent(2), "{")
+				x.g.P(helper.Indent(3), "public ", orderedMapValue, "(", nextOrderedMap, " item1, ", currValueType, " item2) : base(item1, item2) { }")
+				x.g.P(helper.Indent(2), "}")
 			}
 			x.g.P(helper.Indent(2), "public class ", orderedMap, " : SortedDictionary<", keyType, ", ", x.mapValueFieldType(fd), ">;")
 			x.g.P()
 			if depth == 1 {
-				x.g.P(helper.Indent(2), "private ", orderedMap, " _orderedMap = [];")
+				x.g.P(helper.Indent(2), "private ", orderedMap, " _orderedMap = new ", orderedMap, "();")
 				x.g.P()
 			}
 			break

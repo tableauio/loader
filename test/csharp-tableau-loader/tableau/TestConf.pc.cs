@@ -17,19 +17,25 @@ namespace Tableau
         // OrderedMap types.
         public class OrderedMap_int32Map : SortedDictionary<uint, int>;
 
-        public class OrderedMap_protoconf_SectionValue(OrderedMap_int32Map item1, Protoconf.Section item2)
-            : Tuple<OrderedMap_int32Map, Protoconf.Section>(item1, item2);
+        public class OrderedMap_protoconf_SectionValue : Tuple<OrderedMap_int32Map, Protoconf.Section>
+        {
+            public OrderedMap_protoconf_SectionValue(OrderedMap_int32Map item1, Protoconf.Section item2) : base(item1, item2) { }
+        }
         public class OrderedMap_protoconf_SectionMap : SortedDictionary<uint, OrderedMap_protoconf_SectionValue>;
 
-        public class OrderedMap_Activity_ChapterValue(OrderedMap_protoconf_SectionMap item1, Protoconf.ActivityConf.Types.Activity.Types.Chapter item2)
-            : Tuple<OrderedMap_protoconf_SectionMap, Protoconf.ActivityConf.Types.Activity.Types.Chapter>(item1, item2);
+        public class OrderedMap_Activity_ChapterValue : Tuple<OrderedMap_protoconf_SectionMap, Protoconf.ActivityConf.Types.Activity.Types.Chapter>
+        {
+            public OrderedMap_Activity_ChapterValue(OrderedMap_protoconf_SectionMap item1, Protoconf.ActivityConf.Types.Activity.Types.Chapter item2) : base(item1, item2) { }
+        }
         public class OrderedMap_Activity_ChapterMap : SortedDictionary<uint, OrderedMap_Activity_ChapterValue>;
 
-        public class OrderedMap_ActivityValue(OrderedMap_Activity_ChapterMap item1, Protoconf.ActivityConf.Types.Activity item2)
-            : Tuple<OrderedMap_Activity_ChapterMap, Protoconf.ActivityConf.Types.Activity>(item1, item2);
+        public class OrderedMap_ActivityValue : Tuple<OrderedMap_Activity_ChapterMap, Protoconf.ActivityConf.Types.Activity>
+        {
+            public OrderedMap_ActivityValue(OrderedMap_Activity_ChapterMap item1, Protoconf.ActivityConf.Types.Activity item2) : base(item1, item2) { }
+        }
         public class OrderedMap_ActivityMap : SortedDictionary<ulong, OrderedMap_ActivityValue>;
 
-        private OrderedMap_ActivityMap _orderedMap = [];
+        private OrderedMap_ActivityMap _orderedMap = new OrderedMap_ActivityMap();
 
 
         // LevelIndex keys.
@@ -55,37 +61,37 @@ namespace Tableau
         // Index: ActivityName
         public class Index_ActivityMap : Dictionary<string, List<Protoconf.ActivityConf.Types.Activity>>;
 
-        private Index_ActivityMap _indexActivityMap = [];
+        private Index_ActivityMap _indexActivityMap = new Index_ActivityMap();
 
         // Index: ChapterID
         public class Index_ChapterMap : Dictionary<uint, List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>>;
 
-        private Index_ChapterMap _indexChapterMap = [];
+        private Index_ChapterMap _indexChapterMap = new Index_ChapterMap();
 
-        private Dictionary<ulong, Index_ChapterMap> _indexChapterMap1 = [];
+        private Dictionary<ulong, Index_ChapterMap> _indexChapterMap1 = new Dictionary<ulong, Index_ChapterMap>();
 
         // Index: ChapterName<AwardID>@NamedChapter
         public class Index_NamedChapterMap : Dictionary<string, List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>>;
 
-        private Index_NamedChapterMap _indexNamedChapterMap = [];
+        private Index_NamedChapterMap _indexNamedChapterMap = new Index_NamedChapterMap();
 
-        private Dictionary<ulong, Index_NamedChapterMap> _indexNamedChapterMap1 = [];
+        private Dictionary<ulong, Index_NamedChapterMap> _indexNamedChapterMap1 = new Dictionary<ulong, Index_NamedChapterMap>();
 
         // Index: SectionItemID@Award
         public class Index_AwardMap : Dictionary<uint, List<Protoconf.Section.Types.SectionItem>>;
 
-        private Index_AwardMap _indexAwardMap = [];
+        private Index_AwardMap _indexAwardMap = new Index_AwardMap();
 
-        private Dictionary<ulong, Index_AwardMap> _indexAwardMap1 = [];
+        private Dictionary<ulong, Index_AwardMap> _indexAwardMap1 = new Dictionary<ulong, Index_AwardMap>();
 
-        private Dictionary<LevelIndex_Activity_ChapterKey, Index_AwardMap> _indexAwardMap2 = [];
+        private Dictionary<LevelIndex_Activity_ChapterKey, Index_AwardMap> _indexAwardMap2 = new Dictionary<LevelIndex_Activity_ChapterKey, Index_AwardMap>();
 
         private Protoconf.ActivityConf _data = new();
 
         /// <summary>
         /// Name returns the ActivityConf's message name.
         /// </summary>
-        public static string Name() => Protoconf.ActivityConf.Descriptor.Name;
+        public string Name() => Protoconf.ActivityConf.Descriptor.Name;
 
         /// <summary>
         /// Load loads ActivityConf's content in the given dir, based on format and messager options.
@@ -165,7 +171,7 @@ namespace Tableau
                     var key = item1.Value.ActivityName;
                     {
                         var list = _indexActivityMap.TryGetValue(key, out var existingList) ?
-                        existingList : _indexActivityMap[key] = [];
+                        existingList : _indexActivityMap[key] = new List<Protoconf.ActivityConf.Types.Activity>();
                         list.Add(item1.Value);
                     }
                 }
@@ -177,14 +183,14 @@ namespace Tableau
                         var key = item2.Value.ChapterId;
                         {
                             var list = _indexChapterMap.TryGetValue(key, out var existingList) ?
-                            existingList : _indexChapterMap[key] = [];
+                            existingList : _indexChapterMap[key] = new List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>();
                             list.Add(item2.Value);
                         }
                         {
                             var map = _indexChapterMap1.TryGetValue(k1, out var existingMap) ?
-                            existingMap : _indexChapterMap1[k1] = [];
+                            existingMap : _indexChapterMap1[k1] = new Index_ChapterMap();
                             var list = map.TryGetValue(key, out var existingList) ?
-                            existingList : map[key] = [];
+                            existingList : map[key] = new List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>();
                             list.Add(item2.Value);
                         }
                     }
@@ -193,14 +199,14 @@ namespace Tableau
                         var key = item2.Value.ChapterName;
                         {
                             var list = _indexNamedChapterMap.TryGetValue(key, out var existingList) ?
-                            existingList : _indexNamedChapterMap[key] = [];
+                            existingList : _indexNamedChapterMap[key] = new List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>();
                             list.Add(item2.Value);
                         }
                         {
                             var map = _indexNamedChapterMap1.TryGetValue(k1, out var existingMap) ?
-                            existingMap : _indexNamedChapterMap1[k1] = [];
+                            existingMap : _indexNamedChapterMap1[k1] = new Index_NamedChapterMap();
                             var list = map.TryGetValue(key, out var existingList) ?
-                            existingList : map[key] = [];
+                            existingList : map[key] = new List<Protoconf.ActivityConf.Types.Activity.Types.Chapter>();
                             list.Add(item2.Value);
                         }
                     }
@@ -213,22 +219,22 @@ namespace Tableau
                                 var key = item4.Id;
                                 {
                                     var list = _indexAwardMap.TryGetValue(key, out var existingList) ?
-                                    existingList : _indexAwardMap[key] = [];
+                                    existingList : _indexAwardMap[key] = new List<Protoconf.Section.Types.SectionItem>();
                                     list.Add(item4);
                                 }
                                 {
                                     var map = _indexAwardMap1.TryGetValue(k1, out var existingMap) ?
-                                    existingMap : _indexAwardMap1[k1] = [];
+                                    existingMap : _indexAwardMap1[k1] = new Index_AwardMap();
                                     var list = map.TryGetValue(key, out var existingList) ?
-                                    existingList : map[key] = [];
+                                    existingList : map[key] = new List<Protoconf.Section.Types.SectionItem>();
                                     list.Add(item4);
                                 }
                                 {
                                     var mapKey = new LevelIndex_Activity_ChapterKey(k1, k2);
                                     var map = _indexAwardMap2.TryGetValue(mapKey, out var existingMap) ?
-                                    existingMap : _indexAwardMap2[mapKey] = [];
+                                    existingMap : _indexAwardMap2[mapKey] = new Index_AwardMap();
                                     var list = map.TryGetValue(key, out var existingList) ?
-                                    existingList : map[key] = [];
+                                    existingList : map[key] = new List<Protoconf.Section.Types.SectionItem>();
                                     list.Add(item4);
                                 }
                             }
@@ -491,7 +497,7 @@ namespace Tableau
         /// <summary>
         /// Name returns the ChapterConf's message name.
         /// </summary>
-        public static string Name() => Protoconf.ChapterConf.Descriptor.Name;
+        public string Name() => Protoconf.ChapterConf.Descriptor.Name;
 
         /// <summary>
         /// Load loads ChapterConf's content in the given dir, based on format and messager options.
@@ -546,7 +552,7 @@ namespace Tableau
         /// <summary>
         /// Name returns the ThemeConf's message name.
         /// </summary>
-        public static string Name() => Protoconf.ThemeConf.Descriptor.Name;
+        public string Name() => Protoconf.ThemeConf.Descriptor.Name;
 
         /// <summary>
         /// Load loads ThemeConf's content in the given dir, based on format and messager options.
@@ -607,23 +613,23 @@ namespace Tableau
         // Index: ActivityID<Goal,ID>
         public class Index_TaskMap : Dictionary<long, List<Protoconf.TaskConf.Types.Task>>;
 
-        private Index_TaskMap _indexTaskMap = [];
+        private Index_TaskMap _indexTaskMap = new Index_TaskMap();
 
         // OrderedIndex types.
         // OrderedIndex: Goal<ID>@OrderedTask
         public class OrderedIndex_OrderedTaskMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>>;
 
-        private OrderedIndex_OrderedTaskMap _orderedIndexOrderedTaskMap = [];
+        private OrderedIndex_OrderedTaskMap _orderedIndexOrderedTaskMap = new OrderedIndex_OrderedTaskMap();
 
         // OrderedIndex: Expiry@TaskExpiry
         public class OrderedIndex_TaskExpiryMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>>;
 
-        private OrderedIndex_TaskExpiryMap _orderedIndexTaskExpiryMap = [];
+        private OrderedIndex_TaskExpiryMap _orderedIndexTaskExpiryMap = new OrderedIndex_TaskExpiryMap();
 
         // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
         public class OrderedIndex_SortedTaskExpiryMap : SortedDictionary<long, List<Protoconf.TaskConf.Types.Task>>;
 
-        private OrderedIndex_SortedTaskExpiryMap _orderedIndexSortedTaskExpiryMap = [];
+        private OrderedIndex_SortedTaskExpiryMap _orderedIndexSortedTaskExpiryMap = new OrderedIndex_SortedTaskExpiryMap();
 
         // OrderedIndex: (Expiry,ActivityID)@ActivityExpiry
         public readonly struct OrderedIndex_ActivityExpiryKey : IComparable<OrderedIndex_ActivityExpiryKey>
@@ -643,14 +649,14 @@ namespace Tableau
 
         public class OrderedIndex_ActivityExpiryMap : SortedDictionary<OrderedIndex_ActivityExpiryKey, List<Protoconf.TaskConf.Types.Task>>;
 
-        private OrderedIndex_ActivityExpiryMap _orderedIndexActivityExpiryMap = [];
+        private OrderedIndex_ActivityExpiryMap _orderedIndexActivityExpiryMap = new OrderedIndex_ActivityExpiryMap();
 
         private Protoconf.TaskConf _data = new();
 
         /// <summary>
         /// Name returns the TaskConf's message name.
         /// </summary>
-        public static string Name() => Protoconf.TaskConf.Descriptor.Name;
+        public string Name() => Protoconf.TaskConf.Descriptor.Name;
 
         /// <summary>
         /// Load loads TaskConf's content in the given dir, based on format and messager options.
@@ -701,7 +707,7 @@ namespace Tableau
                     var key = item1.Value.ActivityId;
                     {
                         var list = _indexTaskMap.TryGetValue(key, out var existingList) ?
-                        existingList : _indexTaskMap[key] = [];
+                        existingList : _indexTaskMap[key] = new List<Protoconf.TaskConf.Types.Task>();
                         list.Add(item1.Value);
                     }
                 }
@@ -725,7 +731,7 @@ namespace Tableau
                     var key = item1.Value.Goal;
                     {
                         var list = _orderedIndexOrderedTaskMap.TryGetValue(key, out var existingList) ?
-                        existingList : _orderedIndexOrderedTaskMap[key] = [];
+                        existingList : _orderedIndexOrderedTaskMap[key] = new List<Protoconf.TaskConf.Types.Task>();
                         list.Add(item1.Value);
                     }
                 }
@@ -734,7 +740,7 @@ namespace Tableau
                     var key = item1.Value.Expiry?.Seconds ?? 0;
                     {
                         var list = _orderedIndexTaskExpiryMap.TryGetValue(key, out var existingList) ?
-                        existingList : _orderedIndexTaskExpiryMap[key] = [];
+                        existingList : _orderedIndexTaskExpiryMap[key] = new List<Protoconf.TaskConf.Types.Task>();
                         list.Add(item1.Value);
                     }
                 }
@@ -743,7 +749,7 @@ namespace Tableau
                     var key = item1.Value.Expiry?.Seconds ?? 0;
                     {
                         var list = _orderedIndexSortedTaskExpiryMap.TryGetValue(key, out var existingList) ?
-                        existingList : _orderedIndexSortedTaskExpiryMap[key] = [];
+                        existingList : _orderedIndexSortedTaskExpiryMap[key] = new List<Protoconf.TaskConf.Types.Task>();
                         list.Add(item1.Value);
                     }
                 }
@@ -752,7 +758,7 @@ namespace Tableau
                     var key = new OrderedIndex_ActivityExpiryKey(item1.Value.Expiry?.Seconds ?? 0, item1.Value.ActivityId);
                     {
                         var list = _orderedIndexActivityExpiryMap.TryGetValue(key, out var existingList) ?
-                        existingList : _orderedIndexActivityExpiryMap[key] = [];
+                        existingList : _orderedIndexActivityExpiryMap[key] = new List<Protoconf.TaskConf.Types.Task>();
                         list.Add(item1.Value);
                     }
                 }

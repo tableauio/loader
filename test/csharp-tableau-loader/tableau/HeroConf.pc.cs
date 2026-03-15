@@ -17,18 +17,20 @@ namespace Tableau
         // OrderedMap types.
         public class OrderedMap_Hero_AttrMap : SortedDictionary<string, Protoconf.HeroConf.Types.Hero.Types.Attr>;
 
-        public class OrderedMap_HeroValue(OrderedMap_Hero_AttrMap item1, Protoconf.HeroConf.Types.Hero item2)
-            : Tuple<OrderedMap_Hero_AttrMap, Protoconf.HeroConf.Types.Hero>(item1, item2);
+        public class OrderedMap_HeroValue : Tuple<OrderedMap_Hero_AttrMap, Protoconf.HeroConf.Types.Hero>
+        {
+            public OrderedMap_HeroValue(OrderedMap_Hero_AttrMap item1, Protoconf.HeroConf.Types.Hero item2) : base(item1, item2) { }
+        }
         public class OrderedMap_HeroMap : SortedDictionary<string, OrderedMap_HeroValue>;
 
-        private OrderedMap_HeroMap _orderedMap = [];
+        private OrderedMap_HeroMap _orderedMap = new OrderedMap_HeroMap();
 
         private Protoconf.HeroConf _data = new();
 
         /// <summary>
         /// Name returns the HeroConf's message name.
         /// </summary>
-        public static string Name() => Protoconf.HeroConf.Descriptor.Name;
+        public string Name() => Protoconf.HeroConf.Descriptor.Name;
 
         /// <summary>
         /// Load loads HeroConf's content in the given dir, based on format and messager options.
@@ -122,7 +124,7 @@ namespace Tableau
         /// <summary>
         /// Name returns the HeroBaseConf's message name.
         /// </summary>
-        public static string Name() => Protoconf.HeroBaseConf.Descriptor.Name;
+        public string Name() => Protoconf.HeroBaseConf.Descriptor.Name;
 
         /// <summary>
         /// Load loads HeroBaseConf's content in the given dir, based on format and messager options.

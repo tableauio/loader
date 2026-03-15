@@ -4,19 +4,30 @@ namespace Tableau
     /// <summary>
     /// MessagerContainer holds all messager instances and provides fast access.
     /// </summary>
-    internal class MessagerContainer(in Dictionary<string, Messager>? messagerMap = null)
+    internal class MessagerContainer
     {
-        public Dictionary<string, Messager> MessagerMap = messagerMap ?? [];
-        public DateTime LastLoadedTime = DateTime.Now;
-{{ range . }}        public {{ . }}? {{ . }} = InternalGet<{{ . }}>(messagerMap);
+        public Dictionary<string, Messager> MessagerMap;
+        public DateTime LastLoadedTime;
+{{ range . }}        public {{ . }}? {{ . }};
 {{ end }}
+        public MessagerContainer(Dictionary<string, Messager>? messagerMap = null)
+        {
+            MessagerMap = messagerMap ?? new Dictionary<string, Messager>();
+            LastLoadedTime = DateTime.Now;
+{{ range . }}            {{ . }} = InternalGet<{{ . }}>(messagerMap);
+{{ end }}        }
+
         /// <summary>
         /// Get returns the messager of type T from the container.
         /// </summary>
-        public T? Get<T>() where T : Messager, IMessagerName => InternalGet<T>(MessagerMap);
+        public T? Get<T>() where T : Messager, IMessagerName, new() => InternalGet<T>(MessagerMap);
 
-        private static T? InternalGet<T>(in Dictionary<string, Messager>? messagerMap) where T : Messager, IMessagerName =>
-           messagerMap?.TryGetValue(T.Name(), out var messager) == true ? (T)messager : null;
+        private static T? InternalGet<T>(Dictionary<string, Messager>? messagerMap) where T : Messager, IMessagerName, new()
+        {
+            if (messagerMap == null) return null;
+            string name = new T().Name();
+            return messagerMap.TryGetValue(name, out var messager) ? (T)messager : null;
+        }
     }
 
     /// <summary>
@@ -49,10 +60,15 @@ namespace Tableau
     /// Hub is the messager manager. It manages loading, accessing, and storing
     /// all configuration messagers.
     /// </summary>
-    public class Hub(HubOptions? options = null)
+    public class Hub
     {
-        private readonly Atomic<MessagerContainer> _messagerContainer = new();
-        private readonly HubOptions? _options = options;
+        private readonly Atomic<MessagerContainer> _messagerContainer = new Atomic<MessagerContainer>();
+        private readonly HubOptions? _options;
+
+        public Hub(HubOptions? options = null)
+        {
+            _options = options;
+        }
 
         /// <summary>
         /// Load fills messages from files in the specified directory and format.
@@ -97,7 +113,7 @@ namespace Tableau
         /// <summary>
         /// Get returns the messager of type T from the hub.
         /// </summary>
-        public T? Get<T>() where T : Messager, IMessagerName => _messagerContainer.Value?.Get<T>();
+        public T? Get<T>() where T : Messager, IMessagerName, new() => _messagerContainer.Value?.Get<T>();
 {{ range . }}
         public {{ . }}? Get{{ . }}() => _messagerContainer.Value?.{{ . }};
 {{ end }}
@@ -128,12 +144,12 @@ namespace Tableau
     /// </summary>
     public class Registry
     {
-        internal static readonly Dictionary<string, Func<Messager>> Registrar = [];
+        internal static readonly Dictionary<string, Func<Messager>> Registrar = new Dictionary<string, Func<Messager>>();
 
         /// <summary>
         /// Register registers a messager generator for type T.
         /// </summary>
-        public static void Register<T>() where T : Messager, IMessagerName, new() => Registrar[T.Name()] = () => new T();
+        public static void Register<T>() where T : Messager, IMessagerName, new() => Registrar[new T().Name()] = () => new T();
 
         /// <summary>
         /// Init registers all generated messagers.

@@ -86,14 +86,14 @@ func (x *Generator) genOrderedIndexTypeDef() {
 			x.g.P(helper.Indent(2), "public class ", mapType, " : SortedDictionary<", keyType, ", List<", valueType, ">>;")
 			x.g.P()
 
-			x.g.P(helper.Indent(2), "private ", mapType, " ", x.orderedIndexContainerName(index, 0), " = [];")
+			x.g.P(helper.Indent(2), "private ", mapType, " ", x.orderedIndexContainerName(index, 0), " = new ", mapType, "();")
 			x.g.P()
 			for i := 1; i < lm.MapDepth; i++ {
 				if i == 1 {
-					x.g.P(helper.Indent(2), "private Dictionary<", x.keys[0].Type, ", ", mapType, "> ", x.orderedIndexContainerName(index, i), " = [];")
+					x.g.P(helper.Indent(2), "private Dictionary<", x.keys[0].Type, ", ", mapType, "> ", x.orderedIndexContainerName(index, i), " = new Dictionary<", x.keys[0].Type, ", ", mapType, ">();")
 				} else {
 					levelIndexKeyType := x.levelKeyType(x.keys[i-1].Fd)
-					x.g.P(helper.Indent(2), "private Dictionary<", levelIndexKeyType, ", ", mapType, "> ", x.orderedIndexContainerName(index, i), " = [];")
+					x.g.P(helper.Indent(2), "private Dictionary<", levelIndexKeyType, ", ", mapType, "> ", x.orderedIndexContainerName(index, i), " = new Dictionary<", levelIndexKeyType, ", ", mapType, ">();")
 				}
 				x.g.P()
 			}
@@ -190,18 +190,19 @@ func (x *Generator) generateOneMulticolumnOrderedIndex(lm *index.LevelMessage, i
 }
 
 func (x *Generator) genOrderedIndexLoaderCommon(lm *index.LevelMessage, index *index.LevelIndex, ident int, key, parentDataName string) {
+	valueType := x.mapValueType(index)
 	x.g.P(helper.Indent(ident), "{")
 	x.g.P(helper.Indent(ident+1), "var list = ", x.orderedIndexContainerName(index, 0), ".TryGetValue(", key, ", out var existingList) ?")
-	x.g.P(helper.Indent(ident+1), "existingList : ", x.orderedIndexContainerName(index, 0), "[", key, "] = [];")
+	x.g.P(helper.Indent(ident+1), "existingList : ", x.orderedIndexContainerName(index, 0), "[", key, "] = new List<", valueType, ">();")
 	x.g.P(helper.Indent(ident+1), "list.Add(", parentDataName, ");")
 	x.g.P(helper.Indent(ident), "}")
 	for i := 1; i < lm.MapDepth; i++ {
 		x.g.P(helper.Indent(ident), "{")
 		if i == 1 {
 			x.g.P(helper.Indent(ident+1), "var map = ", x.orderedIndexContainerName(index, i), ".TryGetValue(k1, out var existingMap) ?")
-			x.g.P(helper.Indent(ident+1), "existingMap : ", x.orderedIndexContainerName(index, i), "[k1] = [];")
+			x.g.P(helper.Indent(ident+1), "existingMap : ", x.orderedIndexContainerName(index, i), "[k1] = new ", x.orderedIndexMapType(index), "();")
 			x.g.P(helper.Indent(ident+1), "var list = map.TryGetValue(", key, ", out var existingList) ?")
-			x.g.P(helper.Indent(ident+1), "existingList : map[", key, "] = [];")
+			x.g.P(helper.Indent(ident+1), "existingList : map[", key, "] = new List<", valueType, ">();")
 			x.g.P(helper.Indent(ident+1), "list.Add(", parentDataName, ");")
 		} else {
 			var fields []string
@@ -211,9 +212,9 @@ func (x *Generator) genOrderedIndexLoaderCommon(lm *index.LevelMessage, index *i
 			levelIndexKeyType := x.levelKeyType(x.keys[i-1].Fd)
 			x.g.P(helper.Indent(ident+1), "var mapKey = new ", levelIndexKeyType, "(", strings.Join(fields, ", "), ");")
 			x.g.P(helper.Indent(ident+1), "var map = ", x.orderedIndexContainerName(index, i), ".TryGetValue(mapKey, out var existingMap) ?")
-			x.g.P(helper.Indent(ident+1), "existingMap : ", x.orderedIndexContainerName(index, i), "[mapKey] = [];")
+			x.g.P(helper.Indent(ident+1), "existingMap : ", x.orderedIndexContainerName(index, i), "[mapKey] = new ", x.orderedIndexMapType(index), "();")
 			x.g.P(helper.Indent(ident+1), "var list = map.TryGetValue(", key, ", out var existingList) ?")
-			x.g.P(helper.Indent(ident+1), "existingList : map[", key, "] = [];")
+			x.g.P(helper.Indent(ident+1), "existingList : map[", key, "] = new List<", valueType, ">();")
 			x.g.P(helper.Indent(ident+1), "list.Add(", parentDataName, ");")
 		}
 		x.g.P(helper.Indent(ident), "}")

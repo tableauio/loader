@@ -166,11 +166,11 @@ namespace Tableau
     }
 
     /// <summary>
-    /// IMessagerName is an interface that provides the static Name() method for messagers.
+    /// IMessagerName is an interface that provides the Name() method for messagers.
     /// </summary>
     public interface IMessagerName
     {
-        static abstract string Name();
+        string Name();
     }
 
     /// <summary>

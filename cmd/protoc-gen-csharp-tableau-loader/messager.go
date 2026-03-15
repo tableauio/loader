@@ -75,7 +75,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P(helper.Indent(2), "/// <summary>")
 	g.P(helper.Indent(2), "/// Name returns the ", messagerName, "'s message name.")
 	g.P(helper.Indent(2), "/// </summary>")
-	g.P(helper.Indent(2), "public static string Name() => ", helper.ParseCsharpClassType(message.Desc), ".Descriptor.Name;")
+	g.P(helper.Indent(2), "public string Name() => ", helper.ParseCsharpClassType(message.Desc), ".Descriptor.Name;")
 	g.P()
 	g.P(helper.Indent(2), "/// <summary>")
 	g.P(helper.Indent(2), "/// Load loads ", messagerName, "'s content in the given dir, based on format and messager options.")

@@ -18,16 +18,16 @@ namespace Tableau
         // OrderedIndex: Price<ID>
         public class OrderedIndex_ItemMap : SortedDictionary<int, List<Protoconf.FruitConf.Types.Fruit.Types.Item>>;
 
-        private OrderedIndex_ItemMap _orderedIndexItemMap = [];
+        private OrderedIndex_ItemMap _orderedIndexItemMap = new OrderedIndex_ItemMap();
 
-        private Dictionary<int, OrderedIndex_ItemMap> _orderedIndexItemMap1 = [];
+        private Dictionary<int, OrderedIndex_ItemMap> _orderedIndexItemMap1 = new Dictionary<int, OrderedIndex_ItemMap>();
 
         private Protoconf.FruitConf _data = new();
 
         /// <summary>
         /// Name returns the FruitConf's message name.
         /// </summary>
-        public static string Name() => Protoconf.FruitConf.Descriptor.Name;
+        public string Name() => Protoconf.FruitConf.Descriptor.Name;
 
         /// <summary>
         /// Load loads FruitConf's content in the given dir, based on format and messager options.
@@ -82,14 +82,14 @@ namespace Tableau
                         var key = item2.Value.Price;
                         {
                             var list = _orderedIndexItemMap.TryGetValue(key, out var existingList) ?
-                            existingList : _orderedIndexItemMap[key] = [];
+                            existingList : _orderedIndexItemMap[key] = new List<Protoconf.FruitConf.Types.Fruit.Types.Item>();
                             list.Add(item2.Value);
                         }
                         {
                             var map = _orderedIndexItemMap1.TryGetValue(k1, out var existingMap) ?
-                            existingMap : _orderedIndexItemMap1[k1] = [];
+                            existingMap : _orderedIndexItemMap1[k1] = new OrderedIndex_ItemMap();
                             var list = map.TryGetValue(key, out var existingList) ?
-                            existingList : map[key] = [];
+                            existingList : map[key] = new List<Protoconf.FruitConf.Types.Fruit.Types.Item>();
                             list.Add(item2.Value);
                         }
                     }
@@ -179,29 +179,29 @@ namespace Tableau
         // Index: CountryName
         public class Index_CountryMap : Dictionary<string, List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country>>;
 
-        private Index_CountryMap _indexCountryMap = [];
+        private Index_CountryMap _indexCountryMap = new Index_CountryMap();
 
         // Index: CountryItemAttrName
         public class Index_AttrMap : Dictionary<string, List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>>;
 
-        private Index_AttrMap _indexAttrMap = [];
+        private Index_AttrMap _indexAttrMap = new Index_AttrMap();
 
-        private Dictionary<int, Index_AttrMap> _indexAttrMap1 = [];
+        private Dictionary<int, Index_AttrMap> _indexAttrMap1 = new Dictionary<int, Index_AttrMap>();
 
         // OrderedIndex types.
         // OrderedIndex: CountryItemPrice<CountryItemID>
         public class OrderedIndex_ItemMap : SortedDictionary<int, List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item>>;
 
-        private OrderedIndex_ItemMap _orderedIndexItemMap = [];
+        private OrderedIndex_ItemMap _orderedIndexItemMap = new OrderedIndex_ItemMap();
 
-        private Dictionary<int, OrderedIndex_ItemMap> _orderedIndexItemMap1 = [];
+        private Dictionary<int, OrderedIndex_ItemMap> _orderedIndexItemMap1 = new Dictionary<int, OrderedIndex_ItemMap>();
 
         private Protoconf.Fruit2Conf _data = new();
 
         /// <summary>
         /// Name returns the Fruit2Conf's message name.
         /// </summary>
-        public static string Name() => Protoconf.Fruit2Conf.Descriptor.Name;
+        public string Name() => Protoconf.Fruit2Conf.Descriptor.Name;
 
         /// <summary>
         /// Load loads Fruit2Conf's content in the given dir, based on format and messager options.
@@ -257,7 +257,7 @@ namespace Tableau
                         var key = item2.Name;
                         {
                             var list = _indexCountryMap.TryGetValue(key, out var existingList) ?
-                            existingList : _indexCountryMap[key] = [];
+                            existingList : _indexCountryMap[key] = new List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country>();
                             list.Add(item2);
                         }
                     }
@@ -270,14 +270,14 @@ namespace Tableau
                                 var key = item4.Name;
                                 {
                                     var list = _indexAttrMap.TryGetValue(key, out var existingList) ?
-                                    existingList : _indexAttrMap[key] = [];
+                                    existingList : _indexAttrMap[key] = new List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>();
                                     list.Add(item4);
                                 }
                                 {
                                     var map = _indexAttrMap1.TryGetValue(k1, out var existingMap) ?
-                                    existingMap : _indexAttrMap1[k1] = [];
+                                    existingMap : _indexAttrMap1[k1] = new Index_AttrMap();
                                     var list = map.TryGetValue(key, out var existingList) ?
-                                    existingList : map[key] = [];
+                                    existingList : map[key] = new List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>();
                                     list.Add(item4);
                                 }
                             }
@@ -300,14 +300,14 @@ namespace Tableau
                             var key = item3.Value.Price;
                             {
                                 var list = _orderedIndexItemMap.TryGetValue(key, out var existingList) ?
-                                existingList : _orderedIndexItemMap[key] = [];
+                                existingList : _orderedIndexItemMap[key] = new List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item>();
                                 list.Add(item3.Value);
                             }
                             {
                                 var map = _orderedIndexItemMap1.TryGetValue(k1, out var existingMap) ?
-                                existingMap : _orderedIndexItemMap1[k1] = [];
+                                existingMap : _orderedIndexItemMap1[k1] = new OrderedIndex_ItemMap();
                                 var list = map.TryGetValue(key, out var existingList) ?
-                                existingList : map[key] = [];
+                                existingList : map[key] = new List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item>();
                                 list.Add(item3.Value);
                             }
                         }
@@ -455,25 +455,25 @@ namespace Tableau
         // Index: CountryName
         public class Index_CountryMap : Dictionary<string, List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country>>;
 
-        private Index_CountryMap _indexCountryMap = [];
+        private Index_CountryMap _indexCountryMap = new Index_CountryMap();
 
         // Index: CountryItemAttrName
         public class Index_AttrMap : Dictionary<string, List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>>;
 
-        private Index_AttrMap _indexAttrMap = [];
+        private Index_AttrMap _indexAttrMap = new Index_AttrMap();
 
         // OrderedIndex types.
         // OrderedIndex: CountryItemPrice<CountryItemID>
         public class OrderedIndex_ItemMap : SortedDictionary<int, List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item>>;
 
-        private OrderedIndex_ItemMap _orderedIndexItemMap = [];
+        private OrderedIndex_ItemMap _orderedIndexItemMap = new OrderedIndex_ItemMap();
 
         private Protoconf.Fruit3Conf _data = new();
 
         /// <summary>
         /// Name returns the Fruit3Conf's message name.
         /// </summary>
-        public static string Name() => Protoconf.Fruit3Conf.Descriptor.Name;
+        public string Name() => Protoconf.Fruit3Conf.Descriptor.Name;
 
         /// <summary>
         /// Load loads Fruit3Conf's content in the given dir, based on format and messager options.
@@ -527,7 +527,7 @@ namespace Tableau
                         var key = item2.Name;
                         {
                             var list = _indexCountryMap.TryGetValue(key, out var existingList) ?
-                            existingList : _indexCountryMap[key] = [];
+                            existingList : _indexCountryMap[key] = new List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country>();
                             list.Add(item2);
                         }
                     }
@@ -540,7 +540,7 @@ namespace Tableau
                                 var key = item4.Name;
                                 {
                                     var list = _indexAttrMap.TryGetValue(key, out var existingList) ?
-                                    existingList : _indexAttrMap[key] = [];
+                                    existingList : _indexAttrMap[key] = new List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>();
                                     list.Add(item4);
                                 }
                             }
@@ -561,7 +561,7 @@ namespace Tableau
                             var key = item3.Value.Price;
                             {
                                 var list = _orderedIndexItemMap.TryGetValue(key, out var existingList) ?
-                                existingList : _orderedIndexItemMap[key] = [];
+                                existingList : _orderedIndexItemMap[key] = new List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item>();
                                 list.Add(item3.Value);
                             }
                         }
@@ -671,35 +671,35 @@ namespace Tableau
         // Index: CountryName
         public class Index_CountryMap : Dictionary<string, List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country>>;
 
-        private Index_CountryMap _indexCountryMap = [];
+        private Index_CountryMap _indexCountryMap = new Index_CountryMap();
 
-        private Dictionary<int, Index_CountryMap> _indexCountryMap1 = [];
+        private Dictionary<int, Index_CountryMap> _indexCountryMap1 = new Dictionary<int, Index_CountryMap>();
 
         // Index: CountryItemAttrName
         public class Index_AttrMap : Dictionary<string, List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>>;
 
-        private Index_AttrMap _indexAttrMap = [];
+        private Index_AttrMap _indexAttrMap = new Index_AttrMap();
 
-        private Dictionary<int, Index_AttrMap> _indexAttrMap1 = [];
+        private Dictionary<int, Index_AttrMap> _indexAttrMap1 = new Dictionary<int, Index_AttrMap>();
 
-        private Dictionary<LevelIndex_Fruit_CountryKey, Index_AttrMap> _indexAttrMap2 = [];
+        private Dictionary<LevelIndex_Fruit_CountryKey, Index_AttrMap> _indexAttrMap2 = new Dictionary<LevelIndex_Fruit_CountryKey, Index_AttrMap>();
 
         // OrderedIndex types.
         // OrderedIndex: CountryItemPrice<CountryItemID>
         public class OrderedIndex_ItemMap : SortedDictionary<int, List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item>>;
 
-        private OrderedIndex_ItemMap _orderedIndexItemMap = [];
+        private OrderedIndex_ItemMap _orderedIndexItemMap = new OrderedIndex_ItemMap();
 
-        private Dictionary<int, OrderedIndex_ItemMap> _orderedIndexItemMap1 = [];
+        private Dictionary<int, OrderedIndex_ItemMap> _orderedIndexItemMap1 = new Dictionary<int, OrderedIndex_ItemMap>();
 
-        private Dictionary<LevelIndex_Fruit_CountryKey, OrderedIndex_ItemMap> _orderedIndexItemMap2 = [];
+        private Dictionary<LevelIndex_Fruit_CountryKey, OrderedIndex_ItemMap> _orderedIndexItemMap2 = new Dictionary<LevelIndex_Fruit_CountryKey, OrderedIndex_ItemMap>();
 
         private Protoconf.Fruit4Conf _data = new();
 
         /// <summary>
         /// Name returns the Fruit4Conf's message name.
         /// </summary>
-        public static string Name() => Protoconf.Fruit4Conf.Descriptor.Name;
+        public string Name() => Protoconf.Fruit4Conf.Descriptor.Name;
 
         /// <summary>
         /// Load loads Fruit4Conf's content in the given dir, based on format and messager options.
@@ -758,14 +758,14 @@ namespace Tableau
                         var key = item2.Value.Name;
                         {
                             var list = _indexCountryMap.TryGetValue(key, out var existingList) ?
-                            existingList : _indexCountryMap[key] = [];
+                            existingList : _indexCountryMap[key] = new List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country>();
                             list.Add(item2.Value);
                         }
                         {
                             var map = _indexCountryMap1.TryGetValue(k1, out var existingMap) ?
-                            existingMap : _indexCountryMap1[k1] = [];
+                            existingMap : _indexCountryMap1[k1] = new Index_CountryMap();
                             var list = map.TryGetValue(key, out var existingList) ?
-                            existingList : map[key] = [];
+                            existingList : map[key] = new List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country>();
                             list.Add(item2.Value);
                         }
                     }
@@ -778,22 +778,22 @@ namespace Tableau
                                 var key = item4.Name;
                                 {
                                     var list = _indexAttrMap.TryGetValue(key, out var existingList) ?
-                                    existingList : _indexAttrMap[key] = [];
+                                    existingList : _indexAttrMap[key] = new List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>();
                                     list.Add(item4);
                                 }
                                 {
                                     var map = _indexAttrMap1.TryGetValue(k1, out var existingMap) ?
-                                    existingMap : _indexAttrMap1[k1] = [];
+                                    existingMap : _indexAttrMap1[k1] = new Index_AttrMap();
                                     var list = map.TryGetValue(key, out var existingList) ?
-                                    existingList : map[key] = [];
+                                    existingList : map[key] = new List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>();
                                     list.Add(item4);
                                 }
                                 {
                                     var mapKey = new LevelIndex_Fruit_CountryKey(k1, k2);
                                     var map = _indexAttrMap2.TryGetValue(mapKey, out var existingMap) ?
-                                    existingMap : _indexAttrMap2[mapKey] = [];
+                                    existingMap : _indexAttrMap2[mapKey] = new Index_AttrMap();
                                     var list = map.TryGetValue(key, out var existingList) ?
-                                    existingList : map[key] = [];
+                                    existingList : map[key] = new List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>();
                                     list.Add(item4);
                                 }
                             }
@@ -818,22 +818,22 @@ namespace Tableau
                             var key = item3.Value.Price;
                             {
                                 var list = _orderedIndexItemMap.TryGetValue(key, out var existingList) ?
-                                existingList : _orderedIndexItemMap[key] = [];
+                                existingList : _orderedIndexItemMap[key] = new List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item>();
                                 list.Add(item3.Value);
                             }
                             {
                                 var map = _orderedIndexItemMap1.TryGetValue(k1, out var existingMap) ?
-                                existingMap : _orderedIndexItemMap1[k1] = [];
+                                existingMap : _orderedIndexItemMap1[k1] = new OrderedIndex_ItemMap();
                                 var list = map.TryGetValue(key, out var existingList) ?
-                                existingList : map[key] = [];
+                                existingList : map[key] = new List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item>();
                                 list.Add(item3.Value);
                             }
                             {
                                 var mapKey = new LevelIndex_Fruit_CountryKey(k1, k2);
                                 var map = _orderedIndexItemMap2.TryGetValue(mapKey, out var existingMap) ?
-                                existingMap : _orderedIndexItemMap2[mapKey] = [];
+                                existingMap : _orderedIndexItemMap2[mapKey] = new OrderedIndex_ItemMap();
                                 var list = map.TryGetValue(key, out var existingList) ?
-                                existingList : map[key] = [];
+                                existingList : map[key] = new List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item>();
                                 list.Add(item3.Value);
                             }
                         }
@@ -1068,16 +1068,16 @@ namespace Tableau
         // Index: CountryName
         public class Index_CountryMap : Dictionary<string, List<Protoconf.Fruit5Conf.Types.Fruit.Types.Country>>;
 
-        private Index_CountryMap _indexCountryMap = [];
+        private Index_CountryMap _indexCountryMap = new Index_CountryMap();
 
-        private Dictionary<int, Index_CountryMap> _indexCountryMap1 = [];
+        private Dictionary<int, Index_CountryMap> _indexCountryMap1 = new Dictionary<int, Index_CountryMap>();
 
         private Protoconf.Fruit5Conf _data = new();
 
         /// <summary>
         /// Name returns the Fruit5Conf's message name.
         /// </summary>
-        public static string Name() => Protoconf.Fruit5Conf.Descriptor.Name;
+        public string Name() => Protoconf.Fruit5Conf.Descriptor.Name;
 
         /// <summary>
         /// Load loads Fruit5Conf's content in the given dir, based on format and messager options.
@@ -1132,14 +1132,14 @@ namespace Tableau
                         var key = item2.Value.Name;
                         {
                             var list = _indexCountryMap.TryGetValue(key, out var existingList) ?
-                            existingList : _indexCountryMap[key] = [];
+                            existingList : _indexCountryMap[key] = new List<Protoconf.Fruit5Conf.Types.Fruit.Types.Country>();
                             list.Add(item2.Value);
                         }
                         {
                             var map = _indexCountryMap1.TryGetValue(k1, out var existingMap) ?
-                            existingMap : _indexCountryMap1[k1] = [];
+                            existingMap : _indexCountryMap1[k1] = new Index_CountryMap();
                             var list = map.TryGetValue(key, out var existingList) ?
-                            existingList : map[key] = [];
+                            existingList : map[key] = new List<Protoconf.Fruit5Conf.Types.Fruit.Types.Country>();
                             list.Add(item2.Value);
                         }
                     }

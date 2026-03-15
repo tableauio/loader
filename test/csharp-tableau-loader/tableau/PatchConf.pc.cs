@@ -19,7 +19,7 @@ namespace Tableau
         /// <summary>
         /// Name returns the PatchReplaceConf's message name.
         /// </summary>
-        public static string Name() => Protoconf.PatchReplaceConf.Descriptor.Name;
+        public string Name() => Protoconf.PatchReplaceConf.Descriptor.Name;
 
         /// <summary>
         /// Load loads PatchReplaceConf's content in the given dir, based on format and messager options.
@@ -67,7 +67,7 @@ namespace Tableau
         /// <summary>
         /// Name returns the PatchMergeConf's message name.
         /// </summary>
-        public static string Name() => Protoconf.PatchMergeConf.Descriptor.Name;
+        public string Name() => Protoconf.PatchMergeConf.Descriptor.Name;
 
         /// <summary>
         /// Load loads PatchMergeConf's content in the given dir, based on format and messager options.
@@ -122,7 +122,7 @@ namespace Tableau
         /// <summary>
         /// Name returns the RecursivePatchConf's message name.
         /// </summary>
-        public static string Name() => Protoconf.RecursivePatchConf.Descriptor.Name;
+        public string Name() => Protoconf.RecursivePatchConf.Descriptor.Name;
 
         /// <summary>
         /// Load loads RecursivePatchConf's content in the given dir, based on format and messager options.
