@@ -1,0 +1,69 @@
+name: Testing C#
+
+# Trigger on pushes, PRs (excluding documentation changes), and nightly.
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  schedule:
+    - cron: 0 0 * * * # daily at 00:00
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            gen_script: bash gen.sh
+          - os: windows-latest
+            gen_script: cmd /c gen.bat
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.21.x
+          cache: true
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: choco install cmake ninja -y
+
+      - name: Setup MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Init submodules and build protobuf
+        shell: bash
+        run: bash init.sh
+
+      - name: Generate protoconf
+        working-directory: test/csharp-tableau-loader
+        run: ${{ matrix.gen_script }}
+
+      - name: Build
+        working-directory: test/csharp-tableau-loader
+        run: dotnet build
+
+      - name: Run loader
+        working-directory: test/csharp-tableau-loader
+        run: dotnet run
