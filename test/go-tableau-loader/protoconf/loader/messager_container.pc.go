@@ -28,6 +28,7 @@ type MessagerContainer struct {
 	chapterConf        *ChapterConf
 	themeConf          *ThemeConf
 	taskConf           *TaskConf
+	strcaseConf        *StrcaseConf
 }
 
 func newMessagerContainer(messagerMap MessagerMap) *MessagerContainer {
@@ -49,6 +50,7 @@ func newMessagerContainer(messagerMap MessagerMap) *MessagerContainer {
 		chapterConf:        GetMessager[*ChapterConf](messagerMap),
 		themeConf:          GetMessager[*ThemeConf](messagerMap),
 		taskConf:           GetMessager[*TaskConf](messagerMap),
+		strcaseConf:        GetMessager[*StrcaseConf](messagerMap),
 	}
 }
 
@@ -124,4 +126,8 @@ func (mc *MessagerContainer) GetThemeConf() *ThemeConf {
 
 func (mc *MessagerContainer) GetTaskConf() *TaskConf {
 	return mc.taskConf
+}
+
+func (mc *MessagerContainer) GetStrcaseConf() *StrcaseConf {
+	return mc.strcaseConf
 }

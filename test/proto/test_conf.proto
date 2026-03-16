@@ -115,3 +115,20 @@ message TaskConf {
     google.protobuf.Timestamp expiry = 5 [(tableau.field) = { name: "Expiry" }];
   }
 }
+
+message StrcaseConf {
+  option (tableau.worksheet) = {
+    name: "StrcaseConf"
+    index: "HTTPServer@Index1"
+    index: "Fight1v1@Index2"
+    index: "SeasonRank@Index3"
+  };
+
+  map<int64, Task> task_map = 1 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
+  message Task {
+    int64 id = 1 [(tableau.field) = { name: "ID" }];
+    int64 HTTPServer = 2 [(tableau.field) = { name: "HTTPServer" }];
+    int64 fight_1v1_ = 3 [(tableau.field) = { name: "Fight1v1" }];
+    int64 SEASON_RANK = 4 [(tableau.field) = { name: "SeasonRank" }];
+  }
+}

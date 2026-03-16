@@ -44,6 +44,11 @@ const std::shared_ptr<TaskConf> Hub::Get<TaskConf>() const {
   return GetMessagerContainerWithProvider()->task_conf_;
 }
 
+template <>
+const std::shared_ptr<StrcaseConf> Hub::Get<StrcaseConf>() const {
+  return GetMessagerContainerWithProvider()->strcase_conf_;
+}
+
 void MessagerContainer::InitShard1() {
   patch_replace_conf_ = std::dynamic_pointer_cast<PatchReplaceConf>(GetMessager(PatchReplaceConf::Name()));
   patch_merge_conf_ = std::dynamic_pointer_cast<PatchMergeConf>(GetMessager(PatchMergeConf::Name()));
@@ -52,6 +57,7 @@ void MessagerContainer::InitShard1() {
   chapter_conf_ = std::dynamic_pointer_cast<ChapterConf>(GetMessager(ChapterConf::Name()));
   theme_conf_ = std::dynamic_pointer_cast<ThemeConf>(GetMessager(ThemeConf::Name()));
   task_conf_ = std::dynamic_pointer_cast<TaskConf>(GetMessager(TaskConf::Name()));
+  strcase_conf_ = std::dynamic_pointer_cast<StrcaseConf>(GetMessager(StrcaseConf::Name()));
 }
 
 void Registry::InitShard1() {
@@ -62,5 +68,6 @@ void Registry::InitShard1() {
   Register<ChapterConf>();
   Register<ThemeConf>();
   Register<TaskConf>();
+  Register<StrcaseConf>();
 }
 }  // namespace tableau

@@ -991,6 +991,191 @@ func (x *TaskConf) FindFirstActivityExpiry(expiry int64, activityId int64) *prot
 	return nil
 }
 
+// Index types.
+// Index: HTTPServer@Index1
+type StrcaseConf_Index_Index1Map = map[int64][]*protoconf.StrcaseConf_Task
+
+// Index: Fight1v1@Index2
+type StrcaseConf_Index_Index2Map = map[int64][]*protoconf.StrcaseConf_Task
+
+// Index: SeasonRank@Index3
+type StrcaseConf_Index_Index3Map = map[int64][]*protoconf.StrcaseConf_Task
+
+// StrcaseConf is a wrapper around protobuf message: protoconf.StrcaseConf.
+//
+// It is designed for three goals:
+//
+//  1. Easy use: simple yet powerful accessers.
+//  2. Elegant API: concise and clean functions.
+//  3. Extensibility: Map, OrdererdMap, Index, OrderedIndex...
+type StrcaseConf struct {
+	UnimplementedMessager
+	data, originalData *protoconf.StrcaseConf
+	indexIndex1Map     StrcaseConf_Index_Index1Map
+	indexIndex2Map     StrcaseConf_Index_Index2Map
+	indexIndex3Map     StrcaseConf_Index_Index3Map
+}
+
+// Name returns the StrcaseConf's message name.
+func (x *StrcaseConf) Name() string {
+	return string((*protoconf.StrcaseConf)(nil).ProtoReflect().Descriptor().Name())
+}
+
+// Data returns the StrcaseConf's inner message data.
+func (x *StrcaseConf) Data() *protoconf.StrcaseConf {
+	if x != nil {
+		return x.data
+	}
+	return nil
+}
+
+// Load loads StrcaseConf's content in the given dir, based on format and messager options.
+func (x *StrcaseConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
+	start := time.Now()
+	defer func() {
+		x.Stats.Duration = time.Since(start)
+	}()
+	x.data = &protoconf.StrcaseConf{}
+	err := load.LoadMessagerInDir(x.data, dir, format, opts)
+	if err != nil {
+		return err
+	}
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.StrcaseConf)
+	}
+	return x.processAfterLoad()
+}
+
+// Store stores StrcaseConf's content to file in the specified directory and format.
+// Available formats: JSON, Bin, and Text.
+func (x *StrcaseConf) Store(dir string, format format.Format, options ...store.Option) error {
+	return store.Store(x.Data(), dir, format, options...)
+}
+
+// Message returns the StrcaseConf's inner message data.
+func (x *StrcaseConf) Message() proto.Message {
+	return x.Data()
+}
+
+// Messager returns the current messager.
+func (x *StrcaseConf) Messager() Messager {
+	return x
+}
+
+// originalMessage returns the StrcaseConf's original inner message.
+func (x *StrcaseConf) originalMessage() proto.Message {
+	if x != nil {
+		return x.originalData
+	}
+	return nil
+}
+
+// processAfterLoad runs after this messager is loaded.
+func (x *StrcaseConf) processAfterLoad() error {
+	// Index init.
+	x.indexIndex1Map = make(StrcaseConf_Index_Index1Map)
+	x.indexIndex2Map = make(StrcaseConf_Index_Index2Map)
+	x.indexIndex3Map = make(StrcaseConf_Index_Index3Map)
+	for _, v1 := range x.data.GetTaskMap() {
+		{
+			// Index: HTTPServer@Index1
+			key := v1.GetHTTPServer()
+			x.indexIndex1Map[key] = append(x.indexIndex1Map[key], v1)
+		}
+		{
+			// Index: Fight1v1@Index2
+			key := v1.GetFight_1V1_()
+			x.indexIndex2Map[key] = append(x.indexIndex2Map[key], v1)
+		}
+		{
+			// Index: SeasonRank@Index3
+			key := v1.GetSEASON_RANK()
+			x.indexIndex3Map[key] = append(x.indexIndex3Map[key], v1)
+		}
+	}
+	return nil
+}
+
+// Get1 finds value in the 1st-level map. It will return
+// NotFound error if the key is not found.
+func (x *StrcaseConf) Get1(id int64) (*protoconf.StrcaseConf_Task, error) {
+	d := x.Data().GetTaskMap()
+	if val, ok := d[id]; !ok {
+		return nil, fmt.Errorf("id(%v) %w", id, ErrNotFound)
+	} else {
+		return val, nil
+	}
+}
+
+// Index: HTTPServer@Index1
+
+// FindIndex1Map finds the index: key(HTTPServer@Index1) to value(protoconf.StrcaseConf_Task) map.
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *StrcaseConf) FindIndex1Map() StrcaseConf_Index_Index1Map {
+	return x.indexIndex1Map
+}
+
+// FindIndex1 finds a slice of all values of the given key(s).
+func (x *StrcaseConf) FindIndex1(httpserver int64) []*protoconf.StrcaseConf_Task {
+	return x.indexIndex1Map[httpserver]
+}
+
+// FindFirstIndex1 finds the first value of the given key(s),
+// or nil if no value found.
+func (x *StrcaseConf) FindFirstIndex1(httpserver int64) *protoconf.StrcaseConf_Task {
+	val := x.FindIndex1(httpserver)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: Fight1v1@Index2
+
+// FindIndex2Map finds the index: key(Fight1v1@Index2) to value(protoconf.StrcaseConf_Task) map.
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *StrcaseConf) FindIndex2Map() StrcaseConf_Index_Index2Map {
+	return x.indexIndex2Map
+}
+
+// FindIndex2 finds a slice of all values of the given key(s).
+func (x *StrcaseConf) FindIndex2(fight1V1 int64) []*protoconf.StrcaseConf_Task {
+	return x.indexIndex2Map[fight1V1]
+}
+
+// FindFirstIndex2 finds the first value of the given key(s),
+// or nil if no value found.
+func (x *StrcaseConf) FindFirstIndex2(fight1V1 int64) *protoconf.StrcaseConf_Task {
+	val := x.FindIndex2(fight1V1)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: SeasonRank@Index3
+
+// FindIndex3Map finds the index: key(SeasonRank@Index3) to value(protoconf.StrcaseConf_Task) map.
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *StrcaseConf) FindIndex3Map() StrcaseConf_Index_Index3Map {
+	return x.indexIndex3Map
+}
+
+// FindIndex3 finds a slice of all values of the given key(s).
+func (x *StrcaseConf) FindIndex3(seasonRank int64) []*protoconf.StrcaseConf_Task {
+	return x.indexIndex3Map[seasonRank]
+}
+
+// FindFirstIndex3 finds the first value of the given key(s),
+// or nil if no value found.
+func (x *StrcaseConf) FindFirstIndex3(seasonRank int64) *protoconf.StrcaseConf_Task {
+	val := x.FindIndex3(seasonRank)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
 func init() {
 	Register(func() Messager {
 		return new(ActivityConf)
@@ -1003,5 +1188,8 @@ func init() {
 	})
 	Register(func() Messager {
 		return new(TaskConf)
+	})
+	Register(func() Messager {
+		return new(StrcaseConf)
 	})
 }

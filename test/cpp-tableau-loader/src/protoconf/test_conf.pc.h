@@ -307,6 +307,70 @@ class TaskConf final : public Messager {
   OrderedIndex_ActivityExpiryMap ordered_index_activity_expiry_map_;
 };
 
+class StrcaseConf final : public Messager {
+ public:
+  static const std::string& Name() { return kProtoName; }
+  virtual bool Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options = nullptr) override;
+  const protoconf::StrcaseConf& Data() const { return data_; }
+  const google::protobuf::Message* Message() const override { return &data_; }
+
+ private:
+  virtual bool ProcessAfterLoad() override;
+
+ public:
+  const protoconf::StrcaseConf::Task* Get(int64_t id) const;
+
+ private:
+  static const std::string kProtoName;
+  protoconf::StrcaseConf data_;
+
+  // Index accessers.
+  // Index: HTTPServer@Index1
+ public:
+  using Index_Index1Vector = std::vector<const protoconf::StrcaseConf::Task*>;
+  using Index_Index1Map = std::unordered_map<int64_t, Index_Index1Vector>;
+  // Finds the index: key(HTTPServer@Index1) to value(Index_Index1Vector) hashmap.
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_Index1Map& FindIndex1Map() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_Index1Vector* FindIndex1(int64_t httpserver) const;
+  // Finds the first value of the given key(s).
+  const protoconf::StrcaseConf::Task* FindFirstIndex1(int64_t httpserver) const;
+
+ private:
+  Index_Index1Map index_index_1_map_;
+
+  // Index: Fight1v1@Index2
+ public:
+  using Index_Index2Vector = std::vector<const protoconf::StrcaseConf::Task*>;
+  using Index_Index2Map = std::unordered_map<int64_t, Index_Index2Vector>;
+  // Finds the index: key(Fight1v1@Index2) to value(Index_Index2Vector) hashmap.
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_Index2Map& FindIndex2Map() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_Index2Vector* FindIndex2(int64_t fight_1v1_) const;
+  // Finds the first value of the given key(s).
+  const protoconf::StrcaseConf::Task* FindFirstIndex2(int64_t fight_1v1_) const;
+
+ private:
+  Index_Index2Map index_index_2_map_;
+
+  // Index: SeasonRank@Index3
+ public:
+  using Index_Index3Vector = std::vector<const protoconf::StrcaseConf::Task*>;
+  using Index_Index3Map = std::unordered_map<int64_t, Index_Index3Vector>;
+  // Finds the index: key(SeasonRank@Index3) to value(Index_Index3Vector) hashmap.
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_Index3Map& FindIndex3Map() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_Index3Vector* FindIndex3(int64_t season_rank) const;
+  // Finds the first value of the given key(s).
+  const protoconf::StrcaseConf::Task* FindFirstIndex3(int64_t season_rank) const;
+
+ private:
+  Index_Index3Map index_index_3_map_;
+};
+
 }  // namespace tableau
 
 namespace protoconf {
@@ -315,4 +379,5 @@ using ActivityConfMgr = tableau::ActivityConf;
 using ChapterConfMgr = tableau::ChapterConf;
 using ThemeConfMgr = tableau::ThemeConf;
 using TaskConfMgr = tableau::TaskConf;
+using StrcaseConfMgr = tableau::StrcaseConf;
 }  // namespace protoconf

@@ -895,4 +895,180 @@ namespace Tableau
         public Protoconf.TaskConf.Types.Task? FindFirstActivityExpiry(long expiry, long activityId) =>
             FindActivityExpiry(expiry, activityId)?.FirstOrDefault();
     }
+
+    /// <summary>
+    /// StrcaseConf is a wrapper around protobuf message Protoconf.StrcaseConf.
+    /// </summary>
+    public class StrcaseConf : Messager, IMessagerName
+    {
+        // Index types.
+        // Index: HTTPServer@Index1
+        public class Index_Index1Map : Dictionary<long, List<Protoconf.StrcaseConf.Types.Task>> { }
+
+        private Index_Index1Map _indexIndex1Map = new Index_Index1Map();
+
+        // Index: Fight1v1@Index2
+        public class Index_Index2Map : Dictionary<long, List<Protoconf.StrcaseConf.Types.Task>> { }
+
+        private Index_Index2Map _indexIndex2Map = new Index_Index2Map();
+
+        // Index: SeasonRank@Index3
+        public class Index_Index3Map : Dictionary<long, List<Protoconf.StrcaseConf.Types.Task>> { }
+
+        private Index_Index3Map _indexIndex3Map = new Index_Index3Map();
+
+        private Protoconf.StrcaseConf _data = new();
+
+        /// <summary>
+        /// Name returns the StrcaseConf's message name.
+        /// </summary>
+        public string Name() => Protoconf.StrcaseConf.Descriptor.Name;
+
+        /// <summary>
+        /// Load loads StrcaseConf's content in the given dir, based on format and messager options.
+        /// </summary>
+        public override bool Load(string dir, Format fmt, in Load.MessagerOptions? options = null)
+        {
+            var start = DateTime.Now;
+            try
+            {
+                _data = (Protoconf.StrcaseConf)(
+                    Tableau.Load.LoadMessagerInDir(Protoconf.StrcaseConf.Descriptor, dir, fmt, options)
+                    ?? throw new InvalidOperationException()
+                );
+            }
+            catch (Exception ex)
+            {
+                if (string.IsNullOrEmpty(Util.GetErrMsg()))
+                {
+                    Util.SetErrMsg($"failed to load StrcaseConf: {ex.Message}");
+                }
+                return false;
+            }
+            LoadStats.Duration = DateTime.Now - start;
+            return ProcessAfterLoad();
+        }
+
+        /// <summary>
+        /// Data returns the StrcaseConf's inner message data.
+        /// </summary>
+        public ref readonly Protoconf.StrcaseConf Data() => ref _data;
+
+        /// <summary>
+        /// Message returns the StrcaseConf's inner message data.
+        /// </summary>
+        public override pb::IMessage? Message() => _data;
+
+        /// <summary>
+        /// ProcessAfterLoad runs after this messager is loaded.
+        /// </summary>
+        protected override bool ProcessAfterLoad()
+        {
+            // Index init.
+            _indexIndex1Map.Clear();
+            _indexIndex2Map.Clear();
+            _indexIndex3Map.Clear();
+            foreach (var item1 in _data.TaskMap)
+            {
+                {
+                    // Index: HTTPServer@Index1
+                    var key = item1.Value.HTTPServer;
+                    {
+                        var list = _indexIndex1Map.TryGetValue(key, out var existingList) ?
+                        existingList : _indexIndex1Map[key] = new List<Protoconf.StrcaseConf.Types.Task>();
+                        list.Add(item1.Value);
+                    }
+                }
+                {
+                    // Index: Fight1v1@Index2
+                    var key = item1.Value.Fight1V1;
+                    {
+                        var list = _indexIndex2Map.TryGetValue(key, out var existingList) ?
+                        existingList : _indexIndex2Map[key] = new List<Protoconf.StrcaseConf.Types.Task>();
+                        list.Add(item1.Value);
+                    }
+                }
+                {
+                    // Index: SeasonRank@Index3
+                    var key = item1.Value.SEASONRANK;
+                    {
+                        var list = _indexIndex3Map.TryGetValue(key, out var existingList) ?
+                        existingList : _indexIndex3Map[key] = new List<Protoconf.StrcaseConf.Types.Task>();
+                        list.Add(item1.Value);
+                    }
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Get1 finds value in the 1st-level map.
+        /// It will return null if the key is not found.
+        /// </summary>
+        public Protoconf.StrcaseConf.Types.Task? Get1(long id) =>
+            _data.TaskMap?.TryGetValue(id, out var val) == true ? val : null;
+
+        // Index: HTTPServer@Index1
+
+        /// <summary>
+        /// FindIndex1Map finds the index: key(HTTPServer@Index1) to value(Protoconf.StrcaseConf.Types.Task) map.
+        /// One key may correspond to multiple values, which are represented by a list.
+        /// </summary>
+        public ref readonly Index_Index1Map FindIndex1Map() => ref _indexIndex1Map;
+
+        /// <summary>
+        /// FindIndex1 finds a list of all values of the given key(s).
+        /// </summary>
+        public List<Protoconf.StrcaseConf.Types.Task>? FindIndex1(long httpserver) =>
+            _indexIndex1Map.TryGetValue(httpserver, out var value) ? value : null;
+
+        /// <summary>
+        /// FindFirstIndex1 finds the first value of the given key(s),
+        /// or null if no value found.
+        /// </summary>
+        public Protoconf.StrcaseConf.Types.Task? FindFirstIndex1(long httpserver) =>
+            FindIndex1(httpserver)?.FirstOrDefault();
+
+        // Index: Fight1v1@Index2
+
+        /// <summary>
+        /// FindIndex2Map finds the index: key(Fight1v1@Index2) to value(Protoconf.StrcaseConf.Types.Task) map.
+        /// One key may correspond to multiple values, which are represented by a list.
+        /// </summary>
+        public ref readonly Index_Index2Map FindIndex2Map() => ref _indexIndex2Map;
+
+        /// <summary>
+        /// FindIndex2 finds a list of all values of the given key(s).
+        /// </summary>
+        public List<Protoconf.StrcaseConf.Types.Task>? FindIndex2(long fight1V1) =>
+            _indexIndex2Map.TryGetValue(fight1V1, out var value) ? value : null;
+
+        /// <summary>
+        /// FindFirstIndex2 finds the first value of the given key(s),
+        /// or null if no value found.
+        /// </summary>
+        public Protoconf.StrcaseConf.Types.Task? FindFirstIndex2(long fight1V1) =>
+            FindIndex2(fight1V1)?.FirstOrDefault();
+
+        // Index: SeasonRank@Index3
+
+        /// <summary>
+        /// FindIndex3Map finds the index: key(SeasonRank@Index3) to value(Protoconf.StrcaseConf.Types.Task) map.
+        /// One key may correspond to multiple values, which are represented by a list.
+        /// </summary>
+        public ref readonly Index_Index3Map FindIndex3Map() => ref _indexIndex3Map;
+
+        /// <summary>
+        /// FindIndex3 finds a list of all values of the given key(s).
+        /// </summary>
+        public List<Protoconf.StrcaseConf.Types.Task>? FindIndex3(long seasonRank) =>
+            _indexIndex3Map.TryGetValue(seasonRank, out var value) ? value : null;
+
+        /// <summary>
+        /// FindFirstIndex3 finds the first value of the given key(s),
+        /// or null if no value found.
+        /// </summary>
+        public Protoconf.StrcaseConf.Types.Task? FindFirstIndex3(long seasonRank) =>
+            FindIndex3(seasonRank)?.FirstOrDefault();
+    }
 }

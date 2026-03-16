@@ -270,3 +270,7 @@ func (h *Hub) GetThemeConf() *ThemeConf {
 func (h *Hub) GetTaskConf() *TaskConf {
 	return h.mc.Load().GetTaskConf()
 }
+
+func (h *Hub) GetStrcaseConf() *StrcaseConf {
+	return h.mc.Load().GetStrcaseConf()
+}

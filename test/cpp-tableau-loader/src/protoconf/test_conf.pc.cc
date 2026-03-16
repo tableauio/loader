@@ -592,4 +592,101 @@ const protoconf::TaskConf::Task* TaskConf::FindFirstActivityExpiry(int64_t expir
   return conf->front();
 }
 
+const std::string StrcaseConf::kProtoName = protoconf::StrcaseConf::GetDescriptor()->name();
+
+bool StrcaseConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
+  tableau::util::TimeProfiler profiler;
+  bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
+  bool ok = loaded ? ProcessAfterLoad() : false;
+  stats_.duration = profiler.Elapse();
+  return ok;
+}
+
+bool StrcaseConf::ProcessAfterLoad() {
+  // Index init.
+  index_index_1_map_.clear();
+  index_index_2_map_.clear();
+  index_index_3_map_.clear();
+  for (auto&& item1 : data_.task_map()) {
+    {
+      // Index: HTTPServer@Index1
+      index_index_1_map_[item1.second.httpserver()].push_back(&item1.second);
+    }
+    {
+      // Index: Fight1v1@Index2
+      index_index_2_map_[item1.second.fight_1v1_()].push_back(&item1.second);
+    }
+    {
+      // Index: SeasonRank@Index3
+      index_index_3_map_[item1.second.season_rank()].push_back(&item1.second);
+    }
+  }
+  return true;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::Get(int64_t id) const {
+  auto iter = data_.task_map().find(id);
+  if (iter == data_.task_map().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+// Index: HTTPServer@Index1
+const StrcaseConf::Index_Index1Map& StrcaseConf::FindIndex1Map() const { return index_index_1_map_; }
+
+const StrcaseConf::Index_Index1Vector* StrcaseConf::FindIndex1(int64_t httpserver) const {
+  auto iter = index_index_1_map_.find(httpserver);
+  if (iter == index_index_1_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::FindFirstIndex1(int64_t httpserver) const {
+  auto conf = FindIndex1(httpserver);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+// Index: Fight1v1@Index2
+const StrcaseConf::Index_Index2Map& StrcaseConf::FindIndex2Map() const { return index_index_2_map_; }
+
+const StrcaseConf::Index_Index2Vector* StrcaseConf::FindIndex2(int64_t fight_1v1_) const {
+  auto iter = index_index_2_map_.find(fight_1v1_);
+  if (iter == index_index_2_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::FindFirstIndex2(int64_t fight_1v1_) const {
+  auto conf = FindIndex2(fight_1v1_);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+// Index: SeasonRank@Index3
+const StrcaseConf::Index_Index3Map& StrcaseConf::FindIndex3Map() const { return index_index_3_map_; }
+
+const StrcaseConf::Index_Index3Vector* StrcaseConf::FindIndex3(int64_t season_rank) const {
+  auto iter = index_index_3_map_.find(season_rank);
+  if (iter == index_index_3_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::FindFirstIndex3(int64_t season_rank) const {
+  auto conf = FindIndex3(season_rank);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
 }  // namespace tableau

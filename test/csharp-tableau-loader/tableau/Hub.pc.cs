@@ -33,6 +33,7 @@ namespace Tableau
         public ChapterConf? ChapterConf;
         public ThemeConf? ThemeConf;
         public TaskConf? TaskConf;
+        public StrcaseConf? StrcaseConf;
 
         public MessagerContainer(Dictionary<string, Messager>? messagerMap = null)
         {
@@ -53,6 +54,7 @@ namespace Tableau
             ChapterConf = InternalGet<ChapterConf>(messagerMap);
             ThemeConf = InternalGet<ThemeConf>(messagerMap);
             TaskConf = InternalGet<TaskConf>(messagerMap);
+            StrcaseConf = InternalGet<StrcaseConf>(messagerMap);
         }
 
         /// <summary>
@@ -183,6 +185,8 @@ namespace Tableau
 
         public TaskConf? GetTaskConf() => _messagerContainer.Value?.TaskConf;
 
+        public StrcaseConf? GetStrcaseConf() => _messagerContainer.Value?.StrcaseConf;
+
         /// <summary>
         /// GetLastLoadedTime returns the time when hub's messager container was last set.
         /// </summary>
@@ -237,6 +241,7 @@ namespace Tableau
             Register<ChapterConf>();
             Register<ThemeConf>();
             Register<TaskConf>();
+            Register<StrcaseConf>();
         }
     }
 }

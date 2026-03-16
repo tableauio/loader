@@ -178,6 +178,10 @@ class TaskConf;
 template <>
 const std::shared_ptr<TaskConf> Hub::Get<TaskConf>() const;
 
+class StrcaseConf;
+template <>
+const std::shared_ptr<StrcaseConf> Hub::Get<StrcaseConf>() const;
+
 class MessagerContainer {
   friend class Hub;
 
@@ -207,6 +211,7 @@ class MessagerContainer {
   std::shared_ptr<ChapterConf> chapter_conf_;
   std::shared_ptr<ThemeConf> theme_conf_;
   std::shared_ptr<TaskConf> task_conf_;
+  std::shared_ptr<StrcaseConf> strcase_conf_;
 };
 
 using MessagerGenerator = std::function<std::shared_ptr<Messager>()>;
