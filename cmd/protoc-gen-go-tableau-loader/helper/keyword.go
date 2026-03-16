@@ -62,5 +62,11 @@ func init() {
 		"switch":      true,
 		"type":        true,
 		"var":         true,
+		// "x" is treated as a keyword because the generated Go code uses "x" as the
+		// method receiver name (e.g., `func (x *FooConf) FindIndex1(...)`). If a proto
+		// field named "X" is used as an index key, escapeIdentifier converts it to "x"
+		// (lowerCamelCase), which would shadow the receiver and cause a compile error.
+		// By treating "x" as a keyword, it gets escaped to "x_" to avoid the conflict.
+		"x": true,
 	}
 }

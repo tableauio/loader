@@ -369,6 +369,111 @@ class StrcaseConf final : public Messager {
 
  private:
   Index_Index3Map index_index_3_map_;
+
+  // Index: UserID@Index4
+ public:
+  using Index_Index4Vector = std::vector<const protoconf::StrcaseConf::Task*>;
+  using Index_Index4Map = std::unordered_map<int64_t, Index_Index4Vector>;
+  // Finds the index: key(UserID@Index4) to value(Index_Index4Vector) hashmap.
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_Index4Map& FindIndex4Map() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_Index4Vector* FindIndex4(int64_t userid) const;
+  // Finds the first value of the given key(s).
+  const protoconf::StrcaseConf::Task* FindFirstIndex4(int64_t userid) const;
+
+ private:
+  Index_Index4Map index_index_4_map_;
+
+  // Index: Task@Index5
+ public:
+  using Index_Index5Vector = std::vector<const protoconf::StrcaseConf::Task*>;
+  using Index_Index5Map = std::unordered_map<int64_t, Index_Index5Vector>;
+  // Finds the index: key(Task@Index5) to value(Index_Index5Vector) hashmap.
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_Index5Map& FindIndex5Map() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_Index5Vector* FindIndex5(int64_t task) const;
+  // Finds the first value of the given key(s).
+  const protoconf::StrcaseConf::Task* FindFirstIndex5(int64_t task) const;
+
+ private:
+  Index_Index5Map index_index_5_map_;
+
+  // Index: V2Ray@Index6
+ public:
+  using Index_Index6Vector = std::vector<const protoconf::StrcaseConf::Task*>;
+  using Index_Index6Map = std::unordered_map<int64_t, Index_Index6Vector>;
+  // Finds the index: key(V2Ray@Index6) to value(Index_Index6Vector) hashmap.
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_Index6Map& FindIndex6Map() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_Index6Vector* FindIndex6(int64_t v2ray) const;
+  // Finds the first value of the given key(s).
+  const protoconf::StrcaseConf::Task* FindFirstIndex6(int64_t v2ray) const;
+
+ private:
+  Index_Index6Map index_index_6_map_;
+
+  // Index: X@Index7
+ public:
+  using Index_Index7Vector = std::vector<const protoconf::StrcaseConf::Task*>;
+  using Index_Index7Map = std::unordered_map<int64_t, Index_Index7Vector>;
+  // Finds the index: key(X@Index7) to value(Index_Index7Vector) hashmap.
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_Index7Map& FindIndex7Map() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_Index7Vector* FindIndex7(int64_t x) const;
+  // Finds the first value of the given key(s).
+  const protoconf::StrcaseConf::Task* FindFirstIndex7(int64_t x) const;
+
+ private:
+  Index_Index7Map index_index_7_map_;
+
+  // Index: SomeField@Index8
+ public:
+  using Index_Index8Vector = std::vector<const protoconf::StrcaseConf::Task*>;
+  using Index_Index8Map = std::unordered_map<int64_t, Index_Index8Vector>;
+  // Finds the index: key(SomeField@Index8) to value(Index_Index8Vector) hashmap.
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_Index8Map& FindIndex8Map() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_Index8Vector* FindIndex8(int64_t some__field) const;
+  // Finds the first value of the given key(s).
+  const protoconf::StrcaseConf::Task* FindFirstIndex8(int64_t some__field) const;
+
+ private:
+  Index_Index8Map index_index_8_map_;
+
+  // Index: XCoordinate@Index9
+ public:
+  using Index_Index9Vector = std::vector<const protoconf::StrcaseConf::Task*>;
+  using Index_Index9Map = std::unordered_map<int64_t, Index_Index9Vector>;
+  // Finds the index: key(XCoordinate@Index9) to value(Index_Index9Vector) hashmap.
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_Index9Map& FindIndex9Map() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_Index9Vector* FindIndex9(int64_t xcoordinate) const;
+  // Finds the first value of the given key(s).
+  const protoconf::StrcaseConf::Task* FindFirstIndex9(int64_t xcoordinate) const;
+
+ private:
+  Index_Index9Map index_index_9_map_;
+
+  // Index: Class@Index10
+ public:
+  using Index_Index10Vector = std::vector<const protoconf::StrcaseConf::Task*>;
+  using Index_Index10Map = std::unordered_map<int64_t, Index_Index10Vector>;
+  // Finds the index: key(Class@Index10) to value(Index_Index10Vector) hashmap.
+  // One key may correspond to multiple values, which are represented by a vector.
+  const Index_Index10Map& FindIndex10Map() const;
+  // Finds a vector of all values of the given key(s).
+  const Index_Index10Vector* FindIndex10(int64_t class_) const;
+  // Finds the first value of the given key(s).
+  const protoconf::StrcaseConf::Task* FindFirstIndex10(int64_t class_) const;
+
+ private:
+  Index_Index10Map index_index_10_map_;
 };
 
 }  // namespace tableau

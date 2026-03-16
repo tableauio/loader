@@ -122,6 +122,13 @@ message StrcaseConf {
     index: "HTTPServer@Index1"
     index: "Fight1v1@Index2"
     index: "SeasonRank@Index3"
+    index: "UserID@Index4"
+    index: "Task@Index5"
+    index: "V2Ray@Index6"
+    index: "X@Index7"
+    index: "SomeField@Index8"
+    index: "XCoordinate@Index9"
+    index: "Class@Index10"
   };
 
   map<int64, Task> task_map = 1 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
@@ -130,5 +137,12 @@ message StrcaseConf {
     int64 HTTPServer = 2 [(tableau.field) = { name: "HTTPServer" }];
     int64 fight_1v1_ = 3 [(tableau.field) = { name: "Fight1v1" }];
     int64 SEASON_RANK = 4 [(tableau.field) = { name: "SeasonRank" }];
+    int64 userID = 5 [(tableau.field) = { name: "UserID" }];
+    int64 task = 6 [(tableau.field) = { name: "Task" }];
+    int64 v2Ray = 7 [(tableau.field) = { name: "V2Ray" }];
+    int64 x = 8 [(tableau.field) = { name: "X" }];
+    int64 some__field = 9 [(tableau.field) = { name: "SomeField" }];
+    int64 xCoordinate = 10 [(tableau.field) = { name: "XCoordinate" }];
+    int64 class = 11 [(tableau.field) = { name: "Class" }];
   }
 }
