@@ -72,6 +72,10 @@ func (pfs ProtoFiles) FlatMessagers() []string {
 	return messagers
 }
 
+// SplitShards splits the proto files into the specified number of shards
+// as evenly as possible. If shardNum <= 1, it returns nil indicating no
+// splitting is needed. The extra remainder files are distributed one per
+// shard to the first (len(pfs) % shardNum) shards.
 func (pfs ProtoFiles) SplitShards(shardNum int) []ProtoFiles {
 	if shardNum <= 1 {
 		// no need to split
