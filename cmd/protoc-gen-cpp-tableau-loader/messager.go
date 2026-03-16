@@ -198,9 +198,9 @@ func genCppMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescript
 
 			var container string
 			if depth == 1 {
-				container = "data_." + string(fd.Name()) + "()"
+				container = "data_." + helper.ParseCppFieldName(fd) + "()"
 			} else {
-				container = "conf->" + string(fd.Name()) + "()"
+				container = "conf->" + helper.ParseCppFieldName(fd) + "()"
 				prevKeys := keys[:len(keys)-1]
 				g.P(helper.Indent(1), "const auto* conf = Get(", prevKeys.GenGetArguments(), ");")
 				g.P(helper.Indent(1), "if (conf == nullptr) {")
