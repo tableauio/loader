@@ -3,6 +3,7 @@ package helper
 import (
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/tableau/proto/tableaupb"
@@ -45,13 +46,49 @@ func ParseIndexFieldName(fd protoreflect.FieldDescriptor) string {
 	return ParseCsharpPropertyName(fd)
 }
 
+// Refer: https://github.com/protocolbuffers/protobuf/blob/v3.19.3/src/google/protobuf/compiler/csharp/csharp_helpers.cc#L143
+func underscoresToCamelCase(input string, capNextLetter bool, preservePeriod bool) string {
+	var result strings.Builder
+
+	for i, c := range input {
+		if c >= 'a' && c <= 'z' {
+			if capNextLetter {
+				result.WriteRune(unicode.ToUpper(c))
+			} else {
+				result.WriteRune(c)
+			}
+			capNextLetter = false
+		} else if c >= 'A' && c <= 'Z' {
+			if i == 0 && !capNextLetter {
+				result.WriteRune(unicode.ToLower(c))
+			} else {
+				result.WriteRune(c)
+			}
+			capNextLetter = false
+		} else if c >= '0' && c <= '9' {
+			result.WriteRune(c)
+			capNextLetter = true
+		} else {
+			capNextLetter = true
+			if c == '.' && preservePeriod {
+				result.WriteRune('.')
+			}
+		}
+	}
+
+	if result.Len() == 0 {
+		return "_"
+	}
+	return result.String()
+}
+
 // ParseCsharpPropertyName converts a protobuf field descriptor to the corresponding
 // C# property name, matching the behavior of protoc's C# code generator.
 // When the PascalCase field name collides with its containing type name,
 // "Types", or "Descriptor", a trailing underscore is appended to avoid conflicts.
 // See: protobuf/src/google/protobuf/compiler/csharp/csharp_helpers.cc GetPropertyName()
 func ParseCsharpPropertyName(fd protoreflect.FieldDescriptor) string {
-	propertyName := strcase.ToCamel(string(fd.Name()))
+	propertyName := underscoresToCamelCase(string(fd.Name()), true, false)
 	containingName := string(fd.Parent().(protoreflect.MessageDescriptor).Name())
 	if propertyName == containingName || propertyName == "Types" || propertyName == "Descriptor" {
 		propertyName += "_"
@@ -134,7 +171,7 @@ func ParseCsharpNamespace(fd protoreflect.FileDescriptor) string {
 			return ns
 		}
 	}
-	return strcase.ToCamel(string(fd.Package()))
+	return underscoresToCamelCase(string(fd.Package()), true, true)
 }
 
 // ParseOrderedIndexKeyType converts a FieldDescriptor to its treemap key type.
