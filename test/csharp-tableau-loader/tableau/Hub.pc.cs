@@ -18,10 +18,8 @@ namespace Tableau
     {
         public Dictionary<string, Messager> MessagerMap;
         public DateTime LastLoadedTime;
-        public ActivityConf? ActivityConf;
-        public ChapterConf? ChapterConf;
-        public ThemeConf? ThemeConf;
-        public TaskConf? TaskConf;
+        public HeroConf? HeroConf;
+        public HeroBaseConf? HeroBaseConf;
         public FruitConf? FruitConf;
         public Fruit2Conf? Fruit2Conf;
         public Fruit3Conf? Fruit3Conf;
@@ -31,17 +29,17 @@ namespace Tableau
         public PatchReplaceConf? PatchReplaceConf;
         public PatchMergeConf? PatchMergeConf;
         public RecursivePatchConf? RecursivePatchConf;
-        public HeroConf? HeroConf;
-        public HeroBaseConf? HeroBaseConf;
+        public ActivityConf? ActivityConf;
+        public ChapterConf? ChapterConf;
+        public ThemeConf? ThemeConf;
+        public TaskConf? TaskConf;
 
         public MessagerContainer(Dictionary<string, Messager>? messagerMap = null)
         {
             MessagerMap = messagerMap ?? new Dictionary<string, Messager>();
             LastLoadedTime = DateTime.Now;
-            ActivityConf = InternalGet<ActivityConf>(messagerMap);
-            ChapterConf = InternalGet<ChapterConf>(messagerMap);
-            ThemeConf = InternalGet<ThemeConf>(messagerMap);
-            TaskConf = InternalGet<TaskConf>(messagerMap);
+            HeroConf = InternalGet<HeroConf>(messagerMap);
+            HeroBaseConf = InternalGet<HeroBaseConf>(messagerMap);
             FruitConf = InternalGet<FruitConf>(messagerMap);
             Fruit2Conf = InternalGet<Fruit2Conf>(messagerMap);
             Fruit3Conf = InternalGet<Fruit3Conf>(messagerMap);
@@ -51,8 +49,10 @@ namespace Tableau
             PatchReplaceConf = InternalGet<PatchReplaceConf>(messagerMap);
             PatchMergeConf = InternalGet<PatchMergeConf>(messagerMap);
             RecursivePatchConf = InternalGet<RecursivePatchConf>(messagerMap);
-            HeroConf = InternalGet<HeroConf>(messagerMap);
-            HeroBaseConf = InternalGet<HeroBaseConf>(messagerMap);
+            ActivityConf = InternalGet<ActivityConf>(messagerMap);
+            ChapterConf = InternalGet<ChapterConf>(messagerMap);
+            ThemeConf = InternalGet<ThemeConf>(messagerMap);
+            TaskConf = InternalGet<TaskConf>(messagerMap);
         }
 
         /// <summary>
@@ -153,13 +153,9 @@ namespace Tableau
         /// </summary>
         public T? Get<T>() where T : Messager, IMessagerName, new() => _messagerContainer.Value?.Get<T>();
 
-        public ActivityConf? GetActivityConf() => _messagerContainer.Value?.ActivityConf;
+        public HeroConf? GetHeroConf() => _messagerContainer.Value?.HeroConf;
 
-        public ChapterConf? GetChapterConf() => _messagerContainer.Value?.ChapterConf;
-
-        public ThemeConf? GetThemeConf() => _messagerContainer.Value?.ThemeConf;
-
-        public TaskConf? GetTaskConf() => _messagerContainer.Value?.TaskConf;
+        public HeroBaseConf? GetHeroBaseConf() => _messagerContainer.Value?.HeroBaseConf;
 
         public FruitConf? GetFruitConf() => _messagerContainer.Value?.FruitConf;
 
@@ -179,9 +175,13 @@ namespace Tableau
 
         public RecursivePatchConf? GetRecursivePatchConf() => _messagerContainer.Value?.RecursivePatchConf;
 
-        public HeroConf? GetHeroConf() => _messagerContainer.Value?.HeroConf;
+        public ActivityConf? GetActivityConf() => _messagerContainer.Value?.ActivityConf;
 
-        public HeroBaseConf? GetHeroBaseConf() => _messagerContainer.Value?.HeroBaseConf;
+        public ChapterConf? GetChapterConf() => _messagerContainer.Value?.ChapterConf;
+
+        public ThemeConf? GetThemeConf() => _messagerContainer.Value?.ThemeConf;
+
+        public TaskConf? GetTaskConf() => _messagerContainer.Value?.TaskConf;
 
         /// <summary>
         /// GetLastLoadedTime returns the time when hub's messager container was last set.
@@ -222,10 +222,8 @@ namespace Tableau
         /// </summary>
         public static void Init()
         {
-            Register<ActivityConf>();
-            Register<ChapterConf>();
-            Register<ThemeConf>();
-            Register<TaskConf>();
+            Register<HeroConf>();
+            Register<HeroBaseConf>();
             Register<FruitConf>();
             Register<Fruit2Conf>();
             Register<Fruit3Conf>();
@@ -235,8 +233,10 @@ namespace Tableau
             Register<PatchReplaceConf>();
             Register<PatchMergeConf>();
             Register<RecursivePatchConf>();
-            Register<HeroConf>();
-            Register<HeroBaseConf>();
+            Register<ActivityConf>();
+            Register<ChapterConf>();
+            Register<ThemeConf>();
+            Register<TaskConf>();
         }
     }
 }

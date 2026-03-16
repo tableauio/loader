@@ -5,6 +5,7 @@ import (
 
 	"github.com/tableauio/loader/cmd/protoc-gen-csharp-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/extensions"
+	"github.com/tableauio/loader/internal/xproto"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
@@ -15,7 +16,7 @@ func generateHub(gen *protogen.Plugin) {
 	filename := "Hub." + extensions.PC + ".cs"
 	g := gen.NewGeneratedFile(filename, "")
 	helper.GenerateFileHeader(gen, nil, g, version)
-	if err := tpl.Lookup(filename+".tpl").Execute(g, messagers); err != nil {
+	if err := tpl.Lookup(filename+".tpl").Execute(g, xproto.ParseProtoFiles(gen).FlatMessagers()); err != nil {
 		panic(err)
 	}
 }

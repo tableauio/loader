@@ -10,13 +10,13 @@
 
 namespace tableau {
 template <>
-const std::shared_ptr<PatchMergeConf> Hub::Get<PatchMergeConf>() const {
-  return GetMessagerContainerWithProvider()->patch_merge_conf_;
+const std::shared_ptr<PatchReplaceConf> Hub::Get<PatchReplaceConf>() const {
+  return GetMessagerContainerWithProvider()->patch_replace_conf_;
 }
 
 template <>
-const std::shared_ptr<PatchReplaceConf> Hub::Get<PatchReplaceConf>() const {
-  return GetMessagerContainerWithProvider()->patch_replace_conf_;
+const std::shared_ptr<PatchMergeConf> Hub::Get<PatchMergeConf>() const {
+  return GetMessagerContainerWithProvider()->patch_merge_conf_;
 }
 
 template <>
@@ -35,32 +35,32 @@ const std::shared_ptr<ChapterConf> Hub::Get<ChapterConf>() const {
 }
 
 template <>
-const std::shared_ptr<TaskConf> Hub::Get<TaskConf>() const {
-  return GetMessagerContainerWithProvider()->task_conf_;
-}
-
-template <>
 const std::shared_ptr<ThemeConf> Hub::Get<ThemeConf>() const {
   return GetMessagerContainerWithProvider()->theme_conf_;
 }
 
+template <>
+const std::shared_ptr<TaskConf> Hub::Get<TaskConf>() const {
+  return GetMessagerContainerWithProvider()->task_conf_;
+}
+
 void MessagerContainer::InitShard1() {
-  patch_merge_conf_ = std::dynamic_pointer_cast<PatchMergeConf>(GetMessager(PatchMergeConf::Name()));
   patch_replace_conf_ = std::dynamic_pointer_cast<PatchReplaceConf>(GetMessager(PatchReplaceConf::Name()));
+  patch_merge_conf_ = std::dynamic_pointer_cast<PatchMergeConf>(GetMessager(PatchMergeConf::Name()));
   recursive_patch_conf_ = std::dynamic_pointer_cast<RecursivePatchConf>(GetMessager(RecursivePatchConf::Name()));
   activity_conf_ = std::dynamic_pointer_cast<ActivityConf>(GetMessager(ActivityConf::Name()));
   chapter_conf_ = std::dynamic_pointer_cast<ChapterConf>(GetMessager(ChapterConf::Name()));
-  task_conf_ = std::dynamic_pointer_cast<TaskConf>(GetMessager(TaskConf::Name()));
   theme_conf_ = std::dynamic_pointer_cast<ThemeConf>(GetMessager(ThemeConf::Name()));
+  task_conf_ = std::dynamic_pointer_cast<TaskConf>(GetMessager(TaskConf::Name()));
 }
 
 void Registry::InitShard1() {
-  Register<PatchMergeConf>();
   Register<PatchReplaceConf>();
+  Register<PatchMergeConf>();
   Register<RecursivePatchConf>();
   Register<ActivityConf>();
   Register<ChapterConf>();
-  Register<TaskConf>();
   Register<ThemeConf>();
+  Register<TaskConf>();
 }
 }  // namespace tableau
