@@ -1,6 +1,13 @@
 @echo off
 setlocal
 
+REM Initialize build environment (installs choco/ninja/MSVC if needed, sets up PATH)
+call "%~dp0prepare.bat"
+if errorlevel 1 (
+    echo [ERROR] prepare.bat failed. Aborting.
+    exit /b 1
+)
+
 for /f "delims=" %%i in ('git rev-parse --show-toplevel') do set repoRoot=%%i
 cd /d "%repoRoot%"
 

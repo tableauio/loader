@@ -10,18 +10,23 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 - Install: [CMake 3.22](https://github.com/Kitware/CMake/releases/tag/v3.31.8) or above
 - Init protobuf:
   - macOS or Linux: `bash init.sh`
-  - Windows: 
-    - Install [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/)
-    - Build tools require specific environment variables to function. The easiest way to run it is through a specialized terminal: 
-      - **Developer Command Prompt**: Open the Start menu, search for **Developer Command Prompt for VS 2022**, and launch it.
-      - **Developer PowerShell**: Search for **Developer PowerShell for VS 2022** and launch it.
-      - **Verify Installation**: Type `cl /?` and `nmake /?` in the command prompt. If installed correctly, it will display the version and usage options. 
-    - Change dir to **loader** repo
-    - Run: `.\init.bat`
+  - Windows:
+    1. Change dir to **loader** repo
+    2. Run `prepare.bat` to automatically install all build dependencies ([Chocolatey](https://chocolatey.org/), [Ninja](https://ninja-build.org/), and MSVC build tools) and configure `PATH`:
+       ```bat
+       .\prepare.bat
+       ```
+    3. Run `init.bat` to initialize submodules and build protobuf:
+       ```bat
+       .\init.bat
+       ```
+    > **Note:** `prepare.bat` only needs to be run once. It installs missing tools automatically — no manual Visual Studio or Ninja installation required.
 
 ### References
 
-- [NMAKE Reference](https://learn.microsoft.com/en-us/cpp/build/reference/nmake-reference?view=msvc-170)
+- [CMake 3.22](https://github.com/Kitware/CMake/releases/tag/v3.31.8)
+- [Ninja](https://ninja-build.org/)
+- [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/)
 - [Use the Microsoft C++ Build Tools from the command line](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170)
 
 ## C++
@@ -39,11 +44,14 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 ### Dev at Windows
 
+> **Important:** CMake with Ninja requires MSVC environment variables (`cl.exe`, `INCLUDE`, `LIB`, etc.) to be active. Run `.\prepare.bat` from the **loader** root in the **same cmd session** before switching to the test directory. Opening a new terminal window will lose these variables.
+
+- Initialize MSVC environment (from loader root): `.\prepare.bat`
 - Change dir: `cd test\cpp-tableau-loader`, or change directory with Drive, e.g.: `cd /D D:\GitHub\loader\test\cpp-tableau-loader`
 - Generate protoconf: `.\gen.bat`
 - CMake:
-  - C++17: `cmake -S . -B build -G "NMake Makefiles"`
-  - C++20: `cmake -S . -B build -G "NMake Makefiles" -DCMAKE_CXX_STANDARD=20`
+  - C++17: `cmake -S . -B build -G "Ninja"`
+  - C++20: `cmake -S . -B build -G "Ninja" -DCMAKE_CXX_STANDARD=20`
 - Build: `cmake --build build --parallel`
 - Run: `.\bin\loader.exe`
 
