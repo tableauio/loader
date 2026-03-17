@@ -88,7 +88,7 @@ bool ItemConf::ProcessAfterLoad() {
     }
     {
       // Index: UseEffectType@UseEffectType
-      index_use_effect_type_map_[item1.second.use_effect().type()].push_back(&item1.second);
+      index_use_effect_type_map_[item1.second.use_effect().account_level().type_map()].push_back(&item1.second);
     }
   }
   // Index(sort): Param<ID>@ItemInfo
@@ -105,7 +105,7 @@ bool ItemConf::ProcessAfterLoad() {
     if (a->type() != b->type()) {
       return a->type() < b->type();
     }
-    return a->use_effect().type() < b->use_effect().type();
+    return a->use_effect().account_level().type_map() < b->use_effect().account_level().type_map();
   };
   for (auto&& item : index_award_item_map_) {
     std::sort(item.second.begin(), item.second.end(), index_award_item_map_sorter);
@@ -327,16 +327,16 @@ const protoconf::ItemConf::Item* ItemConf::FindFirstItemPathFriendID(uint32_t id
 // Index: UseEffectType@UseEffectType
 const ItemConf::Index_UseEffectTypeMap& ItemConf::FindUseEffectTypeMap() const { return index_use_effect_type_map_; }
 
-const ItemConf::Index_UseEffectTypeVector* ItemConf::FindUseEffectType(protoconf::UseEffect::Type type) const {
-  auto iter = index_use_effect_type_map_.find(type);
+const ItemConf::Index_UseEffectTypeVector* ItemConf::FindUseEffectType(protoconf::UseEffect::AccountLevel::TypeMapEntry type_map) const {
+  auto iter = index_use_effect_type_map_.find(type_map);
   if (iter == index_use_effect_type_map_.end()) {
     return nullptr;
   }
   return &iter->second;
 }
 
-const protoconf::ItemConf::Item* ItemConf::FindFirstUseEffectType(protoconf::UseEffect::Type type) const {
-  auto conf = FindUseEffectType(type);
+const protoconf::ItemConf::Item* ItemConf::FindFirstUseEffectType(protoconf::UseEffect::AccountLevel::TypeMapEntry type_map) const {
+  auto conf = FindUseEffectType(type_map);
   if (conf == nullptr || conf->empty()) {
     return nullptr;
   }

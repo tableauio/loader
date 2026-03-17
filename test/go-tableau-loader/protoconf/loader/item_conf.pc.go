@@ -60,7 +60,7 @@ type ItemConf_Index_ItemPathNameMap = map[string][]*protoconf.ItemConf_Item
 type ItemConf_Index_ItemPathFriendIDMap = map[uint32][]*protoconf.ItemConf_Item
 
 // Index: UseEffectType@UseEffectType
-type ItemConf_Index_UseEffectTypeMap = map[protoconf.UseEffect_Type][]*protoconf.ItemConf_Item
+type ItemConf_Index_UseEffectTypeMap = map[protoconf.UseEffect_AccountLevel_TypeMapEntry][]*protoconf.ItemConf_Item
 
 // OrderedIndex types.
 // OrderedIndex: ExtType@ExtType
@@ -237,7 +237,7 @@ func (x *ItemConf) processAfterLoad() error {
 		}
 		{
 			// Index: UseEffectType@UseEffectType
-			key := v1.GetUseEffect().GetType()
+			key := v1.GetUseEffect().GetAccountLevel().GetTypeMap()
 			x.indexUseEffectTypeMap[key] = append(x.indexUseEffectTypeMap[key], v1)
 		}
 	}
@@ -256,7 +256,7 @@ func (x *ItemConf) processAfterLoad() error {
 			if itemList[i].GetType() != itemList[j].GetType() {
 				return itemList[i].GetType() < itemList[j].GetType()
 			}
-			return itemList[i].GetUseEffect().GetType() < itemList[j].GetUseEffect().GetType()
+			return itemList[i].GetUseEffect().GetAccountLevel().GetTypeMap() < itemList[j].GetUseEffect().GetAccountLevel().GetTypeMap()
 		}
 	}
 	for _, itemList := range x.indexAwardItemMap {
@@ -530,14 +530,14 @@ func (x *ItemConf) FindUseEffectTypeMap() ItemConf_Index_UseEffectTypeMap {
 }
 
 // FindUseEffectType finds a slice of all values of the given key(s).
-func (x *ItemConf) FindUseEffectType(type_ protoconf.UseEffect_Type) []*protoconf.ItemConf_Item {
-	return x.indexUseEffectTypeMap[type_]
+func (x *ItemConf) FindUseEffectType(typeMap protoconf.UseEffect_AccountLevel_TypeMapEntry) []*protoconf.ItemConf_Item {
+	return x.indexUseEffectTypeMap[typeMap]
 }
 
 // FindFirstUseEffectType finds the first value of the given key(s),
 // or nil if no value found.
-func (x *ItemConf) FindFirstUseEffectType(type_ protoconf.UseEffect_Type) *protoconf.ItemConf_Item {
-	val := x.FindUseEffectType(type_)
+func (x *ItemConf) FindFirstUseEffectType(typeMap protoconf.UseEffect_AccountLevel_TypeMapEntry) *protoconf.ItemConf_Item {
+	val := x.FindUseEffectType(typeMap)
 	if len(val) > 0 {
 		return val[0]
 	}
