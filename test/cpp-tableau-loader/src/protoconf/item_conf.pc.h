@@ -211,14 +211,14 @@ class ItemConf final : public Messager {
   // Index: UseEffectType@UseEffectType
  public:
   using Index_UseEffectTypeVector = std::vector<const protoconf::ItemConf::Item*>;
-  using Index_UseEffectTypeMap = std::unordered_map<protoconf::UseEffect::AccountLevel::TypeMapEntry, Index_UseEffectTypeVector>;
+  using Index_UseEffectTypeMap = std::unordered_map<protoconf::UseEffect::Type, Index_UseEffectTypeVector>;
   // Finds the index: key(UseEffectType@UseEffectType) to value(Index_UseEffectTypeVector) hashmap.
   // One key may correspond to multiple values, which are represented by a vector.
   const Index_UseEffectTypeMap& FindUseEffectTypeMap() const;
   // Finds a vector of all values of the given key(s).
-  const Index_UseEffectTypeVector* FindUseEffectType(protoconf::UseEffect::AccountLevel::TypeMapEntry type_map) const;
+  const Index_UseEffectTypeVector* FindUseEffectType(protoconf::UseEffect::Type type) const;
   // Finds the first value of the given key(s).
-  const protoconf::ItemConf::Item* FindFirstUseEffectType(protoconf::UseEffect::AccountLevel::TypeMapEntry type_map) const;
+  const protoconf::ItemConf::Item* FindFirstUseEffectType(protoconf::UseEffect::Type type) const;
 
  private:
   Index_UseEffectTypeMap index_use_effect_type_map_;

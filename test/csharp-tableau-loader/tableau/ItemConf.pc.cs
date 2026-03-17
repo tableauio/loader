@@ -109,7 +109,7 @@ namespace Tableau
         private Index_ItemPathFriendIDMap _indexItemPathFriendIdMap = new Index_ItemPathFriendIDMap();
 
         // Index: UseEffectType@UseEffectType
-        public class Index_UseEffectTypeMap : Dictionary<Protoconf.UseEffect.Types.AccountLevel.Types.TypeMapEntry, List<Protoconf.ItemConf.Types.Item>> { }
+        public class Index_UseEffectTypeMap : Dictionary<Protoconf.UseEffect.Types.Type, List<Protoconf.ItemConf.Types.Item>> { }
 
         private Index_UseEffectTypeMap _indexUseEffectTypeMap = new Index_UseEffectTypeMap();
 
@@ -300,7 +300,7 @@ namespace Tableau
                 }
                 {
                     // Index: UseEffectType@UseEffectType
-                    var key = item1.Value.UseEffect?.AccountLevel?.TypeMap ?? null;
+                    var key = item1.Value.UseEffect?.Type ?? 0;
                     {
                         var list = _indexUseEffectTypeMap.TryGetValue(key, out var existingList) ?
                         existingList : _indexUseEffectTypeMap[key] = new List<Protoconf.ItemConf.Types.Item>();
@@ -317,7 +317,7 @@ namespace Tableau
             }
             // Index(sort): (ID,Name)<Type,UseEffectType>@AwardItem
             Comparison<Protoconf.ItemConf.Types.Item> indexAwardItemMapComparison = (a, b) =>
-                (a.Type, a.UseEffect?.AccountLevel?.TypeMap ?? null).CompareTo((b.Type, b.UseEffect?.AccountLevel?.TypeMap ?? null));
+                (a.Type, a.UseEffect?.Type ?? 0).CompareTo((b.Type, b.UseEffect?.Type ?? 0));
             foreach (var itemList in _indexAwardItemMap.Values)
             {
                 itemList.Sort(indexAwardItemMapComparison);
@@ -578,15 +578,15 @@ namespace Tableau
         /// <summary>
         /// FindUseEffectType finds a list of all values of the given key(s).
         /// </summary>
-        public List<Protoconf.ItemConf.Types.Item>? FindUseEffectType(Protoconf.UseEffect.Types.AccountLevel.Types.TypeMapEntry typeMap) =>
-            _indexUseEffectTypeMap.TryGetValue(typeMap, out var value) ? value : null;
+        public List<Protoconf.ItemConf.Types.Item>? FindUseEffectType(Protoconf.UseEffect.Types.Type type) =>
+            _indexUseEffectTypeMap.TryGetValue(type, out var value) ? value : null;
 
         /// <summary>
         /// FindFirstUseEffectType finds the first value of the given key(s),
         /// or null if no value found.
         /// </summary>
-        public Protoconf.ItemConf.Types.Item? FindFirstUseEffectType(Protoconf.UseEffect.Types.AccountLevel.Types.TypeMapEntry typeMap) =>
-            FindUseEffectType(typeMap)?.FirstOrDefault();
+        public Protoconf.ItemConf.Types.Item? FindFirstUseEffectType(Protoconf.UseEffect.Types.Type type) =>
+            FindUseEffectType(type)?.FirstOrDefault();
 
         // OrderedIndex: ExtType@ExtType
 
