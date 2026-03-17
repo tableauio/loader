@@ -62,7 +62,7 @@ func (x *Generator) mapValueType(index *index.LevelIndex) string {
 }
 
 func (x *Generator) fieldGetter(fd protoreflect.FieldDescriptor) string {
-	return fmt.Sprintf(".%s()", helper.ParseIndexFieldName(fd))
+	return fmt.Sprintf(".%s()", helper.ParseCppFieldName(fd))
 }
 
 func (x *Generator) parseKeyFieldNameAndSuffix(field *index.LevelField) (string, string) {

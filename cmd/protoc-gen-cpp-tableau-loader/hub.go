@@ -7,6 +7,7 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/extensions"
+	"github.com/tableauio/loader/internal/xproto"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
@@ -16,7 +17,7 @@ var tpl = template.Must(template.New("").Funcs(template.FuncMap{
 
 // generateHub generates related hub files.
 func generateHub(gen *protogen.Plugin) {
-	protofiles := helper.ParseProtoFiles(gen)
+	protofiles := xproto.ParseProtoFiles(gen)
 	// detect real shard num
 	realShardNum := min(*shards, len(protofiles))
 	if realShardNum <= 1 {
@@ -28,7 +29,7 @@ func generateHub(gen *protogen.Plugin) {
 	}
 	type Param struct {
 		Shards     []int
-		Protofiles helper.ProtoFiles
+		Protofiles xproto.ProtoFiles
 	}
 	params := &Param{Shards: shards, Protofiles: protofiles}
 	// generate hub hpp
@@ -48,10 +49,10 @@ func generateHub(gen *protogen.Plugin) {
 		panic(err)
 	}
 	// generate shards
-	for i, shard := range splitShards(protofiles, realShardNum) {
+	for i, shard := range protofiles.SplitShards(realShardNum) {
 		type Param struct {
 			Shard      int
-			Protofiles helper.ProtoFiles
+			Protofiles xproto.ProtoFiles
 		}
 		params := &Param{Shard: i, Protofiles: shard}
 		cppTplname := "hub_shard" + "." + extensions.PC + ".cc"
@@ -62,26 +63,5 @@ func generateHub(gen *protogen.Plugin) {
 		if err := tpl.Lookup(cppTplname+".tpl").Execute(g, params); err != nil {
 			panic(err)
 		}
-	}
-}
-
-func splitShards(protofiles helper.ProtoFiles, shardNum int) []helper.ProtoFiles {
-	if shardNum <= 1 {
-		// no need to split
-		return nil
-	} else {
-		cursor := 0
-		shards := []helper.ProtoFiles{}
-		for i := 0; i < shardNum; i++ {
-			shardSize := len(protofiles) / shardNum
-			if i < len(protofiles)%shardNum {
-				shardSize++
-			}
-			begin := cursor
-			end := cursor + shardSize
-			shards = append(shards, protofiles[begin:end])
-			cursor = end
-		}
-		return shards
 	}
 }

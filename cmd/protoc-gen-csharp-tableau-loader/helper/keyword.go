@@ -9,6 +9,15 @@ import (
 
 var csharpKeywords map[string]bool
 
+// escapeIdentifier converts a raw string into a valid C# lowerCamelCase identifier.
+//
+// Processing steps:
+//  1. Strip invalid runes — only letters, digits, and underscores are kept.
+//  2. Convert to lowerCamelCase via strcase.ToLowerCamel.
+//  3. Prefix with "_" if the result starts with a digit (invalid in C#).
+//  4. Append "_" if the result collides with a C# reserved keyword.
+//
+// Returns an empty string if no valid runes remain after filtering.
 func escapeIdentifier(str string) string {
 	// Filter invalid runes
 	var result strings.Builder
@@ -31,9 +40,10 @@ func escapeIdentifier(str string) string {
 	return str
 }
 
-// Ref:
+// csharpKeywords is the set of C# reserved keywords used by escapeIdentifier
+// to detect and escape naming conflicts.
 //
-//	https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords
+// Ref: https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords
 func init() {
 	csharpKeywords = map[string]bool{
 		"abstract":   true,

@@ -118,13 +118,17 @@ const U* Hub::GetOrderedMap(Args... args) const {
   return msger ? msger->GetOrderedMap(args...) : nullptr;
 }
 
+class HeroConf;
+template <>
+const std::shared_ptr<HeroConf> Hub::Get<HeroConf>() const;
+
 class HeroBaseConf;
 template <>
 const std::shared_ptr<HeroBaseConf> Hub::Get<HeroBaseConf>() const;
 
-class HeroConf;
+class FruitConf;
 template <>
-const std::shared_ptr<HeroConf> Hub::Get<HeroConf>() const;
+const std::shared_ptr<FruitConf> Hub::Get<FruitConf>() const;
 
 class Fruit2Conf;
 template <>
@@ -142,21 +146,17 @@ class Fruit5Conf;
 template <>
 const std::shared_ptr<Fruit5Conf> Hub::Get<Fruit5Conf>() const;
 
-class FruitConf;
-template <>
-const std::shared_ptr<FruitConf> Hub::Get<FruitConf>() const;
-
 class ItemConf;
 template <>
 const std::shared_ptr<ItemConf> Hub::Get<ItemConf>() const;
 
-class PatchMergeConf;
-template <>
-const std::shared_ptr<PatchMergeConf> Hub::Get<PatchMergeConf>() const;
-
 class PatchReplaceConf;
 template <>
 const std::shared_ptr<PatchReplaceConf> Hub::Get<PatchReplaceConf>() const;
+
+class PatchMergeConf;
+template <>
+const std::shared_ptr<PatchMergeConf> Hub::Get<PatchMergeConf>() const;
 
 class RecursivePatchConf;
 template <>
@@ -170,13 +170,17 @@ class ChapterConf;
 template <>
 const std::shared_ptr<ChapterConf> Hub::Get<ChapterConf>() const;
 
+class ThemeConf;
+template <>
+const std::shared_ptr<ThemeConf> Hub::Get<ThemeConf>() const;
+
 class TaskConf;
 template <>
 const std::shared_ptr<TaskConf> Hub::Get<TaskConf>() const;
 
-class ThemeConf;
+class StrcaseConf;
 template <>
-const std::shared_ptr<ThemeConf> Hub::Get<ThemeConf>() const;
+const std::shared_ptr<StrcaseConf> Hub::Get<StrcaseConf>() const;
 
 class MessagerContainer {
   friend class Hub;
@@ -192,21 +196,22 @@ class MessagerContainer {
  private:
   std::shared_ptr<MessagerMap> msger_map_;
   std::time_t last_loaded_time_;
-  std::shared_ptr<HeroBaseConf> hero_base_conf_;
   std::shared_ptr<HeroConf> hero_conf_;
+  std::shared_ptr<HeroBaseConf> hero_base_conf_;
+  std::shared_ptr<FruitConf> fruit_conf_;
   std::shared_ptr<Fruit2Conf> fruit_2_conf_;
   std::shared_ptr<Fruit3Conf> fruit_3_conf_;
   std::shared_ptr<Fruit4Conf> fruit_4_conf_;
   std::shared_ptr<Fruit5Conf> fruit_5_conf_;
-  std::shared_ptr<FruitConf> fruit_conf_;
   std::shared_ptr<ItemConf> item_conf_;
-  std::shared_ptr<PatchMergeConf> patch_merge_conf_;
   std::shared_ptr<PatchReplaceConf> patch_replace_conf_;
+  std::shared_ptr<PatchMergeConf> patch_merge_conf_;
   std::shared_ptr<RecursivePatchConf> recursive_patch_conf_;
   std::shared_ptr<ActivityConf> activity_conf_;
   std::shared_ptr<ChapterConf> chapter_conf_;
-  std::shared_ptr<TaskConf> task_conf_;
   std::shared_ptr<ThemeConf> theme_conf_;
+  std::shared_ptr<TaskConf> task_conf_;
+  std::shared_ptr<StrcaseConf> strcase_conf_;
 };
 
 using MessagerGenerator = std::function<std::shared_ptr<Messager>()>;

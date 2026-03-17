@@ -40,6 +40,10 @@ func protocVersion(gen *protogen.Plugin) string {
 	return fmt.Sprintf("v%d.%d.%d%s", v.GetMajor(), v.GetMinor(), v.GetPatch(), suffix)
 }
 
+func ParseCppFieldName(fd protoreflect.FieldDescriptor) string {
+	return escapeIdentifier(string(fd.Name()))
+}
+
 func ParseMapFieldName(fd protoreflect.FieldDescriptor) string {
 	opts := fd.Options().(*descriptorpb.FieldOptions)
 	fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
@@ -51,17 +55,13 @@ func ParseMapFieldName(fd protoreflect.FieldDescriptor) string {
 	return escapeIdentifier(name)
 }
 
-func ParseIndexFieldName(fd protoreflect.FieldDescriptor) string {
-	return escapeIdentifier(string(fd.Name()))
-}
-
 func ParseIndexFieldNameAsFuncParam(fd protoreflect.FieldDescriptor) string {
 	if fd.IsList() {
 		opts := fd.Options().(*descriptorpb.FieldOptions)
 		fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
 		return escapeIdentifier(strcase.ToSnake(fdOpts.GetName()))
 	}
-	return ParseIndexFieldName(fd)
+	return ParseCppFieldName(fd)
 }
 
 // ParseCppType converts a FieldDescriptor to C++ type string.

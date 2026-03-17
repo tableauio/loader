@@ -116,7 +116,7 @@ func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth
 				prevContainer = "data_"
 				prevTmpOrderedMapName = "ordered_map_"
 			}
-			x.g.P(helper.Indent(depth), "for (auto&& ", itemName, " : ", prevContainer, ".", string(fd.Name()), "()) {")
+			x.g.P(helper.Indent(depth), "for (auto&& ", itemName, " : ", prevContainer, ".", helper.ParseCppFieldName(fd), "()) {")
 			nextMapFD := getNextLevelMapFD(fd.MapValue())
 			if nextMapFD != nil {
 				nextOrderedMap := x.mapType(nextMapFD)

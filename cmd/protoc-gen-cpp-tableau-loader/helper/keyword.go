@@ -3,8 +3,6 @@ package helper
 import (
 	"strings"
 	"unicode"
-
-	"github.com/iancoleman/strcase"
 )
 
 var cppKeywords map[string]bool
@@ -18,8 +16,8 @@ func escapeIdentifier(str string) string {
 		}
 	}
 	str = result.String()
-	// To snake case
-	str = strcase.ToSnake(str)
+	// To lower case
+	str = strings.ToLower(str)
 	// Cpp variables must not start with digits
 	if len(str) != 0 && unicode.IsDigit(rune(str[0])) {
 		str = "_" + str

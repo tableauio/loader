@@ -592,4 +592,269 @@ const protoconf::TaskConf::Task* TaskConf::FindFirstActivityExpiry(int64_t expir
   return conf->front();
 }
 
+const std::string StrcaseConf::kProtoName = protoconf::StrcaseConf::GetDescriptor()->name();
+
+bool StrcaseConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
+  tableau::util::TimeProfiler profiler;
+  bool loaded = LoadMessagerInDir(data_, dir, fmt, options);
+  bool ok = loaded ? ProcessAfterLoad() : false;
+  stats_.duration = profiler.Elapse();
+  return ok;
+}
+
+bool StrcaseConf::ProcessAfterLoad() {
+  // Index init.
+  index_index_1_map_.clear();
+  index_index_2_map_.clear();
+  index_index_3_map_.clear();
+  index_index_4_map_.clear();
+  index_index_5_map_.clear();
+  index_index_6_map_.clear();
+  index_index_7_map_.clear();
+  index_index_8_map_.clear();
+  index_index_9_map_.clear();
+  index_index_10_map_.clear();
+  for (auto&& item1 : data_.task_map()) {
+    {
+      // Index: HTTPServer@Index1
+      index_index_1_map_[item1.second.httpserver()].push_back(&item1.second);
+    }
+    {
+      // Index: Fight1v1@Index2
+      index_index_2_map_[item1.second.fight_1v1_()].push_back(&item1.second);
+    }
+    {
+      // Index: SeasonRank@Index3
+      index_index_3_map_[item1.second.season_rank()].push_back(&item1.second);
+    }
+    {
+      // Index: UserID@Index4
+      index_index_4_map_[item1.second.userid()].push_back(&item1.second);
+    }
+    {
+      // Index: Task@Index5
+      index_index_5_map_[item1.second.task()].push_back(&item1.second);
+    }
+    {
+      // Index: V2Ray@Index6
+      index_index_6_map_[item1.second.v2ray()].push_back(&item1.second);
+    }
+    {
+      // Index: X@Index7
+      index_index_7_map_[item1.second.x()].push_back(&item1.second);
+    }
+    {
+      // Index: SomeField@Index8
+      index_index_8_map_[item1.second.some__field()].push_back(&item1.second);
+    }
+    {
+      // Index: XCoordinate@Index9
+      index_index_9_map_[item1.second.xcoordinate()].push_back(&item1.second);
+    }
+    {
+      // Index: Class@Index10
+      index_index_10_map_[item1.second.class_()].push_back(&item1.second);
+    }
+  }
+  return true;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::Get(int64_t id) const {
+  auto iter = data_.task_map().find(id);
+  if (iter == data_.task_map().end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+// Index: HTTPServer@Index1
+const StrcaseConf::Index_Index1Map& StrcaseConf::FindIndex1Map() const { return index_index_1_map_; }
+
+const StrcaseConf::Index_Index1Vector* StrcaseConf::FindIndex1(int64_t httpserver) const {
+  auto iter = index_index_1_map_.find(httpserver);
+  if (iter == index_index_1_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::FindFirstIndex1(int64_t httpserver) const {
+  auto conf = FindIndex1(httpserver);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+// Index: Fight1v1@Index2
+const StrcaseConf::Index_Index2Map& StrcaseConf::FindIndex2Map() const { return index_index_2_map_; }
+
+const StrcaseConf::Index_Index2Vector* StrcaseConf::FindIndex2(int64_t fight_1v1_) const {
+  auto iter = index_index_2_map_.find(fight_1v1_);
+  if (iter == index_index_2_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::FindFirstIndex2(int64_t fight_1v1_) const {
+  auto conf = FindIndex2(fight_1v1_);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+// Index: SeasonRank@Index3
+const StrcaseConf::Index_Index3Map& StrcaseConf::FindIndex3Map() const { return index_index_3_map_; }
+
+const StrcaseConf::Index_Index3Vector* StrcaseConf::FindIndex3(int64_t season_rank) const {
+  auto iter = index_index_3_map_.find(season_rank);
+  if (iter == index_index_3_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::FindFirstIndex3(int64_t season_rank) const {
+  auto conf = FindIndex3(season_rank);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+// Index: UserID@Index4
+const StrcaseConf::Index_Index4Map& StrcaseConf::FindIndex4Map() const { return index_index_4_map_; }
+
+const StrcaseConf::Index_Index4Vector* StrcaseConf::FindIndex4(int64_t userid) const {
+  auto iter = index_index_4_map_.find(userid);
+  if (iter == index_index_4_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::FindFirstIndex4(int64_t userid) const {
+  auto conf = FindIndex4(userid);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+// Index: Task@Index5
+const StrcaseConf::Index_Index5Map& StrcaseConf::FindIndex5Map() const { return index_index_5_map_; }
+
+const StrcaseConf::Index_Index5Vector* StrcaseConf::FindIndex5(int64_t task) const {
+  auto iter = index_index_5_map_.find(task);
+  if (iter == index_index_5_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::FindFirstIndex5(int64_t task) const {
+  auto conf = FindIndex5(task);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+// Index: V2Ray@Index6
+const StrcaseConf::Index_Index6Map& StrcaseConf::FindIndex6Map() const { return index_index_6_map_; }
+
+const StrcaseConf::Index_Index6Vector* StrcaseConf::FindIndex6(int64_t v2ray) const {
+  auto iter = index_index_6_map_.find(v2ray);
+  if (iter == index_index_6_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::FindFirstIndex6(int64_t v2ray) const {
+  auto conf = FindIndex6(v2ray);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+// Index: X@Index7
+const StrcaseConf::Index_Index7Map& StrcaseConf::FindIndex7Map() const { return index_index_7_map_; }
+
+const StrcaseConf::Index_Index7Vector* StrcaseConf::FindIndex7(int64_t x) const {
+  auto iter = index_index_7_map_.find(x);
+  if (iter == index_index_7_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::FindFirstIndex7(int64_t x) const {
+  auto conf = FindIndex7(x);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+// Index: SomeField@Index8
+const StrcaseConf::Index_Index8Map& StrcaseConf::FindIndex8Map() const { return index_index_8_map_; }
+
+const StrcaseConf::Index_Index8Vector* StrcaseConf::FindIndex8(int64_t some__field) const {
+  auto iter = index_index_8_map_.find(some__field);
+  if (iter == index_index_8_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::FindFirstIndex8(int64_t some__field) const {
+  auto conf = FindIndex8(some__field);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+// Index: XCoordinate@Index9
+const StrcaseConf::Index_Index9Map& StrcaseConf::FindIndex9Map() const { return index_index_9_map_; }
+
+const StrcaseConf::Index_Index9Vector* StrcaseConf::FindIndex9(int64_t xcoordinate) const {
+  auto iter = index_index_9_map_.find(xcoordinate);
+  if (iter == index_index_9_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::FindFirstIndex9(int64_t xcoordinate) const {
+  auto conf = FindIndex9(xcoordinate);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+// Index: Class@Index10
+const StrcaseConf::Index_Index10Map& StrcaseConf::FindIndex10Map() const { return index_index_10_map_; }
+
+const StrcaseConf::Index_Index10Vector* StrcaseConf::FindIndex10(int64_t class_) const {
+  auto iter = index_index_10_map_.find(class_);
+  if (iter == index_index_10_map_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::StrcaseConf::Task* StrcaseConf::FindFirstIndex10(int64_t class_) const {
+  auto conf = FindIndex10(class_);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
 }  // namespace tableau

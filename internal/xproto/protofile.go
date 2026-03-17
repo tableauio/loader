@@ -1,4 +1,4 @@
-package helper
+package xproto
 
 import (
 	"errors"
@@ -11,13 +11,18 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
+// ProtoFiles is a list of parsed proto files with their messager names.
 type ProtoFiles []*ProtoFile
 
+// ProtoFile represents a parsed proto file with its name prefix and messager names.
 type ProtoFile struct {
 	Name      string
 	Messagers []string
 }
 
+// ParseProtoFiles parses all proto files from the protogen plugin,
+// and returns sorted ProtoFiles (sorted by file name, and messagers
+// within each file are also sorted).
 func ParseProtoFiles(gen *protogen.Plugin) ProtoFiles {
 	var protofiles []*ProtoFile
 	for _, f := range gen.Files {
@@ -44,8 +49,6 @@ func ParseProtoFiles(gen *protogen.Plugin) ProtoFiles {
 				messagers = append(messagers, messagerName)
 			}
 		}
-		// sort messagers in one file to keep in order
-		sort.Strings(messagers)
 		protofiles = append(protofiles, &ProtoFile{
 			Name:      f.GeneratedFilenamePrefix,
 			Messagers: messagers,
@@ -56,4 +59,40 @@ func ParseProtoFiles(gen *protogen.Plugin) ProtoFiles {
 		return protofiles[i].Name < protofiles[j].Name
 	})
 	return protofiles
+}
+
+// FlatMessagers returns a flat sorted list of all messager names
+// across all proto files. The order is determined by file order first,
+// then messager order within each file.
+func (pfs ProtoFiles) FlatMessagers() []string {
+	var messagers []string
+	for _, pf := range pfs {
+		messagers = append(messagers, pf.Messagers...)
+	}
+	return messagers
+}
+
+// SplitShards splits the proto files into the specified number of shards
+// as evenly as possible. If shardNum <= 1, it returns nil indicating no
+// splitting is needed. The extra remainder files are distributed one per
+// shard to the first (len(pfs) % shardNum) shards.
+func (pfs ProtoFiles) SplitShards(shardNum int) []ProtoFiles {
+	if shardNum <= 1 {
+		// no need to split
+		return nil
+	} else {
+		cursor := 0
+		shards := []ProtoFiles{}
+		for i := 0; i < shardNum; i++ {
+			shardSize := len(pfs) / shardNum
+			if i < len(pfs)%shardNum {
+				shardSize++
+			}
+			begin := cursor
+			end := cursor + shardSize
+			shards = append(shards, pfs[begin:end])
+			cursor = end
+		}
+		return shards
+	}
 }

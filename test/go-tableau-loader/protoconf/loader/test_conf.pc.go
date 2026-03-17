@@ -991,6 +991,422 @@ func (x *TaskConf) FindFirstActivityExpiry(expiry int64, activityId int64) *prot
 	return nil
 }
 
+// Index types.
+// Index: HTTPServer@Index1
+type StrcaseConf_Index_Index1Map = map[int64][]*protoconf.StrcaseConf_Task
+
+// Index: Fight1v1@Index2
+type StrcaseConf_Index_Index2Map = map[int64][]*protoconf.StrcaseConf_Task
+
+// Index: SeasonRank@Index3
+type StrcaseConf_Index_Index3Map = map[int64][]*protoconf.StrcaseConf_Task
+
+// Index: UserID@Index4
+type StrcaseConf_Index_Index4Map = map[int64][]*protoconf.StrcaseConf_Task
+
+// Index: Task@Index5
+type StrcaseConf_Index_Index5Map = map[int64][]*protoconf.StrcaseConf_Task
+
+// Index: V2Ray@Index6
+type StrcaseConf_Index_Index6Map = map[int64][]*protoconf.StrcaseConf_Task
+
+// Index: X@Index7
+type StrcaseConf_Index_Index7Map = map[int64][]*protoconf.StrcaseConf_Task
+
+// Index: SomeField@Index8
+type StrcaseConf_Index_Index8Map = map[int64][]*protoconf.StrcaseConf_Task
+
+// Index: XCoordinate@Index9
+type StrcaseConf_Index_Index9Map = map[int64][]*protoconf.StrcaseConf_Task
+
+// Index: Class@Index10
+type StrcaseConf_Index_Index10Map = map[int64][]*protoconf.StrcaseConf_Task
+
+// StrcaseConf is a wrapper around protobuf message: protoconf.StrcaseConf.
+//
+// It is designed for three goals:
+//
+//  1. Easy use: simple yet powerful accessers.
+//  2. Elegant API: concise and clean functions.
+//  3. Extensibility: Map, OrdererdMap, Index, OrderedIndex...
+type StrcaseConf struct {
+	UnimplementedMessager
+	data, originalData *protoconf.StrcaseConf
+	indexIndex1Map     StrcaseConf_Index_Index1Map
+	indexIndex2Map     StrcaseConf_Index_Index2Map
+	indexIndex3Map     StrcaseConf_Index_Index3Map
+	indexIndex4Map     StrcaseConf_Index_Index4Map
+	indexIndex5Map     StrcaseConf_Index_Index5Map
+	indexIndex6Map     StrcaseConf_Index_Index6Map
+	indexIndex7Map     StrcaseConf_Index_Index7Map
+	indexIndex8Map     StrcaseConf_Index_Index8Map
+	indexIndex9Map     StrcaseConf_Index_Index9Map
+	indexIndex10Map    StrcaseConf_Index_Index10Map
+}
+
+// Name returns the StrcaseConf's message name.
+func (x *StrcaseConf) Name() string {
+	return string((*protoconf.StrcaseConf)(nil).ProtoReflect().Descriptor().Name())
+}
+
+// Data returns the StrcaseConf's inner message data.
+func (x *StrcaseConf) Data() *protoconf.StrcaseConf {
+	if x != nil {
+		return x.data
+	}
+	return nil
+}
+
+// Load loads StrcaseConf's content in the given dir, based on format and messager options.
+func (x *StrcaseConf) Load(dir string, format format.Format, opts *load.MessagerOptions) error {
+	start := time.Now()
+	defer func() {
+		x.Stats.Duration = time.Since(start)
+	}()
+	x.data = &protoconf.StrcaseConf{}
+	err := load.LoadMessagerInDir(x.data, dir, format, opts)
+	if err != nil {
+		return err
+	}
+	if x.backup {
+		x.originalData = proto.Clone(x.data).(*protoconf.StrcaseConf)
+	}
+	return x.processAfterLoad()
+}
+
+// Store stores StrcaseConf's content to file in the specified directory and format.
+// Available formats: JSON, Bin, and Text.
+func (x *StrcaseConf) Store(dir string, format format.Format, options ...store.Option) error {
+	return store.Store(x.Data(), dir, format, options...)
+}
+
+// Message returns the StrcaseConf's inner message data.
+func (x *StrcaseConf) Message() proto.Message {
+	return x.Data()
+}
+
+// Messager returns the current messager.
+func (x *StrcaseConf) Messager() Messager {
+	return x
+}
+
+// originalMessage returns the StrcaseConf's original inner message.
+func (x *StrcaseConf) originalMessage() proto.Message {
+	if x != nil {
+		return x.originalData
+	}
+	return nil
+}
+
+// processAfterLoad runs after this messager is loaded.
+func (x *StrcaseConf) processAfterLoad() error {
+	// Index init.
+	x.indexIndex1Map = make(StrcaseConf_Index_Index1Map)
+	x.indexIndex2Map = make(StrcaseConf_Index_Index2Map)
+	x.indexIndex3Map = make(StrcaseConf_Index_Index3Map)
+	x.indexIndex4Map = make(StrcaseConf_Index_Index4Map)
+	x.indexIndex5Map = make(StrcaseConf_Index_Index5Map)
+	x.indexIndex6Map = make(StrcaseConf_Index_Index6Map)
+	x.indexIndex7Map = make(StrcaseConf_Index_Index7Map)
+	x.indexIndex8Map = make(StrcaseConf_Index_Index8Map)
+	x.indexIndex9Map = make(StrcaseConf_Index_Index9Map)
+	x.indexIndex10Map = make(StrcaseConf_Index_Index10Map)
+	for _, v1 := range x.data.GetTaskMap() {
+		{
+			// Index: HTTPServer@Index1
+			key := v1.GetHTTPServer()
+			x.indexIndex1Map[key] = append(x.indexIndex1Map[key], v1)
+		}
+		{
+			// Index: Fight1v1@Index2
+			key := v1.GetFight_1V1_()
+			x.indexIndex2Map[key] = append(x.indexIndex2Map[key], v1)
+		}
+		{
+			// Index: SeasonRank@Index3
+			key := v1.GetSEASON_RANK()
+			x.indexIndex3Map[key] = append(x.indexIndex3Map[key], v1)
+		}
+		{
+			// Index: UserID@Index4
+			key := v1.GetUserID()
+			x.indexIndex4Map[key] = append(x.indexIndex4Map[key], v1)
+		}
+		{
+			// Index: Task@Index5
+			key := v1.GetTask()
+			x.indexIndex5Map[key] = append(x.indexIndex5Map[key], v1)
+		}
+		{
+			// Index: V2Ray@Index6
+			key := v1.GetV2Ray()
+			x.indexIndex6Map[key] = append(x.indexIndex6Map[key], v1)
+		}
+		{
+			// Index: X@Index7
+			key := v1.GetX()
+			x.indexIndex7Map[key] = append(x.indexIndex7Map[key], v1)
+		}
+		{
+			// Index: SomeField@Index8
+			key := v1.GetSome_Field()
+			x.indexIndex8Map[key] = append(x.indexIndex8Map[key], v1)
+		}
+		{
+			// Index: XCoordinate@Index9
+			key := v1.GetXCoordinate()
+			x.indexIndex9Map[key] = append(x.indexIndex9Map[key], v1)
+		}
+		{
+			// Index: Class@Index10
+			key := v1.GetClass()
+			x.indexIndex10Map[key] = append(x.indexIndex10Map[key], v1)
+		}
+	}
+	return nil
+}
+
+// Get1 finds value in the 1st-level map. It will return
+// NotFound error if the key is not found.
+func (x *StrcaseConf) Get1(id int64) (*protoconf.StrcaseConf_Task, error) {
+	d := x.Data().GetTaskMap()
+	if val, ok := d[id]; !ok {
+		return nil, fmt.Errorf("id(%v) %w", id, ErrNotFound)
+	} else {
+		return val, nil
+	}
+}
+
+// Index: HTTPServer@Index1
+
+// FindIndex1Map finds the index: key(HTTPServer@Index1) to value(protoconf.StrcaseConf_Task) map.
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *StrcaseConf) FindIndex1Map() StrcaseConf_Index_Index1Map {
+	return x.indexIndex1Map
+}
+
+// FindIndex1 finds a slice of all values of the given key(s).
+func (x *StrcaseConf) FindIndex1(httpserver int64) []*protoconf.StrcaseConf_Task {
+	return x.indexIndex1Map[httpserver]
+}
+
+// FindFirstIndex1 finds the first value of the given key(s),
+// or nil if no value found.
+func (x *StrcaseConf) FindFirstIndex1(httpserver int64) *protoconf.StrcaseConf_Task {
+	val := x.FindIndex1(httpserver)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: Fight1v1@Index2
+
+// FindIndex2Map finds the index: key(Fight1v1@Index2) to value(protoconf.StrcaseConf_Task) map.
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *StrcaseConf) FindIndex2Map() StrcaseConf_Index_Index2Map {
+	return x.indexIndex2Map
+}
+
+// FindIndex2 finds a slice of all values of the given key(s).
+func (x *StrcaseConf) FindIndex2(fight1V1 int64) []*protoconf.StrcaseConf_Task {
+	return x.indexIndex2Map[fight1V1]
+}
+
+// FindFirstIndex2 finds the first value of the given key(s),
+// or nil if no value found.
+func (x *StrcaseConf) FindFirstIndex2(fight1V1 int64) *protoconf.StrcaseConf_Task {
+	val := x.FindIndex2(fight1V1)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: SeasonRank@Index3
+
+// FindIndex3Map finds the index: key(SeasonRank@Index3) to value(protoconf.StrcaseConf_Task) map.
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *StrcaseConf) FindIndex3Map() StrcaseConf_Index_Index3Map {
+	return x.indexIndex3Map
+}
+
+// FindIndex3 finds a slice of all values of the given key(s).
+func (x *StrcaseConf) FindIndex3(seasonRank int64) []*protoconf.StrcaseConf_Task {
+	return x.indexIndex3Map[seasonRank]
+}
+
+// FindFirstIndex3 finds the first value of the given key(s),
+// or nil if no value found.
+func (x *StrcaseConf) FindFirstIndex3(seasonRank int64) *protoconf.StrcaseConf_Task {
+	val := x.FindIndex3(seasonRank)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: UserID@Index4
+
+// FindIndex4Map finds the index: key(UserID@Index4) to value(protoconf.StrcaseConf_Task) map.
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *StrcaseConf) FindIndex4Map() StrcaseConf_Index_Index4Map {
+	return x.indexIndex4Map
+}
+
+// FindIndex4 finds a slice of all values of the given key(s).
+func (x *StrcaseConf) FindIndex4(userId int64) []*protoconf.StrcaseConf_Task {
+	return x.indexIndex4Map[userId]
+}
+
+// FindFirstIndex4 finds the first value of the given key(s),
+// or nil if no value found.
+func (x *StrcaseConf) FindFirstIndex4(userId int64) *protoconf.StrcaseConf_Task {
+	val := x.FindIndex4(userId)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: Task@Index5
+
+// FindIndex5Map finds the index: key(Task@Index5) to value(protoconf.StrcaseConf_Task) map.
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *StrcaseConf) FindIndex5Map() StrcaseConf_Index_Index5Map {
+	return x.indexIndex5Map
+}
+
+// FindIndex5 finds a slice of all values of the given key(s).
+func (x *StrcaseConf) FindIndex5(task int64) []*protoconf.StrcaseConf_Task {
+	return x.indexIndex5Map[task]
+}
+
+// FindFirstIndex5 finds the first value of the given key(s),
+// or nil if no value found.
+func (x *StrcaseConf) FindFirstIndex5(task int64) *protoconf.StrcaseConf_Task {
+	val := x.FindIndex5(task)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: V2Ray@Index6
+
+// FindIndex6Map finds the index: key(V2Ray@Index6) to value(protoconf.StrcaseConf_Task) map.
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *StrcaseConf) FindIndex6Map() StrcaseConf_Index_Index6Map {
+	return x.indexIndex6Map
+}
+
+// FindIndex6 finds a slice of all values of the given key(s).
+func (x *StrcaseConf) FindIndex6(v2Ray int64) []*protoconf.StrcaseConf_Task {
+	return x.indexIndex6Map[v2Ray]
+}
+
+// FindFirstIndex6 finds the first value of the given key(s),
+// or nil if no value found.
+func (x *StrcaseConf) FindFirstIndex6(v2Ray int64) *protoconf.StrcaseConf_Task {
+	val := x.FindIndex6(v2Ray)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: X@Index7
+
+// FindIndex7Map finds the index: key(X@Index7) to value(protoconf.StrcaseConf_Task) map.
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *StrcaseConf) FindIndex7Map() StrcaseConf_Index_Index7Map {
+	return x.indexIndex7Map
+}
+
+// FindIndex7 finds a slice of all values of the given key(s).
+func (x *StrcaseConf) FindIndex7(x_ int64) []*protoconf.StrcaseConf_Task {
+	return x.indexIndex7Map[x_]
+}
+
+// FindFirstIndex7 finds the first value of the given key(s),
+// or nil if no value found.
+func (x *StrcaseConf) FindFirstIndex7(x_ int64) *protoconf.StrcaseConf_Task {
+	val := x.FindIndex7(x_)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: SomeField@Index8
+
+// FindIndex8Map finds the index: key(SomeField@Index8) to value(protoconf.StrcaseConf_Task) map.
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *StrcaseConf) FindIndex8Map() StrcaseConf_Index_Index8Map {
+	return x.indexIndex8Map
+}
+
+// FindIndex8 finds a slice of all values of the given key(s).
+func (x *StrcaseConf) FindIndex8(someField int64) []*protoconf.StrcaseConf_Task {
+	return x.indexIndex8Map[someField]
+}
+
+// FindFirstIndex8 finds the first value of the given key(s),
+// or nil if no value found.
+func (x *StrcaseConf) FindFirstIndex8(someField int64) *protoconf.StrcaseConf_Task {
+	val := x.FindIndex8(someField)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: XCoordinate@Index9
+
+// FindIndex9Map finds the index: key(XCoordinate@Index9) to value(protoconf.StrcaseConf_Task) map.
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *StrcaseConf) FindIndex9Map() StrcaseConf_Index_Index9Map {
+	return x.indexIndex9Map
+}
+
+// FindIndex9 finds a slice of all values of the given key(s).
+func (x *StrcaseConf) FindIndex9(xcoordinate int64) []*protoconf.StrcaseConf_Task {
+	return x.indexIndex9Map[xcoordinate]
+}
+
+// FindFirstIndex9 finds the first value of the given key(s),
+// or nil if no value found.
+func (x *StrcaseConf) FindFirstIndex9(xcoordinate int64) *protoconf.StrcaseConf_Task {
+	val := x.FindIndex9(xcoordinate)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
+// Index: Class@Index10
+
+// FindIndex10Map finds the index: key(Class@Index10) to value(protoconf.StrcaseConf_Task) map.
+// One key may correspond to multiple values, which are represented by a slice.
+func (x *StrcaseConf) FindIndex10Map() StrcaseConf_Index_Index10Map {
+	return x.indexIndex10Map
+}
+
+// FindIndex10 finds a slice of all values of the given key(s).
+func (x *StrcaseConf) FindIndex10(class int64) []*protoconf.StrcaseConf_Task {
+	return x.indexIndex10Map[class]
+}
+
+// FindFirstIndex10 finds the first value of the given key(s),
+// or nil if no value found.
+func (x *StrcaseConf) FindFirstIndex10(class int64) *protoconf.StrcaseConf_Task {
+	val := x.FindIndex10(class)
+	if len(val) > 0 {
+		return val[0]
+	}
+	return nil
+}
+
 func init() {
 	Register(func() Messager {
 		return new(ActivityConf)
@@ -1003,5 +1419,8 @@ func init() {
 	})
 	Register(func() Messager {
 		return new(TaskConf)
+	})
+	Register(func() Messager {
+		return new(StrcaseConf)
 	})
 }

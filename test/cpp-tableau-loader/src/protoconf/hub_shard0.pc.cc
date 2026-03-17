@@ -11,13 +11,18 @@
 
 namespace tableau {
 template <>
+const std::shared_ptr<HeroConf> Hub::Get<HeroConf>() const {
+  return GetMessagerContainerWithProvider()->hero_conf_;
+}
+
+template <>
 const std::shared_ptr<HeroBaseConf> Hub::Get<HeroBaseConf>() const {
   return GetMessagerContainerWithProvider()->hero_base_conf_;
 }
 
 template <>
-const std::shared_ptr<HeroConf> Hub::Get<HeroConf>() const {
-  return GetMessagerContainerWithProvider()->hero_conf_;
+const std::shared_ptr<FruitConf> Hub::Get<FruitConf>() const {
+  return GetMessagerContainerWithProvider()->fruit_conf_;
 }
 
 template <>
@@ -41,34 +46,29 @@ const std::shared_ptr<Fruit5Conf> Hub::Get<Fruit5Conf>() const {
 }
 
 template <>
-const std::shared_ptr<FruitConf> Hub::Get<FruitConf>() const {
-  return GetMessagerContainerWithProvider()->fruit_conf_;
-}
-
-template <>
 const std::shared_ptr<ItemConf> Hub::Get<ItemConf>() const {
   return GetMessagerContainerWithProvider()->item_conf_;
 }
 
 void MessagerContainer::InitShard0() {
-  hero_base_conf_ = std::dynamic_pointer_cast<HeroBaseConf>(GetMessager(HeroBaseConf::Name()));
   hero_conf_ = std::dynamic_pointer_cast<HeroConf>(GetMessager(HeroConf::Name()));
+  hero_base_conf_ = std::dynamic_pointer_cast<HeroBaseConf>(GetMessager(HeroBaseConf::Name()));
+  fruit_conf_ = std::dynamic_pointer_cast<FruitConf>(GetMessager(FruitConf::Name()));
   fruit_2_conf_ = std::dynamic_pointer_cast<Fruit2Conf>(GetMessager(Fruit2Conf::Name()));
   fruit_3_conf_ = std::dynamic_pointer_cast<Fruit3Conf>(GetMessager(Fruit3Conf::Name()));
   fruit_4_conf_ = std::dynamic_pointer_cast<Fruit4Conf>(GetMessager(Fruit4Conf::Name()));
   fruit_5_conf_ = std::dynamic_pointer_cast<Fruit5Conf>(GetMessager(Fruit5Conf::Name()));
-  fruit_conf_ = std::dynamic_pointer_cast<FruitConf>(GetMessager(FruitConf::Name()));
   item_conf_ = std::dynamic_pointer_cast<ItemConf>(GetMessager(ItemConf::Name()));
 }
 
 void Registry::InitShard0() {
-  Register<HeroBaseConf>();
   Register<HeroConf>();
+  Register<HeroBaseConf>();
+  Register<FruitConf>();
   Register<Fruit2Conf>();
   Register<Fruit3Conf>();
   Register<Fruit4Conf>();
   Register<Fruit5Conf>();
-  Register<FruitConf>();
   Register<ItemConf>();
 }
 }  // namespace tableau

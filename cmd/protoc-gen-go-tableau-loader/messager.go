@@ -16,9 +16,6 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-// golbal container for record all proto filenames and messager names
-var messagers []string
-
 // generateMessager generates a protoconf file corresponding to the protobuf file.
 // Each wrapped struct type implement the Messager interface.
 func generateMessager(gen *protogen.Plugin, file *protogen.File) {
@@ -44,7 +41,6 @@ func generateFileContent(gen *protogen.Plugin, file *protogen.File, g *protogen.
 			fileMessagers = append(fileMessagers, messagerName)
 		}
 	}
-	messagers = append(messagers, fileMessagers...)
 	generateRegister(fileMessagers, g)
 }
 

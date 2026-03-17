@@ -6,6 +6,7 @@ import (
 	"text/template"
 
 	"github.com/iancoleman/strcase"
+	"github.com/tableauio/loader/internal/xproto"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
@@ -32,7 +33,7 @@ func generateEmbed(gen *protogen.Plugin) {
 		g.P()
 		g.P("package ", *pkg)
 		g.P()
-		if err := tpl.Lookup(entry.Name()).Execute(g, messagers); err != nil {
+		if err := tpl.Lookup(entry.Name()).Execute(g, xproto.ParseProtoFiles(gen).FlatMessagers()); err != nil {
 			panic(err)
 		}
 	}
