@@ -7,24 +7,29 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 > TODO: [devcontainer](https://code.visualstudio.com/docs/devcontainers/containers)
 
 - C++ standard: at least C++17
-- Install: [CMake 3.22](https://github.com/Kitware/CMake/releases/tag/v3.31.8) or above
-- Init protobuf:
+- Prepare and init:
   - macOS or Linux: `bash init.sh`
   - Windows:
-    1. Change dir to **loader** repo
-    2. Run `prepare.bat` to automatically install all build dependencies ([Chocolatey](https://chocolatey.org/), [Ninja](https://ninja-build.org/), and MSVC build tools) and configure `PATH`:
+    1. Run `prepare.bat` **as Administrator** to automatically install all build dependencies ([Chocolatey](https://chocolatey.org/), [CMake](https://github.com/Kitware/CMake/releases), [Ninja](https://ninja-build.org/), and MSVC build tools), configure `PATH`, and initialize the MSVC compiler environment:
        ```bat
        .\prepare.bat
        ```
-    3. Run `init.bat` to initialize submodules and build protobuf:
+       > ⚠️ **Admin required:** This script uses Chocolatey and MSI installers that write to system-protected directories (`C:\ProgramData`, `C:\Program Files`). Right-click Command Prompt → **Run as administrator**, then execute the script.
+       >
+       > Preview what the script would do without making any changes:
+       > ```bat
+       > .\prepare.bat --dry-run
+       > ```
+    2. Run `init.bat` to initialize submodules and build protobuf:
        ```bat
        .\init.bat
        ```
-    > **Note:** `prepare.bat` only needs to be run once. It installs missing tools automatically — no manual Visual Studio or Ninja installation required.
+    > **Note:** `prepare.bat` only needs to be run once per machine. It detects already-installed tools and skips them — no manual Visual Studio, CMake, or Ninja installation required.
 
 ### References
 
-- [CMake 3.22](https://github.com/Kitware/CMake/releases/tag/v3.31.8)
+- [Chocolatey](https://chocolatey.org/)
+- [CMake 3.31.8](https://github.com/Kitware/CMake/releases/tag/v3.31.8)
 - [Ninja](https://ninja-build.org/)
 - [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/)
 - [Use the Microsoft C++ Build Tools from the command line](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170)

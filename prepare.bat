@@ -119,7 +119,59 @@ if "%NINJA_FOUND%"=="0" (
 )
 
 REM -----------------------------------------------------------------------
-REM Step 2: Ensure MSVC compiler (cl.exe) is available
+REM Step 2: Ensure CMake 3.31.8 is installed
+REM         Try Chocolatey first; fall back to direct MSI download.
+REM -----------------------------------------------------------------------
+set "CMAKE_FOUND=0"
+if "%SIMULATE_CLEAN%"=="0" (
+    where cmake.exe >nul 2>&1
+    if not errorlevel 1 set "CMAKE_FOUND=1"
+)
+if "%CMAKE_FOUND%"=="0" (
+    echo [INFO] cmake.exe not found. Installing CMake 3.31.8...
+    if "%DRY_RUN%"=="0" (
+        set "CMAKE_INSTALLED=0"
+        REM --- Attempt 1: Chocolatey ---
+        choco install cmake --version=3.31.8 --installargs "'ADD_CMAKE_TO_PATH=System'" -y --no-progress >nul 2>&1 && set "CMAKE_INSTALLED=1"
+        if "!CMAKE_INSTALLED!"=="0" (
+            echo [WARN] choco install cmake failed. Falling back to direct MSI download...
+            set "CMAKE_MSI=%TEMP%\cmake-3.31.8-windows-x86_64.msi"
+            powershell -NoProfile -Command "(New-Object Net.WebClient).DownloadFile('https://github.com/Kitware/CMake/releases/download/v3.31.8/cmake-3.31.8-windows-x86_64.msi','!CMAKE_MSI!')"
+            if not exist "!CMAKE_MSI!" (
+                echo [ERROR] Failed to download CMake MSI.
+                exit /b 1
+            )
+            msiexec /i "!CMAKE_MSI!" ADD_CMAKE_TO_PATH=System /quiet /norestart
+            if errorlevel 1 (
+                echo [ERROR] Failed to install CMake from MSI.
+                exit /b 1
+            )
+            del /q "!CMAKE_MSI!" 2>nul
+        )
+    ) else (
+        echo [DRY-RUN] Would run: choco install cmake --version=3.31.8 ... (or fallback to MSI download)
+    )
+    REM Add cmake to current session PATH
+    set "CMAKE_PATH=C:\Program Files\CMake\bin"
+    set "PATH=!CMAKE_PATH!;%PATH%"
+    REM Persist cmake path to user PATH permanently
+    if "%DRY_RUN%"=="0" (
+        for /f "usebackq tokens=2*" %%a in (`reg query "HKCU\Environment" /v PATH 2^>nul`) do set "USR_PATH=%%b"
+        echo !USR_PATH! | findstr /i /c:"CMake\bin" >nul 2>&1
+        if errorlevel 1 (
+            setx PATH "!CMAKE_PATH!;!USR_PATH!"
+            echo [INFO] cmake path added to user PATH permanently.
+        )
+    ) else (
+        echo [DRY-RUN] Would run: setx PATH "!CMAKE_PATH!;..."
+    )
+    echo [INFO] cmake installed successfully.
+) else (
+    echo [INFO] cmake.exe already in PATH.
+)
+
+REM -----------------------------------------------------------------------
+REM Step 3: Ensure MSVC compiler (cl.exe) is available
 REM         (equivalent to CI step: ilammy/msvc-dev-cmd@v1)
 REM -----------------------------------------------------------------------
 set "CL_FOUND=0"
