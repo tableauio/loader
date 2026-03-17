@@ -188,6 +188,9 @@ func parseCols(cols []string, prefix string, md protoreflect.MessageDescriptor, 
 	levelFields := map[string]*LevelField{} // column name -> level field
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
+		if fd.ContainingOneof() != nil {
+			continue
+		}
 		opts := fd.Options().(*descriptorpb.FieldOptions)
 		fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
 		fieldOptName := fdOpts.GetName()

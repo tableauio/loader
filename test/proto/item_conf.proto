@@ -76,5 +76,12 @@ message UseEffect {
   message GainItem {
     uint32 item_id = 1 [(tableau.field) = { name: "ItemId" }];
   }
-  message AccountLevel {}
+  message AccountLevel {
+    map<int32, Type> type_map = 1 [(tableau.field) = {name:"Type" key:"Key" layout:LAYOUT_INCELL}];
+    message Type {
+      FruitType key = 1 [(tableau.field) = {name:"Key"}];
+      bool value = 2 [(tableau.field) = {name:"Value"}];
+    }
+    int32 rank = 2 [(tableau.field) = {name:"Rank"}];
+  }
 }
