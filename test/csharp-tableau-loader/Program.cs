@@ -5,6 +5,7 @@ class Program
     static void Main(string[] _)
     {
         Tableau.Registry.Init();
+        Tableau.Registry.Register<Custom.CustomItemConf>();
 
         var options = new Tableau.HubOptions
         {
