@@ -31,11 +31,11 @@ endif()
 #   - Linux:   build/lib64/cmake/protobuf/ (via CMAKE_INSTALL_LIBDIR)
 #   - Windows: build/cmake/                (MSVC uses "cmake" directly)
 # Setting CMAKE_PREFIX_PATH to the build dir allows CMake to search both layouts.
-set(LOCAL_PROTOBUF_BUILD_DIR "${PROJECT_SOURCE_DIR}/../../third_party/_submodules/protobuf/cmake/build")
+set(LOCAL_PROTOBUF_INSTALL_DIR "${PROJECT_SOURCE_DIR}/../../third_party/_submodules/protobuf/.build/_install")
 set(LOCAL_PROTOBUF_SRC_DIR "${PROJECT_SOURCE_DIR}/../../third_party/_submodules/protobuf/src")
-if(EXISTS "${LOCAL_PROTOBUF_BUILD_DIR}" AND EXISTS "${LOCAL_PROTOBUF_SRC_DIR}")
+if(EXISTS "${LOCAL_PROTOBUF_INSTALL_DIR}" AND EXISTS "${LOCAL_PROTOBUF_SRC_DIR}")
     message(STATUS "Found local protobuf submodule, using it preferentially.")
-    list(PREPEND CMAKE_PREFIX_PATH "${LOCAL_PROTOBUF_BUILD_DIR}")
+    list(PREPEND CMAKE_PREFIX_PATH "${LOCAL_PROTOBUF_INSTALL_DIR}")
 endif()
 
 # Use CONFIG mode explicitly to pick up protobuf's own protobuf-config.cmake

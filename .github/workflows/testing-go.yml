@@ -16,13 +16,11 @@ jobs:
   test:
     strategy:
       matrix:
-        include:
-          - os: ubuntu-latest
-            go-version: 1.21.x
-          - os: windows-latest
-            go-version: 1.21.x
+        os: [ ubuntu-latest, windows-latest ]
+        go-version: [ 1.24.x ]
+        protobuf-version: [ "32.0", "3.19.3" ]
 
-    name: test (${{ matrix.os }})
+    name: test (${{ matrix.os }}, protobuf ${{ matrix.protobuf-version }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
 
