@@ -10,7 +10,7 @@
 #include "util.pc.h"
 
 namespace tableau {
-const std::string ActivityConf::kProtoName = protoconf::ActivityConf::GetDescriptor()->name();
+const std::string ActivityConf::kProtoName = std::string(protoconf::ActivityConf::GetDescriptor()->name());
 
 bool ActivityConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
@@ -396,7 +396,7 @@ const protoconf::Section::SectionItem* ActivityConf::FindFirstAward(uint64_t act
   return conf->front();
 }
 
-const std::string ChapterConf::kProtoName = protoconf::ChapterConf::GetDescriptor()->name();
+const std::string ChapterConf::kProtoName = std::string(protoconf::ChapterConf::GetDescriptor()->name());
 
 bool ChapterConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
@@ -414,7 +414,7 @@ const protoconf::ChapterConf::Chapter* ChapterConf::Get(uint64_t id) const {
   return &iter->second;
 }
 
-const std::string ThemeConf::kProtoName = protoconf::ThemeConf::GetDescriptor()->name();
+const std::string ThemeConf::kProtoName = std::string(protoconf::ThemeConf::GetDescriptor()->name());
 
 bool ThemeConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
@@ -444,7 +444,7 @@ const std::string* ThemeConf::Get(const std::string& name, const std::string& pa
   return &iter->second;
 }
 
-const std::string TaskConf::kProtoName = protoconf::TaskConf::GetDescriptor()->name();
+const std::string TaskConf::kProtoName = std::string(protoconf::TaskConf::GetDescriptor()->name());
 
 bool TaskConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
@@ -623,7 +623,7 @@ const protoconf::TaskConf::Task* TaskConf::FindFirstActivityExpiry(int64_t expir
   return conf->front();
 }
 
-const std::string StrcaseConf::kProtoName = protoconf::StrcaseConf::GetDescriptor()->name();
+const std::string StrcaseConf::kProtoName = std::string(protoconf::StrcaseConf::GetDescriptor()->name());
 
 bool StrcaseConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;

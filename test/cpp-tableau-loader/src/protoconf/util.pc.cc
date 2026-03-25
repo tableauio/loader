@@ -88,8 +88,8 @@ bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Messag
   // Ensure both messages are of the same type
   if (dst_descriptor != src_descriptor) {
     SetErrMsg("dst and src are not messages with the same descriptor");
-    ATOM_ERROR("dst %s and src %s are not messages with the same descriptor", dst_descriptor->name().c_str(),
-               src_descriptor->name().c_str());
+    ATOM_ERROR("dst %s and src %s are not messages with the same descriptor",
+               std::string(dst_descriptor->name()).c_str(), std::string(src_descriptor->name()).c_str());
     return false;
   }
 
@@ -211,18 +211,51 @@ bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Messag
   return true;
 }
 
-// refer: https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/stubs/logging.h
+#if TABLEAU_PB_LOG_LEGACY
+// refer: https://github.com/protocolbuffers/protobuf/blob/v3.19.3/src/google/protobuf/stubs/logging.h
 void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& msg) {
-  static const std::unordered_map<int, log::Level> kLevelMap = {{google::protobuf::LOGLEVEL_INFO, log::kInfo},
-                                                                {google::protobuf::LOGLEVEL_WARNING, log::kWarn},
-                                                                {google::protobuf::LOGLEVEL_ERROR, log::kError},
-                                                                {google::protobuf::LOGLEVEL_FATAL, log::kFatal}};
+#define TABLEAU_PB_LOG_INFO google::protobuf::LOGLEVEL_INFO
+#define TABLEAU_PB_LOG_WARNING google::protobuf::LOGLEVEL_WARNING
+#define TABLEAU_PB_LOG_ERROR google::protobuf::LOGLEVEL_ERROR
+#define TABLEAU_PB_LOG_FATAL google::protobuf::LOGLEVEL_FATAL
+#define TABLEAU_PB_LOG_LEVEL level
+#define TABLEAU_PB_LOG_FILENAME filename
+#define TABLEAU_PB_LOG_LINE line
+#define TABLEAU_PB_LOG_MESSAGE msg
+#else
+// refer: https://github.com/abseil/abseil-cpp/blob/20250512.1/absl/log/log_entry.h
+void ProtobufAbslLogSink::Send(const absl::LogEntry& entry) {
+#define TABLEAU_PB_LOG_INFO absl::LogSeverity::kInfo
+#define TABLEAU_PB_LOG_WARNING absl::LogSeverity::kWarning
+#define TABLEAU_PB_LOG_ERROR absl::LogSeverity::kError
+#define TABLEAU_PB_LOG_FATAL absl::LogSeverity::kFatal
+#define TABLEAU_PB_LOG_LEVEL entry.log_severity()
+#define TABLEAU_PB_LOG_FILENAME std::string(entry.source_filename()).c_str()
+#define TABLEAU_PB_LOG_LINE entry.source_line()
+#define TABLEAU_PB_LOG_MESSAGE std::string(entry.text_message()).c_str()
+#endif
+
+  static const std::unordered_map<decltype(TABLEAU_PB_LOG_LEVEL), log::Level> kLevelMap = {
+      {TABLEAU_PB_LOG_INFO, log::kInfo},
+      {TABLEAU_PB_LOG_WARNING, log::kWarn},
+      {TABLEAU_PB_LOG_ERROR, log::kError},
+      {TABLEAU_PB_LOG_FATAL, log::kFatal}};
   log::Level lvl = log::kWarn;  // default
-  auto iter = kLevelMap.find(level);
+  auto iter = kLevelMap.find(TABLEAU_PB_LOG_LEVEL);
   if (iter != kLevelMap.end()) {
     lvl = iter->second;
   }
-  ATOM_LOGGER_CALL(tableau::log::DefaultLogger(), lvl, "[libprotobuf %s:%d] %s", filename, line, msg.c_str());
+  ATOM_LOGGER_CALL(tableau::log::DefaultLogger(), lvl, "[libprotobuf %s:%d] %s", TABLEAU_PB_LOG_FILENAME,
+                   TABLEAU_PB_LOG_LINE, TABLEAU_PB_LOG_MESSAGE);
+
+#undef TABLEAU_PB_LOG_INFO
+#undef TABLEAU_PB_LOG_WARNING
+#undef TABLEAU_PB_LOG_ERROR
+#undef TABLEAU_PB_LOG_FATAL
+#undef TABLEAU_PB_LOG_LEVEL
+#undef TABLEAU_PB_LOG_FILENAME
+#undef TABLEAU_PB_LOG_LINE
+#undef TABLEAU_PB_LOG_MESSAGE
 }
 }  // namespace util
 }  // namespace tableau

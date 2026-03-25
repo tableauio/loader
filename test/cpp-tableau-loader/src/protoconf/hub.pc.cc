@@ -57,7 +57,12 @@ void Hub::InitScheduler() {
 std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::filesystem::path& dir, Format fmt /* = Format::kJSON */,
                                                std::shared_ptr<const load::Options> options /* = nullptr */) const {
   // intercept protobuf error logs
+#if TABLEAU_PB_LOG_LEGACY
   auto old_handler = google::protobuf::SetLogHandler(util::ProtobufLogHandler);
+#else
+  util::ProtobufAbslLogSink log_sink;
+  absl::AddLogSink(&log_sink);
+#endif
   auto msger_map = NewMessagerMap();
   options = options ? options : std::make_shared<load::Options>();
   for (auto iter : *msger_map) {
@@ -68,14 +73,22 @@ std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::filesystem::path& dir,
     if (!ok) {
       ATOM_ERROR("load %s failed: %s", name.c_str(), GetErrMsg().c_str());
       // restore to old protobuf log handler
+#if TABLEAU_PB_LOG_LEGACY
       google::protobuf::SetLogHandler(old_handler);
+#else
+      absl::RemoveLogSink(&log_sink);
+#endif
       return nullptr;
     }
     ATOM_DEBUG("loaded %s", name.c_str());
   }
 
   // restore to old protobuf log handler
+#if TABLEAU_PB_LOG_LEGACY
   google::protobuf::SetLogHandler(old_handler);
+#else
+  absl::RemoveLogSink(&log_sink);
+#endif
   return msger_map;
 }
 

@@ -54,7 +54,7 @@ bool LoadMessager(google::protobuf::Message& msg, const std::filesystem::path& p
 bool LoadMessagerInDir(google::protobuf::Message& msg, const std::filesystem::path& dir, Format fmt,
                        std::shared_ptr<const MessagerOptions> options /* = nullptr*/) {
   options = options ? options : std::make_shared<MessagerOptions>();
-  const std::string& name = msg.GetDescriptor()->name();
+  const std::string name(msg.GetDescriptor()->name());
   std::filesystem::path path;
   if (!options->path.empty()) {
     // path specified in Paths, then use it instead of dir.
@@ -84,7 +84,7 @@ bool LoadMessagerWithPatch(google::protobuf::Message& msg, const std::filesystem
     // ignore patch files when LoadMode::kModeOnlyMain specified
     return load_func(msg, path, fmt, nullptr);
   }
-  const std::string& name = msg.GetDescriptor()->name();
+  const std::string name(msg.GetDescriptor()->name());
   std::vector<std::filesystem::path> patch_paths;
   if (!options->patch_paths.empty()) {
     // patch path specified in PatchPaths, then use it instead of PatchDirs.
@@ -160,21 +160,21 @@ bool Unmarshal(const std::string& content, google::protobuf::Message& msg, Forma
       parse_options.ignore_unknown_fields = options->GetIgnoreUnknownFields();
       auto status = google::protobuf::util::JsonStringToMessage(content, &msg, parse_options);
       if (!status.ok()) {
-        SetErrMsg("failed to parse " + msg.GetDescriptor()->name() + kJSONExt + ": " + status.ToString());
+        SetErrMsg("failed to parse " + std::string(msg.GetDescriptor()->name()) + kJSONExt + ": " + status.ToString());
         return false;
       }
       return true;
     }
     case Format::kText: {
       if (!google::protobuf::TextFormat::ParseFromString(content, &msg)) {
-        SetErrMsg("failed to parse " + msg.GetDescriptor()->name() + kTextExt);
+        SetErrMsg("failed to parse " + std::string(msg.GetDescriptor()->name()) + kTextExt);
         return false;
       }
       return true;
     }
     case Format::kBin: {
       if (!msg.ParseFromString(content)) {
-        SetErrMsg("failed to parse " + msg.GetDescriptor()->name() + kBinExt);
+        SetErrMsg("failed to parse " + std::string(msg.GetDescriptor()->name()) + kBinExt);
         return false;
       }
       return true;
