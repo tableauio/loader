@@ -59,5 +59,24 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 # link libraries
 target_link_libraries(${PROJECT_NAME} protobuf::libprotobuf)
 if(NOT MSVC)
+    # When using clang with a GCC toolchain (e.g. gcc-toolset-13 on RHEL/CentOS),
+    # clang selects GCC 13's C++ headers but the C compiler (GCC 8) may inject an
+    # older libstdc++ search path into the link line. This causes undefined references
+    # to symbols like std::__throw_bad_array_new_length() and std::filesystem::*.
+    # Detect the GCC library directory used by the CXX compiler and link stdc++/stdc++fs
+    # from there explicitly.
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        execute_process(
+            COMMAND ${CMAKE_CXX_COMPILER} -print-libgcc-file-name
+            OUTPUT_VARIABLE _LIBGCC_FILE
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if(_LIBGCC_FILE)
+            get_filename_component(_GCC_LIB_DIR "${_LIBGCC_FILE}" DIRECTORY)
+            message(STATUS "Detected GCC library directory for clang: ${_GCC_LIB_DIR}")
+            # Prepend GCC toolchain lib dir so it is searched before the system GCC 8 path.
+            target_link_options(${PROJECT_NAME} PRIVATE "-L${_GCC_LIB_DIR}")
+        endif()
+    endif()
     target_link_libraries(${PROJECT_NAME} pthread stdc++fs)
 endif()

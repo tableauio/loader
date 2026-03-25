@@ -16,10 +16,17 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.21.x]
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            go-version: 1.21.x
+            gen_script: bash gen.sh
+          - os: windows-latest
+            go-version: 1.21.x
+            gen_script: cmd /c gen.bat
 
+    name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
 
     steps:
       - name: Checkout Code
@@ -34,17 +41,17 @@ jobs:
           cache: true
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v3
+        uses: arduino/setup-protoc@v1
         with:
-          version: "23.x"
+          version: "3.19.3"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install protoc-gen-go
         run: go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.2
 
       - name: Generate protoconf
-        shell: bash
-        run: PROTOC=protoc bash test/go-tableau-loader/gen.sh
+        working-directory: test/go-tableau-loader
+        run: ${{ matrix.gen_script }}
 
       - name: Vet
         run: go vet ./...
