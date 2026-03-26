@@ -2,6 +2,7 @@
 // versions:
 // - protoc-gen-cpp-tableau-loader v0.11.0
 // - protoc                        v3.19.3
+// clang-format off
 
 #include "logger.pc.h"
 
