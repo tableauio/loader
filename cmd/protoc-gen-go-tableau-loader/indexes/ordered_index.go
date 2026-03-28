@@ -107,7 +107,7 @@ func (x *Generator) genOrderedIndexField() {
 	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
 		for _, index := range lm.OrderedIndexes {
 			x.g.P(x.orderedIndexContainerName(index, 0), " *", x.orderedIndexMapType(index))
-			for i := 1; i < lm.MapDepth; i++ {
+			for i := 1; i < lm.LeveledContainerDepth(); i++ {
 				if i == 1 {
 					x.g.P(x.orderedIndexContainerName(index, i), " map[", x.keys[0].Type, "]*", x.orderedIndexMapType(index))
 				} else {
@@ -127,8 +127,8 @@ func (x *Generator) genOrderedIndexLoader() {
 	x.g.P("// OrderedIndex init.")
 	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
 		for _, index := range lm.OrderedIndexes {
-			x.g.P("x.", x.orderedIndexContainerName(index, 0), " = ", helper.TreeMapPackage.Ident(x.mapCtor(index)), "[", x.orderedIndexMapKeyType(index), ", []*", x.mapValueType(index), "]()")
-			for i := 1; i < lm.MapDepth; i++ {
+			x.g.P("x.", x.orderedIndexContainerName(index, 0), " = ", helper.TreeMapPackage.Ident(x.mapCtor(index)), "[", x.orderedIndexMapKeyType(index), ", []*", x.mapValueType(index), "]()") 
+			for i := 1; i < lm.LeveledContainerDepth(); i++ {
 				if i == 1 {
 					x.g.P("x.", x.orderedIndexContainerName(index, i), " = make(map[", x.keys[0].Type, "]*", x.orderedIndexMapType(index), ")")
 				} else {
@@ -214,7 +214,7 @@ func (x *Generator) genOrderedIndexLoaderCommon(lm *index.LevelMessage, index *i
 	indexContainerName := x.orderedIndexContainerName(index, 0)
 	x.g.P("value, _ := x.", indexContainerName, ".Get(key)")
 	x.g.P("x.", indexContainerName, ".Put(key, append(value, ", parentDataName, "))")
-	for i := 1; i < lm.MapDepth; i++ {
+	for i := 1; i < lm.LeveledContainerDepth(); i++ {
 		orderedIndexContainerName := x.orderedIndexContainerName(index, i)
 		valueName := orderedIndexContainerName + "Value"
 		if i == 1 {
@@ -265,7 +265,7 @@ func (x *Generator) genOrderedIndexSorter() {
 				x.g.P("return true")
 				x.g.P("})")
 				// Iterate all leveled containers.
-				for i := 1; i < lm.MapDepth; i++ {
+				for i := 1; i < lm.LeveledContainerDepth(); i++ {
 					x.g.P("for _, itemMap := range x.", x.orderedIndexContainerName(index, i), " {")
 					x.g.P("itemMap.Range(func(key ", x.orderedIndexMapKeyType(index), ", itemList []*", x.mapValueType(index), ") bool {")
 					x.g.P(helper.SortPackage.Ident("Slice"), "(itemList, ", indexContainerName, "Sorter(itemList))")
@@ -321,7 +321,7 @@ func (x *Generator) genOrderedIndexFinders() {
 			x.g.P("}")
 			x.g.P()
 
-			for i := 1; i < lm.MapDepth; i++ {
+			for i := 1; i < lm.LeveledContainerDepth(); i++ {
 				orderedIndexContainerName := x.orderedIndexContainerName(index, i)
 				partKeys := x.keys[:i]
 				partParams := partKeys.GenGetParams()

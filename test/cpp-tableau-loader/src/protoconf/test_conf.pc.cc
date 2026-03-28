@@ -47,6 +47,7 @@ bool ActivityConf::ProcessAfterLoad() {
   index_award_map_.clear();
   index_award_map1_.clear();
   index_award_map2_.clear();
+  index_award_map3_.clear();
   for (auto&& item1 : data_.activity_map()) {
     auto k1 = item1.first;
     {
@@ -66,12 +67,14 @@ bool ActivityConf::ProcessAfterLoad() {
         index_named_chapter_map1_[k1][item2.second.chapter_name()].push_back(&item2.second);
       }
       for (auto&& item3 : item2.second.section_map()) {
+        auto k3 = item3.first;
         for (auto&& item4 : item3.second.section_item_list()) {
           {
             // Index: SectionItemID@Award
             index_award_map_[item4.id()].push_back(&item4);
             index_award_map1_[k1][item4.id()].push_back(&item4);
             index_award_map2_[{k1, k2}][item4.id()].push_back(&item4);
+            index_award_map3_[{k1, k2, k3}][item4.id()].push_back(&item4);
           }
         }
       }
@@ -359,6 +362,34 @@ const ActivityConf::Index_AwardVector* ActivityConf::FindAward(uint64_t activity
 
 const protoconf::Section::SectionItem* ActivityConf::FindFirstAward(uint64_t activity_id, uint32_t chapter_id, uint32_t id) const {
   auto conf = FindAward(activity_id, chapter_id, id);
+  if (conf == nullptr || conf->empty()) {
+    return nullptr;
+  }
+  return conf->front();
+}
+
+const ActivityConf::Index_AwardMap* ActivityConf::FindAwardMap(uint64_t activity_id, uint32_t chapter_id, uint32_t section_id) const {
+  auto iter = index_award_map3_.find({activity_id, chapter_id, section_id});
+  if (iter == index_award_map3_.end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const ActivityConf::Index_AwardVector* ActivityConf::FindAward(uint64_t activity_id, uint32_t chapter_id, uint32_t section_id, uint32_t id) const {
+  auto map = FindAwardMap(activity_id, chapter_id, section_id);
+  if (map == nullptr) {
+    return nullptr;
+  }
+  auto iter = map->find(id);
+  if (iter == map->end()) {
+    return nullptr;
+  }
+  return &iter->second;
+}
+
+const protoconf::Section::SectionItem* ActivityConf::FindFirstAward(uint64_t activity_id, uint32_t chapter_id, uint32_t section_id, uint32_t id) const {
+  auto conf = FindAward(activity_id, chapter_id, section_id, id);
   if (conf == nullptr || conf->empty()) {
     return nullptr;
   }

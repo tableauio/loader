@@ -16,6 +16,7 @@ type MessagerContainer struct {
 	heroConf           *HeroConf
 	heroBaseConf       *HeroBaseConf
 	fruitConf          *FruitConf
+	fruit6Conf         *Fruit6Conf
 	fruit2Conf         *Fruit2Conf
 	fruit3Conf         *Fruit3Conf
 	fruit4Conf         *Fruit4Conf
@@ -38,6 +39,7 @@ func newMessagerContainer(messagerMap MessagerMap) *MessagerContainer {
 		heroConf:           GetMessager[*HeroConf](messagerMap),
 		heroBaseConf:       GetMessager[*HeroBaseConf](messagerMap),
 		fruitConf:          GetMessager[*FruitConf](messagerMap),
+		fruit6Conf:         GetMessager[*Fruit6Conf](messagerMap),
 		fruit2Conf:         GetMessager[*Fruit2Conf](messagerMap),
 		fruit3Conf:         GetMessager[*Fruit3Conf](messagerMap),
 		fruit4Conf:         GetMessager[*Fruit4Conf](messagerMap),
@@ -78,6 +80,10 @@ func (mc *MessagerContainer) GetHeroBaseConf() *HeroBaseConf {
 
 func (mc *MessagerContainer) GetFruitConf() *FruitConf {
 	return mc.fruitConf
+}
+
+func (mc *MessagerContainer) GetFruit6Conf() *Fruit6Conf {
+	return mc.fruit6Conf
 }
 
 func (mc *MessagerContainer) GetFruit2Conf() *Fruit2Conf {

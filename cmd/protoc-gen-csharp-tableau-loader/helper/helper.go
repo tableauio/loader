@@ -325,10 +325,11 @@ func ParseLeveledMapPrefix(md protoreflect.MessageDescriptor, mapFd protoreflect
 // holding the C# type, parameter name, original field name, and the
 // associated protobuf field descriptor.
 type MapKey struct {
-	Type      string                       // C# type string (e.g. "int", "string")
-	Name      string                       // parameter/variable name in generated code
-	FieldName string                       // original field name (multi-column index only)
-	Fd        protoreflect.FieldDescriptor // the map field descriptor this key belongs to
+	Type          string                       // C# type string (e.g. "int", "string")
+	Name          string                       // parameter/variable name in generated code
+	FieldName     string                       // multi-column index only (may be deduplicated, e.g., "Id" → "Id3")
+	OrigFieldName string                       // original FieldName before deduplication (empty if not renamed)
+	Fd            protoreflect.FieldDescriptor // the map field descriptor this key belongs to
 }
 
 // MapKeySlice is an ordered collection of MapKey entries, providing methods
@@ -336,18 +337,60 @@ type MapKey struct {
 // for code generation.
 type MapKeySlice []MapKey
 
-// AddMapKey appends a new MapKey to the slice. If the new key has no name,
-// a default name "keyN" is assigned (where N is the new length). If the name
-// conflicts with an existing key, a numeric suffix is appended to resolve it.
+// AddMapKey appends a new map key to the slice, automatically deduplicating
+// both Name (used as function parameter names) and FieldName (used as struct
+// field names in LevelIndex key structs).
+//
+// Deduplication is needed because different map levels may share the same key
+// name. For example, given the following nested proto maps where country_map
+// and item_map both use "ID" as their key name:
+//
+//	message Fruit4Conf {
+//	    map<int32, Fruit> fruit_map = 1;          // key field: "FruitType"
+//	    message Fruit {
+//	        map<int32, Country> country_map = 2;  // key field: "ID"
+//	        message Country {
+//	            map<int32, Item> item_map = 3;    // key field: "ID"  ← same name!
+//	        }
+//	    }
+//	}
+//
+// Without dedup, the generated LevelIndex key struct would have duplicate
+// field names, causing a compile error:
+//
+//	public readonly struct LevelIndex_Fruit_Country_ItemKey {
+//	    public int Id { get; }  // key of protoconf.Fruit4Conf.Fruit.country_map
+//	    public int Id { get; }  // key of protoconf.Fruit4Conf.Fruit.Country.item_map — COMPILE ERROR!
+//	}
+//
+// With dedup, the conflicting name gets a numeric suffix (the 1-based position
+// of the new key in the slice), producing valid C# code:
+//
+//	public readonly struct LevelIndex_Fruit_Country_ItemKey {
+//	    public int Id { get; }  // key of protoconf.Fruit4Conf.Fruit.country_map
+//	    public int Id3 { get; } // key of protoconf.Fruit4Conf.Fruit.Country.item_map (renamed from Id)
+//	}
 func (s MapKeySlice) AddMapKey(newKey MapKey) MapKeySlice {
 	if newKey.Name == "" {
 		newKey.Name = fmt.Sprintf("key%d", len(s)+1)
 	}
+	// Deduplicate Name (used as function parameter, e.g., "id" → "id3").
 	for _, key := range s {
 		if key.Name == newKey.Name {
-			// rewrite to avoid name confict
 			newKey.Name = fmt.Sprintf("%s%d", newKey.Name, len(s)+1)
 			break
+		}
+	}
+	// Deduplicate FieldName (used as struct field, e.g., "Id" → "Id3").
+	// This is only relevant for multi-column indexes that generate LevelIndex
+	// key structs; single-column indexes leave FieldName empty.
+	if newKey.FieldName != "" {
+		for _, key := range s {
+			if key.FieldName == newKey.FieldName {
+				newKey.OrigFieldName = newKey.FieldName
+				newKey.FieldName = fmt.Sprintf("%s%d", newKey.FieldName, len(s)+1)
+				break
+			}
 		}
 	}
 	return append(s, newKey)

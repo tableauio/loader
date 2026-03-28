@@ -44,8 +44,8 @@ namespace Tableau
         // LevelIndex keys.
         public readonly struct LevelIndex_Activity_ChapterKey : IEquatable<LevelIndex_Activity_ChapterKey>
         {
-            public ulong ActivityId { get; }
-            public uint ChapterId { get; }
+            public ulong ActivityId { get; } // key of protoconf.ActivityConf.activity_map
+            public uint ChapterId { get; } // key of protoconf.ActivityConf.Activity.chapter_map
 
             public LevelIndex_Activity_ChapterKey(ulong activityId, uint chapterId)
             {
@@ -58,6 +58,26 @@ namespace Tableau
 
             public override int GetHashCode() =>
                 (ActivityId, ChapterId).GetHashCode();
+        }
+
+        public readonly struct LevelIndex_protoconf_SectionKey : IEquatable<LevelIndex_protoconf_SectionKey>
+        {
+            public ulong ActivityId { get; } // key of protoconf.ActivityConf.activity_map
+            public uint ChapterId { get; } // key of protoconf.ActivityConf.Activity.chapter_map
+            public uint SectionId { get; } // key of protoconf.ActivityConf.Activity.Chapter.section_map
+
+            public LevelIndex_protoconf_SectionKey(ulong activityId, uint chapterId, uint sectionId)
+            {
+                ActivityId = activityId;
+                ChapterId = chapterId;
+                SectionId = sectionId;
+            }
+
+            public bool Equals(LevelIndex_protoconf_SectionKey other) =>
+                (ActivityId, ChapterId, SectionId).Equals((other.ActivityId, other.ChapterId, other.SectionId));
+
+            public override int GetHashCode() =>
+                (ActivityId, ChapterId, SectionId).GetHashCode();
         }
 
         // Index types.
@@ -88,6 +108,8 @@ namespace Tableau
         private Dictionary<ulong, Index_AwardMap> _indexAwardMap1 = new Dictionary<ulong, Index_AwardMap>();
 
         private Dictionary<LevelIndex_Activity_ChapterKey, Index_AwardMap> _indexAwardMap2 = new Dictionary<LevelIndex_Activity_ChapterKey, Index_AwardMap>();
+
+        private Dictionary<LevelIndex_protoconf_SectionKey, Index_AwardMap> _indexAwardMap3 = new Dictionary<LevelIndex_protoconf_SectionKey, Index_AwardMap>();
 
         private Protoconf.ActivityConf _data = new();
 
@@ -166,6 +188,7 @@ namespace Tableau
             _indexAwardMap.Clear();
             _indexAwardMap1.Clear();
             _indexAwardMap2.Clear();
+            _indexAwardMap3.Clear();
             foreach (var item1 in _data.ActivityMap)
             {
                 var k1 = item1.Key;
@@ -215,6 +238,7 @@ namespace Tableau
                     }
                     foreach (var item3 in item2.Value.SectionMap)
                     {
+                        var k3 = item3.Key;
                         foreach (var item4 in item3.Value.SectionItemList)
                         {
                             {
@@ -236,6 +260,14 @@ namespace Tableau
                                     var mapKey = new LevelIndex_Activity_ChapterKey(k1, k2);
                                     var map = _indexAwardMap2.TryGetValue(mapKey, out var existingMap) ?
                                     existingMap : _indexAwardMap2[mapKey] = new Index_AwardMap();
+                                    var list = map.TryGetValue(key, out var existingList) ?
+                                    existingList : map[key] = new List<Protoconf.Section.Types.SectionItem>();
+                                    list.Add(item4);
+                                }
+                                {
+                                    var mapKey = new LevelIndex_protoconf_SectionKey(k1, k2, k3);
+                                    var map = _indexAwardMap3.TryGetValue(mapKey, out var existingMap) ?
+                                    existingMap : _indexAwardMap3[mapKey] = new Index_AwardMap();
                                     var list = map.TryGetValue(key, out var existingList) ?
                                     existingList : map[key] = new List<Protoconf.Section.Types.SectionItem>();
                                     list.Add(item4);
@@ -488,6 +520,28 @@ namespace Tableau
         /// </summary>
         public Protoconf.Section.Types.SectionItem? FindFirstAward2(ulong activityId, uint chapterId, uint id) =>
             FindAward2(activityId, chapterId, id)?.FirstOrDefault();
+
+        /// <summary>
+        /// FindAwardMap3 finds the index: key(SectionItemID@Award) to value(Protoconf.Section.Types.SectionItem),
+        /// which is the upper 3rd-level map specified by (activityId, chapterId, sectionId).
+        /// One key may correspond to multiple values, which are represented by a list.
+        /// </summary>
+        public Index_AwardMap? FindAwardMap3(ulong activityId, uint chapterId, uint sectionId) =>
+            _indexAwardMap3.TryGetValue(new LevelIndex_protoconf_SectionKey(activityId, chapterId, sectionId), out var value) ? value : null;
+
+        /// <summary>
+        /// FindAward3 finds a list of all values of the given key(s) in the upper 3rd-level map
+        /// specified by (activityId, chapterId, sectionId).
+        /// </summary>
+        public List<Protoconf.Section.Types.SectionItem>? FindAward3(ulong activityId, uint chapterId, uint sectionId, uint id) =>
+            FindAwardMap3(activityId, chapterId, sectionId)?.TryGetValue(id, out var value) == true ? value : null;
+
+        /// <summary>
+        /// FindFirstAward3 finds the first value of the given key(s) in the upper 3rd-level map
+        /// specified by (activityId, chapterId, sectionId), or null if no value found.
+        /// </summary>
+        public Protoconf.Section.Types.SectionItem? FindFirstAward3(ulong activityId, uint chapterId, uint sectionId, uint id) =>
+            FindAward3(activityId, chapterId, sectionId, id)?.FirstOrDefault();
     }
 
     /// <summary>
