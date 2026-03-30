@@ -127,6 +127,16 @@ class Program
             }
         }
 
+        var customItemConf = hub.Get<Custom.CustomItemConf>();
+        if (customItemConf is null)
+        {
+            Console.WriteLine("CustomItemConf is null");
+        }
+        else
+        {
+            Console.WriteLine($"specialItemName: {customItemConf.GetSpecialItemName()}");
+        }
+
         LoadBin();
     }
 
