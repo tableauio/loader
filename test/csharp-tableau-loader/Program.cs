@@ -139,7 +139,7 @@ class Program
         }
         if (!heroConf.Load("../testdata/notexist", Tableau.Format.Bin))
         {
-            Console.WriteLine("HeroConf not exist");
+            Console.WriteLine("expected: HeroConf not exist");
         }
     }
 }

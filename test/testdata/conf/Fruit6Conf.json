@@ -2,42 +2,50 @@
     "fruitMap": {
         "1": {
             "fruitType": "FRUIT_TYPE_APPLE",
-            "itemMap": {
-                "1001": {
+            "itemList": [
+                {
                     "id": 1001,
                     "price": 10
                 },
-                "1002": {
+                {
                     "id": 1002,
                     "price": 20
                 }
-            }
+            ]
         },
         "2": {
             "fruitType": "FRUIT_TYPE_ORANGE",
-            "itemMap": {
-                "2001": {
+            "itemList": [
+                {
                     "id": 2001,
                     "price": 15
                 },
-                "2002": {
+                {
+                    "id": 2009,
+                    "price": 15
+                },
+                {
+                    "id": 2000,
+                    "price": 15
+                },
+                {
                     "id": 2002,
                     "price": 25
                 }
-            }
+            ]
         },
         "3": {
             "fruitType": "FRUIT_TYPE_BANANA",
-            "itemMap": {
-                "3001": {
+            "itemList": [
+                {
                     "id": 3001,
                     "price": 8
                 },
-                "3002": {
+                {
                     "id": 3002,
                     "price": 12
                 }
-            }
+            ]
         }
     }
 }

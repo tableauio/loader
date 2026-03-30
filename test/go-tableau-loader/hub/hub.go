@@ -15,6 +15,13 @@ type MyHub struct {
 var hubSingleton *MyHub
 var once sync.Once
 
+// NewMyHub creates a new MyHub instance (useful for testing).
+func NewMyHub() *MyHub {
+	return &MyHub{
+		Hub: tableau.NewHub(),
+	}
+}
+
 // GetHub return the singleton of MyHub
 func GetHub() *MyHub {
 	once.Do(func() {

@@ -98,19 +98,23 @@ func (x *Generator) GenIndexTypeDef() {
 	// (k1, k2, k3) with an index at the deepest level, x.keys = [k1, k2, k3].
 	//
 	// Level containers at depth 1 are keyed by a single scalar (k1), so no
-	// composite key struct is needed. The deepest level (depth = len(keys))
-	// also does not need one, because its full key combination (all keys)
-	// is already represented by the index's own key struct generated
-	// separately. Only intermediate depths (2 ≤ depth < len(keys)) require
-	// a LevelIndex struct that bundles all ancestor keys up to that depth:
+	// composite key struct is needed. Only depths ≥ 2 require a LevelIndex
+	// struct that bundles all ancestor keys up to that depth:
 	//
 	//   keys = [k1, k2, k3]     → struct for depth 2: {k1, k2}
+	//                             struct for depth 3: {k1, k2, k3}
 	//   keys = [k1, k2, k3, k4] → struct for depth 2: {k1, k2}
-	//                              struct for depth 3: {k1, k2, k3}
+	//                             struct for depth 3: {k1, k2, k3}
+	//                             struct for depth 4: {k1, k2, k3, k4}
 	//
 	// The loop starts at i=2 (depth 2) and creates a struct from keys[:i].
-	// It runs len(x.keys)-2 times (0 times when len ≤ 2).
-	for i := 2; i < len(x.keys); i++ {
+	// It runs len(x.keys)-1 times (0 times when len ≤ 1).
+	//
+	// NOTE: When multiple map levels share the same key name (e.g., two maps
+	// both keyed by "ID"), the FieldName in x.keys is automatically
+	// deduplicated by AddMapKey (e.g., "Id" → "Id3"). This ensures the
+	// generated struct has unique field names. See AddMapKey for details.
+	for i := 2; i <= len(x.keys); i++ {
 		if i == 2 {
 			x.g.P()
 			x.g.P(helper.Indent(2), "// LevelIndex keys.")
@@ -121,7 +125,11 @@ func (x *Generator) GenIndexTypeDef() {
 		x.g.P(helper.Indent(2), "{")
 		keys := x.keys[:i]
 		for _, key := range keys {
-			x.g.P(helper.Indent(3), "public ", key.Type, " ", key.FieldName, " { get; }")
+			comment := fmt.Sprintf("// key of %s", key.Fd.FullName())
+			if key.OrigFieldName != "" {
+				comment += fmt.Sprintf(" (renamed from %s)", key.OrigFieldName)
+			}
+			x.g.P(helper.Indent(3), "public ", key.Type, " ", key.FieldName, " { get; } ", comment)
 		}
 		x.g.P()
 		x.g.P(helper.Indent(3), "public ", keyType, "(", keys.GenGetParams(), ")")

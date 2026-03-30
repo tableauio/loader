@@ -21,6 +21,7 @@ namespace Tableau
         public HeroConf? HeroConf;
         public HeroBaseConf? HeroBaseConf;
         public FruitConf? FruitConf;
+        public Fruit6Conf? Fruit6Conf;
         public Fruit2Conf? Fruit2Conf;
         public Fruit3Conf? Fruit3Conf;
         public Fruit4Conf? Fruit4Conf;
@@ -42,6 +43,7 @@ namespace Tableau
             HeroConf = InternalGet<HeroConf>(messagerMap);
             HeroBaseConf = InternalGet<HeroBaseConf>(messagerMap);
             FruitConf = InternalGet<FruitConf>(messagerMap);
+            Fruit6Conf = InternalGet<Fruit6Conf>(messagerMap);
             Fruit2Conf = InternalGet<Fruit2Conf>(messagerMap);
             Fruit3Conf = InternalGet<Fruit3Conf>(messagerMap);
             Fruit4Conf = InternalGet<Fruit4Conf>(messagerMap);
@@ -161,6 +163,8 @@ namespace Tableau
 
         public FruitConf? GetFruitConf() => _messagerContainer.Value?.FruitConf;
 
+        public Fruit6Conf? GetFruit6Conf() => _messagerContainer.Value?.Fruit6Conf;
+
         public Fruit2Conf? GetFruit2Conf() => _messagerContainer.Value?.Fruit2Conf;
 
         public Fruit3Conf? GetFruit3Conf() => _messagerContainer.Value?.Fruit3Conf;
@@ -229,6 +233,7 @@ namespace Tableau
             Register<HeroConf>();
             Register<HeroBaseConf>();
             Register<FruitConf>();
+            Register<Fruit6Conf>();
             Register<Fruit2Conf>();
             Register<Fruit3Conf>();
             Register<Fruit4Conf>();

@@ -10,17 +10,37 @@ option (tableau.workbook) = {
   name: "Index.xlsx"
 };
 
-// Nesting: map -> map
+// Nesting: map (vertical) -> map (vertical)
 message FruitConf {
   option (tableau.worksheet) = {
     name: "FruitConf"
-    ordered_index: "Price<ID>"
+    index: "Price<ID>"
+    ordered_index: "Price<ID>@OrderedFruit"
   };
 
   map<int32, Fruit> fruit_map = 1 [(tableau.field) = { key: "FruitType" layout: LAYOUT_VERTICAL }];
   message Fruit {
     protoconf.FruitType fruit_type = 1 [(tableau.field) = { name: "FruitType" }];
     map<int32, Item> item_map = 2 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
+    message Item {
+      int32 id = 1 [(tableau.field) = { name: "ID" }];
+      int32 price = 2 [(tableau.field) = { name: "Price" }];
+    }
+  }
+}
+
+// Nesting: map (vertical) -> list (vertical))
+message Fruit6Conf {
+  option (tableau.worksheet) = {
+    name: "FruitConf"
+    index: "Price<ID>"
+    ordered_index: "Price<ID>@OrderedFruit"
+  };
+
+  map<int32, Fruit> fruit_map = 1 [(tableau.field) = { key: "FruitType" layout: LAYOUT_VERTICAL }];
+  message Fruit {
+    protoconf.FruitType fruit_type = 1 [(tableau.field) = { name: "FruitType" }];
+    repeated Item item_list = 2 [(tableau.field) = { key: "ID" layout: LAYOUT_VERTICAL }];
     message Item {
       int32 id = 1 [(tableau.field) = { name: "ID" }];
       int32 price = 2 [(tableau.field) = { name: "Price" }];

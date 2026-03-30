@@ -174,21 +174,69 @@ func ParseLeveledMapPrefix(md protoreflect.MessageDescriptor, mapFd protoreflect
 }
 
 type MapKey struct {
-	Type string
-	Name string
-	Fd   protoreflect.FieldDescriptor // the map field descriptor this key belongs to
+	Type          string
+	Name          string
+	FieldName     string                       // multi-column index only (may be deduplicated, e.g., "Id" → "Id3")
+	OrigFieldName string                       // original FieldName before deduplication (empty if not renamed)
+	Fd            protoreflect.FieldDescriptor // the map field descriptor this key belongs to
 }
 
 type MapKeySlice []MapKey
 
+// AddMapKey appends a new map key to the slice, automatically deduplicating
+// both Name (used as function parameter names) and FieldName (used as struct
+// field names in LevelIndex key structs).
+//
+// Deduplication is needed because different map levels may share the same key
+// name. For example, given the following nested proto maps where country_map
+// and item_map both use "ID" as their key name:
+//
+//	message Fruit4Conf {
+//	    map<int32, Fruit> fruit_map = 1;          // key field: "FruitType"
+//	    message Fruit {
+//	        map<int32, Country> country_map = 2;  // key field: "ID"
+//	        message Country {
+//	            map<int32, Item> item_map = 3;    // key field: "ID"  ← same name!
+//	        }
+//	    }
+//	}
+//
+// Without dedup, the generated LevelIndex key struct would have duplicate
+// field names, causing a compile error:
+//
+//	struct LevelIndex_Fruit_Country_ItemKey {
+//	    int32_t id;        // key of protoconf.Fruit4Conf.fruit_map
+//	    int32_t id;        // key of protoconf.Fruit4Conf.Fruit.country_map
+//	    int32_t id;        // key of protoconf.Fruit4Conf.Fruit.Country.item_map — COMPILE ERROR!
+//	};
+//
+// With dedup, the conflicting name gets a numeric suffix (the 1-based position
+// of the new key in the slice), producing valid C++ code:
+//
+//	struct LevelIndex_Fruit_Country_ItemKey {
+//	    int32_t fruit_type; // key of protoconf.Fruit4Conf.fruit_map
+//	    int32_t id;         // key of protoconf.Fruit4Conf.Fruit.country_map
+//	    int32_t id3;        // key of protoconf.Fruit4Conf.Fruit.Country.item_map (renamed from id)
+//	};
 func (s MapKeySlice) AddMapKey(newKey MapKey) MapKeySlice {
 	if newKey.Name == "" {
 		newKey.Name = fmt.Sprintf("key%d", len(s)+1)
-	} else {
+	}
+	// Deduplicate Name (used as function parameter, e.g., "id" → "id3").
+	for _, key := range s {
+		if key.Name == newKey.Name {
+			newKey.Name = fmt.Sprintf("%s%d", newKey.Name, len(s)+1)
+			break
+		}
+	}
+	// Deduplicate FieldName (used as struct field, e.g., "Id" → "Id3").
+	// This is only relevant for multi-column indexes that generate LevelIndex
+	// key structs; single-column indexes leave FieldName empty.
+	if newKey.FieldName != "" {
 		for _, key := range s {
-			if key.Name == newKey.Name {
-				// rewrite to avoid name confict
-				newKey.Name = fmt.Sprintf("%s%d", newKey.Name, len(s)+1)
+			if key.FieldName == newKey.FieldName {
+				newKey.OrigFieldName = newKey.FieldName
+				newKey.FieldName = fmt.Sprintf("%s%d", newKey.FieldName, len(s)+1)
 				break
 			}
 		}

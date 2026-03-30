@@ -56,9 +56,14 @@ type LevelMessage struct {
 	// Depth is the 0-based depth of message hierarchy.
 	// For example, the top-level message has Depth=0, the next level has Depth=1, and so on.
 	Depth int
-	// MapDepth is the 0-based map depth of message hierarchy.
-	// It only increments when the current level is entered via a map field (i.e., FD.IsMap()).
-	// For example, the top-level message has MapDepth=0, the next level (if entered via map) has MapDepth=1, and so on.
+	// MapDepth is the number of map fields from the root to this level (inclusive).
+	// It only increments when the current level is entered via a map field (FD.IsMap()),
+	// so list fields do NOT increase MapDepth.
+	//
+	// Examples (root has MapDepth=0):
+	//   map -> map -> map  : MapDepth = 1, 2, 3
+	//   map -> list -> map : MapDepth = 1, 1, 2
+	//   map -> list        : MapDepth = 1, 1
 	MapDepth int
 }
 
@@ -82,25 +87,53 @@ func (l *LevelMessage) NeedGenAnyIndex() bool {
 	return l.NeedGenIndex() || l.NeedGenOrderedIndex()
 }
 
-// NeedMapKeyForIndex checks if the map key variable at this level is needed
-// by any deeper level's regular index's leveled containers.
-// It finds the first level whose MapDepth > l.MapDepth+1 (i.e., at least 2 map
-// levels deeper), then delegates to NeedGenIndex which recursively checks that
-// level and all deeper levels for indexes.
+// LeveledContainerDepth returns the depth used for generating leveled index
+// containers and finders. Leveled containers allow querying indexes scoped to
+// a specific upper map key (e.g., FindItem1(mapKey, indexKey)).
+//
+// The returned value N means the codegen loop "for i := 1; i < N; i++" will
+// produce N-1 leveled containers.
+//
+// For map levels, MapDepth already includes the current map, so N = MapDepth.
+// For non-map levels (e.g., list), MapDepth does NOT include the current level,
+// but all upper maps still need leveled containers, so N = MapDepth + 1.
+//
+// Examples:
+//
+//	map(1) -> map(2)         : map(2).LCD = 2  → 1 leveled container
+//	map(1) -> list(1)        : list(1).LCD = 2  → 1 leveled container
+//	map(1) -> map(2) -> map(3) -> list(3) : list(3).LCD = 4 → 3 leveled containers
+func (l *LevelMessage) LeveledContainerDepth() int {
+	if l.FD != nil && l.FD.IsMap() {
+		return l.MapDepth
+	}
+	if l.MapDepth > 0 {
+		return l.MapDepth + 1
+	}
+	return 0
+}
+
+// NeedMapKeyForIndex checks whether the map key variable declared at this
+// level is referenced by any deeper level's leveled index containers.
+//
+// It walks forward through the level chain and finds the first level whose
+// LeveledContainerDepth exceeds l.MapDepth — meaning that level requires at
+// least one more leveled container than what the current map provides. If that
+// level (or any of its descendants) has a regular index, the map key is needed.
 func (l *LevelMessage) NeedMapKeyForIndex() bool {
 	for lm := l.NextLevel; lm != nil; lm = lm.NextLevel {
-		if lm.MapDepth > l.MapDepth {
+		if lm.LeveledContainerDepth() > l.MapDepth {
 			return lm.NeedGenIndex()
 		}
 	}
 	return false
 }
 
-// NeedMapKeyForOrderedIndex checks if the map key variable at this level is
-// needed by any deeper level's ordered index's leveled containers.
+// NeedMapKeyForOrderedIndex is the ordered-index counterpart of
+// NeedMapKeyForIndex. See NeedMapKeyForIndex for the algorithm description.
 func (l *LevelMessage) NeedMapKeyForOrderedIndex() bool {
 	for lm := l.NextLevel; lm != nil; lm = lm.NextLevel {
-		if lm.MapDepth > l.MapDepth {
+		if lm.LeveledContainerDepth() > l.MapDepth {
 			return lm.NeedGenOrderedIndex()
 		}
 	}

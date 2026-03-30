@@ -91,7 +91,7 @@ func (x *Generator) genIndexTypeDef() {
 
 			x.g.P(helper.Indent(2), "private ", mapType, " ", x.indexContainerName(index, 0), " = new ", mapType, "();")
 			x.g.P()
-			for i := 1; i < lm.MapDepth; i++ {
+			for i := 1; i < lm.LeveledContainerDepth(); i++ {
 				if i == 1 {
 					x.g.P(helper.Indent(2), "private Dictionary<", x.keys[0].Type, ", ", mapType, "> ", x.indexContainerName(index, i), " = new Dictionary<", x.keys[0].Type, ", ", mapType, ">();")
 				} else {
@@ -113,7 +113,7 @@ func (x *Generator) genIndexLoader() {
 	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
 		for _, index := range lm.Indexes {
 			x.g.P(helper.Indent(3), x.indexContainerName(index, 0), ".Clear();")
-			for i := 1; i < lm.MapDepth; i++ {
+			for i := 1; i < lm.LeveledContainerDepth(); i++ {
 				x.g.P(helper.Indent(3), x.indexContainerName(index, i), ".Clear();")
 			}
 		}
@@ -199,7 +199,7 @@ func (x *Generator) genLoader(lm *index.LevelMessage, index *index.LevelIndex, i
 	x.g.P(helper.Indent(ident+1), "existingList : ", x.indexContainerName(index, 0), "[", key, "] = new List<", valueType, ">();")
 	x.g.P(helper.Indent(ident+1), "list.Add(", parentDataName, ");")
 	x.g.P(helper.Indent(ident), "}")
-	for i := 1; i < lm.MapDepth; i++ {
+	for i := 1; i < lm.LeveledContainerDepth(); i++ {
 		x.g.P(helper.Indent(ident), "{")
 		if i == 1 {
 			x.g.P(helper.Indent(ident+1), "var map = ", x.indexContainerName(index, i), ".TryGetValue(k1, out var existingMap) ?")
@@ -244,7 +244,7 @@ func (x *Generator) genIndexSorter() {
 				x.g.P(helper.Indent(4), "itemList.Sort(", sorter, ");")
 				x.g.P(helper.Indent(3), "}")
 				// Iterate all leveled containers.
-				for i := 1; i < lm.MapDepth; i++ {
+				for i := 1; i < lm.LeveledContainerDepth(); i++ {
 					x.g.P(helper.Indent(3), "foreach (var itemDict in ", x.indexContainerName(index, i), ".Values)")
 					x.g.P(helper.Indent(3), "{")
 					x.g.P(helper.Indent(4), "foreach (var itemList in itemDict.Values)")
@@ -300,7 +300,7 @@ func (x *Generator) genIndexFinders() {
 			x.g.P(helper.Indent(2), "public ", mapValueType, "? FindFirst", index.Name(), "(", params, ") =>")
 			x.g.P(helper.Indent(3), "Find", index.Name(), "(", args, ")?.FirstOrDefault();")
 
-			for i := 1; i < lm.MapDepth; i++ {
+			for i := 1; i < lm.LeveledContainerDepth(); i++ {
 				indexContainerName := x.indexContainerName(index, i)
 				partKeys := x.keys[:i]
 				partParams := partKeys.GenGetParams()

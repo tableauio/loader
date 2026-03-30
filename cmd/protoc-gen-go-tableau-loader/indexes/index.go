@@ -83,7 +83,7 @@ func (x *Generator) genIndexField() {
 	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
 		for _, index := range lm.Indexes {
 			x.g.P(x.indexContainerName(index, 0), " ", x.indexMapType(index))
-			for i := 1; i < lm.MapDepth; i++ {
+			for i := 1; i < lm.LeveledContainerDepth(); i++ {
 				if i == 1 {
 					x.g.P(x.indexContainerName(index, i), " map[", x.keys[0].Type, "]", x.indexMapType(index))
 				} else {
@@ -104,7 +104,7 @@ func (x *Generator) genIndexLoader() {
 	for lm := x.descriptor.LevelMessage; lm != nil; lm = lm.NextLevel {
 		for _, index := range lm.Indexes {
 			x.g.P("x.", x.indexContainerName(index, 0), " = make(", x.indexMapType(index), ")")
-			for i := 1; i < lm.MapDepth; i++ {
+			for i := 1; i < lm.LeveledContainerDepth(); i++ {
 				if i == 1 {
 					x.g.P("x.", x.indexContainerName(index, i), " = make(map[", x.keys[0].Type, "]", x.indexMapType(index), ")")
 				} else {
@@ -188,7 +188,7 @@ func (x *Generator) generateOneMulticolumnIndex(lm *index.LevelMessage, index *i
 func (x *Generator) genIndexLoaderCommon(lm *index.LevelMessage, index *index.LevelIndex, parentDataName string) {
 	indexContainerName := x.indexContainerName(index, 0)
 	x.g.P("x.", indexContainerName, "[key] = append(x.", indexContainerName, "[key], ", parentDataName, ")")
-	for i := 1; i < lm.MapDepth; i++ {
+	for i := 1; i < lm.LeveledContainerDepth(); i++ {
 		indexContainerName := x.indexContainerName(index, i)
 		if i == 1 {
 			x.g.P("if x.", indexContainerName, "[k1] == nil {")
@@ -235,7 +235,7 @@ func (x *Generator) genIndexSorter() {
 				x.g.P(helper.SortPackage.Ident("Slice"), "(itemList, ", indexContainerName, "Sorter(itemList))")
 				x.g.P("}")
 				// Iterate all leveled containers.
-				for i := 1; i < lm.MapDepth; i++ {
+				for i := 1; i < lm.LeveledContainerDepth(); i++ {
 					x.g.P("for _, itemMap := range x.", x.indexContainerName(index, i), " {")
 					x.g.P("for _, itemList := range itemMap {")
 					x.g.P(helper.SortPackage.Ident("Slice"), "(itemList, ", indexContainerName, "Sorter(itemList))")
@@ -289,7 +289,7 @@ func (x *Generator) genIndexFinders() {
 			x.g.P("}")
 			x.g.P()
 
-			for i := 1; i < lm.MapDepth; i++ {
+			for i := 1; i < lm.LeveledContainerDepth(); i++ {
 				indexContainerName := x.indexContainerName(index, i)
 				partKeys := x.keys[:i]
 				partParams := partKeys.GenGetParams()

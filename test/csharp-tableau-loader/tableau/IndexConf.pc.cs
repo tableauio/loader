@@ -17,13 +17,21 @@ namespace Tableau
     /// </summary>
     public class FruitConf : Messager, IMessagerName
     {
+        // Index types.
+        // Index: Price<ID>
+        public class Index_ItemMap : Dictionary<int, List<Protoconf.FruitConf.Types.Fruit.Types.Item>> { }
+
+        private Index_ItemMap _indexItemMap = new Index_ItemMap();
+
+        private Dictionary<int, Index_ItemMap> _indexItemMap1 = new Dictionary<int, Index_ItemMap>();
+
         // OrderedIndex types.
-        // OrderedIndex: Price<ID>
-        public class OrderedIndex_ItemMap : SortedDictionary<int, List<Protoconf.FruitConf.Types.Fruit.Types.Item>> { }
+        // OrderedIndex: Price<ID>@OrderedFruit
+        public class OrderedIndex_OrderedFruitMap : SortedDictionary<int, List<Protoconf.FruitConf.Types.Fruit.Types.Item>> { }
 
-        private OrderedIndex_ItemMap _orderedIndexItemMap = new OrderedIndex_ItemMap();
+        private OrderedIndex_OrderedFruitMap _orderedIndexOrderedFruitMap = new OrderedIndex_OrderedFruitMap();
 
-        private Dictionary<int, OrderedIndex_ItemMap> _orderedIndexItemMap1 = new Dictionary<int, OrderedIndex_ItemMap>();
+        private Dictionary<int, OrderedIndex_OrderedFruitMap> _orderedIndexOrderedFruitMap1 = new Dictionary<int, OrderedIndex_OrderedFruitMap>();
 
         private Protoconf.FruitConf _data = new();
 
@@ -72,25 +80,25 @@ namespace Tableau
         /// </summary>
         protected override bool ProcessAfterLoad()
         {
-            // OrderedIndex init.
-            _orderedIndexItemMap.Clear();
-            _orderedIndexItemMap1.Clear();
+            // Index init.
+            _indexItemMap.Clear();
+            _indexItemMap1.Clear();
             foreach (var item1 in _data.FruitMap)
             {
                 var k1 = item1.Key;
                 foreach (var item2 in item1.Value.ItemMap)
                 {
                     {
-                        // OrderedIndex: Price<ID>
+                        // Index: Price<ID>
                         var key = item2.Value.Price;
                         {
-                            var list = _orderedIndexItemMap.TryGetValue(key, out var existingList) ?
-                            existingList : _orderedIndexItemMap[key] = new List<Protoconf.FruitConf.Types.Fruit.Types.Item>();
+                            var list = _indexItemMap.TryGetValue(key, out var existingList) ?
+                            existingList : _indexItemMap[key] = new List<Protoconf.FruitConf.Types.Fruit.Types.Item>();
                             list.Add(item2.Value);
                         }
                         {
-                            var map = _orderedIndexItemMap1.TryGetValue(k1, out var existingMap) ?
-                            existingMap : _orderedIndexItemMap1[k1] = new OrderedIndex_ItemMap();
+                            var map = _indexItemMap1.TryGetValue(k1, out var existingMap) ?
+                            existingMap : _indexItemMap1[k1] = new Index_ItemMap();
                             var list = map.TryGetValue(key, out var existingList) ?
                             existingList : map[key] = new List<Protoconf.FruitConf.Types.Fruit.Types.Item>();
                             list.Add(item2.Value);
@@ -98,18 +106,58 @@ namespace Tableau
                     }
                 }
             }
-            // OrderedIndex(sort): Price<ID>
-            Comparison<Protoconf.FruitConf.Types.Fruit.Types.Item> orderedIndexItemMapComparison = (a, b) =>
+            // Index(sort): Price<ID>
+            Comparison<Protoconf.FruitConf.Types.Fruit.Types.Item> indexItemMapComparison = (a, b) =>
                 (a.Id).CompareTo((b.Id));
-            foreach (var itemList in _orderedIndexItemMap.Values)
+            foreach (var itemList in _indexItemMap.Values)
             {
-                itemList.Sort(orderedIndexItemMapComparison);
+                itemList.Sort(indexItemMapComparison);
             }
-            foreach (var itemDict in _orderedIndexItemMap1.Values)
+            foreach (var itemDict in _indexItemMap1.Values)
             {
                 foreach (var itemList in itemDict.Values)
                 {
-                    itemList.Sort(orderedIndexItemMapComparison);
+                    itemList.Sort(indexItemMapComparison);
+                }
+            }
+            // OrderedIndex init.
+            _orderedIndexOrderedFruitMap.Clear();
+            _orderedIndexOrderedFruitMap1.Clear();
+            foreach (var item1 in _data.FruitMap)
+            {
+                var k1 = item1.Key;
+                foreach (var item2 in item1.Value.ItemMap)
+                {
+                    {
+                        // OrderedIndex: Price<ID>@OrderedFruit
+                        var key = item2.Value.Price;
+                        {
+                            var list = _orderedIndexOrderedFruitMap.TryGetValue(key, out var existingList) ?
+                            existingList : _orderedIndexOrderedFruitMap[key] = new List<Protoconf.FruitConf.Types.Fruit.Types.Item>();
+                            list.Add(item2.Value);
+                        }
+                        {
+                            var map = _orderedIndexOrderedFruitMap1.TryGetValue(k1, out var existingMap) ?
+                            existingMap : _orderedIndexOrderedFruitMap1[k1] = new OrderedIndex_OrderedFruitMap();
+                            var list = map.TryGetValue(key, out var existingList) ?
+                            existingList : map[key] = new List<Protoconf.FruitConf.Types.Fruit.Types.Item>();
+                            list.Add(item2.Value);
+                        }
+                    }
+                }
+            }
+            // OrderedIndex(sort): Price<ID>@OrderedFruit
+            Comparison<Protoconf.FruitConf.Types.Fruit.Types.Item> orderedIndexOrderedFruitMapComparison = (a, b) =>
+                (a.Id).CompareTo((b.Id));
+            foreach (var itemList in _orderedIndexOrderedFruitMap.Values)
+            {
+                itemList.Sort(orderedIndexOrderedFruitMapComparison);
+            }
+            foreach (var itemDict in _orderedIndexOrderedFruitMap1.Values)
+            {
+                foreach (var itemList in itemDict.Values)
+                {
+                    itemList.Sort(orderedIndexOrderedFruitMapComparison);
                 }
             }
             return true;
@@ -129,19 +177,19 @@ namespace Tableau
         public Protoconf.FruitConf.Types.Fruit.Types.Item? Get2(int fruitType, int id) =>
             Get1(fruitType)?.ItemMap?.TryGetValue(id, out var val) == true ? val : null;
 
-        // OrderedIndex: Price<ID>
+        // Index: Price<ID>
 
         /// <summary>
-        /// FindItemMap finds the ordered index: key(Price<ID>) to value(Protoconf.FruitConf.Types.Fruit.Types.Item) sorted map.
+        /// FindItemMap finds the index: key(Price<ID>) to value(Protoconf.FruitConf.Types.Fruit.Types.Item) map.
         /// One key may correspond to multiple values, which are represented by a list.
         /// </summary>
-        public ref readonly OrderedIndex_ItemMap FindItemMap() => ref _orderedIndexItemMap;
+        public ref readonly Index_ItemMap FindItemMap() => ref _indexItemMap;
 
         /// <summary>
         /// FindItem finds a list of all values of the given key(s).
         /// </summary>
         public List<Protoconf.FruitConf.Types.Fruit.Types.Item>? FindItem(int price) =>
-            _orderedIndexItemMap.TryGetValue(price, out var value) ? value : null;
+            _indexItemMap.TryGetValue(price, out var value) ? value : null;
 
         /// <summary>
         /// FindFirstItem finds the first value of the given key(s),
@@ -151,26 +199,314 @@ namespace Tableau
             FindItem(price)?.FirstOrDefault();
 
         /// <summary>
-        /// FindItemMap1 finds the ordered index: key(Price<ID>) to value(Protoconf.FruitConf.Types.Fruit.Types.Item),
-        /// which is the upper 1st-level sorted map specified by (fruitType).
+        /// FindItemMap1 finds the index: key(Price<ID>) to value(Protoconf.FruitConf.Types.Fruit.Types.Item),
+        /// which is the upper 1st-level map specified by (fruitType).
         /// One key may correspond to multiple values, which are represented by a list.
         /// </summary>
-        public OrderedIndex_ItemMap? FindItemMap1(int fruitType) =>
-            _orderedIndexItemMap1.TryGetValue(fruitType, out var value) ? value : null;
+        public Index_ItemMap? FindItemMap1(int fruitType) =>
+            _indexItemMap1.TryGetValue(fruitType, out var value) ? value : null;
 
         /// <summary>
-        /// FindItem1 finds a list of all values of the given key(s) in the upper 1st-level sorted map
+        /// FindItem1 finds a list of all values of the given key(s) in the upper 1st-level map
         /// specified by (fruitType).
         /// </summary>
         public List<Protoconf.FruitConf.Types.Fruit.Types.Item>? FindItem1(int fruitType, int price) =>
             FindItemMap1(fruitType)?.TryGetValue(price, out var value) == true ? value : null;
 
         /// <summary>
-        /// FindFirstItem1 finds the first value of the given key(s) in the upper 1st-level sorted map
+        /// FindFirstItem1 finds the first value of the given key(s) in the upper 1st-level map
         /// specified by (fruitType), or null if no value found.
         /// </summary>
         public Protoconf.FruitConf.Types.Fruit.Types.Item? FindFirstItem1(int fruitType, int price) =>
             FindItem1(fruitType, price)?.FirstOrDefault();
+
+        // OrderedIndex: Price<ID>@OrderedFruit
+
+        /// <summary>
+        /// FindOrderedFruitMap finds the ordered index: key(Price<ID>@OrderedFruit) to value(Protoconf.FruitConf.Types.Fruit.Types.Item) sorted map.
+        /// One key may correspond to multiple values, which are represented by a list.
+        /// </summary>
+        public ref readonly OrderedIndex_OrderedFruitMap FindOrderedFruitMap() => ref _orderedIndexOrderedFruitMap;
+
+        /// <summary>
+        /// FindOrderedFruit finds a list of all values of the given key(s).
+        /// </summary>
+        public List<Protoconf.FruitConf.Types.Fruit.Types.Item>? FindOrderedFruit(int price) =>
+            _orderedIndexOrderedFruitMap.TryGetValue(price, out var value) ? value : null;
+
+        /// <summary>
+        /// FindFirstOrderedFruit finds the first value of the given key(s),
+        /// or null if no value found.
+        /// </summary>
+        public Protoconf.FruitConf.Types.Fruit.Types.Item? FindFirstOrderedFruit(int price) =>
+            FindOrderedFruit(price)?.FirstOrDefault();
+
+        /// <summary>
+        /// FindOrderedFruitMap1 finds the ordered index: key(Price<ID>@OrderedFruit) to value(Protoconf.FruitConf.Types.Fruit.Types.Item),
+        /// which is the upper 1st-level sorted map specified by (fruitType).
+        /// One key may correspond to multiple values, which are represented by a list.
+        /// </summary>
+        public OrderedIndex_OrderedFruitMap? FindOrderedFruitMap1(int fruitType) =>
+            _orderedIndexOrderedFruitMap1.TryGetValue(fruitType, out var value) ? value : null;
+
+        /// <summary>
+        /// FindOrderedFruit1 finds a list of all values of the given key(s) in the upper 1st-level sorted map
+        /// specified by (fruitType).
+        /// </summary>
+        public List<Protoconf.FruitConf.Types.Fruit.Types.Item>? FindOrderedFruit1(int fruitType, int price) =>
+            FindOrderedFruitMap1(fruitType)?.TryGetValue(price, out var value) == true ? value : null;
+
+        /// <summary>
+        /// FindFirstOrderedFruit1 finds the first value of the given key(s) in the upper 1st-level sorted map
+        /// specified by (fruitType), or null if no value found.
+        /// </summary>
+        public Protoconf.FruitConf.Types.Fruit.Types.Item? FindFirstOrderedFruit1(int fruitType, int price) =>
+            FindOrderedFruit1(fruitType, price)?.FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Fruit6Conf is a wrapper around protobuf message Protoconf.Fruit6Conf.
+    /// </summary>
+    public class Fruit6Conf : Messager, IMessagerName
+    {
+        // Index types.
+        // Index: Price<ID>
+        public class Index_ItemMap : Dictionary<int, List<Protoconf.Fruit6Conf.Types.Fruit.Types.Item>> { }
+
+        private Index_ItemMap _indexItemMap = new Index_ItemMap();
+
+        private Dictionary<int, Index_ItemMap> _indexItemMap1 = new Dictionary<int, Index_ItemMap>();
+
+        // OrderedIndex types.
+        // OrderedIndex: Price<ID>@OrderedFruit
+        public class OrderedIndex_OrderedFruitMap : SortedDictionary<int, List<Protoconf.Fruit6Conf.Types.Fruit.Types.Item>> { }
+
+        private OrderedIndex_OrderedFruitMap _orderedIndexOrderedFruitMap = new OrderedIndex_OrderedFruitMap();
+
+        private Dictionary<int, OrderedIndex_OrderedFruitMap> _orderedIndexOrderedFruitMap1 = new Dictionary<int, OrderedIndex_OrderedFruitMap>();
+
+        private Protoconf.Fruit6Conf _data = new();
+
+        /// <summary>
+        /// Name returns the Fruit6Conf's message name.
+        /// </summary>
+        public string Name() => Protoconf.Fruit6Conf.Descriptor.Name;
+
+        /// <summary>
+        /// Load loads Fruit6Conf's content in the given dir, based on format and messager options.
+        /// </summary>
+        public override bool Load(string dir, Format fmt, in Load.MessagerOptions? options = null)
+        {
+            var start = DateTime.Now;
+            try
+            {
+                _data = (Protoconf.Fruit6Conf)(
+                    Tableau.Load.LoadMessagerInDir(Protoconf.Fruit6Conf.Descriptor, dir, fmt, options)
+                    ?? throw new InvalidOperationException()
+                );
+            }
+            catch (Exception ex)
+            {
+                if (string.IsNullOrEmpty(Util.GetErrMsg()))
+                {
+                    Util.SetErrMsg($"failed to load Fruit6Conf: {ex.Message}");
+                }
+                return false;
+            }
+            LoadStats.Duration = DateTime.Now - start;
+            return ProcessAfterLoad();
+        }
+
+        /// <summary>
+        /// Data returns the Fruit6Conf's inner message data.
+        /// </summary>
+        public ref readonly Protoconf.Fruit6Conf Data() => ref _data;
+
+        /// <summary>
+        /// Message returns the Fruit6Conf's inner message data.
+        /// </summary>
+        public override pb::IMessage? Message() => _data;
+
+        /// <summary>
+        /// ProcessAfterLoad runs after this messager is loaded.
+        /// </summary>
+        protected override bool ProcessAfterLoad()
+        {
+            // Index init.
+            _indexItemMap.Clear();
+            _indexItemMap1.Clear();
+            foreach (var item1 in _data.FruitMap)
+            {
+                var k1 = item1.Key;
+                foreach (var item2 in item1.Value.ItemList)
+                {
+                    {
+                        // Index: Price<ID>
+                        var key = item2.Price;
+                        {
+                            var list = _indexItemMap.TryGetValue(key, out var existingList) ?
+                            existingList : _indexItemMap[key] = new List<Protoconf.Fruit6Conf.Types.Fruit.Types.Item>();
+                            list.Add(item2);
+                        }
+                        {
+                            var map = _indexItemMap1.TryGetValue(k1, out var existingMap) ?
+                            existingMap : _indexItemMap1[k1] = new Index_ItemMap();
+                            var list = map.TryGetValue(key, out var existingList) ?
+                            existingList : map[key] = new List<Protoconf.Fruit6Conf.Types.Fruit.Types.Item>();
+                            list.Add(item2);
+                        }
+                    }
+                }
+            }
+            // Index(sort): Price<ID>
+            Comparison<Protoconf.Fruit6Conf.Types.Fruit.Types.Item> indexItemMapComparison = (a, b) =>
+                (a.Id).CompareTo((b.Id));
+            foreach (var itemList in _indexItemMap.Values)
+            {
+                itemList.Sort(indexItemMapComparison);
+            }
+            foreach (var itemDict in _indexItemMap1.Values)
+            {
+                foreach (var itemList in itemDict.Values)
+                {
+                    itemList.Sort(indexItemMapComparison);
+                }
+            }
+            // OrderedIndex init.
+            _orderedIndexOrderedFruitMap.Clear();
+            _orderedIndexOrderedFruitMap1.Clear();
+            foreach (var item1 in _data.FruitMap)
+            {
+                var k1 = item1.Key;
+                foreach (var item2 in item1.Value.ItemList)
+                {
+                    {
+                        // OrderedIndex: Price<ID>@OrderedFruit
+                        var key = item2.Price;
+                        {
+                            var list = _orderedIndexOrderedFruitMap.TryGetValue(key, out var existingList) ?
+                            existingList : _orderedIndexOrderedFruitMap[key] = new List<Protoconf.Fruit6Conf.Types.Fruit.Types.Item>();
+                            list.Add(item2);
+                        }
+                        {
+                            var map = _orderedIndexOrderedFruitMap1.TryGetValue(k1, out var existingMap) ?
+                            existingMap : _orderedIndexOrderedFruitMap1[k1] = new OrderedIndex_OrderedFruitMap();
+                            var list = map.TryGetValue(key, out var existingList) ?
+                            existingList : map[key] = new List<Protoconf.Fruit6Conf.Types.Fruit.Types.Item>();
+                            list.Add(item2);
+                        }
+                    }
+                }
+            }
+            // OrderedIndex(sort): Price<ID>@OrderedFruit
+            Comparison<Protoconf.Fruit6Conf.Types.Fruit.Types.Item> orderedIndexOrderedFruitMapComparison = (a, b) =>
+                (a.Id).CompareTo((b.Id));
+            foreach (var itemList in _orderedIndexOrderedFruitMap.Values)
+            {
+                itemList.Sort(orderedIndexOrderedFruitMapComparison);
+            }
+            foreach (var itemDict in _orderedIndexOrderedFruitMap1.Values)
+            {
+                foreach (var itemList in itemDict.Values)
+                {
+                    itemList.Sort(orderedIndexOrderedFruitMapComparison);
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Get1 finds value in the 1st-level map.
+        /// It will return null if the key is not found.
+        /// </summary>
+        public Protoconf.Fruit6Conf.Types.Fruit? Get1(int fruitType) =>
+            _data.FruitMap?.TryGetValue(fruitType, out var val) == true ? val : null;
+
+        // Index: Price<ID>
+
+        /// <summary>
+        /// FindItemMap finds the index: key(Price<ID>) to value(Protoconf.Fruit6Conf.Types.Fruit.Types.Item) map.
+        /// One key may correspond to multiple values, which are represented by a list.
+        /// </summary>
+        public ref readonly Index_ItemMap FindItemMap() => ref _indexItemMap;
+
+        /// <summary>
+        /// FindItem finds a list of all values of the given key(s).
+        /// </summary>
+        public List<Protoconf.Fruit6Conf.Types.Fruit.Types.Item>? FindItem(int price) =>
+            _indexItemMap.TryGetValue(price, out var value) ? value : null;
+
+        /// <summary>
+        /// FindFirstItem finds the first value of the given key(s),
+        /// or null if no value found.
+        /// </summary>
+        public Protoconf.Fruit6Conf.Types.Fruit.Types.Item? FindFirstItem(int price) =>
+            FindItem(price)?.FirstOrDefault();
+
+        /// <summary>
+        /// FindItemMap1 finds the index: key(Price<ID>) to value(Protoconf.Fruit6Conf.Types.Fruit.Types.Item),
+        /// which is the upper 1st-level map specified by (fruitType).
+        /// One key may correspond to multiple values, which are represented by a list.
+        /// </summary>
+        public Index_ItemMap? FindItemMap1(int fruitType) =>
+            _indexItemMap1.TryGetValue(fruitType, out var value) ? value : null;
+
+        /// <summary>
+        /// FindItem1 finds a list of all values of the given key(s) in the upper 1st-level map
+        /// specified by (fruitType).
+        /// </summary>
+        public List<Protoconf.Fruit6Conf.Types.Fruit.Types.Item>? FindItem1(int fruitType, int price) =>
+            FindItemMap1(fruitType)?.TryGetValue(price, out var value) == true ? value : null;
+
+        /// <summary>
+        /// FindFirstItem1 finds the first value of the given key(s) in the upper 1st-level map
+        /// specified by (fruitType), or null if no value found.
+        /// </summary>
+        public Protoconf.Fruit6Conf.Types.Fruit.Types.Item? FindFirstItem1(int fruitType, int price) =>
+            FindItem1(fruitType, price)?.FirstOrDefault();
+
+        // OrderedIndex: Price<ID>@OrderedFruit
+
+        /// <summary>
+        /// FindOrderedFruitMap finds the ordered index: key(Price<ID>@OrderedFruit) to value(Protoconf.Fruit6Conf.Types.Fruit.Types.Item) sorted map.
+        /// One key may correspond to multiple values, which are represented by a list.
+        /// </summary>
+        public ref readonly OrderedIndex_OrderedFruitMap FindOrderedFruitMap() => ref _orderedIndexOrderedFruitMap;
+
+        /// <summary>
+        /// FindOrderedFruit finds a list of all values of the given key(s).
+        /// </summary>
+        public List<Protoconf.Fruit6Conf.Types.Fruit.Types.Item>? FindOrderedFruit(int price) =>
+            _orderedIndexOrderedFruitMap.TryGetValue(price, out var value) ? value : null;
+
+        /// <summary>
+        /// FindFirstOrderedFruit finds the first value of the given key(s),
+        /// or null if no value found.
+        /// </summary>
+        public Protoconf.Fruit6Conf.Types.Fruit.Types.Item? FindFirstOrderedFruit(int price) =>
+            FindOrderedFruit(price)?.FirstOrDefault();
+
+        /// <summary>
+        /// FindOrderedFruitMap1 finds the ordered index: key(Price<ID>@OrderedFruit) to value(Protoconf.Fruit6Conf.Types.Fruit.Types.Item),
+        /// which is the upper 1st-level sorted map specified by (fruitType).
+        /// One key may correspond to multiple values, which are represented by a list.
+        /// </summary>
+        public OrderedIndex_OrderedFruitMap? FindOrderedFruitMap1(int fruitType) =>
+            _orderedIndexOrderedFruitMap1.TryGetValue(fruitType, out var value) ? value : null;
+
+        /// <summary>
+        /// FindOrderedFruit1 finds a list of all values of the given key(s) in the upper 1st-level sorted map
+        /// specified by (fruitType).
+        /// </summary>
+        public List<Protoconf.Fruit6Conf.Types.Fruit.Types.Item>? FindOrderedFruit1(int fruitType, int price) =>
+            FindOrderedFruitMap1(fruitType)?.TryGetValue(price, out var value) == true ? value : null;
+
+        /// <summary>
+        /// FindFirstOrderedFruit1 finds the first value of the given key(s) in the upper 1st-level sorted map
+        /// specified by (fruitType), or null if no value found.
+        /// </summary>
+        public Protoconf.Fruit6Conf.Types.Fruit.Types.Item? FindFirstOrderedFruit1(int fruitType, int price) =>
+            FindOrderedFruit1(fruitType, price)?.FirstOrDefault();
     }
 
     /// <summary>
@@ -178,11 +514,33 @@ namespace Tableau
     /// </summary>
     public class Fruit2Conf : Messager, IMessagerName
     {
+
+        // LevelIndex keys.
+        public readonly struct LevelIndex_Fruit_Country_ItemKey : IEquatable<LevelIndex_Fruit_Country_ItemKey>
+        {
+            public int FruitType { get; } // key of protoconf.Fruit2Conf.fruit_map
+            public int Id { get; } // key of protoconf.Fruit2Conf.Fruit.Country.item_map
+
+            public LevelIndex_Fruit_Country_ItemKey(int fruitType, int id)
+            {
+                FruitType = fruitType;
+                Id = id;
+            }
+
+            public bool Equals(LevelIndex_Fruit_Country_ItemKey other) =>
+                (FruitType, Id).Equals((other.FruitType, other.Id));
+
+            public override int GetHashCode() =>
+                (FruitType, Id).GetHashCode();
+        }
+
         // Index types.
         // Index: CountryName
         public class Index_CountryMap : Dictionary<string, List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country>> { }
 
         private Index_CountryMap _indexCountryMap = new Index_CountryMap();
+
+        private Dictionary<int, Index_CountryMap> _indexCountryMap1 = new Dictionary<int, Index_CountryMap>();
 
         // Index: CountryItemAttrName
         public class Index_AttrMap : Dictionary<string, List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>> { }
@@ -190,6 +548,8 @@ namespace Tableau
         private Index_AttrMap _indexAttrMap = new Index_AttrMap();
 
         private Dictionary<int, Index_AttrMap> _indexAttrMap1 = new Dictionary<int, Index_AttrMap>();
+
+        private Dictionary<LevelIndex_Fruit_Country_ItemKey, Index_AttrMap> _indexAttrMap2 = new Dictionary<LevelIndex_Fruit_Country_ItemKey, Index_AttrMap>();
 
         // OrderedIndex types.
         // OrderedIndex: CountryItemPrice<CountryItemID>
@@ -248,8 +608,10 @@ namespace Tableau
         {
             // Index init.
             _indexCountryMap.Clear();
+            _indexCountryMap1.Clear();
             _indexAttrMap.Clear();
             _indexAttrMap1.Clear();
+            _indexAttrMap2.Clear();
             foreach (var item1 in _data.FruitMap)
             {
                 var k1 = item1.Key;
@@ -263,9 +625,17 @@ namespace Tableau
                             existingList : _indexCountryMap[key] = new List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country>();
                             list.Add(item2);
                         }
+                        {
+                            var map = _indexCountryMap1.TryGetValue(k1, out var existingMap) ?
+                            existingMap : _indexCountryMap1[k1] = new Index_CountryMap();
+                            var list = map.TryGetValue(key, out var existingList) ?
+                            existingList : map[key] = new List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country>();
+                            list.Add(item2);
+                        }
                     }
                     foreach (var item3 in item2.ItemMap)
                     {
+                        var k2 = item3.Key;
                         foreach (var item4 in item3.Value.AttrList)
                         {
                             {
@@ -279,6 +649,14 @@ namespace Tableau
                                 {
                                     var map = _indexAttrMap1.TryGetValue(k1, out var existingMap) ?
                                     existingMap : _indexAttrMap1[k1] = new Index_AttrMap();
+                                    var list = map.TryGetValue(key, out var existingList) ?
+                                    existingList : map[key] = new List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>();
+                                    list.Add(item4);
+                                }
+                                {
+                                    var mapKey = new LevelIndex_Fruit_Country_ItemKey(k1, k2);
+                                    var map = _indexAttrMap2.TryGetValue(mapKey, out var existingMap) ?
+                                    existingMap : _indexAttrMap2[mapKey] = new Index_AttrMap();
                                     var list = map.TryGetValue(key, out var existingList) ?
                                     existingList : map[key] = new List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>();
                                     list.Add(item4);
@@ -362,6 +740,28 @@ namespace Tableau
         public Protoconf.Fruit2Conf.Types.Fruit.Types.Country? FindFirstCountry(string name) =>
             FindCountry(name)?.FirstOrDefault();
 
+        /// <summary>
+        /// FindCountryMap1 finds the index: key(CountryName) to value(Protoconf.Fruit2Conf.Types.Fruit.Types.Country),
+        /// which is the upper 1st-level map specified by (fruitType).
+        /// One key may correspond to multiple values, which are represented by a list.
+        /// </summary>
+        public Index_CountryMap? FindCountryMap1(int fruitType) =>
+            _indexCountryMap1.TryGetValue(fruitType, out var value) ? value : null;
+
+        /// <summary>
+        /// FindCountry1 finds a list of all values of the given key(s) in the upper 1st-level map
+        /// specified by (fruitType).
+        /// </summary>
+        public List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country>? FindCountry1(int fruitType, string name) =>
+            FindCountryMap1(fruitType)?.TryGetValue(name, out var value) == true ? value : null;
+
+        /// <summary>
+        /// FindFirstCountry1 finds the first value of the given key(s) in the upper 1st-level map
+        /// specified by (fruitType), or null if no value found.
+        /// </summary>
+        public Protoconf.Fruit2Conf.Types.Fruit.Types.Country? FindFirstCountry1(int fruitType, string name) =>
+            FindCountry1(fruitType, name)?.FirstOrDefault();
+
         // Index: CountryItemAttrName
 
         /// <summary>
@@ -404,6 +804,28 @@ namespace Tableau
         /// </summary>
         public Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr? FindFirstAttr1(int fruitType, string name) =>
             FindAttr1(fruitType, name)?.FirstOrDefault();
+
+        /// <summary>
+        /// FindAttrMap2 finds the index: key(CountryItemAttrName) to value(Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr),
+        /// which is the upper 2nd-level map specified by (fruitType, id).
+        /// One key may correspond to multiple values, which are represented by a list.
+        /// </summary>
+        public Index_AttrMap? FindAttrMap2(int fruitType, int id) =>
+            _indexAttrMap2.TryGetValue(new LevelIndex_Fruit_Country_ItemKey(fruitType, id), out var value) ? value : null;
+
+        /// <summary>
+        /// FindAttr2 finds a list of all values of the given key(s) in the upper 2nd-level map
+        /// specified by (fruitType, id).
+        /// </summary>
+        public List<Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>? FindAttr2(int fruitType, int id, string name) =>
+            FindAttrMap2(fruitType, id)?.TryGetValue(name, out var value) == true ? value : null;
+
+        /// <summary>
+        /// FindFirstAttr2 finds the first value of the given key(s) in the upper 2nd-level map
+        /// specified by (fruitType, id), or null if no value found.
+        /// </summary>
+        public Protoconf.Fruit2Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr? FindFirstAttr2(int fruitType, int id, string name) =>
+            FindAttr2(fruitType, id, name)?.FirstOrDefault();
 
         // OrderedIndex: CountryItemPrice<CountryItemID>
 
@@ -465,6 +887,8 @@ namespace Tableau
 
         private Index_AttrMap _indexAttrMap = new Index_AttrMap();
 
+        private Dictionary<int, Index_AttrMap> _indexAttrMap1 = new Dictionary<int, Index_AttrMap>();
+
         // OrderedIndex types.
         // OrderedIndex: CountryItemPrice<CountryItemID>
         public class OrderedIndex_ItemMap : SortedDictionary<int, List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item>> { }
@@ -521,6 +945,7 @@ namespace Tableau
             // Index init.
             _indexCountryMap.Clear();
             _indexAttrMap.Clear();
+            _indexAttrMap1.Clear();
             foreach (var item1 in _data.FruitList)
             {
                 foreach (var item2 in item1.CountryList)
@@ -536,6 +961,7 @@ namespace Tableau
                     }
                     foreach (var item3 in item2.ItemMap)
                     {
+                        var k1 = item3.Key;
                         foreach (var item4 in item3.Value.AttrList)
                         {
                             {
@@ -544,6 +970,13 @@ namespace Tableau
                                 {
                                     var list = _indexAttrMap.TryGetValue(key, out var existingList) ?
                                     existingList : _indexAttrMap[key] = new List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>();
+                                    list.Add(item4);
+                                }
+                                {
+                                    var map = _indexAttrMap1.TryGetValue(k1, out var existingMap) ?
+                                    existingMap : _indexAttrMap1[k1] = new Index_AttrMap();
+                                    var list = map.TryGetValue(key, out var existingList) ?
+                                    existingList : map[key] = new List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>();
                                     list.Add(item4);
                                 }
                             }
@@ -623,6 +1056,28 @@ namespace Tableau
         public Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr? FindFirstAttr(string name) =>
             FindAttr(name)?.FirstOrDefault();
 
+        /// <summary>
+        /// FindAttrMap1 finds the index: key(CountryItemAttrName) to value(Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr),
+        /// which is the upper 1st-level map specified by (id).
+        /// One key may correspond to multiple values, which are represented by a list.
+        /// </summary>
+        public Index_AttrMap? FindAttrMap1(int id) =>
+            _indexAttrMap1.TryGetValue(id, out var value) ? value : null;
+
+        /// <summary>
+        /// FindAttr1 finds a list of all values of the given key(s) in the upper 1st-level map
+        /// specified by (id).
+        /// </summary>
+        public List<Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>? FindAttr1(int id, string name) =>
+            FindAttrMap1(id)?.TryGetValue(name, out var value) == true ? value : null;
+
+        /// <summary>
+        /// FindFirstAttr1 finds the first value of the given key(s) in the upper 1st-level map
+        /// specified by (id), or null if no value found.
+        /// </summary>
+        public Protoconf.Fruit3Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr? FindFirstAttr1(int id, string name) =>
+            FindAttr1(id, name)?.FirstOrDefault();
+
         // OrderedIndex: CountryItemPrice<CountryItemID>
 
         /// <summary>
@@ -654,8 +1109,8 @@ namespace Tableau
         // LevelIndex keys.
         public readonly struct LevelIndex_Fruit_CountryKey : IEquatable<LevelIndex_Fruit_CountryKey>
         {
-            public int FruitType { get; }
-            public int Id { get; }
+            public int FruitType { get; } // key of protoconf.Fruit4Conf.fruit_map
+            public int Id { get; } // key of protoconf.Fruit4Conf.Fruit.country_map
 
             public LevelIndex_Fruit_CountryKey(int fruitType, int id)
             {
@@ -668,6 +1123,26 @@ namespace Tableau
 
             public override int GetHashCode() =>
                 (FruitType, Id).GetHashCode();
+        }
+
+        public readonly struct LevelIndex_Fruit_Country_ItemKey : IEquatable<LevelIndex_Fruit_Country_ItemKey>
+        {
+            public int FruitType { get; } // key of protoconf.Fruit4Conf.fruit_map
+            public int Id { get; } // key of protoconf.Fruit4Conf.Fruit.country_map
+            public int Id3 { get; } // key of protoconf.Fruit4Conf.Fruit.Country.item_map (renamed from Id)
+
+            public LevelIndex_Fruit_Country_ItemKey(int fruitType, int id, int id3)
+            {
+                FruitType = fruitType;
+                Id = id;
+                Id3 = id3;
+            }
+
+            public bool Equals(LevelIndex_Fruit_Country_ItemKey other) =>
+                (FruitType, Id, Id3).Equals((other.FruitType, other.Id, other.Id3));
+
+            public override int GetHashCode() =>
+                (FruitType, Id, Id3).GetHashCode();
         }
 
         // Index types.
@@ -686,6 +1161,8 @@ namespace Tableau
         private Dictionary<int, Index_AttrMap> _indexAttrMap1 = new Dictionary<int, Index_AttrMap>();
 
         private Dictionary<LevelIndex_Fruit_CountryKey, Index_AttrMap> _indexAttrMap2 = new Dictionary<LevelIndex_Fruit_CountryKey, Index_AttrMap>();
+
+        private Dictionary<LevelIndex_Fruit_Country_ItemKey, Index_AttrMap> _indexAttrMap3 = new Dictionary<LevelIndex_Fruit_Country_ItemKey, Index_AttrMap>();
 
         // OrderedIndex types.
         // OrderedIndex: CountryItemPrice<CountryItemID>
@@ -750,6 +1227,7 @@ namespace Tableau
             _indexAttrMap.Clear();
             _indexAttrMap1.Clear();
             _indexAttrMap2.Clear();
+            _indexAttrMap3.Clear();
             foreach (var item1 in _data.FruitMap)
             {
                 var k1 = item1.Key;
@@ -774,6 +1252,7 @@ namespace Tableau
                     }
                     foreach (var item3 in item2.Value.ItemMap)
                     {
+                        var k3 = item3.Key;
                         foreach (var item4 in item3.Value.AttrList)
                         {
                             {
@@ -795,6 +1274,14 @@ namespace Tableau
                                     var mapKey = new LevelIndex_Fruit_CountryKey(k1, k2);
                                     var map = _indexAttrMap2.TryGetValue(mapKey, out var existingMap) ?
                                     existingMap : _indexAttrMap2[mapKey] = new Index_AttrMap();
+                                    var list = map.TryGetValue(key, out var existingList) ?
+                                    existingList : map[key] = new List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>();
+                                    list.Add(item4);
+                                }
+                                {
+                                    var mapKey = new LevelIndex_Fruit_Country_ItemKey(k1, k2, k3);
+                                    var map = _indexAttrMap3.TryGetValue(mapKey, out var existingMap) ?
+                                    existingMap : _indexAttrMap3[mapKey] = new Index_AttrMap();
                                     var list = map.TryGetValue(key, out var existingList) ?
                                     existingList : map[key] = new List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>();
                                     list.Add(item4);
@@ -995,6 +1482,28 @@ namespace Tableau
         /// </summary>
         public Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr? FindFirstAttr2(int fruitType, int id, string name) =>
             FindAttr2(fruitType, id, name)?.FirstOrDefault();
+
+        /// <summary>
+        /// FindAttrMap3 finds the index: key(CountryItemAttrName) to value(Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr),
+        /// which is the upper 3rd-level map specified by (fruitType, id, id3).
+        /// One key may correspond to multiple values, which are represented by a list.
+        /// </summary>
+        public Index_AttrMap? FindAttrMap3(int fruitType, int id, int id3) =>
+            _indexAttrMap3.TryGetValue(new LevelIndex_Fruit_Country_ItemKey(fruitType, id, id3), out var value) ? value : null;
+
+        /// <summary>
+        /// FindAttr3 finds a list of all values of the given key(s) in the upper 3rd-level map
+        /// specified by (fruitType, id, id3).
+        /// </summary>
+        public List<Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr>? FindAttr3(int fruitType, int id, int id3, string name) =>
+            FindAttrMap3(fruitType, id, id3)?.TryGetValue(name, out var value) == true ? value : null;
+
+        /// <summary>
+        /// FindFirstAttr3 finds the first value of the given key(s) in the upper 3rd-level map
+        /// specified by (fruitType, id, id3), or null if no value found.
+        /// </summary>
+        public Protoconf.Fruit4Conf.Types.Fruit.Types.Country.Types.Item.Types.Attr? FindFirstAttr3(int fruitType, int id, int id3, string name) =>
+            FindAttr3(fruitType, id, id3, name)?.FirstOrDefault();
 
         // OrderedIndex: CountryItemPrice<CountryItemID>
 

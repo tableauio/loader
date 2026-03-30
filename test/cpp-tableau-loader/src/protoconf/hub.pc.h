@@ -130,6 +130,10 @@ class FruitConf;
 template <>
 const std::shared_ptr<FruitConf> Hub::Get<FruitConf>() const;
 
+class Fruit6Conf;
+template <>
+const std::shared_ptr<Fruit6Conf> Hub::Get<Fruit6Conf>() const;
+
 class Fruit2Conf;
 template <>
 const std::shared_ptr<Fruit2Conf> Hub::Get<Fruit2Conf>() const;
@@ -199,6 +203,7 @@ class MessagerContainer {
   std::shared_ptr<HeroConf> hero_conf_;
   std::shared_ptr<HeroBaseConf> hero_base_conf_;
   std::shared_ptr<FruitConf> fruit_conf_;
+  std::shared_ptr<Fruit6Conf> fruit_6_conf_;
   std::shared_ptr<Fruit2Conf> fruit_2_conf_;
   std::shared_ptr<Fruit3Conf> fruit_3_conf_;
   std::shared_ptr<Fruit4Conf> fruit_4_conf_;

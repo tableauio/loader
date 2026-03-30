@@ -223,6 +223,10 @@ func (h *Hub) GetFruitConf() *FruitConf {
 	return h.mc.Load().GetFruitConf()
 }
 
+func (h *Hub) GetFruit6Conf() *Fruit6Conf {
+	return h.mc.Load().GetFruit6Conf()
+}
+
 func (h *Hub) GetFruit2Conf() *Fruit2Conf {
 	return h.mc.Load().GetFruit2Conf()
 }
