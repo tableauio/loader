@@ -1,10 +1,10 @@
 package options
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/tableauio/tableau/proto/tableaupb"
-	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
