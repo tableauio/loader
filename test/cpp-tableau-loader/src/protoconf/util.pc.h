@@ -2,13 +2,25 @@
 // versions:
 // - protoc-gen-cpp-tableau-loader v0.11.0
 // - protoc                        v3.19.3
+// clang-format off
 
 #pragma once
 #include <google/protobuf/message.h>
+#include <google/protobuf/stubs/common.h>
 
 #include <chrono>
 #include <filesystem>
 #include <string>
+
+// Protobuf versions before v4.22.0 (GOOGLE_PROTOBUF_VERSION < 4022000) use the legacy
+// logging interface (LogLevel, SetLogHandler). Newer versions removed it in favor of Abseil logging.
+#define TABLEAU_PB_LOG_LEGACY (GOOGLE_PROTOBUF_VERSION < 4022000)
+
+#if !TABLEAU_PB_LOG_LEGACY
+#include <absl/log/log_entry.h>
+#include <absl/log/log_sink.h>
+#include <absl/log/log_sink_registry.h>
+#endif
 
 namespace tableau {
 const std::string& GetErrMsg();
@@ -62,7 +74,18 @@ const std::string& Format2Ext(Format fmt);
 // PatchMessage patches src into dst, which must be a message with the same descriptor.
 bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Message& src);
 
+#if TABLEAU_PB_LOG_LEGACY
+// ProtobufLogHandler redirects protobuf internal logs to tableau logger.
+// Only available for protobuf < v4.22.0, as newer versions removed the old logging interface.
 void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, int line, const std::string& msg);
+#else
+// ProtobufAbslLogSink redirects protobuf/Abseil logs to tableau logger.
+// For protobuf >= v4.22.0, which uses Abseil logging (absl::LogSink).
+class ProtobufAbslLogSink : public absl::LogSink {
+ public:
+  void Send(const absl::LogEntry& entry) override;
+};
+#endif
 
 class TimeProfiler {
  protected:

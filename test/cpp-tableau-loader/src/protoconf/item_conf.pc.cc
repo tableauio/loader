@@ -2,6 +2,7 @@
 // versions:
 // - protoc-gen-cpp-tableau-loader v0.11.0
 // - protoc                        v3.19.3
+// clang-format off
 // source: item_conf.proto
 
 #include "item_conf.pc.h"
@@ -10,7 +11,7 @@
 #include "util.pc.h"
 
 namespace tableau {
-const std::string ItemConf::kProtoName = protoconf::ItemConf::GetDescriptor()->name();
+const std::string ItemConf::kProtoName = std::string(protoconf::ItemConf::GetDescriptor()->name());
 
 bool ItemConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;

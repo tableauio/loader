@@ -2,6 +2,7 @@
 // versions:
 // - protoc-gen-cpp-tableau-loader v0.11.0
 // - protoc                        v3.19.3
+// clang-format off
 // source: index_conf.proto
 
 #include "index_conf.pc.h"
@@ -10,7 +11,7 @@
 #include "util.pc.h"
 
 namespace tableau {
-const std::string FruitConf::kProtoName = protoconf::FruitConf::GetDescriptor()->name();
+const std::string FruitConf::kProtoName = std::string(protoconf::FruitConf::GetDescriptor()->name());
 
 bool FruitConf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
@@ -190,7 +191,7 @@ const protoconf::FruitConf::Fruit::Item* FruitConf::FindFirstOrderedFruit(int32_
   return conf->front();
 }
 
-const std::string Fruit6Conf::kProtoName = protoconf::Fruit6Conf::GetDescriptor()->name();
+const std::string Fruit6Conf::kProtoName = std::string(protoconf::Fruit6Conf::GetDescriptor()->name());
 
 bool Fruit6Conf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
@@ -358,7 +359,7 @@ const protoconf::Fruit6Conf::Fruit::Item* Fruit6Conf::FindFirstOrderedFruit(int3
   return conf->front();
 }
 
-const std::string Fruit2Conf::kProtoName = protoconf::Fruit2Conf::GetDescriptor()->name();
+const std::string Fruit2Conf::kProtoName = std::string(protoconf::Fruit2Conf::GetDescriptor()->name());
 
 bool Fruit2Conf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
@@ -604,7 +605,7 @@ const protoconf::Fruit2Conf::Fruit::Country::Item* Fruit2Conf::FindFirstItem(int
   return conf->front();
 }
 
-const std::string Fruit3Conf::kProtoName = protoconf::Fruit3Conf::GetDescriptor()->name();
+const std::string Fruit3Conf::kProtoName = std::string(protoconf::Fruit3Conf::GetDescriptor()->name());
 
 bool Fruit3Conf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
@@ -745,7 +746,7 @@ const protoconf::Fruit3Conf::Fruit::Country::Item* Fruit3Conf::FindFirstItem(int
   return conf->front();
 }
 
-const std::string Fruit4Conf::kProtoName = protoconf::Fruit4Conf::GetDescriptor()->name();
+const std::string Fruit4Conf::kProtoName = std::string(protoconf::Fruit4Conf::GetDescriptor()->name());
 
 bool Fruit4Conf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;
@@ -1082,7 +1083,7 @@ const protoconf::Fruit4Conf::Fruit::Country::Item* Fruit4Conf::FindFirstItem(int
   return conf->front();
 }
 
-const std::string Fruit5Conf::kProtoName = protoconf::Fruit5Conf::GetDescriptor()->name();
+const std::string Fruit5Conf::kProtoName = std::string(protoconf::Fruit5Conf::GetDescriptor()->name());
 
 bool Fruit5Conf::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {
   tableau::util::TimeProfiler profiler;

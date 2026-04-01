@@ -5,6 +5,7 @@ class Program
     static void Main(string[] _)
     {
         Tableau.Registry.Init();
+        Tableau.Registry.Register<Custom.CustomItemConf>();
 
         var options = new Tableau.HubOptions
         {
@@ -124,6 +125,16 @@ class Program
                     }
                 }
             }
+        }
+
+        var customItemConf = hub.Get<Custom.CustomItemConf>();
+        if (customItemConf is null)
+        {
+            Console.WriteLine("CustomItemConf is null");
+        }
+        else
+        {
+            Console.WriteLine($"specialItemName: {customItemConf.GetSpecialItemName()}");
         }
 
         LoadBin();

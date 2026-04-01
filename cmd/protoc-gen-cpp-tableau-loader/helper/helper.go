@@ -26,6 +26,7 @@ func GenerateCommonHeader(gen *protogen.Plugin, g *protogen.GeneratedFile, versi
 	g.P("// versions:")
 	g.P("// - protoc-gen-cpp-tableau-loader v", version)
 	g.P("// - protoc                        ", protocVersion(gen))
+	g.P("// clang-format off")
 }
 
 func protocVersion(gen *protogen.Plugin) string {

@@ -160,7 +160,7 @@ func genCppMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	orderedMapGenerator := orderedmap.NewGenerator(g, message)
 	indexGenerator := indexes.NewGenerator(g, indexDescriptor, message)
 
-	g.P("const std::string ", messagerName, "::kProtoName = ", cppFullName, `::GetDescriptor()->name();`)
+	g.P("const std::string ", messagerName, "::kProtoName = std::string(", cppFullName, `::GetDescriptor()->name());`)
 	g.P()
 	g.P("bool ", messagerName, "::Load(const std::filesystem::path& dir, Format fmt, std::shared_ptr<const load::MessagerOptions> options /* = nullptr */) {")
 	g.P(helper.Indent(1), "tableau::util::TimeProfiler profiler;")
