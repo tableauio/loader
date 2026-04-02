@@ -3,11 +3,10 @@ module github.com/tableauio/loader
 go 1.21
 
 require (
+	github.com/aymanbagabas/go-udiff v0.2.0
 	github.com/iancoleman/strcase v0.3.0
-	github.com/pmezard/go-difflib v1.0.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tableauio/tableau v0.15.1
-	golang.org/x/exp v0.0.0-20230418202329-0354be287a23
 	google.golang.org/protobuf v1.34.2
 )
 
@@ -18,6 +17,7 @@ require (
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20240820135758-21b1d9897dc7 // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.4 // indirect

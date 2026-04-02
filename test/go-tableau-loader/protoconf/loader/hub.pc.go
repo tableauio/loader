@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/tableauio/loader/pkg/udiff"
 	"github.com/tableauio/tableau/format"
 	"github.com/tableauio/tableau/load"
 	"github.com/tableauio/tableau/store"
@@ -150,7 +151,7 @@ func (h *Hub) Store(dir string, format format.Format, options ...store.Option) e
 	return nil
 }
 
-// mutableCheck checks if the messagers are mutable or not.
+// mutableCheck checks if the messagers are mutated or not.
 func (h *Hub) mutableCheck() {
 	interval := h.opts.MutableCheck.Interval
 	if interval == 0 {
@@ -173,7 +174,7 @@ func (h *Hub) mutableCheck() {
 }
 
 func (h *Hub) onMutateDefault(name string, original, current proto.Message) {
-	text, _ := UnifiedDiff(original, current)
+	text, _ := udiff.UnifiedDiff(original, current)
 	fmt.Fprintf(os.Stderr,
 		"==== %s DIFF BEGIN ====\n%s==== %s DIFF END ====\n",
 		name, text, name)
