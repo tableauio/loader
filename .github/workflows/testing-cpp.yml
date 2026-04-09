@@ -20,10 +20,12 @@ jobs:
           - os: ubuntu-latest
             go-version: 1.21.x
             init_script: bash init.sh
+            buf_generate: PATH=../../third_party/_submodules/protobuf/cmake/build:$PATH buf generate ..
             run_loader: ./bin/loader
           - os: windows-latest
             go-version: 1.21.x
             init_script: cmd /c init.bat
+            buf_generate: cmd /C "set PATH=..\..\third_party\_submodules\protobuf\cmake\build;%PATH% && buf generate .."
             run_loader: .\bin\loader.exe
 
     name: test (${{ matrix.os }})
@@ -65,7 +67,7 @@ jobs:
 
       - name: Generate protoconf
         working-directory: test/cpp-tableau-loader
-        run: buf generate ..
+        run: ${{ matrix.buf_generate }}
 
       - name: CMake Configure
         working-directory: test/cpp-tableau-loader
