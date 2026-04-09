@@ -55,9 +55,14 @@ jobs:
           version: 1.67.0
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Use default protoc path
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq eval -i 'del(.plugins[].protoc_path)' buf.gen.yaml
+
       - name: Generate protoconf
         working-directory: test
-        run: yq eval -i 'del(.plugins[].protoc_path)' buf.gen.yaml && buf generate
+        run: buf generate
 
       - name: Build
         working-directory: test/csharp-tableau-loader
