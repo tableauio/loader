@@ -2,7 +2,3 @@
 	path = third_party/_submodules/protobuf
 	url = https://github.com/protocolbuffers/protobuf
     ignore = dirty
-[submodule "third_party/_submodules/tableau"]
-	path = third_party/_submodules/tableau
-	url = https://github.com/tableauio/tableau
-    ignore = dirty
