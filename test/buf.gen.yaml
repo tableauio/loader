@@ -3,9 +3,9 @@ plugins:
   - remote: buf.build/protocolbuffers/go:v1.34.2
     out: go-tableau-loader/protoconf
     opt: paths=source_relative
-  - local:  ["go", "run", "../cmd/protoc-gen-go-tableau-loader"]
+  - local: ["go", "run", "../cmd/protoc-gen-go-tableau-loader"]
     out: go-tableau-loader/protoconf/loader
-    opt: 
+    opt:
       - paths=source_relative
       - pkg=loader
     strategy: all
@@ -13,9 +13,9 @@ plugins:
     protoc_path: ../third_party/_submodules/protobuf/cmake/build/protoc
     out: cpp-tableau-loader/src/protoconf
     include_imports: true
-  - local:  ["go", "run", "../cmd/protoc-gen-cpp-tableau-loader"]
+  - local: ["go", "run", "../cmd/protoc-gen-cpp-tableau-loader"]
     out: cpp-tableau-loader/src/protoconf
-    opt: 
+    opt:
       - paths=source_relative
       - shards=2
     strategy: all
@@ -23,7 +23,7 @@ plugins:
     protoc_path: ../third_party/_submodules/protobuf/cmake/build/protoc
     out: csharp-tableau-loader/protoconf
     include_imports: true
-  - local:  ["go", "run", "../cmd/protoc-gen-csharp-tableau-loader"]
+  - local: ["go", "run", "../cmd/protoc-gen-csharp-tableau-loader"]
     out: csharp-tableau-loader/tableau
     opt: paths=source_relative
     strategy: all

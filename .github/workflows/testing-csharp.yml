@@ -57,7 +57,7 @@ jobs:
 
       - name: Generate protoconf
         working-directory: test
-        run: buf generate
+        run: yq eval -i 'del(.plugins[].protoc_path)' buf.gen.yaml && buf generate
 
       - name: Build
         working-directory: test/csharp-tableau-loader

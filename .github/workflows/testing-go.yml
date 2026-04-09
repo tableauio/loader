@@ -38,6 +38,12 @@ jobs:
           go-version: ${{ matrix.go-version }}
           cache: true
 
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+        with:
+          version: "3.19.3"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup buf
         uses: bufbuild/buf-setup-action@v1.50.0
         with:
@@ -46,7 +52,7 @@ jobs:
 
       - name: Generate protoconf
         working-directory: test
-        run: buf generate
+        run: yq eval -i 'del(.plugins[].protoc_path)' buf.gen.yaml && buf generate
 
       - name: Vet
         run: go vet ./...
