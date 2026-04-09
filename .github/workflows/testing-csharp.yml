@@ -58,7 +58,7 @@ jobs:
       - name: Use default protoc path
         uses: mikefarah/yq@master
         with:
-          cmd: yq eval -i 'del(.plugins[].protoc_path)' buf.gen.yaml
+          cmd: yq eval -i 'del(.plugins[].protoc_path)' test/buf.gen.yaml
 
       - name: Generate protoconf
         working-directory: test
