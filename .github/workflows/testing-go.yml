@@ -50,14 +50,9 @@ jobs:
           version: 1.67.0
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Use default protoc path
-        uses: mikefarah/yq@master
-        with:
-          cmd: yq eval -i 'del(.plugins[].protoc_path)' test/buf.gen.yaml
-
       - name: Generate protoconf
-        working-directory: test
-        run: buf generate
+        working-directory: test/go-tableau-loader
+        run: buf generate ..
 
       - name: Vet
         run: go vet ./...

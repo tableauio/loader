@@ -64,8 +64,8 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate protoconf
-        working-directory: test
-        run: buf generate
+        working-directory: test/cpp-tableau-loader
+        run: buf generate ..
 
       - name: CMake Configure
         working-directory: test/cpp-tableau-loader
