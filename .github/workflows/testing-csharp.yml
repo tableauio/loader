@@ -3,7 +3,7 @@ name: Testing C#
 # Trigger on pushes, PRs (excluding documentation changes), and nightly.
 on:
   push:
-    branches: [master, main]
+    branches: [ master, main ]
   pull_request:
   schedule:
     - cron: 0 0 * * * # daily at 00:00
@@ -19,10 +19,8 @@ jobs:
         include:
           - os: ubuntu-latest
             go-version: 1.21.x
-            gen_script: bash gen.sh
           - os: windows-latest
             go-version: 1.21.x
-            gen_script: cmd /c gen.bat
 
     name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -51,9 +49,16 @@ jobs:
           version: "3.19.3"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install Buf
+        uses: bufbuild/buf-action@v1
+        with:
+          version: 1.67.0
+          setup_only: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Generate protoconf
         working-directory: test/csharp-tableau-loader
-        run: ${{ matrix.gen_script }}
+        run: buf generate ..
 
       - name: Build
         working-directory: test/csharp-tableau-loader

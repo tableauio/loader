@@ -1,0 +1,9 @@
+version: v2
+plugins:
+  - protoc_builtin: csharp
+    out: protoconf
+    include_imports: true
+  - local: ["go", "run", "../../cmd/protoc-gen-csharp-tableau-loader"]
+    out: tableau
+    opt: paths=source_relative
+    strategy: all

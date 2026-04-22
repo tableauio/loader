@@ -2,18 +2,19 @@ name: Release CPP
 
 on:
   release:
-    types: [published]
+    types: [ published ]
   workflow_dispatch:
 
 jobs:
   release:
     name: Release cmd/protoc-gen-cpp-tableau-loader
     runs-on: ubuntu-latest
-    if: startsWith(github.event.release.tag_name, 'cmd/protoc-gen-cpp-tableau-loader/')
+    if: startsWith(github.event.release.tag_name,
+      'cmd/protoc-gen-cpp-tableau-loader/')
     strategy:
       matrix:
-        goos: [linux, darwin, windows]
-        goarch: [amd64, arm64]
+        goos: [ linux, darwin, windows ]
+        goarch: [ amd64, arm64 ]
         exclude:
           - goos: linux
             goarch: arm64

@@ -1,0 +1,11 @@
+version: v2
+plugins:
+  - protoc_builtin: cpp
+    out: src/protoconf
+    include_imports: true
+  - local: ["go", "run", "../../cmd/protoc-gen-cpp-tableau-loader"]
+    out: src/protoconf
+    opt:
+      - paths=source_relative
+      - shards=2
+    strategy: all

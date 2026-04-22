@@ -39,7 +39,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 ### Dev at Linux
 
 - Change dir: `cd test/cpp-tableau-loader`
-- Generate protoconf: `bash ./gen.sh`
+- Generate protoconf: `PATH=../../third_party/_submodules/protobuf/cmake/build:$PATH buf generate ..`
 - CMake:
   - C++17: `cmake -S . -B build`
   - C++20: `cmake -S . -B build -DCMAKE_CXX_STANDARD=20`
@@ -53,7 +53,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 - Initialize MSVC environment (from loader root): `.\prepare.bat`
 - Change dir: `cd test\cpp-tableau-loader`, or change directory with Drive, e.g.: `cd /D D:\GitHub\loader\test\cpp-tableau-loader`
-- Generate protoconf: `.\gen.bat`
+- Generate protoconf: `cmd /C "set PATH=..\..\third_party\_submodules\protobuf\cmake\build;%PATH% && buf generate .."`
 - CMake:
   - C++17: `cmake -S . -B build -G "Ninja"`
   - C++20: `cmake -S . -B build -G "Ninja" -DCMAKE_CXX_STANDARD=20`
@@ -68,9 +68,8 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 ## Go
 
 - Install: **go1.21** or above
-- Install protoc-gen-go: `go install google.golang.org/protobuf/cmd/protoc-gen-go@latest`
 - Change dir: `cd test/go-tableau-loader`
-- Generate protoconf: `bash ./gen.sh`
+- Generate protoconf: `buf generate .. `
 - Run: `go run .`
 
 ### References
@@ -88,7 +87,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 - Install: **dotnet-sdk-8.0**
 - Change dir: `cd test/csharp-tableau-loader`
-- Generate protoconf: `sh gen.sh`
+- Generate protoconf: `PATH=../third_party/_submodules/protobuf/cmake/build:$PATH buf generate .. `
 - Test: `dotnet run`
 
 ## TypeScript
