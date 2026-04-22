@@ -20,15 +20,10 @@ jobs:
           - os: ubuntu-latest
             go-version: 1.21.x
             init_script: bash init.sh
-            buf_generate: PATH=../../third_party/_submodules/protobuf/cmake/build:$PATH buf
-              generate ..
             run_loader: ./bin/loader
           - os: windows-latest
             go-version: 1.21.x
             init_script: cmd /c init.bat
-            buf_generate: cmd /C "set
-              PATH=..\..\third_party\_submodules\protobuf\cmake\build;%PATH% &&
-              buf generate .."
             run_loader: .\bin\loader.exe
 
     name: test (${{ matrix.os }})
@@ -62,6 +57,12 @@ jobs:
       - name: Init submodules and build protobuf
         run: ${{ matrix.init_script }}
 
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+        with:
+          version: "3.19.3"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Install Buf
         uses: bufbuild/buf-action@v1
         with:
@@ -71,7 +72,7 @@ jobs:
 
       - name: Generate protoconf
         working-directory: test/cpp-tableau-loader
-        run: ${{ matrix.buf_generate }}
+        run: buf generate ..
 
       - name: CMake Configure
         working-directory: test/cpp-tableau-loader
