@@ -3,7 +3,7 @@ name: Testing C++
 # Trigger on pushes, PRs (excluding documentation changes), and nightly.
 on:
   push:
-    branches: [master, main]
+    branches: [ master, main ]
   pull_request:
   schedule:
     - cron: 0 0 * * * # daily at 00:00
@@ -20,12 +20,15 @@ jobs:
           - os: ubuntu-latest
             go-version: 1.21.x
             init_script: bash init.sh
-            buf_generate: PATH=../../third_party/_submodules/protobuf/cmake/build:$PATH buf generate ..
+            buf_generate: PATH=../../third_party/_submodules/protobuf/cmake/build:$PATH buf
+              generate ..
             run_loader: ./bin/loader
           - os: windows-latest
             go-version: 1.21.x
             init_script: cmd /c init.bat
-            buf_generate: cmd /C "set PATH=..\..\third_party\_submodules\protobuf\cmake\build;%PATH% && buf generate .."
+            buf_generate: cmd /C "set
+              PATH=..\..\third_party\_submodules\protobuf\cmake\build;%PATH% &&
+              buf generate .."
             run_loader: .\bin\loader.exe
 
     name: test (${{ matrix.os }})
@@ -59,10 +62,11 @@ jobs:
       - name: Init submodules and build protobuf
         run: ${{ matrix.init_script }}
 
-      - name: Setup buf
-        uses: bufbuild/buf-setup-action@v1.50.0
+      - name: Install Buf
+        uses: bufbuild/buf-action@v1
         with:
           version: 1.67.0
+          setup_only: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate protoconf
@@ -71,7 +75,8 @@ jobs:
 
       - name: CMake Configure
         working-directory: test/cpp-tableau-loader
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=17
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_STANDARD=17
 
       - name: CMake Build
         working-directory: test/cpp-tableau-loader

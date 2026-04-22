@@ -3,7 +3,7 @@ name: Testing C#
 # Trigger on pushes, PRs (excluding documentation changes), and nightly.
 on:
   push:
-    branches: [master, main]
+    branches: [ master, main ]
   pull_request:
   schedule:
     - cron: 0 0 * * * # daily at 00:00
@@ -49,10 +49,11 @@ jobs:
           version: "3.19.3"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup buf
-        uses: bufbuild/buf-setup-action@v1.50.0
+      - name: Install Buf
+        uses: bufbuild/buf-action@v1
         with:
           version: 1.67.0
+          setup_only: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate protoconf
