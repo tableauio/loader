@@ -1,13 +1,13 @@
 module github.com/tableauio/loader
 
-go 1.21
+go 1.24.0
 
 require (
 	github.com/aymanbagabas/go-udiff v0.2.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tableauio/tableau v0.15.1
-	google.golang.org/protobuf v1.34.2
+	google.golang.org/protobuf v1.36.11
 )
 
 require (

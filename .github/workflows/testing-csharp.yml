@@ -16,13 +16,11 @@ jobs:
   test:
     strategy:
       matrix:
-        include:
-          - os: ubuntu-latest
-            go-version: 1.21.x
-          - os: windows-latest
-            go-version: 1.21.x
+        os: [ ubuntu-latest, windows-latest ]
+        go-version: [ 1.24.x ]
+        protobuf-version: [ "32.0", "3.19.3" ]
 
-    name: test (${{ matrix.os }})
+    name: test (${{ matrix.os }}, protobuf ${{ matrix.protobuf-version }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
 
@@ -44,9 +42,17 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Install Protoc
+        if: "!startsWith(matrix.protobuf-version, '3.')"
+        uses: arduino/setup-protoc@v3
+        with:
+          version: ${{ matrix.protobuf-version }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Protoc (legacy)
+        if: startsWith(matrix.protobuf-version, '3.')
         uses: arduino/setup-protoc@v1
         with:
-          version: "3.19.3"
+          version: ${{ matrix.protobuf-version }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Buf
