@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using pb = global::Google.Protobuf;
 using pbr = global::Google.Protobuf.Reflection;
+using tableaupb = global::Tableau.Protobuf.Tableau;
 namespace Tableau
 {
     /// <summary>
@@ -28,6 +29,19 @@ namespace Tableau
         public delegate pb::IMessage? LoadFunc(pbr::MessageDescriptor desc, string dir, Format fmt, in MessagerOptions? options);
 
         /// <summary>
+        /// LoadMode controls patch loading behavior.
+        /// </summary>
+        public enum LoadMode
+        {
+            /// <summary>Load all related files (main + patches). Default.</summary>
+            All,
+            /// <summary>Only load the main file.</summary>
+            OnlyMain,
+            /// <summary>Only load the patch files.</summary>
+            OnlyPatch,
+        }
+
+        /// <summary>
         /// BaseOptions is the common options for both global-level and messager-level options.
         /// </summary>
         public class BaseOptions
@@ -36,6 +50,14 @@ namespace Tableau
             /// Whether to ignore unknown JSON fields during parsing.
             /// </summary>
             public bool? IgnoreUnknownFields { get; set; }
+            /// <summary>
+            /// Specify the directory paths for config patching.
+            /// </summary>
+            public List<string>? PatchDirs { get; set; }
+            /// <summary>
+            /// Specify the loading mode for config patching. Default is LoadMode.All.
+            /// </summary>
+            public LoadMode? Mode { get; set; }
             /// <summary>
             /// You can specify custom read function to read a config file's content.
             /// Default is File.ReadAllBytes.
@@ -67,6 +89,8 @@ namespace Tableau
             {
                 var mopts = MessagerOptions?.TryGetValue(name, out var val) == true ? (MessagerOptions)val.Clone() : new MessagerOptions();
                 mopts.IgnoreUnknownFields ??= IgnoreUnknownFields;
+                mopts.PatchDirs ??= PatchDirs;
+                mopts.Mode ??= Mode;
                 mopts.ReadFunc ??= ReadFunc;
                 mopts.LoadFunc ??= LoadFunc;
                 return mopts;
@@ -84,15 +108,23 @@ namespace Tableau
             /// directly, other than the specified load dir.
             /// </summary>
             public string? Path { get; set; }
+            /// <summary>
+            /// PatchPaths maps each messager name to one or multiple corresponding patch
+            /// file paths. If specified, then the main messager will be patched.
+            /// </summary>
+            public List<string>? PatchPaths { get; set; }
 
             public object Clone()
             {
                 return new MessagerOptions
                 {
                     IgnoreUnknownFields = IgnoreUnknownFields,
+                    PatchDirs = PatchDirs,
+                    Mode = Mode,
                     ReadFunc = ReadFunc,
                     LoadFunc = LoadFunc,
-                    Path = Path
+                    Path = Path,
+                    PatchPaths = PatchPaths,
                 };
             }
         }
@@ -134,8 +166,117 @@ namespace Tableau
                 string filename = name + Util.Format2Ext(fmt);
                 path = Path.Combine(dir, filename);
             }
+            var sheetPatch = Util.GetSheetPatch(desc);
+            if (sheetPatch != tableaupb::Patch.None)
+            {
+                return LoadMessagerWithPatch(desc, path, fmt, sheetPatch, options);
+            }
             var loadFunc = options?.LoadFunc ?? LoadMessager;
             return loadFunc(desc, path, fmt, options);
+        }
+
+        /// <summary>
+        /// LoadMessagerWithPatch loads a protobuf message with patch support.
+        /// </summary>
+        public static pb::IMessage? LoadMessagerWithPatch(pbr::MessageDescriptor desc, string path, Format fmt,
+            tableaupb::Patch patch, in MessagerOptions? options = null)
+        {
+            var mode = options?.Mode ?? LoadMode.All;
+            var loadFunc = options?.LoadFunc ?? LoadMessager;
+            if (mode == LoadMode.OnlyMain)
+            {
+                // Ignore patch files when LoadMode.OnlyMain specified.
+                return loadFunc(desc, path, fmt, options);
+            }
+            string name = desc.Name;
+            List<string> patchPaths = new();
+            if (options?.PatchPaths != null && options.PatchPaths.Count > 0)
+            {
+                // PatchPaths takes precedence over PatchDirs.
+                patchPaths.AddRange(options.PatchPaths);
+            }
+            else if (options?.PatchDirs != null)
+            {
+                string filename = name + Util.Format2Ext(fmt);
+                foreach (var patchDir in options.PatchDirs)
+                {
+                    patchPaths.Add(Path.Combine(patchDir, filename));
+                }
+            }
+
+            // Filter out non-existing patch files when relying on PatchDirs.
+            var existedPatchPaths = new List<string>();
+            if (options?.PatchPaths != null && options.PatchPaths.Count > 0)
+            {
+                // Explicit paths are kept as-is; loadFunc surfaces errors if missing.
+                existedPatchPaths.AddRange(patchPaths);
+            }
+            else
+            {
+                foreach (var p in patchPaths)
+                {
+                    if (File.Exists(p))
+                    {
+                        existedPatchPaths.Add(p);
+                    }
+                }
+            }
+
+            if (existedPatchPaths.Count == 0)
+            {
+                if (mode == LoadMode.OnlyPatch)
+                {
+                    // Return empty message when LoadMode.OnlyPatch specified but no valid patch file provided.
+                    return (pb::IMessage)Activator.CreateInstance(desc.ClrType)!;
+                }
+                // No valid patch path provided, then just load from the "main" file.
+                return loadFunc(desc, path, fmt, options);
+            }
+
+            pb::IMessage? msg;
+            switch (patch)
+            {
+                case tableaupb::Patch.Replace:
+                    {
+                        // Just use the last "patch" file.
+                        var patchPath = existedPatchPaths[existedPatchPaths.Count - 1];
+                        msg = loadFunc(desc, patchPath, Util.GetFormat(patchPath), options);
+                        break;
+                    }
+                case tableaupb::Patch.Merge:
+                    {
+                        if (mode != LoadMode.OnlyPatch)
+                        {
+                            // Load msg from the "main" file.
+                            msg = loadFunc(desc, path, fmt, options);
+                            if (msg == null)
+                            {
+                                return null;
+                            }
+                        }
+                        else
+                        {
+                            msg = (pb::IMessage)Activator.CreateInstance(desc.ClrType)!;
+                        }
+                        foreach (var patchPath in existedPatchPaths)
+                        {
+                            var patchMsg = loadFunc(desc, patchPath, Util.GetFormat(patchPath), options);
+                            if (patchMsg == null)
+                            {
+                                return null;
+                            }
+                            if (!Util.PatchMessage(msg, patchMsg))
+                            {
+                                return null;
+                            }
+                        }
+                        break;
+                    }
+                default:
+                    Util.SetErrMsg($"unknown patch type: {patch}");
+                    return null;
+            }
+            return msg;
         }
 
         /// <summary>
@@ -229,3 +370,4 @@ namespace Tableau
         public virtual bool ProcessAfterLoadAll(in Hub hub) => true;
     }
 }
+

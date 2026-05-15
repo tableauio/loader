@@ -10,6 +10,7 @@ import (
 	"github.com/tableauio/tableau/format"
 	"github.com/tableauio/tableau/load"
 	"github.com/tableauio/tableau/store"
+	"google.golang.org/protobuf/proto"
 )
 
 func prepareHub(t *testing.T) *hub.MyHub {
@@ -128,3 +129,163 @@ func Test_Context(t *testing.T) {
 	t.Logf("PatchReplaceConf(from ctx): %v", h.FromContext(ctx).GetPatchReplaceConf().Data())
 	t.Logf("PatchReplaceConf(from background): %v", h.FromContext(context.Background()).GetPatchReplaceConf().Data())
 }
+
+// Test_Patch mirrors the patch tests in cpp-tableau-loader/src/main.cpp::TestPatch
+// and csharp-tableau-loader/Program.cs::TestPatch to verify the Go patch logic.
+func Test_Patch(t *testing.T) {
+	const testdataDir = "../testdata"
+
+	t.Run("patchconf", func(t *testing.T) {
+		h := hub.NewMyHub()
+		err := h.Load(testdataDir+"/conf/", format.JSON,
+			load.IgnoreUnknownFields(),
+			load.PatchDirs(testdataDir+"/patchconf/"),
+		)
+		if err != nil {
+			t.Fatalf("failed to load with patchconf: %v", err)
+		}
+
+		mgr := h.GetRecursivePatchConf()
+		if mgr == nil {
+			t.Fatal("RecursivePatchConf is nil")
+		}
+		t.Logf("RecursivePatchConf: %v", mgr.Data())
+
+		// Verify against the expected patch result.
+		expected := &loader.RecursivePatchConf{}
+		if err := expected.Load(testdataDir+"/patchresult/", format.JSON, nil); err != nil {
+			t.Fatalf("failed to load patch result: %v", err)
+		}
+		t.Logf("Expected patch result: %v", expected.Data())
+		if !proto.Equal(mgr.Data(), expected.Data()) {
+			t.Fatalf("patch result not correct:\n got:      %v\n expected: %v", mgr.Data(), expected.Data())
+		}
+
+		t.Logf("PatchReplaceConf: %v", h.GetPatchReplaceConf().Data())
+		t.Logf("PatchMergeConf: %v", h.GetPatchMergeConf().Data())
+	})
+
+	t.Run("patchconf2", func(t *testing.T) {
+		h := hub.NewMyHub()
+		err := h.Load(testdataDir+"/conf/", format.JSON,
+			load.IgnoreUnknownFields(),
+			load.PatchDirs(testdataDir+"/patchconf2/"),
+		)
+		if err != nil {
+			t.Fatalf("failed to load with patchconf2: %v", err)
+		}
+		t.Logf("PatchMergeConf(patchconf2): %v", h.GetPatchMergeConf().Data())
+	})
+
+	t.Run("patchconf2-different-format", func(t *testing.T) {
+		// patch_dirs uses .json for resolution, but messager_options overrides
+		// PatchMergeConf with a .txtpb patch path.
+		h := hub.NewMyHub()
+		err := h.Load(testdataDir+"/conf/", format.JSON,
+			load.IgnoreUnknownFields(),
+			load.PatchDirs(testdataDir+"/patchconf2/"),
+			load.WithMessagerOptions(map[string]*load.MessagerOptions{
+				"PatchMergeConf": {
+					PatchPaths: []string{testdataDir + "/patchconf2/PatchMergeConf.txtpb"},
+				},
+			}),
+		)
+		if err != nil {
+			t.Fatalf("failed to load with patchconf2 (txtpb): %v", err)
+		}
+		t.Logf("PatchMergeConf(txtpb): %v", h.GetPatchMergeConf().Data())
+	})
+
+	t.Run("multiple-patch-files", func(t *testing.T) {
+		h := hub.NewMyHub()
+		err := h.Load(testdataDir+"/conf/", format.JSON,
+			load.IgnoreUnknownFields(),
+			load.WithMessagerOptions(map[string]*load.MessagerOptions{
+				"PatchMergeConf": {
+					PatchPaths: []string{
+						testdataDir + "/patchconf/PatchMergeConf.json",
+						testdataDir + "/patchconf2/PatchMergeConf.json",
+					},
+				},
+			}),
+		)
+		if err != nil {
+			t.Fatalf("failed to load with multiple patch files: %v", err)
+		}
+		got := h.GetPatchMergeConf().Data()
+		t.Logf("PatchMergeConf(multi-patch): %v", got)
+
+		// Sanity: 'item_map' should contain the merged entry from patchconf2 (id=999).
+		if _, ok := got.GetItemMap()[999]; !ok {
+			t.Fatalf("expected ItemMap to contain key 999 from patchconf2, got: %v", got.GetItemMap())
+		}
+		// 'replace_item_map' has PATCH_REPLACE field-level option, so the last
+		// patch should fully replace any prior content (key 999 must remain).
+		if _, ok := got.GetReplaceItemMap()[999]; !ok {
+			t.Fatalf("expected ReplaceItemMap to contain key 999, got: %v", got.GetReplaceItemMap())
+		}
+	})
+
+	t.Run("ModeOnlyMain", func(t *testing.T) {
+		h := hub.NewMyHub()
+		err := h.Load(testdataDir+"/conf/", format.JSON,
+			load.IgnoreUnknownFields(),
+			load.Mode(load.ModeOnlyMain),
+			load.WithMessagerOptions(map[string]*load.MessagerOptions{
+				"PatchMergeConf": {
+					PatchPaths: []string{
+						testdataDir + "/patchconf/PatchMergeConf.json",
+						testdataDir + "/patchconf2/PatchMergeConf.json",
+					},
+				},
+			}),
+		)
+		if err != nil {
+			t.Fatalf("failed to load with ModeOnlyMain: %v", err)
+		}
+
+		got := h.GetPatchMergeConf().Data()
+		t.Logf("PatchMergeConf(OnlyMain): %v", got)
+
+		// Compare against the raw main file (no patches applied).
+		mainMgr := &loader.PatchMergeConf{}
+		if err := mainMgr.Load(testdataDir+"/conf/", format.JSON, &load.MessagerOptions{
+			BaseOptions: load.BaseOptions{Mode: modeRef(load.ModeOnlyMain)},
+		}); err != nil {
+			t.Fatalf("failed to load main file: %v", err)
+		}
+		if !proto.Equal(got, mainMgr.Data()) {
+			t.Fatalf("ModeOnlyMain should equal raw main file:\n got:      %v\n expected: %v", got, mainMgr.Data())
+		}
+	})
+
+	t.Run("ModeOnlyPatch", func(t *testing.T) {
+		h := hub.NewMyHub()
+		err := h.Load(testdataDir+"/conf/", format.JSON,
+			load.IgnoreUnknownFields(),
+			load.Mode(load.ModeOnlyPatch),
+			load.WithMessagerOptions(map[string]*load.MessagerOptions{
+				"PatchMergeConf": {
+					PatchPaths: []string{
+						testdataDir + "/patchconf/PatchMergeConf.json",
+						testdataDir + "/patchconf2/PatchMergeConf.json",
+					},
+				},
+			}),
+		)
+		if err != nil {
+			t.Fatalf("failed to load with ModeOnlyPatch: %v", err)
+		}
+		got := h.GetPatchMergeConf().Data()
+		t.Logf("PatchMergeConf(OnlyPatch): %v", got)
+
+		// Without main-file content, 'name' should be the value coming from the last
+		// non-replace merge (still merged from patches), and replace_* fields should
+		// equal the last patch only.
+		if got.GetName() == "" {
+			t.Fatalf("expected non-empty Name from patches, got: %q", got.GetName())
+		}
+	})
+}
+
+func modeRef(m load.LoadMode) *load.LoadMode { return &m }

@@ -138,6 +138,79 @@ class Program
         }
 
         LoadBin();
+        TestPatch();
+    }
+
+    static void TestPatch()
+    {
+        Console.WriteLine("----- TestPatch patchconf -----");
+        var hub = new Tableau.Hub();
+        var options = new Tableau.Load.Options
+        {
+            IgnoreUnknownFields = true,
+            PatchDirs = new System.Collections.Generic.List<string> { "../testdata/patchconf/" },
+        };
+        if (!hub.Load("../testdata/conf", Tableau.Format.JSON, options))
+        {
+            Console.WriteLine($"failed to load with patch: {Tableau.Util.GetErrMsg()}");
+            return;
+        }
+        var recursive = hub.GetRecursivePatchConf();
+        Console.WriteLine($"RecursivePatchConf: {recursive?.Data()}");
+
+        // Compare to expected patch result.
+        var expected = new Tableau.RecursivePatchConf();
+        if (expected.Load("../testdata/patchresult", Tableau.Format.JSON))
+        {
+            bool equal = expected.Data().Equals(recursive!.Data());
+            Console.WriteLine($"RecursivePatchConf matches expected patch result: {equal}");
+        }
+
+        var patchReplace = hub.GetPatchReplaceConf();
+        Console.WriteLine($"PatchReplaceConf: {patchReplace?.Data()}");
+        var patchMerge = hub.GetPatchMergeConf();
+        Console.WriteLine($"PatchMergeConf: {patchMerge?.Data()}");
+
+        // ModeOnlyMain
+        Console.WriteLine("----- TestPatch ModeOnlyMain -----");
+        options.Mode = Tableau.Load.LoadMode.OnlyMain;
+        if (!hub.Load("../testdata/conf", Tableau.Format.JSON, options))
+        {
+            Console.WriteLine($"failed to load with OnlyMain: {Tableau.Util.GetErrMsg()}");
+            return;
+        }
+        Console.WriteLine($"PatchMergeConf(OnlyMain): {hub.GetPatchMergeConf()?.Data()}");
+
+        // ModeOnlyPatch
+        Console.WriteLine("----- TestPatch ModeOnlyPatch -----");
+        options.Mode = Tableau.Load.LoadMode.OnlyPatch;
+        if (!hub.Load("../testdata/conf", Tableau.Format.JSON, options))
+        {
+            Console.WriteLine($"failed to load with OnlyPatch: {Tableau.Util.GetErrMsg()}");
+            return;
+        }
+        Console.WriteLine($"PatchMergeConf(OnlyPatch): {hub.GetPatchMergeConf()?.Data()}");
+
+        // PatchPaths via messager-level options.
+        Console.WriteLine("----- TestPatch PatchPaths -----");
+        options.Mode = null;
+        options.MessagerOptions = new System.Collections.Generic.Dictionary<string, Tableau.Load.MessagerOptions>
+        {
+            ["PatchMergeConf"] = new Tableau.Load.MessagerOptions
+            {
+                PatchPaths = new System.Collections.Generic.List<string>
+                {
+                    "../testdata/patchconf/PatchMergeConf.json",
+                    "../testdata/patchconf2/PatchMergeConf.json",
+                },
+            },
+        };
+        if (!hub.Load("../testdata/conf", Tableau.Format.JSON, options))
+        {
+            Console.WriteLine($"failed to load with PatchPaths: {Tableau.Util.GetErrMsg()}");
+            return;
+        }
+        Console.WriteLine($"PatchMergeConf(PatchPaths): {hub.GetPatchMergeConf()?.Data()}");
     }
 
     static void LoadBin()
