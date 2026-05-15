@@ -216,7 +216,7 @@ void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, 
 #define TABLEAU_PB_LOG_LEVEL level
 #define TABLEAU_PB_LOG_FILENAME filename
 #define TABLEAU_PB_LOG_LINE line
-#define TABLEAU_PB_LOG_MESSAGE msg
+#define TABLEAU_PB_LOG_MESSAGE msg.c_str()
 #else
 // refer: https://github.com/abseil/abseil-cpp/blob/20250512.1/absl/log/log_entry.h
 void ProtobufAbslLogSink::Send(const absl::LogEntry& entry) {
