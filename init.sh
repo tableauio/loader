@@ -35,7 +35,7 @@ if [ "${MAJOR_VERSION}" -le 3 ] 2>/dev/null; then
     # Legacy protobuf (v3.x): CMakeLists.txt is in cmake/ subdirectory
     echo "Using legacy cmake/ subdirectory for protobuf ${PROTOBUF_VERSION}"
     cmake -S cmake -B .build -G Ninja \
-        -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_STANDARD=17 \
         -Dprotobuf_BUILD_TESTS=OFF \
         -Dprotobuf_WITH_ZLIB=OFF \
@@ -48,7 +48,7 @@ else
     #   in protobuf's exported CMake targets, which simplifies cross-platform builds.
     # - protobuf_BUILD_SHARED_LIBS=OFF: build static libraries explicitly.
     cmake -S . -B .build -G Ninja \
-        -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_STANDARD=17 \
         -Dprotobuf_BUILD_TESTS=OFF \
         -Dprotobuf_WITH_ZLIB=OFF \

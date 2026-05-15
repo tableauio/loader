@@ -50,14 +50,18 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 ### Dev at Windows
 
-> **Important:** CMake with Ninja requires MSVC environment variables (`cl.exe`, `INCLUDE`, `LIB`, etc.) to be active. Run `.\prepare.bat` from the **loader** root in the **same cmd session** before switching to the test directory. Opening a new terminal window will lose these variables.
+> **Important:** CMake with Ninja requires MSVC environment variables (`cl.exe`, `INCLUDE`, `LIB`, etc.) to be active. Run `.\prepare.bat` from the **loader** root in the **same cmd session** (use **cmd**, not PowerShell — `prepare.bat` exports vars via `endlocal & set ...` which only works for a cmd parent process) before switching to the test directory. Opening a new terminal window will lose these variables.
+>
+> **Build type:** The protobuf submodule is built as **Release** (`/MT`) by `init.bat`. To avoid LNK2038 `_ITERATOR_DEBUG_LEVEL` / `RuntimeLibrary` CRT-mismatch errors, the loader must also be built as Release. The `CMakeLists.txt` defaults `CMAKE_BUILD_TYPE` to `Release` when it is unset, so the commands below work out of the box.
 
 - Initialize MSVC environment (from loader root): `.\prepare.bat`
 - Change dir: `cd test\cpp-tableau-loader`, or change directory with Drive, e.g.: `cd /D D:\GitHub\loader\test\cpp-tableau-loader`
-- Generate protoconf: `cmd /C "set PATH=..\..\third_party\_submodules\protobuf\.build\_install\bin;%PATH% && buf generate .."`
+- Generate protoconf:
+  - cmd: `cmd /C "set PATH=..\..\third_party\_submodules\protobuf\.build\_install\bin;%PATH% && buf generate .."`
+  - PowerShell: `$env:PATH = "..\..\third_party\_submodules\protobuf\.build\_install\bin;" + $env:PATH; buf generate ..`
 - CMake:
-  - C++17: `cmake -S . -B build -G "Ninja"`
-  - C++20: `cmake -S . -B build -G "Ninja" -DCMAKE_CXX_STANDARD=20`
+  - C++17: `cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release`
+  - C++20: `cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20`
 - Build: `cmake --build build --parallel`
 - Test: `ctest --test-dir build --output-on-failure`
 
@@ -90,7 +94,10 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 - Install: **dotnet-sdk-8.0**
 - Change dir: `cd test/csharp-tableau-loader`
-- Generate protoconf: `PATH=../../third_party/_submodules/protobuf/.build/_install/bin:$PATH buf generate ..`
+- Generate protoconf:
+  - macOS / Linux: `PATH=../../third_party/_submodules/protobuf/.build/_install/bin:$PATH buf generate ..`
+  - Windows (cmd): `cmd /C "set PATH=..\..\third_party\_submodules\protobuf\.build\_install\bin;%PATH% && buf generate .."`
+  - Windows (PowerShell): `$env:PATH = "..\..\third_party\_submodules\protobuf\.build\_install\bin;" + $env:PATH; buf generate ..`
 - Test: `dotnet test`
 
 > **Note:** Tests are written with [xUnit](https://xunit.net/).

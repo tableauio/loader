@@ -37,7 +37,7 @@ if %MAJOR_VERSION% LEQ 3 (
     REM Legacy protobuf (v3.x): CMakeLists.txt is in cmake/ subdirectory
     echo Using legacy cmake\ subdirectory for protobuf %PROTOBUF_VERSION%
     cmake -S cmake -B .build -G Ninja ^
-      -DCMAKE_BUILD_TYPE=Debug ^
+      -DCMAKE_BUILD_TYPE=Release ^
       -DCMAKE_CXX_STANDARD=17 ^
       -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ^
       -Dprotobuf_BUILD_TESTS=OFF ^
@@ -47,13 +47,13 @@ if %MAJOR_VERSION% LEQ 3 (
     REM Modern protobuf (v4+/v21+/v32+): CMakeLists.txt is in root directory
     REM Refer: https://github.com/protocolbuffers/protobuf/blob/v32.0/cmake/README.md#cmake-configuration
     echo Using root CMakeLists.txt for protobuf %PROTOBUF_VERSION%
-    REM - protobuf_MSVC_STATIC_RUNTIME defaults to ON, which uses static CRT (/MTd for Debug).
+    REM - protobuf_MSVC_STATIC_RUNTIME defaults to ON, which uses static CRT (/MT for Release).
     REM   Our project's CMakeLists.txt also sets static CRT to match.
     REM - protobuf_WITH_ZLIB=OFF: disable ZLIB dependency to avoid ZLIB::ZLIB link requirement
     REM   in protobuf's exported CMake targets, which simplifies cross-platform builds.
     REM - protobuf_BUILD_SHARED_LIBS=OFF: build static libraries explicitly.
     cmake -S . -B .build -G Ninja ^
-      -DCMAKE_BUILD_TYPE=Debug ^
+      -DCMAKE_BUILD_TYPE=Release ^
       -DCMAKE_CXX_STANDARD=17 ^
       -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ^
       -Dprotobuf_BUILD_TESTS=OFF ^
