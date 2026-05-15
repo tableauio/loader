@@ -26,6 +26,18 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
        ```
     > **Note:** `prepare.bat` only needs to be run once per machine. It detects already-installed tools and skips them — no manual Visual Studio, CMake, Ninja, or buf installation required.
 
+> **Fast path (idempotent re-runs):** Building protobuf takes 5–15 minutes. To make repeated runs cheap, both `init.sh` and `init.bat` short-circuit and exit immediately when `third_party/_submodules/protobuf/.build/_install` already contains a valid `protobuf-config.cmake` (the marker that the previous build finished). This means:
+> - Re-running `init.sh` / `init.bat` after a successful first run is a no-op (a second or two).
+> - CI workflows cache `.build/_install` (see `.github/workflows/testing-cpp.yml`) and the fast path then turns the "build protobuf" step into a near-instant cache restore.
+> - To force a clean rebuild (e.g. after changing protobuf flags or switching `PROTOBUF_REF` to a version whose previously-installed artefacts are still around), set `FORCE_REBUILD_PROTOBUF=1`:
+>   ```sh
+>   FORCE_REBUILD_PROTOBUF=1 bash init.sh         # macOS / Linux
+>   ```
+>   ```bat
+>   set FORCE_REBUILD_PROTOBUF=1 && .\init.bat    :: Windows (cmd)
+>   ```
+>   Or simply delete `third_party/_submodules/protobuf/.build/` before rerunning.
+
 ### References
 
 - [Chocolatey](https://chocolatey.org/)

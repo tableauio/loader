@@ -25,6 +25,9 @@ fi
 # Fast path: if a previous build's _install dir is already present (e.g.
 # restored from CI cache), skip the (very long) protobuf compile entirely.
 # Set FORCE_REBUILD_PROTOBUF=1 to bypass this short-circuit.
+# On Linux/macOS, protobuf-config.cmake lands at:
+#   .build/_install/lib/cmake/protobuf/protobuf-config.cmake     (lib)
+#   .build/_install/lib64/cmake/protobuf/protobuf-config.cmake   (lib64, e.g. RHEL/CentOS)
 if [ -z "${FORCE_REBUILD_PROTOBUF:-}" ]; then
     if [ -f ".build/_install/lib/cmake/protobuf/protobuf-config.cmake" ] || \
        [ -f ".build/_install/lib64/cmake/protobuf/protobuf-config.cmake" ]; then

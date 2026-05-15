@@ -27,13 +27,20 @@ if not "%PROTOBUF_REF%"=="" (
 REM Fast path: if a previous build's _install dir is already present (e.g.
 REM restored from CI cache), skip the (very long) protobuf compile entirely.
 REM Set FORCE_REBUILD_PROTOBUF=1 to bypass this short-circuit.
-if "%FORCE_REBUILD_PROTOBUF%"=="" (
-    if exist ".build\_install\lib\cmake\protobuf\protobuf-config.cmake" (
-        echo [INFO] Found existing protobuf install at .build\_install, skipping rebuild.
-        echo [INFO] Set FORCE_REBUILD_PROTOBUF=1 to force a clean rebuild.
-        goto :eof
-    )
-)
+REM On Windows, protobuf-config.cmake lands at:
+REM   - v3.x : .build\_install\cmake\protobuf-config.cmake
+REM   - v4+  : .build\_install\lib\cmake\protobuf\protobuf-config.cmake
+if not "%FORCE_REBUILD_PROTOBUF%"=="" goto :no_fast_path
+if exist ".build\_install\cmake\protobuf-config.cmake"              goto :fast_path_hit
+if exist ".build\_install\lib\cmake\protobuf\protobuf-config.cmake" goto :fast_path_hit
+goto :no_fast_path
+
+:fast_path_hit
+echo [INFO] Found existing protobuf install at .build\_install, skipping rebuild.
+echo [INFO] Set FORCE_REBUILD_PROTOBUF=1 to force a clean rebuild.
+goto :eof
+
+:no_fast_path
 
 REM Detect protobuf major version to determine cmake source directory and arguments.
 for /f "tokens=*" %%v in ('git describe --tags --abbrev^=0 2^>nul') do set PROTOBUF_VERSION=%%v
