@@ -22,6 +22,18 @@ if [ -n "${PROTOBUF_REF:-}" ]; then
     git submodule update --init --recursive
 fi
 
+# Fast path: if a previous build's _install dir is already present (e.g.
+# restored from CI cache), skip the (very long) protobuf compile entirely.
+# Set FORCE_REBUILD_PROTOBUF=1 to bypass this short-circuit.
+if [ -z "${FORCE_REBUILD_PROTOBUF:-}" ]; then
+    if [ -f ".build/_install/lib/cmake/protobuf/protobuf-config.cmake" ] || \
+       [ -f ".build/_install/lib64/cmake/protobuf/protobuf-config.cmake" ]; then
+        echo "[INFO] Found existing protobuf install at .build/_install, skipping rebuild."
+        echo "[INFO] Set FORCE_REBUILD_PROTOBUF=1 to force a clean rebuild."
+        exit 0
+    fi
+fi
+
 # Detect protobuf major version to determine cmake source directory and arguments.
 # - protobuf v3.x uses cmake/ subdirectory for CMake builds with minimal options.
 # - protobuf v4+ (v21+) and latest (v32+) use the root directory with additional options.

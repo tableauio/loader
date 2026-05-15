@@ -53,6 +53,24 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
+      # Cache the prebuilt protobuf install dir. The init scripts have a
+      # fast path: if .build/_install is present (e.g. restored from cache),
+      # they skip the (very long) protobuf compile and exit early.
+      # Key invalidates automatically when:
+      #   - the OS changes (binaries are not portable),
+      #   - the requested protobuf version changes,
+      #   - build scripts change (init.sh / init.bat / .gitmodules), which
+      #     covers BUILD_TYPE flips, flag changes, etc.
+      - name: Cache protobuf install
+        id: cache-protobuf
+        uses: actions/cache@v4
+        with:
+          path: |
+            third_party/_submodules/protobuf/.build/_install
+          key: protobuf-${{ matrix.os }}-${{ matrix.protobuf-version }}-${{ hashFiles('init.sh', 'init.bat', '.gitmodules') }}
+          restore-keys: |
+            protobuf-${{ matrix.os }}-${{ matrix.protobuf-version }}-
+
       - name: Init submodules and build protobuf
         run: ${{ matrix.init_script }}
         env:

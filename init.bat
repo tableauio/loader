@@ -24,6 +24,17 @@ if not "%PROTOBUF_REF%"=="" (
     git submodule update --init --recursive
 )
 
+REM Fast path: if a previous build's _install dir is already present (e.g.
+REM restored from CI cache), skip the (very long) protobuf compile entirely.
+REM Set FORCE_REBUILD_PROTOBUF=1 to bypass this short-circuit.
+if "%FORCE_REBUILD_PROTOBUF%"=="" (
+    if exist ".build\_install\lib\cmake\protobuf\protobuf-config.cmake" (
+        echo [INFO] Found existing protobuf install at .build\_install, skipping rebuild.
+        echo [INFO] Set FORCE_REBUILD_PROTOBUF=1 to force a clean rebuild.
+        goto :eof
+    )
+)
+
 REM Detect protobuf major version to determine cmake source directory and arguments.
 for /f "tokens=*" %%v in ('git describe --tags --abbrev^=0 2^>nul') do set PROTOBUF_VERSION=%%v
 if not defined PROTOBUF_VERSION set PROTOBUF_VERSION=unknown
