@@ -66,10 +66,6 @@ jobs:
         working-directory: test/csharp-tableau-loader
         run: buf generate ..
 
-      - name: Build
+      - name: Test
         working-directory: test/csharp-tableau-loader
-        run: dotnet build
-
-      - name: Run loader
-        working-directory: test/csharp-tableau-loader
-        run: dotnet run
+        run: dotnet test --nologo --logger "console;verbosity=normal"

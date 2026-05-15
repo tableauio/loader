@@ -54,10 +54,6 @@ jobs:
         run: go test -v -timeout 30m -race ./... -coverprofile=coverage.txt
           -covermode=atomic
 
-      - name: Run loader
-        working-directory: test/go-tableau-loader
-        run: go run .
-
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:

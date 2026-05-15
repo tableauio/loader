@@ -2,8 +2,14 @@ cmake_minimum_required(VERSION 3.22)
 
 # set the project name
 project(loader)
+
+# Glob the loader sources (proto-generated .cc and the hub/custom .cpp files
+# under src/, but NOT files under tests/ — those are owned by the test target).
 file(GLOB_RECURSE PROTO_SOURCE ${PROJECT_SOURCE_DIR}/src/*.cc)
 file(GLOB_RECURSE SOURCE ${PROJECT_SOURCE_DIR}/src/*.cpp)
+
+# Globbed test sources.
+file(GLOB_RECURSE TEST_SOURCE ${PROJECT_SOURCE_DIR}/tests/*.cpp)
 
 # check C++ standard requirement
 set(MIN_CXX_STANDARD 17)
@@ -44,20 +50,34 @@ endif()
 find_package(Protobuf CONFIG REQUIRED)
 message(STATUS "Using protobuf ${Protobuf_VERSION}")
 
+# GoogleTest via FetchContent, pinned to a stable release. Using FetchContent
+# (instead of add_subdirectory on protobuf's bundled googletest) gives a
+# consistent test framework regardless of which protobuf version is in use.
+include(FetchContent)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG        v1.14.0
+    GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
 # loader
 SET(LOADER_SRC_DIR ${PROJECT_SOURCE_DIR}/src/)
 
 # include
 # protobuf::libprotobuf target already provides its include directories via
 # INTERFACE_INCLUDE_DIRECTORIES, so we only need to add our own source dirs.
-include_directories(${LOADER_SRC_DIR} ${LOADER_SRC_DIR}/protoconf)
+include_directories(${LOADER_SRC_DIR} ${LOADER_SRC_DIR}/protoconf ${PROJECT_SOURCE_DIR})
 
-# add the executable
-add_executable(${PROJECT_NAME} ${PROTO_SOURCE} ${SOURCE})
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-
-# link libraries
-target_link_libraries(${PROJECT_NAME} protobuf::libprotobuf)
+# Static library bundling all proto-generated and hub sources, reused by the
+# test executable. This avoids re-compiling the (very large) generated proto
+# code if more test binaries are added in the future.
+add_library(loader_lib STATIC ${PROTO_SOURCE} ${SOURCE})
+target_link_libraries(loader_lib PUBLIC protobuf::libprotobuf)
 if(NOT MSVC)
     # When using clang with a GCC toolchain (e.g. gcc-toolset-13 on RHEL/CentOS),
     # clang selects GCC 13's C++ headers but the C compiler (GCC 8) may inject an
@@ -75,8 +95,21 @@ if(NOT MSVC)
             get_filename_component(_GCC_LIB_DIR "${_LIBGCC_FILE}" DIRECTORY)
             message(STATUS "Detected GCC library directory for clang: ${_GCC_LIB_DIR}")
             # Prepend GCC toolchain lib dir so it is searched before the system GCC 8 path.
-            target_link_options(${PROJECT_NAME} PRIVATE "-L${_GCC_LIB_DIR}")
+            target_link_options(loader_lib PUBLIC "-L${_GCC_LIB_DIR}")
         endif()
     endif()
-    target_link_libraries(${PROJECT_NAME} pthread stdc++fs)
+    target_link_libraries(loader_lib PUBLIC pthread stdc++fs)
 endif()
+
+# Test executable. The CMake target stays named "loader" for compatibility with
+# the existing CI step that runs ./bin/loader; gtest's main() returns non-zero
+# on failure, just like the old print-based runner.
+add_executable(${PROJECT_NAME} ${TEST_SOURCE})
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+target_link_libraries(${PROJECT_NAME} PRIVATE loader_lib GTest::gtest_main)
+
+include(GoogleTest)
+gtest_discover_tests(${PROJECT_NAME}
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    DISCOVERY_TIMEOUT 60
+)

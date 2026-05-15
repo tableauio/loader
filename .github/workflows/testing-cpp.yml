@@ -21,10 +21,8 @@ jobs:
         include:
           - os: ubuntu-latest
             init_script: bash init.sh
-            run_loader: ./bin/loader
           - os: windows-latest
             init_script: cmd /c init.bat
-            run_loader: .\bin\loader.exe
 
     name: test (${{ matrix.os }}, protobuf ${{ matrix.protobuf-version }})
     runs-on: ${{ matrix.os }}
@@ -94,6 +92,6 @@ jobs:
         working-directory: test/cpp-tableau-loader
         run: cmake --build build --parallel
 
-      - name: Run loader
+      - name: Run tests
         working-directory: test/cpp-tableau-loader
-        run: ${{ matrix.run_loader }}
+        run: ctest --test-dir build --output-on-failure

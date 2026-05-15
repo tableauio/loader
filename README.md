@@ -45,7 +45,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
   - C++20: `cmake -S . -B build -DCMAKE_CXX_STANDARD=20`
   - clang: `cmake -S . -B build -DCMAKE_CXX_COMPILER=clang++`
 - Build: `cmake --build build --parallel`
-- Run: `./bin/loader`
+- Test: `ctest --test-dir build --output-on-failure`
 
 ### Dev at Windows
 
@@ -58,7 +58,9 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
   - C++17: `cmake -S . -B build -G "Ninja"`
   - C++20: `cmake -S . -B build -G "Ninja" -DCMAKE_CXX_STANDARD=20`
 - Build: `cmake --build build --parallel`
-- Run: `.\bin\loader.exe`
+- Test: `ctest --test-dir build --output-on-failure`
+
+> **Note:** Tests are written with [GoogleTest](https://github.com/google/googletest), pulled in via CMake `FetchContent` (no manual installation needed).
 
 ### References
 
@@ -69,8 +71,8 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 - Install: **go1.21** or above
 - Change dir: `cd test/go-tableau-loader`
-- Generate protoconf: `buf generate .. `
-- Run: `go run .`
+- Generate protoconf: `buf generate ..`
+- Test: `go test ./...`
 
 ### References
 
@@ -87,8 +89,10 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 - Install: **dotnet-sdk-8.0**
 - Change dir: `cd test/csharp-tableau-loader`
-- Generate protoconf: `PATH=../third_party/_submodules/protobuf/.build/_install/bin:$PATH buf generate ..`
-- Test: `dotnet run`
+- Generate protoconf: `PATH=../../third_party/_submodules/protobuf/.build/_install/bin:$PATH buf generate ..`
+- Test: `dotnet test`
+
+> **Note:** Tests are written with [xUnit](https://xunit.net/).
 
 ## TypeScript
 

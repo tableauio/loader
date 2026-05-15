@@ -1,4 +1,4 @@
-package main
+package gotableauloader_test
 
 import (
 	"errors"
