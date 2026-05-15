@@ -43,12 +43,12 @@ jobs:
 
       - name: Install dependencies (Ubuntu)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+        # ubuntu-latest preinstalls cmake but not ninja-build.
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
 
-      - name: Install dependencies (Windows)
-        if: runner.os == 'Windows'
-        run: choco install cmake ninja -y
-
+      # Note: windows-latest (Windows Server 2022) preinstalls CMake, Ninja,
+      # Visual Studio 2022 + MSVC C++ toolchain, and vswhere. No 'choco install'
+      # step is needed; the Setup MSVC step below is sufficient.
       - name: Setup MSVC (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
