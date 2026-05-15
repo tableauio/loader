@@ -7,15 +7,15 @@ namespace LoaderTests
     /// <summary>
     /// Patch-loading tests, mirroring the same scenarios in:
     ///   - Go:  test/go-tableau-loader/main_test.go::Test_Patch
-    ///   - C++: test/cpp-tableau-loader/src/main.cpp::TestPatch (legacy print-based)
+    ///   - C++: test/cpp-tableau-loader/tests/patch_test.cpp
     /// </summary>
+    [Collection("HubCollection")]
     public class PatchTests
     {
-        public PatchTests()
-        {
-            Tableau.Registry.Init();
-            Tableau.Registry.Register<Custom.CustomItemConf>();
-        }
+        // Depending on HubFixture guarantees Tableau.Registry.Init() has run
+        // exactly once before any test in this class executes, and the
+        // collection serialization prevents concurrent registry mutation.
+        public PatchTests(HubFixture _) { }
 
         [Fact]
         public void PatchConf_RecursivePatchConf_MatchesExpectedResult()

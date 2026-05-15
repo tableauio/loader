@@ -239,6 +239,51 @@ if "%CL_FOUND%"=="0" (
     echo [INFO] cl.exe already in PATH, skipping MSVC environment setup.
 )
 
+REM -----------------------------------------------------------------------
+REM Step 4: Ensure buf CLI is installed
+REM         (equivalent to CI step: bufbuild/buf-action@v1, version 1.67.0)
+REM         buf is a single self-contained .exe; install it under
+REM         %LOCALAPPDATA%\buf\bin\buf.exe to avoid requiring admin rights.
+REM -----------------------------------------------------------------------
+set "BUF_VERSION=1.67.0"
+set "BUF_FOUND=0"
+if "%SIMULATE_CLEAN%"=="0" (
+    where buf.exe >nul 2>&1
+    if not errorlevel 1 set "BUF_FOUND=1"
+)
+if "%BUF_FOUND%"=="0" (
+    echo [INFO] buf.exe not found. Installing buf %BUF_VERSION%...
+    set "BUF_DIR=%LOCALAPPDATA%\buf\bin"
+    set "BUF_EXE=!BUF_DIR!\buf.exe"
+    set "BUF_URL=https://github.com/bufbuild/buf/releases/download/v%BUF_VERSION%/buf-Windows-x86_64.exe"
+    if "%DRY_RUN%"=="0" (
+        if not exist "!BUF_DIR!" mkdir "!BUF_DIR!"
+        powershell -NoProfile -Command "(New-Object Net.WebClient).DownloadFile('!BUF_URL!','!BUF_EXE!')"
+        if not exist "!BUF_EXE!" (
+            echo [ERROR] Failed to download buf from !BUF_URL!.
+            exit /b 1
+        )
+    ) else (
+        echo [DRY-RUN] Would run: download !BUF_URL! to !BUF_EXE!
+    )
+    REM Add buf to current session PATH
+    set "PATH=!BUF_DIR!;%PATH%"
+    REM Persist buf path to user PATH permanently
+    if "%DRY_RUN%"=="0" (
+        for /f "usebackq tokens=2*" %%a in (`reg query "HKCU\Environment" /v PATH 2^>nul`) do set "USR_PATH=%%b"
+        echo !USR_PATH! | findstr /i /c:"buf\bin" >nul 2>&1
+        if errorlevel 1 (
+            setx PATH "!BUF_DIR!;!USR_PATH!"
+            echo [INFO] buf path added to user PATH permanently.
+        )
+    ) else (
+        echo [DRY-RUN] Would run: setx PATH "!BUF_DIR!;..."
+    )
+    echo [INFO] buf installed successfully.
+) else (
+    echo [INFO] buf.exe already in PATH.
+)
+
 echo [INFO] Build environment ready.
 
 REM Export PATH and key MSVC vars back to the caller's environment

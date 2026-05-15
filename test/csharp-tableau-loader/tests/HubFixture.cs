@@ -48,15 +48,34 @@ namespace LoaderTests
     /// <summary>
     /// Provides a per-fixture pre-loaded Hub used by most tests. Loading is the
     /// expensive part; xUnit instantiates the fixture once per collection.
+    ///
+    /// Also serves as the single owner of <see cref="Tableau.Registry"/>
+    /// initialization. The registry is a process-wide static collection that is
+    /// not thread-safe, so all test classes that touch it must join
+    /// <c>[Collection("HubCollection")]</c> to be serialized by xUnit.
     /// </summary>
     public class HubFixture
     {
+        // Guards Registry init across all fixture constructions in the AppDomain.
+        // xUnit may instantiate the fixture multiple times when test classes are
+        // discovered in parallel; the lock plus the _registryInited flag make
+        // Registry.Init() effectively idempotent.
+        private static readonly object _registryLock = new object();
+        private static bool _registryInited;
+
         public Tableau.Hub Hub { get; }
 
         public HubFixture()
         {
-            Tableau.Registry.Init();
-            Tableau.Registry.Register<Custom.CustomItemConf>();
+            lock (_registryLock)
+            {
+                if (!_registryInited)
+                {
+                    Tableau.Registry.Init();
+                    Tableau.Registry.Register<Custom.CustomItemConf>();
+                    _registryInited = true;
+                }
+            }
 
             var options = new Tableau.HubOptions
             {
@@ -73,6 +92,11 @@ namespace LoaderTests
         }
     }
 
+    /// <summary>
+    /// All test classes that read from <see cref="Tableau.Registry"/> or build a
+    /// <see cref="Tableau.Hub"/> should belong to this collection so xUnit runs
+    /// them serially and shares a single <see cref="HubFixture"/> instance.
+    /// </summary>
     [CollectionDefinition("HubCollection")]
     public class HubCollection : ICollectionFixture<HubFixture> { }
 }

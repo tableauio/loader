@@ -10,7 +10,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 - Prepare and init:
   - macOS or Linux: `bash init.sh`
   - Windows:
-    1. Run `prepare.bat` **as Administrator** to automatically install all build dependencies ([Chocolatey](https://chocolatey.org/), [CMake](https://github.com/Kitware/CMake/releases), [Ninja](https://ninja-build.org/), and MSVC build tools), configure `PATH`, and initialize the MSVC compiler environment:
+    1. Run `prepare.bat` **as Administrator** to automatically install all build dependencies ([Chocolatey](https://chocolatey.org/), [CMake](https://github.com/Kitware/CMake/releases), [Ninja](https://ninja-build.org/), MSVC build tools, and [buf](https://buf.build/)), configure `PATH`, and initialize the MSVC compiler environment:
        ```bat
        .\prepare.bat
        ```
@@ -24,7 +24,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
        ```bat
        .\init.bat
        ```
-    > **Note:** `prepare.bat` only needs to be run once per machine. It detects already-installed tools and skips them — no manual Visual Studio, CMake, or Ninja installation required.
+    > **Note:** `prepare.bat` only needs to be run once per machine. It detects already-installed tools and skips them — no manual Visual Studio, CMake, Ninja, or buf installation required.
 
 ### References
 
@@ -33,6 +33,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 - [Ninja](https://ninja-build.org/)
 - [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/)
 - [Use the Microsoft C++ Build Tools from the command line](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170)
+- [buf CLI](https://buf.build/docs/cli/)
 
 ## C++
 
