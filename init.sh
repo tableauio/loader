@@ -5,7 +5,12 @@ set -o pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
-git submodule update --init --recursive
+# Initialize only the protobuf submodule (non-recursive). Protobuf's own nested
+# submodules (third_party/googletest, third_party/benchmark on v3.x) are only
+# needed when protobuf_BUILD_TESTS=ON / benchmarks are enabled, and modern
+# protobuf (v4+/v21+) has dropped git submodules entirely in favor of CMake
+# FetchContent. Skipping --recursive saves clone time and CI bandwidth.
+git submodule update --init third_party/_submodules/protobuf
 
 # prerequisites
 # On Ubuntu/Debian, you can install them with:
@@ -19,7 +24,6 @@ if [ -n "${PROTOBUF_REF:-}" ]; then
     echo "Switching protobuf submodule to ${PROTOBUF_REF}..."
     git fetch --tags
     git checkout "${PROTOBUF_REF}"
-    git submodule update --init --recursive
 fi
 
 # -----------------------------------------------------------------------------

@@ -32,7 +32,11 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
         with:
-          submodules: recursive
+          # Non-recursive: only the top-level protobuf submodule is needed.
+          # Its nested submodules (googletest/benchmark on v3.x) are gated
+          # behind protobuf_BUILD_TESTS, which we keep OFF; modern protobuf
+          # (v4+/v21+) has no git submodules at all.
+          submodules: true
 
       - name: Install Go
         uses: actions/setup-go@v6
