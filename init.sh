@@ -22,24 +22,13 @@ if [ -n "${PROTOBUF_REF:-}" ]; then
     git submodule update --init --recursive
 fi
 
-# Fast path: if a previous build's _install dir is already present (e.g.
-# restored from CI cache), skip the (very long) protobuf compile entirely.
-# Set FORCE_REBUILD_PROTOBUF=1 to bypass this short-circuit.
-# On Linux/macOS, protobuf-config.cmake lands at:
-#   .build/_install/lib/cmake/protobuf/protobuf-config.cmake     (lib)
-#   .build/_install/lib64/cmake/protobuf/protobuf-config.cmake   (lib64, e.g. RHEL/CentOS)
-if [ -z "${FORCE_REBUILD_PROTOBUF:-}" ]; then
-    if [ -f ".build/_install/lib/cmake/protobuf/protobuf-config.cmake" ] || \
-       [ -f ".build/_install/lib64/cmake/protobuf/protobuf-config.cmake" ]; then
-        echo "[INFO] Found existing protobuf install at .build/_install, skipping rebuild."
-        echo "[INFO] Set FORCE_REBUILD_PROTOBUF=1 to force a clean rebuild."
-        exit 0
-    fi
-fi
-
-# Detect protobuf major version to determine cmake source directory and arguments.
-# - protobuf v3.x uses cmake/ subdirectory for CMake builds with minimal options.
-# - protobuf v4+ (v21+) and latest (v32+) use the root directory with additional options.
+# -----------------------------------------------------------------------------
+# Detect protobuf major version and build the cmake command line. We compute
+# both up-front (before the fast-path check) so the signature comparison below
+# can include the exact cmake invocation we would run.
+#   - protobuf v3.x  : CMakeLists.txt is in cmake/ subdirectory
+#   - protobuf v4+   : CMakeLists.txt is in root directory
+# -----------------------------------------------------------------------------
 PROTOBUF_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "unknown")
 echo "Detected protobuf version: ${PROTOBUF_VERSION}"
 
@@ -48,28 +37,81 @@ MAJOR_VERSION=$(echo "${PROTOBUF_VERSION}" | sed 's/^v//' | cut -d. -f1)
 
 if [ "${MAJOR_VERSION}" -le 3 ] 2>/dev/null; then
     # Legacy protobuf (v3.x): CMakeLists.txt is in cmake/ subdirectory
-    echo "Using legacy cmake/ subdirectory for protobuf ${PROTOBUF_VERSION}"
-    cmake -S cmake -B .build -G Ninja \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_STANDARD=17 \
-        -Dprotobuf_BUILD_TESTS=OFF \
-        -Dprotobuf_WITH_ZLIB=OFF \
+    PROTOBUF_BUILD_VARIANT="legacy"
+    CMAKE_ARGS=(
+        -S cmake
+        -B .build
+        -G Ninja
+        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_CXX_STANDARD=17
+        -Dprotobuf_BUILD_TESTS=OFF
+        -Dprotobuf_WITH_ZLIB=OFF
         -Dprotobuf_BUILD_SHARED_LIBS=OFF
+    )
 else
     # Modern protobuf (v4+/v21+/v32+): CMakeLists.txt is in root directory
     # Refer: https://github.com/protocolbuffers/protobuf/blob/v32.0/cmake/README.md#cmake-configuration
-    echo "Using root CMakeLists.txt for protobuf ${PROTOBUF_VERSION}"
     # - protobuf_WITH_ZLIB=OFF: disable ZLIB dependency to avoid ZLIB::ZLIB link requirement
     #   in protobuf's exported CMake targets, which simplifies cross-platform builds.
     # - protobuf_BUILD_SHARED_LIBS=OFF: build static libraries explicitly.
-    cmake -S . -B .build -G Ninja \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_STANDARD=17 \
-        -Dprotobuf_BUILD_TESTS=OFF \
-        -Dprotobuf_WITH_ZLIB=OFF \
-        -Dprotobuf_BUILD_SHARED_LIBS=OFF \
+    PROTOBUF_BUILD_VARIANT="modern"
+    CMAKE_ARGS=(
+        -S .
+        -B .build
+        -G Ninja
+        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_CXX_STANDARD=17
+        -Dprotobuf_BUILD_TESTS=OFF
+        -Dprotobuf_WITH_ZLIB=OFF
+        -Dprotobuf_BUILD_SHARED_LIBS=OFF
         -Dutf8_range_ENABLE_INSTALL=ON
+    )
 fi
+
+# Build a stable, multi-line signature describing the inputs that determine
+# the contents of .build/_install. Any change to these values must invalidate
+# the fast-path. Adding new compile-time inputs? Append a line here.
+SIG_FILE=".build/_install/.build_signature"
+EXPECTED_SIGNATURE=$(printf '%s\n' \
+    "schema=1" \
+    "version=${PROTOBUF_VERSION}" \
+    "variant=${PROTOBUF_BUILD_VARIANT}" \
+    "cmake_args=${CMAKE_ARGS[*]}")
+
+# -----------------------------------------------------------------------------
+# Fast path: if a previous build's _install dir is present AND its embedded
+# signature matches the one we're about to use, skip the (very long) protobuf
+# compile entirely.
+# Set FORCE_REBUILD_PROTOBUF=1 to bypass this short-circuit unconditionally.
+# -----------------------------------------------------------------------------
+if [ -z "${FORCE_REBUILD_PROTOBUF:-}" ] && [ -f "${SIG_FILE}" ]; then
+    ACTUAL_SIGNATURE=$(cat "${SIG_FILE}")
+    if [ "${ACTUAL_SIGNATURE}" = "${EXPECTED_SIGNATURE}" ]; then
+        echo "[INFO] Build signature matches; reusing existing protobuf install at .build/_install."
+        echo "[INFO] Set FORCE_REBUILD_PROTOBUF=1 to force a clean rebuild."
+        exit 0
+    fi
+    echo "[INFO] Build signature mismatch; rebuilding protobuf."
+    echo "[INFO]   actual:"
+    printf '%s\n' "${ACTUAL_SIGNATURE}" | sed 's/^/[INFO]     /'
+    echo "[INFO]   expected:"
+    printf '%s\n' "${EXPECTED_SIGNATURE}" | sed 's/^/[INFO]     /'
+fi
+
+# Wipe any stale install dir so we don't leave half-overwritten files behind
+# when cmake flags change (e.g. Release -> Debug puts artifacts in different
+# places, an in-place re-install would mix old and new).
+rm -rf .build 2>/dev/null || true
+
+# -----------------------------------------------------------------------------
+# Configure
+# -----------------------------------------------------------------------------
+if [ "${PROTOBUF_BUILD_VARIANT}" = "legacy" ]; then
+    echo "Using legacy cmake/ subdirectory for protobuf ${PROTOBUF_VERSION}"
+else
+    echo "Using root CMakeLists.txt for protobuf ${PROTOBUF_VERSION}"
+fi
+cmake "${CMAKE_ARGS[@]}"
 
 # Compile the code
 cmake --build .build --parallel
@@ -79,3 +121,7 @@ cmake --build .build --parallel
 # used by downstream CMakeLists.txt.
 # NOTE: .build/ is already in protobuf's .gitignore, so _install stays clean.
 cmake --install .build --prefix .build/_install
+
+# Persist the signature so the next run can fast-path skip when nothing changed.
+printf '%s\n' "${EXPECTED_SIGNATURE}" > "${SIG_FILE}"
+echo "[INFO] Wrote build signature to ${SIG_FILE}"
