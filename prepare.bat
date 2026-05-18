@@ -77,7 +77,6 @@ if "%SIMULATE_CLEAN%"=="0" (
 
 REM -----------------------------------------------------------------------
 REM Step 1: Ensure Ninja is installed via Chocolatey
-REM         (equivalent to CI step: choco install ninja -y)
 REM -----------------------------------------------------------------------
 set "NINJA_FOUND=0"
 if "%SIMULATE_CLEAN%"=="0" (
@@ -171,8 +170,9 @@ if "%CMAKE_FOUND%"=="0" (
 )
 
 REM -----------------------------------------------------------------------
-REM Step 3: Ensure MSVC compiler (cl.exe) is available
-REM         (equivalent to CI step: ilammy/msvc-dev-cmd@v1)
+REM Step 3: Ensure MSVC compiler (cl.exe) is available, then activate its
+REM         environment for this cmd session via vcvarsall.bat. The CI
+REM         workflow uses ilammy/msvc-dev-cmd@v1 to do the same thing.
 REM -----------------------------------------------------------------------
 set "CL_FOUND=0"
 if "%SIMULATE_CLEAN%"=="0" (
@@ -241,7 +241,8 @@ if "%CL_FOUND%"=="0" (
 
 REM -----------------------------------------------------------------------
 REM Step 4: Ensure buf CLI is installed
-REM         (equivalent to CI step: bufbuild/buf-action@v1, version 1.67.0)
+REM         The CI workflow uses bufbuild/buf-action@v1 (also pinned to
+REM         BUF_VERSION below) to do the same thing.
 REM         buf is a single self-contained .exe; install it under
 REM         %LOCALAPPDATA%\buf\bin\buf.exe to avoid requiring admin rights.
 REM -----------------------------------------------------------------------

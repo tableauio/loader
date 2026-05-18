@@ -32,10 +32,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
         with:
-          # Non-recursive: only the top-level protobuf submodule is needed.
-          # Its nested submodules (googletest/benchmark on v3.x) are gated
-          # behind protobuf_BUILD_TESTS, which we keep OFF; modern protobuf
-          # (v4+/v21+) has no git submodules at all.
           submodules: true
 
       - name: Install Go
@@ -47,24 +43,12 @@ jobs:
 
       - name: Install dependencies (Ubuntu)
         if: runner.os == 'Linux'
-        # ubuntu-latest preinstalls cmake but not ninja-build.
         run: sudo apt-get update && sudo apt-get install -y ninja-build
 
-      # Note: windows-latest (Windows Server 2022) preinstalls CMake, Ninja,
-      # Visual Studio 2022 + MSVC C++ toolchain, and vswhere. No 'choco install'
-      # step is needed; the Setup MSVC step below is sufficient.
       - name: Setup MSVC (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      # Cache the prebuilt protobuf install dir. The init scripts have a
-      # fast path: if .build/_install is present (e.g. restored from cache),
-      # they skip the (very long) protobuf compile and exit early.
-      # Key invalidates automatically when:
-      #   - the OS changes (binaries are not portable),
-      #   - the requested protobuf version changes,
-      #   - build scripts change (init.sh / init.bat / .gitmodules), which
-      #     covers BUILD_TYPE flips, flag changes, etc.
       - name: Cache protobuf install
         id: cache-protobuf
         uses: actions/cache@v4
@@ -107,8 +91,7 @@ jobs:
 
       - name: CMake Configure
         working-directory: test/cpp-tableau-loader
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_CXX_STANDARD=17
+        run: cmake -S . -B build -G Ninja
 
       - name: CMake Build
         working-directory: test/cpp-tableau-loader
