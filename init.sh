@@ -127,5 +127,5 @@ cmake --build .build --parallel
 cmake --install .build --prefix .build/_install
 
 # Persist the signature so the next run can fast-path skip when nothing changed.
-printf '%s\n' "${EXPECTED_SIGNATURE}" > "${SIG_FILE}"
+printf '%s\n' "${EXPECTED_SIGNATURE}" >"${SIG_FILE}"
 echo "[INFO] Wrote build signature to ${SIG_FILE}"
