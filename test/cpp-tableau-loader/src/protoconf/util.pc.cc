@@ -12,9 +12,18 @@
 #include "tableau/protobuf/tableau.pb.h"
 
 namespace tableau {
-static thread_local std::string g_err_msg;
-const std::string& GetErrMsg() { return g_err_msg; }
-void SetErrMsg(const std::string& msg) { g_err_msg = msg; }
+namespace {
+// NOTE: Use a function-local thread_local (Meyers singleton) instead of a
+// namespace-scope thread_local to avoid MSVC static/TLS destruction order
+// issues at process exit (observed as AV in __acrt_lock during the dynamic
+// initializer/destructor of a thread_local std::string when /MTd is used).
+std::string& ErrMsgRef() {
+  static thread_local std::string g_err_msg;
+  return g_err_msg;
+}
+}  // namespace
+const std::string& GetErrMsg() { return ErrMsgRef(); }
+void SetErrMsg(const std::string& msg) { ErrMsgRef() = msg; }
 
 const std::string kUnknownExt = ".unknown";
 const std::string kJSONExt = ".json";
