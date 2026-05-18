@@ -53,8 +53,19 @@ message(STATUS "Using protobuf ${Protobuf_VERSION}")
 # GoogleTest via FetchContent, pinned to a stable release. Using FetchContent
 # (instead of add_subdirectory on protobuf's bundled googletest) gives a
 # consistent test framework regardless of which protobuf version is in use.
+#
+# gtest_force_shared_crt:
+#   OFF  -> let CMAKE_MSVC_RUNTIME_LIBRARY decide (we set it to MultiThreaded[Debug]
+#           above, i.e. static CRT /MT or /MTd).
+#   ON   -> force googletest to use the DYNAMIC CRT (/MD or /MDd).
+# Our protobuf submodule is built with protobuf_MSVC_STATIC_RUNTIME=ON (static
+# CRT), and our loader_lib also targets static CRT. Forcing gtest to a different
+# CRT would mix two C runtimes inside loader.exe; the link may still succeed but
+# global-destructor sequencing at process exit can hit an Access Violation
+# (gtest's STL objects holding handles allocated by a different heap). Keep gtest
+# on the same static CRT as everything else.
 include(FetchContent)
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+set(gtest_force_shared_crt OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
