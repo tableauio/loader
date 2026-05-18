@@ -91,7 +91,7 @@ jobs:
 
       - name: CMake Configure
         working-directory: test/cpp-tableau-loader
-        run: cmake -S . -B build -G Ninja
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=17
 
       - name: CMake Build
         working-directory: test/cpp-tableau-loader

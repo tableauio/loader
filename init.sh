@@ -46,7 +46,7 @@ if [ "${MAJOR_VERSION}" -le 3 ] 2>/dev/null; then
         -S cmake
         -B .build
         -G Ninja
-        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_BUILD_TYPE=Debug
         -DCMAKE_CXX_STANDARD=17
         -Dprotobuf_BUILD_TESTS=OFF
         -Dprotobuf_WITH_ZLIB=OFF
@@ -63,7 +63,7 @@ else
         -S .
         -B .build
         -G Ninja
-        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_BUILD_TYPE=Debug
         -DCMAKE_CXX_STANDARD=17
         -Dprotobuf_BUILD_TESTS=OFF
         -Dprotobuf_WITH_ZLIB=OFF
@@ -103,7 +103,7 @@ if [ -z "${FORCE_REBUILD_PROTOBUF:-}" ] && [ -f "${SIG_FILE}" ]; then
 fi
 
 # Wipe any stale install dir so we don't leave half-overwritten files behind
-# when cmake flags change (e.g. Release -> Debug puts artifacts in different
+# when cmake flags change (e.g. Debug -> Release puts artifacts in different
 # places, an in-place re-install would mix old and new).
 rm -rf .build 2>/dev/null || true
 

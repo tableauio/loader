@@ -3,16 +3,6 @@ cmake_minimum_required(VERSION 3.22)
 # set the project name
 project(loader)
 
-# Default to Release for single-config generators (e.g. Ninja, Makefiles) when
-# the user does not pass -DCMAKE_BUILD_TYPE=... explicitly. This is critical on
-# Windows/MSVC because our protobuf submodule is built as Release (/MT), and a
-# mismatched CRT (e.g. loader built as Debug /MTd against libprotobuf.lib /MT)
-# causes LNK2038 _ITERATOR_DEBUG_LEVEL / RuntimeLibrary mismatch errors.
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build (Debug, Release, RelWithDebInfo, MinSizeRel)" FORCE)
-    message(STATUS "CMAKE_BUILD_TYPE not set; defaulting to Release.")
-endif()
-
 # Glob the loader sources (proto-generated .cc and the hub/custom .cpp files
 # under src/, but NOT files under tests/ — those are owned by the test target).
 file(GLOB_RECURSE PROTO_SOURCE ${PROJECT_SOURCE_DIR}/src/*.cc)

@@ -55,10 +55,10 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 - Change dir: `cd test/cpp-tableau-loader`
 - Generate protoconf: `PATH=../../third_party/_submodules/protobuf/.build/_install/bin:$PATH buf generate ..`
-- CMake (the project's `CMakeLists.txt` defaults `CMAKE_BUILD_TYPE` to `Release` for single-config generators when unset, so `-DCMAKE_BUILD_TYPE=...` is omitted below):
-  - C++17: `cmake -S . -B build`
-  - C++20: `cmake -S . -B build -DCMAKE_CXX_STANDARD=20`
-  - clang: `cmake -S . -B build -DCMAKE_CXX_COMPILER=clang++`
+- CMake:
+  - C++17: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug`
+  - C++20: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=20`
+  - clang: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++`
 - Build: `cmake --build build --parallel`
 - Test: `ctest --test-dir build --output-on-failure`
 
@@ -66,16 +66,16 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 > **Important:** CMake with Ninja requires MSVC environment variables (`cl.exe`, `INCLUDE`, `LIB`, etc.) to be active. Run `.\prepare.bat` from the **loader** root in the **same cmd session** (use **cmd**, not PowerShell — `prepare.bat` exports vars via `endlocal & set ...` which only works for a cmd parent process) before switching to the test directory. Opening a new terminal window will lose these variables.
 >
-> **Build type:** The protobuf submodule is built as **Release** (`/MT`) by `init.bat`. To avoid LNK2038 `_ITERATOR_DEBUG_LEVEL` / `RuntimeLibrary` CRT-mismatch errors, the loader must also be built as Release. The `CMakeLists.txt` defaults `CMAKE_BUILD_TYPE` to `Release` when it is unset, so the commands below work out of the box.
+> **Build type:** The protobuf submodule is built as **Debug** (`/MTd`) by `init.bat`. To avoid LNK2038 `_ITERATOR_DEBUG_LEVEL` / `RuntimeLibrary` CRT-mismatch errors, the loader must also be built as Debug. `CMakeLists.txt` does not set a default, so always pass `-DCMAKE_BUILD_TYPE=Debug` explicitly — also required for multi-config generators (Visual Studio default = Debug, but stay explicit to match the cached protobuf).
 
 - Initialize MSVC environment (from loader root): `.\prepare.bat`
 - Change dir: `cd test\cpp-tableau-loader`, or change directory with Drive, e.g.: `cd /D D:\GitHub\loader\test\cpp-tableau-loader`
 - Generate protoconf:
   - cmd: `cmd /C "set PATH=..\..\third_party\_submodules\protobuf\.build\_install\bin;%PATH% && buf generate .."`
   - PowerShell: `$env:PATH = "..\..\third_party\_submodules\protobuf\.build\_install\bin;" + $env:PATH; buf generate ..`
-- CMake (Ninja is single-config; the project's `CMakeLists.txt` defaults `CMAKE_BUILD_TYPE` to `Release` when unset, so `-DCMAKE_BUILD_TYPE=...` is omitted below):
-  - C++17: `cmake -S . -B build -G "Ninja"`
-  - C++20: `cmake -S . -B build -G "Ninja" -DCMAKE_CXX_STANDARD=20`
+- CMake:
+  - C++17: `cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug`
+  - C++20: `cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=20`
 - Build: `cmake --build build --parallel`
 - Test: `ctest --test-dir build --output-on-failure`
 
