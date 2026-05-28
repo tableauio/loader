@@ -15,11 +15,16 @@ permissions:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        protobuf-version: ["32.0", "3.19.3"]
+        config:
+          - label: modern
+            protobuf-version: "6.33.4"
+          - label: legacy-v3
+            protobuf-version: "3.21.12"
 
-    name: test (${{ matrix.os }}, protobuf ${{ matrix.protobuf-version }})
+    name: test (${{ matrix.os }}, ${{ matrix.config.label }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
 
@@ -42,17 +47,17 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Install Protoc
-        if: "!startsWith(matrix.protobuf-version, '3.')"
+        if: matrix.config.label != 'legacy-v3'
         uses: arduino/setup-protoc@v3
         with:
-          version: ${{ matrix.protobuf-version }}
+          version: ${{ matrix.config.protobuf-version }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Protoc (legacy)
-        if: startsWith(matrix.protobuf-version, '3.')
+        if: matrix.config.label == 'legacy-v3'
         uses: arduino/setup-protoc@v1
         with:
-          version: ${{ matrix.protobuf-version }}
+          version: ${{ matrix.config.protobuf-version }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Buf
