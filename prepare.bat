@@ -310,9 +310,18 @@ REM -----------------------------------------------------------------------
 REM Step 5: Ensure vcpkg is installed and `protobuf` is provisioned
 REM
 REM Resolution order for the vcpkg install location:
-REM   1. Existing %VCPKG_ROOT% if it points at a usable bootstrap.
+REM   1. Existing %VCPKG_ROOT% if it points at a usable classic-mode bootstrap.
 REM   2. Existing %VCPKG_INSTALLATION_ROOT% (set on GitHub-hosted runners).
-REM   3. Fresh clone into %USERPROFILE%\vcpkg.
+REM   3. Existing %USERPROFILE%\vcpkg (a previous run of this script).
+REM   4. Fresh clone into %USERPROFILE%\vcpkg.
+REM
+REM A "usable" vcpkg root must contain BOTH vcpkg.exe AND bootstrap-vcpkg.bat.
+REM This deliberately rejects the manifest-only vcpkg shipped under
+REM   C:\Program Files\Microsoft Visual Studio\2022\<edition>\VC\vcpkg
+REM which has no bootstrap script and refuses classic-mode `vcpkg install
+REM <port>:<triplet>` with: "Could not locate a manifest (vcpkg.json) above
+REM the current working directory. This vcpkg distribution does not have a
+REM classic mode instance."
 REM
 REM We then run `vcpkg install protobuf:x64-windows-static` so that the
 REM static-CRT libprotobuf + protoc match the loader build (CMakeLists.txt
@@ -324,23 +333,37 @@ REM -----------------------------------------------------------------------
 set "VCPKG_TRIPLET=x64-windows-static"
 set "VCPKG_EXE="
 
-REM Honor pre-existing VCPKG_ROOT / VCPKG_INSTALLATION_ROOT if they look valid.
+REM Honor pre-existing VCPKG_ROOT / VCPKG_INSTALLATION_ROOT only if they
+REM point at a classic-mode-capable vcpkg (i.e. bootstrap-vcpkg.bat is present).
 if "%SIMULATE_CLEAN%"=="0" (
     if defined VCPKG_ROOT (
-        if exist "%VCPKG_ROOT%\vcpkg.exe" set "VCPKG_EXE=%VCPKG_ROOT%\vcpkg.exe"
+        if exist "%VCPKG_ROOT%\vcpkg.exe" (
+            if exist "%VCPKG_ROOT%\bootstrap-vcpkg.bat" (
+                set "VCPKG_EXE=%VCPKG_ROOT%\vcpkg.exe"
+            ) else (
+                echo [WARN] %VCPKG_ROOT% looks like a manifest-only vcpkg ^(no bootstrap-vcpkg.bat^); ignoring.
+                set "VCPKG_ROOT="
+            )
+        )
     )
     if not defined VCPKG_EXE (
         if defined VCPKG_INSTALLATION_ROOT (
             if exist "%VCPKG_INSTALLATION_ROOT%\vcpkg.exe" (
-                set "VCPKG_ROOT=%VCPKG_INSTALLATION_ROOT%"
-                set "VCPKG_EXE=%VCPKG_INSTALLATION_ROOT%\vcpkg.exe"
+                if exist "%VCPKG_INSTALLATION_ROOT%\bootstrap-vcpkg.bat" (
+                    set "VCPKG_ROOT=%VCPKG_INSTALLATION_ROOT%"
+                    set "VCPKG_EXE=%VCPKG_INSTALLATION_ROOT%\vcpkg.exe"
+                ) else (
+                    echo [WARN] %VCPKG_INSTALLATION_ROOT% looks like a manifest-only vcpkg; ignoring.
+                )
             )
         )
     )
     if not defined VCPKG_EXE (
         if exist "%USERPROFILE%\vcpkg\vcpkg.exe" (
-            set "VCPKG_ROOT=%USERPROFILE%\vcpkg"
-            set "VCPKG_EXE=%USERPROFILE%\vcpkg\vcpkg.exe"
+            if exist "%USERPROFILE%\vcpkg\bootstrap-vcpkg.bat" (
+                set "VCPKG_ROOT=%USERPROFILE%\vcpkg"
+                set "VCPKG_EXE=%USERPROFILE%\vcpkg\vcpkg.exe"
+            )
         )
     )
 )
