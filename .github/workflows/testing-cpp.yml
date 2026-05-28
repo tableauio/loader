@@ -39,7 +39,6 @@ jobs:
     env:
       VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
-      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
     steps:
       - name: Checkout Code
@@ -60,14 +59,6 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Export GitHub Actions cache env
-        uses: actions/github-script@v7
-        with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL',    process.env.ACTIONS_CACHE_URL    || '');
-            core.exportVariable('ACTIONS_RESULTS_URL',  process.env.ACTIONS_RESULTS_URL  || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-
       - name: Render vcpkg.json
         working-directory: test/cpp-tableau-loader
         shell: bash
@@ -83,6 +74,13 @@ jobs:
             "builtin-baseline": "${{ env.VCPKG_COMMIT }}"
           }
           EOF
+
+      - name: Cache vcpkg_installed
+        id: cache-vcpkg-installed
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_INSTALLED_DIR }}
+          key: vcpkg-installed-${{ runner.os }}-${{ matrix.triplet }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('test/cpp-tableau-loader/vcpkg.json') }}
 
       - name: Setup vcpkg & install protobuf
         uses: lukka/run-vcpkg@v11
