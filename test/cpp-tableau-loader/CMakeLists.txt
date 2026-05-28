@@ -24,26 +24,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 message(STATUS "Using C++${CMAKE_CXX_STANDARD} standard")
 
 if (MSVC)
-    # NOTE: do NOT append /DNDEBUG here. CMAKE_CXX_FLAGS applies to every build
-    # configuration, but we already let CMAKE_BUILD_TYPE drive optimization /
-    # assert behaviour via the per-config flags (CMAKE_CXX_FLAGS_DEBUG,
-    # CMAKE_CXX_FLAGS_RELEASE, ...). Worse, MSVC's STL uses NDEBUG to pick
-    # _ITERATOR_DEBUG_LEVEL: when _DEBUG is defined (Debug CRT /MTd) but NDEBUG
-    # is also forced on, our own translation units silently switch to IDL=0
-    # while protobuf and googletest (built without NDEBUG in Debug) stay at
-    # IDL=2. The CRT defaultlib check still passes (everything is /MTd), so the
-    # link succeeds, but std::vector / std::string have incompatible layouts
-    # across modules and the process crashes at global-destructor time with an
-    # access violation -- exactly what we observed in `gtest_discover_tests`.
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
     # Use static CRT (/MT or /MTd) to match protobuf's default static runtime build.
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 else()
-    # Same reasoning as the MSVC branch above: do not hard-code -DNDEBUG into
-    # the always-on flags. On Linux it does not change STL ABI (libstdc++
-    # ignores NDEBUG for layout), so it is "merely" inconsistent with Debug
-    # builds elsewhere -- still better to leave assert() honoring the build
-    # type chosen by the user.
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -fPIC -Wno-deprecated -Wno-unused-variable -Wno-sign-compare -Wno-strict-aliasing -fno-strict-aliasing")
 endif()
 
@@ -128,10 +112,8 @@ if(NOT MSVC)
     target_link_libraries(loader_lib PUBLIC pthread stdc++fs)
 endif()
 
-# Test executable. The CMake target stays named "loader" for compatibility with
-# the existing CI step that runs ./bin/loader; gtest's main() returns non-zero
-# on failure, just like the old print-based runner.
 add_executable(${PROJECT_NAME} ${TEST_SOURCE})
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME loader_test)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 target_link_libraries(${PROJECT_NAME} PRIVATE loader_lib GTest::gtest_main)
 

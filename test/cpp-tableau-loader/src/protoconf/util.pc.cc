@@ -13,10 +13,8 @@
 
 namespace tableau {
 namespace {
-// NOTE: Use a function-local thread_local (Meyers singleton) instead of a
-// namespace-scope thread_local to avoid MSVC static/TLS destruction order
-// issues at process exit (observed as AV in __acrt_lock during the dynamic
-// initializer/destructor of a thread_local std::string when /MTd is used).
+// NOTE: Use a function-local thread_local (Meyers singleton) to avoid MSVC
+// TLS destruction order issues at process exit under /MTd.
 std::string& ErrMsgRef() {
   static thread_local std::string g_err_msg;
   return g_err_msg;
