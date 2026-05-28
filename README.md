@@ -26,16 +26,20 @@ Pick whichever channel fits your platform; loader does not bundle protobuf.
   # .\vcpkg\vcpkg install protobuf:x64-windows-static  # Windows (matches loader's static CRT)
   ```
   Pin to the legacy v3 line if you need it: append `--x-version=3.21.12`.
-  Then point CMake at vcpkg with `-DCMAKE_TOOLCHAIN_FILE=<vcpkg-root>/scripts/buildsystems/vcpkg.cmake`.
+
+  Then put `protoc` on `PATH` (so `buf generate` works) and pass
+  `-DCMAKE_TOOLCHAIN_FILE=<vcpkg-root>/scripts/buildsystems/vcpkg.cmake` to
+  CMake. See [Dev at Linux](#dev-at-linux) / [Dev at Windows](#dev-at-windows)
+  for the exact commands.
 
 - **Linux (system package):**
   ```sh
   sudo apt-get install -y protobuf-compiler libprotobuf-dev   # Debian / Ubuntu
-  sudo dnf install -y protobuf-compiler protobuf-devel        # Fedora / RHEL 8+ / CentOS Stream / Rocky / Alma
-  sudo yum install -y epel-release \
-      && sudo yum install -y protobuf-compiler protobuf-devel # CentOS 7 (via EPEL)
   ```
-  > Distro packages can lag well behind upstream (e.g. CentOS 7 ships protobuf 2.5; RHEL/Rocky 8 ships 3.x). If you need protobuf v22+ (or any specific version), prefer **vcpkg** above or **build from source**.
+  > **Avoid `dnf` / `yum` on RHEL-family distros.** The `protobuf-devel`
+  > shipped by Fedora / RHEL / TencentOS repos is typically stuck on
+  > protobuf **3.5.x**, which is far behind what loader expects and predates
+  > the v22 / Abseil split. Use vcpkg or build from source instead.
 
 - **macOS (Homebrew):**
   ```sh
