@@ -6,7 +6,11 @@
 // </auto-generated>
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.IO;
+using pb = global::Google.Protobuf;
+using pbr = global::Google.Protobuf.Reflection;
+using tableaupb = global::Tableau.Protobuf.Tableau;
 namespace Tableau
 {
     /// <summary>
@@ -66,5 +70,193 @@ namespace Tableau
                 _ => _unknownExt,
             };
         }
+
+        /// <summary>
+        /// PatchMessage patches src into dst, which must be a message with the same descriptor.
+        ///
+        /// Default PatchMessage mechanism:
+        ///   - scalar: Populated scalar fields in src are copied to dst.
+        ///   - message: Populated singular messages in src are merged into dst by
+        ///     recursively calling PatchMessage, or replace dst message if
+        ///     "PATCH_REPLACE" is specified for this field.
+        ///   - list: The elements of every list field in src are appended to the
+        ///     corresponded list fields in dst, or replace dst list if "PATCH_REPLACE"
+        ///     is specified for this field.
+        ///   - map: The entries of every map field in src are MERGED (different from
+        ///     the behavior of message merge) into the corresponding map field in dst,
+        ///     or replace dst map if "PATCH_REPLACE" is specified for this field.
+        /// </summary>
+        public static bool PatchMessage(pb::IMessage dst, pb::IMessage src)
+        {
+            var dstDesc = dst.Descriptor;
+            var srcDesc = src.Descriptor;
+            if (dstDesc.FullName != srcDesc.FullName)
+            {
+                SetErrMsg($"dst {dstDesc.FullName} and src {srcDesc.FullName} are not messages with the same descriptor");
+                return false;
+            }
+            PatchMessageInternal(dst, src, dstDesc);
+            return true;
+        }
+
+        private static void PatchMessageInternal(pb::IMessage dst, pb::IMessage src, pbr::MessageDescriptor desc)
+        {
+            foreach (var fd in desc.Fields.InDeclarationOrder())
+            {
+                // Only process populated fields in src.
+                if (!IsFieldPopulated(src, fd))
+                {
+                    continue;
+                }
+
+                var fieldPatch = GetFieldPatch(fd);
+                if (fieldPatch == tableaupb::Patch.Replace)
+                {
+                    fd.Accessor.Clear(dst);
+                }
+
+                if (fd.IsMap)
+                {
+                    PatchMap(dst, src, fd);
+                }
+                else if (fd.IsRepeated)
+                {
+                    PatchList(dst, src, fd);
+                }
+                else if (fd.FieldType == pbr::FieldType.Message || fd.FieldType == pbr::FieldType.Group)
+                {
+                    var srcChild = (pb::IMessage)fd.Accessor.GetValue(src);
+                    var dstChild = (pb::IMessage?)fd.Accessor.GetValue(dst);
+                    if (dstChild == null)
+                    {
+                        // Set a fresh message and recurse into it.
+                        var newMsg = (pb::IMessage)Activator.CreateInstance(fd.MessageType.ClrType)!;
+                        PatchMessageInternal(newMsg, srcChild, fd.MessageType);
+                        fd.Accessor.SetValue(dst, newMsg);
+                    }
+                    else
+                    {
+                        PatchMessageInternal(dstChild, srcChild, fd.MessageType);
+                    }
+                }
+                else if (fd.FieldType == pbr::FieldType.Bytes)
+                {
+                    var bytes = (pb::ByteString)fd.Accessor.GetValue(src);
+                    // ByteString is immutable, safe to assign directly.
+                    fd.Accessor.SetValue(dst, bytes);
+                }
+                else
+                {
+                    fd.Accessor.SetValue(dst, fd.Accessor.GetValue(src));
+                }
+            }
+        }
+
+        private static bool IsFieldPopulated(pb::IMessage msg, pbr::FieldDescriptor fd)
+        {
+            if (fd.IsMap)
+            {
+                var map = (System.Collections.IDictionary)fd.Accessor.GetValue(msg);
+                return map.Count > 0;
+            }
+            if (fd.IsRepeated)
+            {
+                var list = (System.Collections.IList)fd.Accessor.GetValue(msg);
+                return list.Count > 0;
+            }
+            if (fd.HasPresence)
+            {
+                return fd.Accessor.HasValue(msg);
+            }
+            // For scalars without presence (proto3 implicit), treat as populated only when value is non-default.
+            var value = fd.Accessor.GetValue(msg);
+            return fd.FieldType switch
+            {
+                pbr::FieldType.Message or pbr::FieldType.Group => value != null,
+                pbr::FieldType.String => !string.IsNullOrEmpty((string)value),
+                pbr::FieldType.Bytes => ((pb::ByteString)value).Length > 0,
+                pbr::FieldType.Bool => (bool)value,
+                pbr::FieldType.Enum => System.Convert.ToInt32(value) != 0,
+                pbr::FieldType.Float => (float)value != 0f,
+                pbr::FieldType.Double => (double)value != 0.0,
+                _ => System.Convert.ToInt64(value) != 0L,
+            };
+        }
+
+        private static tableaupb::Patch GetFieldPatch(pbr::FieldDescriptor fd)
+        {
+            var opts = fd.GetOptions();
+            if (opts == null)
+            {
+                return tableaupb::Patch.None;
+            }
+            var fieldOpts = opts.GetExtension(global::Tableau.Protobuf.Tableau.TableauExtensions.Field);
+            return fieldOpts?.Prop?.Patch ?? tableaupb::Patch.None;
+        }
+
+        /// <summary>
+        /// GetSheetPatch returns the sheet-level patch type for a message descriptor.
+        /// </summary>
+        public static tableaupb::Patch GetSheetPatch(pbr::MessageDescriptor desc)
+        {
+            var opts = desc.GetOptions();
+            if (opts == null)
+            {
+                return tableaupb::Patch.None;
+            }
+            var worksheet = opts.GetExtension(global::Tableau.Protobuf.Tableau.TableauExtensions.Worksheet);
+            return worksheet?.Patch ?? tableaupb::Patch.None;
+        }
+
+        private static void PatchList(pb::IMessage dst, pb::IMessage src, pbr::FieldDescriptor fd)
+        {
+            var srcList = (System.Collections.IList)fd.Accessor.GetValue(src);
+            var dstList = (System.Collections.IList)fd.Accessor.GetValue(dst);
+            foreach (var item in srcList)
+            {
+                if (item is pb::IMessage srcElem)
+                {
+                    var newElem = (pb::IMessage)Activator.CreateInstance(fd.MessageType.ClrType)!;
+                    PatchMessageInternal(newElem, srcElem, fd.MessageType);
+                    dstList.Add(newElem);
+                }
+                else
+                {
+                    // For bytes, ByteString is immutable so a direct add is safe.
+                    dstList.Add(item);
+                }
+            }
+        }
+
+        private static void PatchMap(pb::IMessage dst, pb::IMessage src, pbr::FieldDescriptor fd)
+        {
+            var srcMap = (System.Collections.IDictionary)fd.Accessor.GetValue(src);
+            var dstMap = (System.Collections.IDictionary)fd.Accessor.GetValue(dst);
+            var valueFd = fd.MessageType.FindFieldByNumber(2); // map entry: value is field 2
+            bool isMessageValue = valueFd != null &&
+                (valueFd.FieldType == pbr::FieldType.Message || valueFd.FieldType == pbr::FieldType.Group);
+            foreach (System.Collections.DictionaryEntry entry in srcMap)
+            {
+                if (isMessageValue && entry.Value is pb::IMessage srcVal)
+                {
+                    if (dstMap.Contains(entry.Key) && dstMap[entry.Key] is pb::IMessage existing)
+                    {
+                        // NOTE: this MERGES into the existing value, differing from a simple replace.
+                        PatchMessageInternal(existing, srcVal, valueFd!.MessageType);
+                    }
+                    else
+                    {
+                        var newVal = (pb::IMessage)Activator.CreateInstance(valueFd!.MessageType.ClrType)!;
+                        PatchMessageInternal(newVal, srcVal, valueFd.MessageType);
+                        dstMap[entry.Key] = newVal;
+                    }
+                }
+                else
+                {
+                    dstMap[entry.Key] = entry.Value;
+                }
+            }
+        }
     }
 }
+

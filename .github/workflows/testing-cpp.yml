@@ -3,7 +3,7 @@ name: Testing C++
 # Trigger on pushes, PRs (excluding documentation changes), and nightly.
 on:
   push:
-    branches: [ master, main ]
+    branches: [master, main]
   pull_request:
   schedule:
     - cron: 0 0 * * * # daily at 00:00
@@ -16,16 +16,13 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ ubuntu-latest, windows-latest ]
-        go-version: [ 1.24.x ]
-        protobuf-version: [ "32.0", "3.19.3" ]
+        os: [ubuntu-latest, windows-latest]
+        protobuf-version: ["32.0", "3.19.3"]
         include:
           - os: ubuntu-latest
             init_script: bash init.sh
-            run_loader: ./bin/loader
           - os: windows-latest
             init_script: cmd /c init.bat
-            run_loader: .\bin\loader.exe
 
     name: test (${{ matrix.os }}, protobuf ${{ matrix.protobuf-version }})
     runs-on: ${{ matrix.os }}
@@ -35,25 +32,32 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
         with:
-          submodules: recursive
+          submodules: true
 
       - name: Install Go
         uses: actions/setup-go@v6
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
           cache: true
 
       - name: Install dependencies (Ubuntu)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
-
-      - name: Install dependencies (Windows)
-        if: runner.os == 'Windows'
-        run: choco install cmake ninja -y
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
 
       - name: Setup MSVC (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Cache protobuf install
+        id: cache-protobuf
+        uses: actions/cache@v4
+        with:
+          path: |
+            third_party/_submodules/protobuf/.build/_install
+          key: protobuf-${{ matrix.os }}-${{ matrix.protobuf-version }}-${{ hashFiles('init.sh', 'init.bat', '.gitmodules') }}
+          restore-keys: |
+            protobuf-${{ matrix.os }}-${{ matrix.protobuf-version }}-
 
       - name: Init submodules and build protobuf
         run: ${{ matrix.init_script }}
@@ -87,13 +91,12 @@ jobs:
 
       - name: CMake Configure
         working-directory: test/cpp-tableau-loader
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
-          -DCMAKE_CXX_STANDARD=17
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=17
 
       - name: CMake Build
         working-directory: test/cpp-tableau-loader
         run: cmake --build build --parallel
 
-      - name: Run loader
+      - name: Run tests
         working-directory: test/cpp-tableau-loader
-        run: ${{ matrix.run_loader }}
+        run: ctest --test-dir build --output-on-failure

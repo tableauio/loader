@@ -1,4 +1,4 @@
-package main
+package loader_test
 
 import (
 	"errors"

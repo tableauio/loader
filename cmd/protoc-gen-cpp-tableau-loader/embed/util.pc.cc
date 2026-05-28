@@ -6,9 +6,16 @@
 #include "tableau/protobuf/tableau.pb.h"
 
 namespace tableau {
-static thread_local std::string g_err_msg;
-const std::string& GetErrMsg() { return g_err_msg; }
-void SetErrMsg(const std::string& msg) { g_err_msg = msg; }
+namespace {
+// NOTE: Use a function-local thread_local (Meyers singleton) to avoid MSVC
+// TLS destruction order issues at process exit under /MTd.
+std::string& ErrMsgRef() {
+  static thread_local std::string g_err_msg;
+  return g_err_msg;
+}
+}  // namespace
+const std::string& GetErrMsg() { return ErrMsgRef(); }
+void SetErrMsg(const std::string& msg) { ErrMsgRef() = msg; }
 
 const std::string kUnknownExt = ".unknown";
 const std::string kJSONExt = ".json";
@@ -216,7 +223,7 @@ void ProtobufLogHandler(google::protobuf::LogLevel level, const char* filename, 
 #define TABLEAU_PB_LOG_LEVEL level
 #define TABLEAU_PB_LOG_FILENAME filename
 #define TABLEAU_PB_LOG_LINE line
-#define TABLEAU_PB_LOG_MESSAGE msg
+#define TABLEAU_PB_LOG_MESSAGE msg.c_str()
 #else
 // refer: https://github.com/abseil/abseil-cpp/blob/20250512.1/absl/log/log_entry.h
 void ProtobufAbslLogSink::Send(const absl::LogEntry& entry) {

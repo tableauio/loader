@@ -47,3 +47,6 @@ coverage.txt
 !test/testdata/bin/
 test/csharp-tableau-loader/protoconf
 
+# C# Dev Kit language service cache (VS Code)
+*.lscache
+

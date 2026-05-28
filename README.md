@@ -10,7 +10,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 - Prepare and init:
   - macOS or Linux: `bash init.sh`
   - Windows:
-    1. Run `prepare.bat` **as Administrator** to automatically install all build dependencies ([Chocolatey](https://chocolatey.org/), [CMake](https://github.com/Kitware/CMake/releases), [Ninja](https://ninja-build.org/), and MSVC build tools), configure `PATH`, and initialize the MSVC compiler environment:
+    1. Run `prepare.bat` **as Administrator** to automatically install all build dependencies ([Chocolatey](https://chocolatey.org/), [CMake](https://github.com/Kitware/CMake/releases), [Ninja](https://ninja-build.org/), MSVC build tools, and [buf](https://buf.build/)), configure `PATH`, and initialize the MSVC compiler environment:
        ```bat
        .\prepare.bat
        ```
@@ -24,7 +24,21 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
        ```bat
        .\init.bat
        ```
-    > **Note:** `prepare.bat` only needs to be run once per machine. It detects already-installed tools and skips them — no manual Visual Studio, CMake, or Ninja installation required.
+    > **Note:** The **installation** part of `prepare.bat` only runs once per machine — it detects already-installed tools (Chocolatey, Ninja, CMake, MSVC Build Tools, buf) and skips them, so no manual installation is required.
+    >
+    > However, the MSVC compiler environment (`cl.exe` on `PATH`, plus `INCLUDE` / `LIB` / `LIBPATH` / `WindowsSdkDir` / `VCToolsInstallDir`) is exported to the **current cmd session only** — `vcvarsall.bat` does not (and should not) write these into the persistent user `PATH`. You therefore need to re-run `.\prepare.bat` in **every new cmd window** before invoking `init.bat` or building the loader. Subsequent runs are near-instant since no installation work is repeated.
+
+> **Fast path (idempotent re-runs):** Building protobuf takes 5–15 minutes. To make repeated runs cheap, both `init.sh` and `init.bat` short-circuit and exit immediately when `third_party/_submodules/protobuf/.build/_install` already contains a valid `protobuf-config.cmake` (the marker that the previous build finished). This means:
+> - Re-running `init.sh` / `init.bat` after a successful first run is a no-op (a second or two).
+> - CI workflows cache `.build/_install` (see `.github/workflows/testing-cpp.yml`) and the fast path then turns the "build protobuf" step into a near-instant cache restore.
+> - To force a clean rebuild (e.g. after changing protobuf flags or switching `PROTOBUF_REF` to a version whose previously-installed artefacts are still around), set `FORCE_REBUILD_PROTOBUF=1`:
+>   ```sh
+>   FORCE_REBUILD_PROTOBUF=1 bash init.sh         # macOS / Linux
+>   ```
+>   ```bat
+>   set FORCE_REBUILD_PROTOBUF=1 && .\init.bat    :: Windows (cmd)
+>   ```
+>   Or simply delete `third_party/_submodules/protobuf/.build/` before rerunning.
 
 ### References
 
@@ -33,6 +47,7 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 - [Ninja](https://ninja-build.org/)
 - [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/)
 - [Use the Microsoft C++ Build Tools from the command line](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170)
+- [buf CLI](https://buf.build/docs/cli/)
 
 ## C++
 
@@ -41,24 +56,30 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 - Change dir: `cd test/cpp-tableau-loader`
 - Generate protoconf: `PATH=../../third_party/_submodules/protobuf/.build/_install/bin:$PATH buf generate ..`
 - CMake:
-  - C++17: `cmake -S . -B build`
-  - C++20: `cmake -S . -B build -DCMAKE_CXX_STANDARD=20`
-  - clang: `cmake -S . -B build -DCMAKE_CXX_COMPILER=clang++`
+  - C++17: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug`
+  - C++20: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=20`
+  - clang: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++`
 - Build: `cmake --build build --parallel`
-- Run: `./bin/loader`
+- Test: `ctest --test-dir build --output-on-failure`
 
 ### Dev at Windows
 
-> **Important:** CMake with Ninja requires MSVC environment variables (`cl.exe`, `INCLUDE`, `LIB`, etc.) to be active. Run `.\prepare.bat` from the **loader** root in the **same cmd session** before switching to the test directory. Opening a new terminal window will lose these variables.
+> **Important:** CMake with Ninja requires MSVC environment variables (`cl.exe`, `INCLUDE`, `LIB`, etc.) to be active. Run `.\prepare.bat` from the **loader** root in the **same cmd session** (use **cmd**, not PowerShell — `prepare.bat` exports vars via `endlocal & set ...` which only works for a cmd parent process) before switching to the test directory. Opening a new terminal window will lose these variables.
+>
+> **Build type:** The protobuf submodule is built as **Debug** (`/MTd`) by `init.bat`. To avoid LNK2038 `_ITERATOR_DEBUG_LEVEL` / `RuntimeLibrary` CRT-mismatch errors, the loader must also be built as Debug. `CMakeLists.txt` does not set a default, so always pass `-DCMAKE_BUILD_TYPE=Debug` explicitly — also required for multi-config generators (Visual Studio default = Debug, but stay explicit to match the cached protobuf).
 
 - Initialize MSVC environment (from loader root): `.\prepare.bat`
 - Change dir: `cd test\cpp-tableau-loader`, or change directory with Drive, e.g.: `cd /D D:\GitHub\loader\test\cpp-tableau-loader`
-- Generate protoconf: `cmd /C "set PATH=..\..\third_party\_submodules\protobuf\.build\_install\bin;%PATH% && buf generate .."`
+- Generate protoconf:
+  - cmd: `cmd /C "set PATH=..\..\third_party\_submodules\protobuf\.build\_install\bin;%PATH% && buf generate .."`
+  - PowerShell: `$env:PATH = "..\..\third_party\_submodules\protobuf\.build\_install\bin;" + $env:PATH; buf generate ..`
 - CMake:
-  - C++17: `cmake -S . -B build -G "Ninja"`
-  - C++20: `cmake -S . -B build -G "Ninja" -DCMAKE_CXX_STANDARD=20`
+  - C++17: `cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug`
+  - C++20: `cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=20`
 - Build: `cmake --build build --parallel`
-- Run: `.\bin\loader.exe`
+- Test: `ctest --test-dir build --output-on-failure`
+
+> **Note:** Tests are written with [GoogleTest](https://github.com/google/googletest), pulled in via CMake `FetchContent` (no manual installation needed).
 
 ### References
 
@@ -67,10 +88,10 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 ## Go
 
-- Install: **go1.21** or above
+- Install: **go1.24** or above
 - Change dir: `cd test/go-tableau-loader`
-- Generate protoconf: `buf generate .. `
-- Run: `go run .`
+- Generate protoconf: `buf generate ..`
+- Test: `go test ./...`
 
 ### References
 
@@ -87,8 +108,13 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 - Install: **dotnet-sdk-8.0**
 - Change dir: `cd test/csharp-tableau-loader`
-- Generate protoconf: `PATH=../third_party/_submodules/protobuf/.build/_install/bin:$PATH buf generate ..`
-- Test: `dotnet run`
+- Generate protoconf:
+  - macOS / Linux: `PATH=../../third_party/_submodules/protobuf/.build/_install/bin:$PATH buf generate ..`
+  - Windows (cmd): `cmd /C "set PATH=..\..\third_party\_submodules\protobuf\.build\_install\bin;%PATH% && buf generate .."`
+  - Windows (PowerShell): `$env:PATH = "..\..\third_party\_submodules\protobuf\.build\_install\bin;" + $env:PATH; buf generate ..`
+- Test: `dotnet test`
+
+> **Note:** Tests are written with [xUnit](https://xunit.net/).
 
 ## TypeScript
 
