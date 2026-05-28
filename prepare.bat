@@ -1,6 +1,27 @@
 @echo off
 setlocal enabledelayedexpansion
 
+REM ===========================================================================
+REM prepare.bat — bootstrap a Windows build environment for the C++ loader.
+REM
+REM Installs (only if missing): Chocolatey, Ninja, CMake 3.31.8, MSVC Build
+REM Tools (Visual Studio 2022 Build Tools), buf CLI, and vcpkg.
+REM
+REM Then installs `protobuf` (and friends) into vcpkg using the static-CRT
+REM triplet x64-windows-static, so that downstream cmake builds can pick it
+REM up via -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake.
+REM
+REM Override `protobuf` to a specific vcpkg port version with PROTOBUF_VCPKG_VERSION:
+REM   set PROTOBUF_VCPKG_VERSION=3.21.12 && .\prepare.bat
+REM (Default is whatever the vcpkg `master` baseline ships, currently the 6.x
+REM line. Use 3.21.12 if you need the legacy v3 ABI.)
+REM
+REM This script is idempotent: re-running it on a machine that already has
+REM everything installed is a no-op (a few seconds of probing). Only the MSVC
+REM environment variables are re-exported each time, since vcvarsall.bat sets
+REM cmd-session-local state that does not persist.
+REM ===========================================================================
+
 REM -----------------------------------------------------------------------
 REM Parse arguments
 REM   --dry-run        : print what would be done, but do not install anything
@@ -285,7 +306,118 @@ if "%BUF_FOUND%"=="0" (
     echo [INFO] buf.exe already in PATH.
 )
 
+REM -----------------------------------------------------------------------
+REM Step 5: Ensure vcpkg is installed and `protobuf` is provisioned
+REM
+REM Resolution order for the vcpkg install location:
+REM   1. Existing %VCPKG_ROOT% if it points at a usable bootstrap.
+REM   2. Existing %VCPKG_INSTALLATION_ROOT% (set on GitHub-hosted runners).
+REM   3. Fresh clone into %USERPROFILE%\vcpkg.
+REM
+REM We then run `vcpkg install protobuf:x64-windows-static` so that the
+REM static-CRT libprotobuf + protoc match the loader build (CMakeLists.txt
+REM forces /MT[d] via CMAKE_MSVC_RUNTIME_LIBRARY).
+REM
+REM Override the protobuf port version (e.g. for the legacy v3 line) with:
+REM   set PROTOBUF_VCPKG_VERSION=3.21.12 && .\prepare.bat
+REM -----------------------------------------------------------------------
+set "VCPKG_TRIPLET=x64-windows-static"
+set "VCPKG_EXE="
+
+REM Honor pre-existing VCPKG_ROOT / VCPKG_INSTALLATION_ROOT if they look valid.
+if "%SIMULATE_CLEAN%"=="0" (
+    if defined VCPKG_ROOT (
+        if exist "%VCPKG_ROOT%\vcpkg.exe" set "VCPKG_EXE=%VCPKG_ROOT%\vcpkg.exe"
+    )
+    if not defined VCPKG_EXE (
+        if defined VCPKG_INSTALLATION_ROOT (
+            if exist "%VCPKG_INSTALLATION_ROOT%\vcpkg.exe" (
+                set "VCPKG_ROOT=%VCPKG_INSTALLATION_ROOT%"
+                set "VCPKG_EXE=%VCPKG_INSTALLATION_ROOT%\vcpkg.exe"
+            )
+        )
+    )
+    if not defined VCPKG_EXE (
+        if exist "%USERPROFILE%\vcpkg\vcpkg.exe" (
+            set "VCPKG_ROOT=%USERPROFILE%\vcpkg"
+            set "VCPKG_EXE=%USERPROFILE%\vcpkg\vcpkg.exe"
+        )
+    )
+)
+
+if not defined VCPKG_EXE (
+    echo [INFO] vcpkg not found. Installing into %USERPROFILE%\vcpkg ...
+    set "VCPKG_ROOT=%USERPROFILE%\vcpkg"
+    if "%DRY_RUN%"=="0" (
+        if not exist "!VCPKG_ROOT!" (
+            git clone --depth 1 https://github.com/microsoft/vcpkg.git "!VCPKG_ROOT!"
+            if errorlevel 1 (
+                echo [ERROR] Failed to clone vcpkg.
+                exit /b 1
+            )
+        )
+        call "!VCPKG_ROOT!\bootstrap-vcpkg.bat" -disableMetrics
+        if errorlevel 1 (
+            echo [ERROR] Failed to bootstrap vcpkg.
+            exit /b 1
+        )
+    ) else (
+        echo [DRY-RUN] Would run: git clone https://github.com/microsoft/vcpkg.git "!VCPKG_ROOT!"
+        echo [DRY-RUN] Would run: "!VCPKG_ROOT!\bootstrap-vcpkg.bat" -disableMetrics
+    )
+    set "VCPKG_EXE=!VCPKG_ROOT!\vcpkg.exe"
+    REM Persist VCPKG_ROOT and PATH to user environment
+    if "%DRY_RUN%"=="0" (
+        setx VCPKG_ROOT "!VCPKG_ROOT!"
+        for /f "usebackq tokens=2*" %%a in (`reg query "HKCU\Environment" /v PATH 2^>nul`) do set "USR_PATH=%%b"
+        echo !USR_PATH! | findstr /i /c:"!VCPKG_ROOT!" >nul 2>&1
+        if errorlevel 1 (
+            setx PATH "!VCPKG_ROOT!;!USR_PATH!"
+            echo [INFO] vcpkg path added to user PATH permanently.
+        )
+    ) else (
+        echo [DRY-RUN] Would run: setx VCPKG_ROOT "!VCPKG_ROOT!"
+        echo [DRY-RUN] Would run: setx PATH "!VCPKG_ROOT!;..."
+    )
+    set "PATH=!VCPKG_ROOT!;%PATH%"
+    echo [INFO] vcpkg installed at !VCPKG_ROOT!.
+) else (
+    echo [INFO] vcpkg already available at !VCPKG_ROOT!.
+)
+
+REM Install protobuf into vcpkg (idempotent: vcpkg detects already-installed
+REM packages and skips them). If PROTOBUF_VCPKG_VERSION is set, pass --version.
+if "%DRY_RUN%"=="0" (
+    if defined PROTOBUF_VCPKG_VERSION (
+        echo [INFO] Installing protobuf %PROTOBUF_VCPKG_VERSION% into vcpkg ^(triplet !VCPKG_TRIPLET!^)...
+        "!VCPKG_EXE!" install "protobuf:!VCPKG_TRIPLET!" --x-version=%PROTOBUF_VCPKG_VERSION%
+    ) else (
+        echo [INFO] Installing protobuf into vcpkg ^(triplet !VCPKG_TRIPLET!^)...
+        "!VCPKG_EXE!" install "protobuf:!VCPKG_TRIPLET!"
+    )
+    if errorlevel 1 (
+        echo [ERROR] vcpkg failed to install protobuf.
+        exit /b 1
+    )
+) else (
+    if defined PROTOBUF_VCPKG_VERSION (
+        echo [DRY-RUN] Would run: "!VCPKG_EXE!" install "protobuf:!VCPKG_TRIPLET!" --x-version=%PROTOBUF_VCPKG_VERSION%
+    ) else (
+        echo [DRY-RUN] Would run: "!VCPKG_EXE!" install "protobuf:!VCPKG_TRIPLET!"
+    )
+)
+
+REM Expose vcpkg-installed protoc on PATH so `buf generate` finds it.
+set "PROTOC_TOOLS_DIR=!VCPKG_ROOT!\installed\!VCPKG_TRIPLET!\tools\protobuf"
+if exist "!PROTOC_TOOLS_DIR!\protoc.exe" (
+    set "PATH=!PROTOC_TOOLS_DIR!;%PATH%"
+    echo [INFO] vcpkg protoc on PATH: !PROTOC_TOOLS_DIR!
+)
+
 echo [INFO] Build environment ready.
 
-REM Export PATH and key MSVC vars back to the caller's environment
-endlocal & set "PATH=%PATH%" & set "INCLUDE=%INCLUDE%" & set "LIB=%LIB%" & set "LIBPATH=%LIBPATH%" & set "WindowsSdkDir=%WindowsSdkDir%" & set "VCToolsInstallDir=%VCToolsInstallDir%"
+REM Export PATH and key MSVC vars back to the caller's environment.
+REM Also export VCPKG_ROOT so subsequent `cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\...`
+REM invocations resolve in this same cmd session even before the persisted
+REM setx value takes effect in newly-spawned processes.
+endlocal & set "PATH=%PATH%" & set "INCLUDE=%INCLUDE%" & set "LIB=%LIB%" & set "LIBPATH=%LIBPATH%" & set "WindowsSdkDir=%WindowsSdkDir%" & set "VCToolsInstallDir=%VCToolsInstallDir%" & set "VCPKG_ROOT=%VCPKG_ROOT%"
