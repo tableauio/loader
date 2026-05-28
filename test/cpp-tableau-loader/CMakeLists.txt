@@ -32,21 +32,33 @@ else()
 endif()
 
 # google protobuf
-# Try to find protobuf from local submodule first, then fallback to system.
-# Protobuf's install.cmake generates config files under:
-#   - Linux:   build/lib64/cmake/protobuf/ (via CMAKE_INSTALL_LIBDIR)
-#   - Windows: build/cmake/                (MSVC uses "cmake" directly)
-# Setting CMAKE_PREFIX_PATH to the build dir allows CMake to search both layouts.
+#
+# Resolution order (first match wins):
+#   1. User-provided -DProtobuf_ROOT=... or -DCMAKE_PREFIX_PATH=... — for users
+#      bringing their own protobuf install (vcpkg / conan / Homebrew / custom).
+#   2. Local submodule build at third_party/_submodules/protobuf/.build/_install
+#      — populated by running ./init.sh (or init.bat on Windows) at the repo root.
+#      This is OPTIONAL; loader does not require it.
+#   3. System-wide protobuf discoverable by find_package (e.g. apt's
+#      libprotobuf-dev, system-installed CMake config).
+#
+# Whichever protobuf is picked, it MUST match the protoc that generated
+# tableau.pb.{h,cc}: protobuf v22+ enforces a strict gencode/runtime version
+# check via PROTOBUF_VERSION in the generated headers. Install matching
+# protoc + libprotobuf yourself, or run ./init.sh with PROTOBUF_REF=vX.Y.Z to
+# build a matching submodule copy.
 set(LOCAL_PROTOBUF_INSTALL_DIR "${PROJECT_SOURCE_DIR}/../../third_party/_submodules/protobuf/.build/_install")
-set(LOCAL_PROTOBUF_SRC_DIR "${PROJECT_SOURCE_DIR}/../../third_party/_submodules/protobuf/src")
-if(EXISTS "${LOCAL_PROTOBUF_INSTALL_DIR}" AND EXISTS "${LOCAL_PROTOBUF_SRC_DIR}")
-    message(STATUS "Found local protobuf submodule, using it preferentially.")
-    list(PREPEND CMAKE_PREFIX_PATH "${LOCAL_PROTOBUF_INSTALL_DIR}")
+if(EXISTS "${LOCAL_PROTOBUF_INSTALL_DIR}")
+    message(STATUS "Found local protobuf submodule install at ${LOCAL_PROTOBUF_INSTALL_DIR}; "
+                   "appending to CMAKE_PREFIX_PATH (user-provided paths still take priority).")
+    list(APPEND CMAKE_PREFIX_PATH "${LOCAL_PROTOBUF_INSTALL_DIR}")
 endif()
 
 # Use CONFIG mode explicitly to pick up protobuf's own protobuf-config.cmake
 # instead of CMake's built-in FindProtobuf.cmake module, which may not handle
-# the local build directory layout correctly.
+# every layout correctly (especially the submodule build dir on Linux vs.
+# Windows). CONFIG also gives us the modern protobuf::libprotobuf imported
+# target with proper INTERFACE_INCLUDE_DIRECTORIES.
 find_package(Protobuf CONFIG REQUIRED)
 message(STATUS "Using protobuf ${Protobuf_VERSION}")
 
