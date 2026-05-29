@@ -143,3 +143,13 @@ apt-get install -y --no-install-recommends \
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOF
+
+# ---------------------------------------------------------------------------
+# Final environment: with CMAKE_PREFIX_PATH pointing at vcpkg's installed
+# tree, find_package(Protobuf CONFIG) resolves automatically — the existing
+# README's "Dev at Linux → CMake (system protobuf)" recipe works as written
+# inside the container.
+# VCPKG_ROOT is set above (Task 5) for users who want to invoke the toolchain
+# file explicitly: -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake.
+# ---------------------------------------------------------------------------
+ENV CMAKE_PREFIX_PATH=/opt/vcpkg/active
