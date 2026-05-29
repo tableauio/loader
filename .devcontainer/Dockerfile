@@ -25,3 +25,19 @@ mkdir -p /opt
 printf 'GO_ARCH=%s\nBUF_ARCH=%s\nVCPKG_TRIPLET=%s\n' \
   "${GO_ARCH}" "${BUF_ARCH}" "${TRIPLET}" > /opt/buildargs.env
 EOF
+
+# ---------------------------------------------------------------------------
+# Go 1.24.0 — official tarball into /usr/local/go.
+#
+# PATH is set via ENV (not /etc/profile.d/) so non-interactive shells like
+# the postCreateCommand and downstream RUNs see Go without sourcing profile.
+# /home/vscode/go/bin lands `go install`-placed binaries on PATH automatically.
+# ---------------------------------------------------------------------------
+ARG GO_VERSION=1.24.0
+RUN <<EOF
+set -eux
+. /opt/buildargs.env
+curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" \
+  | tar -C /usr/local -xz
+EOF
+ENV PATH=/usr/local/go/bin:/home/vscode/go/bin:${PATH}
