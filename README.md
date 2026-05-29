@@ -26,7 +26,29 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 > Then install protobuf via one of the channels documented in
 > [Install protobuf](#install-protobuf).
 
+### Recommended: Dev Container (any host OS)
+
+The fastest way to get a reproducible build environment is to open the
+repo in VS Code and choose **Reopen in Container**. The devcontainer
+under [`.devcontainer/`](./.devcontainer/) has everything pinned to the
+exact versions CI uses (Go 1.24, buf 1.67.0, protobuf 6.33.4 via vcpkg,
+.NET 8.0, Node 20). First container build is one-time ~25 minutes (vcpkg
+compiles protobuf from source); subsequent reopens are near-instant.
+
+After the container starts you can skip the per-language setup below and
+jump straight to **[C++](#c)** / **[Go](#go)** / **[C#](#c-1)** /
+**[TypeScript](#typescript)**.
+
+Requirements: Docker Desktop (Windows + macOS) or Docker Engine (Linux),
+and the VS Code "Dev Containers" extension. See
+[`.devcontainer/README.md`](./.devcontainer/README.md) for the longer
+how-to.
+
 ### Install protobuf
+
+> **Skip this section if you're using the [devcontainer](#recommended-dev-container-any-host-os).**
+> The instructions below cover the manual fallback for hosts where
+> Docker isn't available.
 
 Pick whichever channel fits your platform; loader does not bundle protobuf.
 
@@ -82,6 +104,10 @@ Pick whichever channel fits your platform; loader does not bundle protobuf.
   (or `-DProtobuf_ROOT=...`).
 
 ### Windows: bootstrap the rest of the toolchain
+
+> **Skip this section if you're using the [devcontainer](#recommended-dev-container-any-host-os).**
+> `prepare.bat` is the manual fallback for Windows hosts that can't run
+> Docker.
 
 Run `prepare.bat` **as Administrator** to install everything you need on a
 fresh Windows machine: [Chocolatey](https://chocolatey.org/),
