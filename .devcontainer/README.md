@@ -71,6 +71,31 @@ The architecture choice is detected from BuildKit's `TARGETARCH` and fed
 into Go / buf / vcpkg triplet selection. Docker auto-selects the host
 arch on build.
 
+## Troubleshooting
+
+### `buf generate` works but the C++ or C# build then fails with stale-codegen errors
+
+If you're hitting errors like
+
+- C++: `fatal error: google/protobuf/generated_message_table_driven.h: No such file or directory`
+- C#: hundreds of `error CS0101: The namespace already contains a definition for ...`
+
+your host workspace probably has generated files from a *different* protobuf
+version (left over from a previous host toolchain — gitignored, so `git pull`
+doesn't remove them). They shadow what the container's `protoc` produces.
+
+Wipe and retry:
+
+```sh
+rm -rf test/cpp-tableau-loader/src/tableau \
+       test/cpp-tableau-loader/build \
+       test/csharp-tableau-loader/protoconf/tableau \
+       test/csharp-tableau-loader/{bin,obj}
+```
+
+Then re-run `buf generate ..` from the affected language's `test/<lang>-tableau-loader/`
+directory. A fresh clone doesn't have these stale artefacts.
+
 ## Falling back
 
 If you can't run Docker (corp policy, restricted machines, etc.) the
