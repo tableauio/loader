@@ -124,3 +124,22 @@ esac
 ln -s /opt/vcpkg-manifest/vcpkg_installed/${VCPKG_TRIPLET} /opt/vcpkg/active
 ln -s /opt/vcpkg/active/tools/protobuf/protoc /usr/local/bin/protoc
 EOF
+
+# ---------------------------------------------------------------------------
+# .NET SDK 8.0 + Node.js 20 LTS — apt-based installs from the official
+# Microsoft and NodeSource repositories. apt-get clean + rm /var/lib/apt/lists
+# at the end keeps the layer small.
+# ---------------------------------------------------------------------------
+RUN <<EOF
+set -eux
+curl -fsSL https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb \
+    -o /tmp/ms.deb
+dpkg -i /tmp/ms.deb
+rm /tmp/ms.deb
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt-get install -y --no-install-recommends \
+    dotnet-sdk-8.0 \
+    nodejs
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+EOF
