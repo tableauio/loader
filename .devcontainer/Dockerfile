@@ -41,3 +41,15 @@ curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" \
   | tar -C /usr/local -xz
 EOF
 ENV PATH=/usr/local/go/bin:/home/vscode/go/bin:${PATH}
+
+# ---------------------------------------------------------------------------
+# buf 1.67.0 — single-binary release on PATH.
+# ---------------------------------------------------------------------------
+ARG BUF_VERSION=1.67.0
+RUN <<EOF
+set -eux
+. /opt/buildargs.env
+curl -fsSL -o /usr/local/bin/buf \
+  "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-Linux-${BUF_ARCH}"
+chmod +x /usr/local/bin/buf
+EOF
