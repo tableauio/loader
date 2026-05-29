@@ -87,9 +87,9 @@ doesn't remove them). They shadow what the container's `protoc` produces.
 Wipe and retry:
 
 ```sh
-rm -rf test/cpp-tableau-loader/src/tableau \
+rm -rf test/cpp-tableau-loader/src/protoconf/tableau \
        test/cpp-tableau-loader/build \
-       test/csharp-tableau-loader/protoconf/tableau \
+       test/csharp-tableau-loader/protoconf \
        test/csharp-tableau-loader/{bin,obj}
 ```
 

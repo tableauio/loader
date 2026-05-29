@@ -4,8 +4,6 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 ## Prerequisites
 
-> TODO: [devcontainer](https://code.visualstudio.com/docs/devcontainers/containers)
-
 - C++ standard: at least C++17
 - A working **`protoc` + `libprotobuf`** toolchain on your machine. The same
   protobuf release **must** provide both: protobuf v22+ enforces a strict
