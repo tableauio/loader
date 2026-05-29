@@ -11,10 +11,22 @@ REM Then installs `protobuf` (and friends) into vcpkg using the static-CRT
 REM triplet x64-windows-static, so that downstream cmake builds can pick it
 REM up via -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake.
 REM
+REM The vcpkg checkout is pinned to VCPKG_BASELINE_COMMIT below for
+REM reproducibility — the same commit testing-cpp.yml uses in CI.
+REM
 REM Override `protobuf` to a specific vcpkg port version with PROTOBUF_VCPKG_VERSION:
 REM   set PROTOBUF_VCPKG_VERSION=3.21.12 && .\prepare.bat
-REM (Default is whatever the vcpkg `master` baseline ships, currently the 6.x
-REM line. Use 3.21.12 if you need the legacy v3 ABI.)
+REM
+REM When PROTOBUF_VCPKG_VERSION is set we install in vcpkg MANIFEST mode (a
+REM rendered vcpkg.json under %LOCALAPPDATA%\loader\vcpkg-manifest\), which
+REM is the only mode where `--x-version` / `overrides` actually pin the port
+REM version. In that case the install root is %VCPKG_INSTALLED_DIR%, and
+REM downstream cmake invocations must add:
+REM     -DVCPKG_INSTALLED_DIR=%VCPKG_INSTALLED_DIR% -DVCPKG_MANIFEST_INSTALL=OFF
+REM (matching the CI flow in .github/workflows/testing-cpp.yml).
+REM
+REM When PROTOBUF_VCPKG_VERSION is NOT set we install in vcpkg CLASSIC mode
+REM (no manifest), and downstream cmake works with just the toolchain file.
 REM
 REM This script is idempotent: re-running it on a machine that already has
 REM everything installed is a no-op (a few seconds of probing). Only the MSVC
@@ -323,13 +335,39 @@ REM <port>:<triplet>` with: "Could not locate a manifest (vcpkg.json) above
 REM the current working directory. This vcpkg distribution does not have a
 REM classic mode instance."
 REM
+REM When we install vcpkg ourselves we pin it to VCPKG_BASELINE_COMMIT so
+REM the protobuf port version is reproducible. When we adopt a pre-existing
+REM user-managed vcpkg, we leave its checkout state alone (the user owns it).
+REM
 REM We then run `vcpkg install protobuf:x64-windows-static` so that the
 REM static-CRT libprotobuf + protoc match the loader build (CMakeLists.txt
 REM forces /MT[d] via CMAKE_MSVC_RUNTIME_LIBRARY).
 REM
 REM Override the protobuf port version (e.g. for the legacy v3 line) with:
 REM   set PROTOBUF_VCPKG_VERSION=3.21.12 && .\prepare.bat
+REM In that case we switch to manifest mode (see header comment above).
 REM -----------------------------------------------------------------------
+REM Pre-flight: vcpkg compiles protobuf from source via MSVC, so cl.exe must
+REM resolve here. If Step 3 didn't activate the MSVC environment (e.g. choco
+REM just installed VS Build Tools and the registration hasn't fully landed
+REM in this shell), fail fast with an actionable message rather than letting
+REM vcpkg emit cryptic compiler-detection errors deep into the install.
+where cl.exe >nul 2>&1
+if errorlevel 1 (
+    if "%DRY_RUN%"=="0" (
+        echo [ERROR] cl.exe not on PATH; the MSVC environment is not active in this shell.
+        echo [ERROR] Open a new "Developer Command Prompt for VS 2022" or rerun this script
+        echo [ERROR] in a fresh cmd window so vcvarsall.bat can take effect, then retry.
+        exit /b 1
+    ) else (
+        echo [DRY-RUN] [WARN] cl.exe not on PATH; would error out before vcpkg install.
+    )
+)
+
+REM Pin both the vcpkg checkout and the manifest's builtin-baseline to the
+REM same commit testing-cpp.yml uses. Bumping vcpkg? Bump both this value
+REM and VCPKG_COMMIT in .github/workflows/testing-cpp.yml in lockstep.
+set "VCPKG_BASELINE_COMMIT=dc8d75cfc3281b8e2a4ed8ee4163c891190df932"
 set "VCPKG_TRIPLET=x64-windows-static"
 set "VCPKG_EXE="
 
@@ -373,11 +411,21 @@ if not defined VCPKG_EXE (
     set "VCPKG_ROOT=%USERPROFILE%\vcpkg"
     if "%DRY_RUN%"=="0" (
         if not exist "!VCPKG_ROOT!" (
-            git clone --depth 1 https://github.com/microsoft/vcpkg.git "!VCPKG_ROOT!"
+            REM Full clone (no --depth 1) so we can `git checkout` an arbitrary
+            REM commit below for reproducibility.
+            git clone https://github.com/microsoft/vcpkg.git "!VCPKG_ROOT!"
             if errorlevel 1 (
                 echo [ERROR] Failed to clone vcpkg.
                 exit /b 1
             )
+        )
+        REM Pin the checkout so port versions are reproducible. Safe to run
+        REM repeatedly: a no-op when we're already on VCPKG_BASELINE_COMMIT.
+        git -C "!VCPKG_ROOT!" fetch --quiet origin %VCPKG_BASELINE_COMMIT%
+        git -C "!VCPKG_ROOT!" checkout --quiet %VCPKG_BASELINE_COMMIT%
+        if errorlevel 1 (
+            echo [ERROR] Failed to checkout vcpkg @ %VCPKG_BASELINE_COMMIT%.
+            exit /b 1
         )
         call "!VCPKG_ROOT!\bootstrap-vcpkg.bat" -disableMetrics
         if errorlevel 1 (
@@ -386,6 +434,7 @@ if not defined VCPKG_EXE (
         )
     ) else (
         echo [DRY-RUN] Would run: git clone https://github.com/microsoft/vcpkg.git "!VCPKG_ROOT!"
+        echo [DRY-RUN] Would run: git -C "!VCPKG_ROOT!" checkout %VCPKG_BASELINE_COMMIT%
         echo [DRY-RUN] Would run: "!VCPKG_ROOT!\bootstrap-vcpkg.bat" -disableMetrics
     )
     set "VCPKG_EXE=!VCPKG_ROOT!\vcpkg.exe"
@@ -403,38 +452,97 @@ if not defined VCPKG_EXE (
         echo [DRY-RUN] Would run: setx PATH "!VCPKG_ROOT!;..."
     )
     set "PATH=!VCPKG_ROOT!;%PATH%"
-    echo [INFO] vcpkg installed at !VCPKG_ROOT!.
+    echo [INFO] vcpkg installed at !VCPKG_ROOT! ^(pinned to %VCPKG_BASELINE_COMMIT%^).
 ) else (
-    echo [INFO] vcpkg already available at !VCPKG_ROOT!.
+    echo [INFO] vcpkg already available at !VCPKG_ROOT! ^(user-managed; not re-pinning^).
 )
 
-REM Install protobuf into vcpkg (idempotent: vcpkg detects already-installed
-REM packages and skips them). If PROTOBUF_VCPKG_VERSION is set, pass --version.
-if "%DRY_RUN%"=="0" (
-    if defined PROTOBUF_VCPKG_VERSION (
-        echo [INFO] Installing protobuf %PROTOBUF_VCPKG_VERSION% into vcpkg ^(triplet !VCPKG_TRIPLET!^)...
-        "!VCPKG_EXE!" install "protobuf:!VCPKG_TRIPLET!" --x-version=%PROTOBUF_VCPKG_VERSION%
+REM Install protobuf into vcpkg.
+REM
+REM Branching on PROTOBUF_VCPKG_VERSION:
+REM   - unset: CLASSIC mode. Installs into %VCPKG_ROOT%\installed\<triplet>\,
+REM            auto-discovered by the vcpkg cmake toolchain — no extra cmake
+REM            flags needed downstream. Whatever protobuf the pinned vcpkg
+REM            checkout (VCPKG_BASELINE_COMMIT) ships is what you get.
+REM   - set:   MANIFEST mode. Renders a vcpkg.json under
+REM            %LOCALAPPDATA%\loader\vcpkg-manifest\ with builtin-baseline +
+REM            an override pinning protobuf to the requested version. This
+REM            is the only mode in which `--x-version` / `overrides` actually
+REM            take effect; classic-mode `--x-version` is silently a no-op.
+REM            Install root: <manifest-dir>\vcpkg_installed\<triplet>\.
+REM
+REM Both modes are idempotent: vcpkg detects already-installed packages and
+REM skips them.
+if defined PROTOBUF_VCPKG_VERSION (
+    set "VCPKG_MANIFEST_DIR=%LOCALAPPDATA%\loader\vcpkg-manifest"
+    set "VCPKG_INSTALLED_DIR=!VCPKG_MANIFEST_DIR!\vcpkg_installed"
+    if "%DRY_RUN%"=="0" (
+        if not exist "!VCPKG_MANIFEST_DIR!" mkdir "!VCPKG_MANIFEST_DIR!"
+        REM Render vcpkg.json. The `>` redirection truncates on first line and
+        REM `>>` appends the rest, mirroring a here-doc.
+        > "!VCPKG_MANIFEST_DIR!\vcpkg.json" echo {
+        >>"!VCPKG_MANIFEST_DIR!\vcpkg.json" echo   "name": "loader-prepare",
+        >>"!VCPKG_MANIFEST_DIR!\vcpkg.json" echo   "version": "0.1.0",
+        >>"!VCPKG_MANIFEST_DIR!\vcpkg.json" echo   "dependencies": ["protobuf"],
+        >>"!VCPKG_MANIFEST_DIR!\vcpkg.json" echo   "overrides": [{ "name": "protobuf", "version": "%PROTOBUF_VCPKG_VERSION%" }],
+        >>"!VCPKG_MANIFEST_DIR!\vcpkg.json" echo   "builtin-baseline": "%VCPKG_BASELINE_COMMIT%"
+        >>"!VCPKG_MANIFEST_DIR!\vcpkg.json" echo }
+        echo [INFO] Installing protobuf %PROTOBUF_VCPKG_VERSION% into vcpkg ^(manifest mode, triplet !VCPKG_TRIPLET!^)...
+        pushd "!VCPKG_MANIFEST_DIR!"
+        "!VCPKG_EXE!" install --triplet=!VCPKG_TRIPLET! --x-install-root="!VCPKG_INSTALLED_DIR!"
+        set "VCPKG_INSTALL_RC=!ERRORLEVEL!"
+        popd
+        if not "!VCPKG_INSTALL_RC!"=="0" (
+            echo [ERROR] vcpkg failed to install protobuf %PROTOBUF_VCPKG_VERSION%.
+            exit /b 1
+        )
+        REM Sanity check: assert the resolved version actually starts with
+        REM the requested one. vcpkg port versions can have a `#N` port-revision
+        REM suffix, so we match by prefix rather than equality. This is the
+        REM safety net that catches future regressions in vcpkg's manifest
+        REM resolution silently producing the wrong version.
+        set "VCPKG_INFO_FILE=!VCPKG_INSTALLED_DIR!\vcpkg\info\.unused"
+        for /f "delims=" %%f in ('dir /b /a-d "!VCPKG_INSTALLED_DIR!\vcpkg\info\protobuf_*_!VCPKG_TRIPLET!.list" 2^>nul') do (
+            set "VCPKG_INFO_FILE=%%f"
+        )
+        echo !VCPKG_INFO_FILE! | findstr /c:"protobuf_%PROTOBUF_VCPKG_VERSION%" >nul 2>&1
+        if errorlevel 1 (
+            echo [ERROR] Installed protobuf does not match requested version %PROTOBUF_VCPKG_VERSION%.
+            echo [ERROR]   vcpkg installed file marker: !VCPKG_INFO_FILE!
+            echo [ERROR] This usually means VCPKG_BASELINE_COMMIT is too old to know about that
+            echo [ERROR] version. Bump the commit at the top of Step 5 and retry.
+            exit /b 1
+        )
     ) else (
-        echo [INFO] Installing protobuf into vcpkg ^(triplet !VCPKG_TRIPLET!^)...
-        "!VCPKG_EXE!" install "protobuf:!VCPKG_TRIPLET!"
+        echo [DRY-RUN] Would render: !VCPKG_MANIFEST_DIR!\vcpkg.json ^(protobuf %PROTOBUF_VCPKG_VERSION%, baseline %VCPKG_BASELINE_COMMIT%^)
+        echo [DRY-RUN] Would run: pushd "!VCPKG_MANIFEST_DIR!" ^&^& "!VCPKG_EXE!" install --triplet=!VCPKG_TRIPLET! --x-install-root="!VCPKG_INSTALLED_DIR!"
     )
-    if errorlevel 1 (
-        echo [ERROR] vcpkg failed to install protobuf.
-        exit /b 1
-    )
+    set "PROTOC_TOOLS_DIR=!VCPKG_INSTALLED_DIR!\!VCPKG_TRIPLET!\tools\protobuf"
 ) else (
-    if defined PROTOBUF_VCPKG_VERSION (
-        echo [DRY-RUN] Would run: "!VCPKG_EXE!" install "protobuf:!VCPKG_TRIPLET!" --x-version=%PROTOBUF_VCPKG_VERSION%
+    if "%DRY_RUN%"=="0" (
+        echo [INFO] Installing protobuf into vcpkg ^(classic mode, triplet !VCPKG_TRIPLET!^)...
+        "!VCPKG_EXE!" install "protobuf:!VCPKG_TRIPLET!"
+        if errorlevel 1 (
+            echo [ERROR] vcpkg failed to install protobuf.
+            exit /b 1
+        )
     ) else (
         echo [DRY-RUN] Would run: "!VCPKG_EXE!" install "protobuf:!VCPKG_TRIPLET!"
     )
+    set "VCPKG_INSTALLED_DIR="
+    set "PROTOC_TOOLS_DIR=!VCPKG_ROOT!\installed\!VCPKG_TRIPLET!\tools\protobuf"
 )
 
 REM Expose vcpkg-installed protoc on PATH so `buf generate` finds it.
-set "PROTOC_TOOLS_DIR=!VCPKG_ROOT!\installed\!VCPKG_TRIPLET!\tools\protobuf"
 if exist "!PROTOC_TOOLS_DIR!\protoc.exe" (
     set "PATH=!PROTOC_TOOLS_DIR!;%PATH%"
     echo [INFO] vcpkg protoc on PATH: !PROTOC_TOOLS_DIR!
+)
+
+if defined VCPKG_INSTALLED_DIR (
+    echo [INFO] Manifest-mode install root: !VCPKG_INSTALLED_DIR!
+    echo [INFO] When invoking cmake, also pass:
+    echo [INFO]     -DVCPKG_INSTALLED_DIR="!VCPKG_INSTALLED_DIR!" -DVCPKG_MANIFEST_INSTALL=OFF
 )
 
 echo [INFO] Build environment ready.
@@ -442,5 +550,6 @@ echo [INFO] Build environment ready.
 REM Export PATH and key MSVC vars back to the caller's environment.
 REM Also export VCPKG_ROOT so subsequent `cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\...`
 REM invocations resolve in this same cmd session even before the persisted
-REM setx value takes effect in newly-spawned processes.
-endlocal & set "PATH=%PATH%" & set "INCLUDE=%INCLUDE%" & set "LIB=%LIB%" & set "LIBPATH=%LIBPATH%" & set "WindowsSdkDir=%WindowsSdkDir%" & set "VCToolsInstallDir=%VCToolsInstallDir%" & set "VCPKG_ROOT=%VCPKG_ROOT%"
+REM setx value takes effect in newly-spawned processes. VCPKG_INSTALLED_DIR
+REM is set only in manifest mode (PROTOBUF_VCPKG_VERSION pinned).
+endlocal & set "PATH=%PATH%" & set "INCLUDE=%INCLUDE%" & set "LIB=%LIB%" & set "LIBPATH=%LIBPATH%" & set "WindowsSdkDir=%WindowsSdkDir%" & set "VCToolsInstallDir=%VCToolsInstallDir%" & set "VCPKG_ROOT=%VCPKG_ROOT%" & set "VCPKG_INSTALLED_DIR=%VCPKG_INSTALLED_DIR%"

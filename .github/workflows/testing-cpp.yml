@@ -66,7 +66,7 @@ jobs:
           cat > vcpkg.json <<EOF
           {
             "name": "loader-cpp-test",
-            "version-string": "0.1.0",
+            "version": "0.1.0",
             "dependencies": ["protobuf"],
             "overrides": [
               { "name": "protobuf", "version": "${{ matrix.config.protobuf-version }}" }

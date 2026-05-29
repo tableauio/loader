@@ -57,3 +57,5 @@ vcpkg_installed/
 # Local users who want to commit a manifest can `git add -f vcpkg.json`.
 test/cpp-tableau-loader/vcpkg.json
 
+.claude/settings.local.json
+

@@ -18,6 +18,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        # protobuf-version below is the protoc release tag (without the leading
+        # "v") fed to arduino/setup-protoc — NOT the libprotobuf C++ runtime
+        # SemVer used in testing-cpp.yml. The pairs map to the same upstream
+        # protobuf release:
+        #   modern:    protoc v33.4   ↔ libprotobuf C++ 6.33.4   (testing-cpp.yml)
+        #   legacy-v3: protoc v21.12  ↔ libprotobuf C++ 3.21.12  (testing-cpp.yml)
+        # C# only needs protoc; libprotobuf is irrelevant, so we install via
+        # arduino/setup-protoc instead of vcpkg.
         config:
           - label: modern
             protobuf-version: "33.4"

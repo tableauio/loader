@@ -12,6 +12,20 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
   gencode/runtime version check via `PROTOBUF_VERSION` in the generated
   headers, so a mismatched `protoc` and `libprotobuf` will fail to link.
 
+> **Migrating from the bundled-protobuf layout?** Loader used to vendor
+> protobuf as a git submodule under `third_party/_submodules/protobuf` plus
+> an `init.sh` / `init.bat` build pipeline. Both are gone. If you've checked
+> the repo out before this change, clean up the orphan worktree and submodule
+> metadata before building:
+>
+> ```sh
+> git submodule deinit -f third_party/_submodules/protobuf
+> rm -rf third_party/_submodules/protobuf .git/modules/third_party/_submodules/protobuf
+> ```
+>
+> Then install protobuf via one of the channels documented in
+> [Install protobuf](#install-protobuf).
+
 ### Install protobuf
 
 Pick whichever channel fits your platform; loader does not bundle protobuf.
@@ -25,7 +39,24 @@ Pick whichever channel fits your platform; loader does not bundle protobuf.
   # ~/vcpkg/vcpkg install protobuf:x64-osx         # macOS
   # .\vcpkg\vcpkg install protobuf:x64-windows-static  # Windows (matches loader's static CRT)
   ```
-  Pin to the legacy v3 line if you need it: append `--x-version=3.21.12`.
+  This installs whatever protobuf version the vcpkg checkout's baseline ships
+  (currently the 6.x line). To pin a specific version, use vcpkg **manifest
+  mode**: drop a `vcpkg.json` in your build directory with a `builtin-baseline`
+  + `overrides`, e.g.
+
+  ```json
+  {
+    "name": "loader-build",
+    "version": "0.1.0",
+    "dependencies": ["protobuf"],
+    "overrides": [{ "name": "protobuf", "version": "3.21.12" }],
+    "builtin-baseline": "<recent-vcpkg-commit-sha>"
+  }
+  ```
+
+  > **Note:** classic-mode `vcpkg install --x-version=...` is silently a no-op;
+  > version pinning only works in manifest mode. See
+  > `.github/workflows/testing-cpp.yml` for the exact pattern CI uses.
 
   Then put `protoc` on `PATH` (so `buf generate` works) and pass
   `-DCMAKE_TOOLCHAIN_FILE=<vcpkg-root>/scripts/buildsystems/vcpkg.cmake` to
@@ -74,6 +105,13 @@ compiler environment for the current cmd session.
 > ```bat
 > set PROTOBUF_VCPKG_VERSION=3.21.12 && .\prepare.bat
 > ```
+> Setting this switches the script to vcpkg **manifest mode** — the only mode
+> in which the version pin actually takes effect. The install root moves from
+> `%VCPKG_ROOT%\installed\x64-windows-static\` to a manifest dir under
+> `%LOCALAPPDATA%\loader\vcpkg-manifest\vcpkg_installed\`, and `prepare.bat`
+> exports its path as `%VCPKG_INSTALLED_DIR%`. Your downstream CMake invocation
+> must then add `-DVCPKG_INSTALLED_DIR=%VCPKG_INSTALLED_DIR%` and
+> `-DVCPKG_MANIFEST_INSTALL=OFF` (see [Dev at Windows](#dev-at-windows)).
 
 > **Note:** The **installation** part of `prepare.bat` only runs once per machine — it detects already-installed tools (Chocolatey, Ninja, CMake, MSVC Build Tools, buf, vcpkg, protobuf) and skips them, so no manual installation is required.
 >
@@ -116,9 +154,11 @@ compiler environment for the current cmd session.
 - Initialize MSVC environment (from loader root): `.\prepare.bat`
 - Change dir: `cd test\cpp-tableau-loader`, or change directory with Drive, e.g.: `cd /D D:\GitHub\loader\test\cpp-tableau-loader`
 - Generate protoconf: `buf generate ..` (the `prepare.bat` step above already puts the vcpkg-built `protoc.exe` on `PATH`)
-- CMake (vcpkg-provided protobuf):
+- CMake (vcpkg-provided protobuf, classic mode — default):
   - C++17: `cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static`
   - C++20: append `-DCMAKE_CXX_STANDARD=20`
+- CMake (vcpkg manifest mode — only when you ran `prepare.bat` with `PROTOBUF_VCPKG_VERSION` set):
+  - C++17: `cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static -DVCPKG_INSTALLED_DIR="%VCPKG_INSTALLED_DIR%" -DVCPKG_MANIFEST_INSTALL=OFF`
 - Build: `cmake --build build --parallel`
 - Test: `ctest --test-dir build --output-on-failure`
 
