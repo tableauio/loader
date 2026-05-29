@@ -53,3 +53,74 @@ curl -fsSL -o /usr/local/bin/buf \
   "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-Linux-${BUF_ARCH}"
 chmod +x /usr/local/bin/buf
 EOF
+
+# ---------------------------------------------------------------------------
+# vcpkg + protobuf via manifest mode.
+#
+# Pins:
+#   VCPKG_BASELINE_COMMIT — same commit testing-cpp.yml's VCPKG_COMMIT and
+#       prepare.bat's VCPKG_BASELINE_COMMIT use. Bumping vcpkg = bump all three.
+#   PROTOBUF_VERSION    — defaults to the modern 6.33.4 line (CI's primary).
+#       Override at build time:
+#         docker build --build-arg PROTOBUF_VERSION=3.21.12 ...
+#       devcontainer.json wires this to the LOADER_PROTOBUF_VERSION host env var.
+#
+# Why manifest mode: classic-mode `vcpkg install --x-version=...` is silently
+# a no-op; only manifest mode + overrides actually pin the port version. The
+# post-install assertion catches the case where vcpkg's resolution still picks
+# a different port revision than requested.
+# ---------------------------------------------------------------------------
+ARG VCPKG_BASELINE_COMMIT=dc8d75cfc3281b8e2a4ed8ee4163c891190df932
+ARG PROTOBUF_VERSION=6.33.4
+ENV VCPKG_ROOT=/opt/vcpkg
+
+RUN <<EOF
+set -eux
+. /opt/buildargs.env
+
+# 1. Bring up vcpkg pinned to the baseline commit.
+git clone https://github.com/microsoft/vcpkg.git "${VCPKG_ROOT}"
+git -C "${VCPKG_ROOT}" checkout "${VCPKG_BASELINE_COMMIT}"
+"${VCPKG_ROOT}/bootstrap-vcpkg.sh" -disableMetrics
+
+# 2. Render a minimal manifest with builtin-baseline + the protobuf override.
+mkdir -p /opt/vcpkg-manifest
+cat > /opt/vcpkg-manifest/vcpkg.json <<MANIFEST
+{
+  "name": "loader-devcontainer",
+  "version": "0.1.0",
+  "dependencies": ["protobuf"],
+  "overrides": [{ "name": "protobuf", "version": "${PROTOBUF_VERSION}" }],
+  "builtin-baseline": "${VCPKG_BASELINE_COMMIT}"
+}
+MANIFEST
+
+# 3. Manifest-mode install. Triplet comes from /opt/buildargs.env
+#    (x64-linux on amd64, arm64-linux on arm64).
+cd /opt/vcpkg-manifest
+"${VCPKG_ROOT}/vcpkg" install \
+    --triplet="${VCPKG_TRIPLET}" \
+    --x-install-root=/opt/vcpkg-manifest/vcpkg_installed
+
+# 4. Post-install assertion: vcpkg writes a per-port file whose name encodes
+#    the resolved version. If the prefix doesn't match what we asked for,
+#    fail loudly — silently producing a wrong-version image is the bug we
+#    are explicitly defending against.
+INFO_FILE=$(ls /opt/vcpkg-manifest/vcpkg_installed/vcpkg/info/protobuf_*_${VCPKG_TRIPLET}.list 2>/dev/null | head -n1)
+case "$(basename "${INFO_FILE:-/missing}" 2>/dev/null)" in
+  protobuf_${PROTOBUF_VERSION}*)
+    ;;
+  *)
+    echo "ERROR: installed protobuf does not match requested version ${PROTOBUF_VERSION}."
+    echo "       vcpkg installed-file marker: ${INFO_FILE:-<none>}"
+    echo "       Bump VCPKG_BASELINE_COMMIT (in this Dockerfile, prepare.bat,"
+    echo "       and testing-cpp.yml) to a commit that knows about the requested version."
+    exit 1
+    ;;
+esac
+
+# 5. Stable symlinks so ENV CMAKE_PREFIX_PATH (last layer) doesn't have to
+#    care about the underlying triplet.
+ln -s /opt/vcpkg-manifest/vcpkg_installed/${VCPKG_TRIPLET} /opt/vcpkg/active
+ln -s /opt/vcpkg/active/tools/protobuf/protoc /usr/local/bin/protoc
+EOF
