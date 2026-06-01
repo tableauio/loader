@@ -36,10 +36,56 @@ jobs:
       - name: Switch Docker to Windows containers
         shell: pwsh
         run: |
-          # GitHub-hosted windows-2022 runners ship Docker in Linux-containers
-          # mode by default. Flip to Windows containers; the runner has
-          # DockerCli.exe in PATH for exactly this reason.
-          & "$env:ProgramFiles\Docker\Docker\DockerCli.exe" -SwitchDaemon
+          # GitHub-hosted windows-2022 runners ship Moby Engine (not Docker
+          # Desktop) and default to Linux-containers mode. The legacy
+          # `DockerCli.exe -SwitchDaemon` helper is not present on current
+          # runner images. Flip the daemon by re-registering the `docker`
+          # Windows service without the `dockerd-default` (Linux) backend.
+          $ErrorActionPreference = 'Stop'
+
+          $current = (docker info --format '{{.OSType}}' 2>$null)
+          Write-Host "Current OSType before switch: $current"
+          if ($current -eq 'windows') {
+              Write-Host 'Already in Windows-containers mode; nothing to do.'
+              docker info | Select-String -Pattern 'OSType|Server Version|Operating System'
+              exit 0
+          }
+
+          # Locate dockerd.exe. Moby Engine on the runner lives under
+          # %ProgramFiles%\docker\; Docker Desktop (older runners) used
+          # %ProgramFiles%\Docker\Docker\. Probe both.
+          $candidates = @(
+              "$env:ProgramFiles\docker\dockerd.exe",
+              "$env:ProgramFiles\Docker\Docker\resources\dockerd.exe",
+              "$env:ProgramFiles\Docker\dockerd.exe"
+          )
+          $dockerd = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $dockerd) {
+              Write-Error "dockerd.exe not found in any of: $($candidates -join '; ')"
+              Write-Host '--- diagnostic: Get-Service docker ---'
+              Get-Service docker -ErrorAction SilentlyContinue | Format-List *
+              Write-Host '--- diagnostic: ProgramFiles tree ---'
+              Get-ChildItem "$env:ProgramFiles\docker", "$env:ProgramFiles\Docker" -ErrorAction SilentlyContinue
+              exit 1
+          }
+          Write-Host "Using dockerd at: $dockerd"
+
+          # Stop, re-register without `-G docker` Linux args, restart.
+          Stop-Service docker
+          & $dockerd --unregister-service
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $dockerd --register-service --service-name docker
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Start-Service docker
+
+          # Verify the switch took effect.
+          $after = (docker info --format '{{.OSType}}' 2>$null)
+          Write-Host "Current OSType after switch: $after"
+          if ($after -ne 'windows') {
+              Write-Error "Docker daemon did not switch to Windows containers (OSType=$after)."
+              docker info
+              exit 1
+          }
           docker info | Select-String -Pattern 'OSType|Server Version|Operating System'
 
       - name: Build devcontainer image
