@@ -15,11 +15,11 @@ permissions:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        protobuf-version: ["32.0", "3.19.3"]
 
-    name: test (${{ matrix.os }}, protobuf ${{ matrix.protobuf-version }})
+    name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
 

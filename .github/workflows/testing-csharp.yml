@@ -15,11 +15,24 @@ permissions:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        protobuf-version: ["32.0", "3.19.3"]
+        # protobuf-version below is the protoc release tag (without the leading
+        # "v") fed to arduino/setup-protoc — NOT the libprotobuf C++ runtime
+        # SemVer used in testing-cpp.yml. The pairs map to the same upstream
+        # protobuf release:
+        #   modern:    protoc v33.4   ↔ libprotobuf C++ 6.33.4   (testing-cpp.yml)
+        #   legacy-v3: protoc v21.12  ↔ libprotobuf C++ 3.21.12  (testing-cpp.yml)
+        # C# only needs protoc; libprotobuf is irrelevant, so we install via
+        # arduino/setup-protoc instead of vcpkg.
+        config:
+          - label: modern
+            protobuf-version: "33.4"
+          - label: legacy-v3
+            protobuf-version: "21.12"
 
-    name: test (${{ matrix.os }}, protobuf ${{ matrix.protobuf-version }})
+    name: test (${{ matrix.os }}, ${{ matrix.config.label }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
 
@@ -42,17 +55,9 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Install Protoc
-        if: "!startsWith(matrix.protobuf-version, '3.')"
         uses: arduino/setup-protoc@v3
         with:
-          version: ${{ matrix.protobuf-version }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Protoc (legacy)
-        if: startsWith(matrix.protobuf-version, '3.')
-        uses: arduino/setup-protoc@v1
-        with:
-          version: ${{ matrix.protobuf-version }}
+          version: ${{ matrix.config.protobuf-version }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Buf

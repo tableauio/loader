@@ -1,0 +1,51 @@
+{
+    // tableauio/loader Dev Container.
+    // See docs/superpowers/specs/2026-05-29-devcontainer-design.md for the design.
+    "name": "tableauio/loader",
+    // Build args wire host env to Dockerfile ARGs:
+    //   LOADER_PROTOBUF_VERSION on the host -> PROTOBUF_VERSION inside.
+    // Default 6.33.4 (CI's modern matrix entry). To rebuild against legacy v3:
+    //   LOADER_PROTOBUF_VERSION=3.21.12 code .   # then Reopen in Container.
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            "PROTOBUF_VERSION": "${localEnv:LOADER_PROTOBUF_VERSION:6.33.4}"
+        }
+    },
+    // Persist the Go module cache across container rebuilds. Workspace itself
+    // uses VS Code's default bind-mount so edits sync to the host.
+    "mounts": [
+        "source=loader-go-mod,target=/home/vscode/go,type=volume"
+    ],
+    "remoteUser": "vscode",
+    "workspaceFolder": "/workspaces/loader",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go",
+                "ms-vscode.cmake-tools",
+                "ms-vscode.cpptools",
+                "ms-dotnettools.csharp",
+                "bufbuild.vscode-buf",
+                "DrBlury.protobuf-vsc"
+            ],
+            "settings": {
+                // Don't auto-install gopls and friends on first open — let the user
+                // do it explicitly from the Go extension's command palette.
+                "go.toolsManagement.autoUpdate": false,
+                // Don't auto-cmake-configure on workspace open; we run cmake manually
+                // per the existing README recipes.
+                "cmake.configureOnOpen": false
+            }
+        }
+    },
+    // One-line ready banner so the developer knows the container is healthy.
+    // Pure echo — no installs, no version-pinning at runtime, no surprises.
+    "postCreateCommand": "printf 'tableauio/loader devcontainer ready.\\n  go: %s\\n  buf: %s\\n  protoc: %s\\n  dotnet: %s\\n  node: %s\\n' \"$(go version | cut -d' ' -f3)\" \"$(buf --version)\" \"$(protoc --version)\" \"$(dotnet --version)\" \"$(node --version)\"",
+    // The loader-go-mod named volume is mounted at /home/vscode/go (see "mounts"
+    // above). Docker creates named volumes root-owned by default, masking any
+    // ownership set in the Dockerfile. Re-chown on every start so `go install`
+    // (e.g. gopls auto-install from the Go extension) can write into GOPATH.
+    // Idempotent and ~50ms on an already-correct tree.
+    "postStartCommand": "sudo chown -R vscode:vscode /home/vscode/go"
+}

@@ -12,27 +12,37 @@ on:
 permissions:
   contents: read
 
+env:
+  VCPKG_COMMIT: dc8d75cfc3281b8e2a4ed8ee4163c891190df932
+
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        protobuf-version: ["32.0", "3.19.3"]
+        config:
+          - label: modern
+            protobuf-version: "6.33.4"
+          - label: legacy-v3
+            protobuf-version: "3.21.12"
         include:
           - os: ubuntu-latest
-            init_script: bash init.sh
+            triplet: x64-linux
           - os: windows-latest
-            init_script: cmd /c init.bat
+            triplet: x64-windows-static
 
-    name: test (${{ matrix.os }}, protobuf ${{ matrix.protobuf-version }})
+    name: test (${{ matrix.os }}, ${{ matrix.config.label }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 45
+
+    env:
+      VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
+      VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
-        with:
-          submodules: true
 
       - name: Install Go
         uses: actions/setup-go@v6
@@ -41,7 +51,7 @@ jobs:
           cache-dependency-path: go.sum
           cache: true
 
-      - name: Install dependencies (Ubuntu)
+      - name: Install Ninja (Ubuntu)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y ninja-build
 
@@ -49,34 +59,50 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Cache protobuf install
-        id: cache-protobuf
+      - name: Render vcpkg.json
+        working-directory: test/cpp-tableau-loader
+        shell: bash
+        run: |
+          cat > vcpkg.json <<EOF
+          {
+            "name": "loader-cpp-test",
+            "version": "0.1.0",
+            "dependencies": ["protobuf"],
+            "overrides": [
+              { "name": "protobuf", "version": "${{ matrix.config.protobuf-version }}" }
+            ],
+            "builtin-baseline": "${{ env.VCPKG_COMMIT }}"
+          }
+          EOF
+
+      - name: Cache vcpkg_installed
+        id: cache-vcpkg-installed
         uses: actions/cache@v4
         with:
-          path: |
-            third_party/_submodules/protobuf/.build/_install
-          key: protobuf-${{ matrix.os }}-${{ matrix.protobuf-version }}-${{ hashFiles('init.sh', 'init.bat', '.gitmodules') }}
-          restore-keys: |
-            protobuf-${{ matrix.os }}-${{ matrix.protobuf-version }}-
+          path: ${{ env.VCPKG_INSTALLED_DIR }}
+          key: vcpkg-installed-${{ runner.os }}-${{ matrix.triplet }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('test/cpp-tableau-loader/vcpkg.json') }}
 
-      - name: Init submodules and build protobuf
-        run: ${{ matrix.init_script }}
-        env:
-          PROTOBUF_REF: v${{ matrix.protobuf-version }}
-
-      - name: Install Protoc
-        if: "!startsWith(matrix.protobuf-version, '3.')"
-        uses: arduino/setup-protoc@v3
+      - name: Setup vcpkg & install protobuf
+        uses: lukka/run-vcpkg@v11
         with:
-          version: ${{ matrix.protobuf-version }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT }}
+          vcpkgJsonGlob: "test/cpp-tableau-loader/vcpkg.json"
+          runVcpkgInstall: true
 
-      - name: Install Protoc (legacy)
-        if: startsWith(matrix.protobuf-version, '3.')
-        uses: arduino/setup-protoc@v1
-        with:
-          version: ${{ matrix.protobuf-version }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add vcpkg-installed protoc to PATH (Linux)
+        if: runner.os == 'Linux'
+        run: echo "$VCPKG_INSTALLED_DIR/${{ matrix.triplet }}/tools/protobuf" >> "$GITHUB_PATH"
+
+      - name: Add vcpkg-installed protoc to PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Add-Content -Path $env:GITHUB_PATH -Value "$env:VCPKG_INSTALLED_DIR\${{ matrix.triplet }}\tools\protobuf"
+
+      - name: Verify protoc
+        shell: bash
+        run: |
+          which protoc
+          protoc --version
 
       - name: Install Buf
         uses: bufbuild/buf-action@v1
@@ -91,7 +117,14 @@ jobs:
 
       - name: CMake Configure
         working-directory: test/cpp-tableau-loader
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=17
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_STANDARD=17
+          -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
+          -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+          -DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }}
+          -DVCPKG_MANIFEST_INSTALL=OFF
 
       - name: CMake Build
         working-directory: test/cpp-tableau-loader
