@@ -43,17 +43,26 @@ $manifest = @{
 Set-Content -Path (Join-Path $manifestDir 'vcpkg.json') -Value $manifest -Encoding ASCII
 
 # 2. Activate the VS 2022 Build Tools environment for this PS session.
-#    Mirrors what prepare.bat's `call "!VCVARSALL!" x64` does on bare metal.
-$vswhere = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe'
-if (-not (Test-Path $vswhere)) {
-    throw "vswhere.exe not found at $vswhere; VS Build Tools install layer failed."
+#    On the mcr.microsoft.com/visualstudio/buildtools base image, the
+#    Build Tools live at a fixed `C:\BuildTools\` prefix, so we go straight
+#    there instead of probing via vswhere. Fall back to vswhere if a future
+#    base image changes this layout.
+$primaryVsdevcmd = 'C:\BuildTools\Common7\Tools\VsDevCmd.bat'
+if (Test-Path $primaryVsdevcmd) {
+    $vsdevcmd = $primaryVsdevcmd
+} else {
+    $vswhere = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe'
+    if (-not (Test-Path $vswhere)) {
+        throw "Neither $primaryVsdevcmd nor $vswhere found; VS Build Tools layer is missing."
+    }
+    $installPath = & $vswhere -latest -products * `
+        -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+        -property installationPath
+    if (-not $installPath) { throw 'No VS install with C++ tools detected.' }
+    $vsdevcmd = Join-Path $installPath 'Common7\Tools\VsDevCmd.bat'
+    if (-not (Test-Path $vsdevcmd)) { throw "VsDevCmd.bat not found: $vsdevcmd" }
 }
-$installPath = & $vswhere -latest -products * `
-    -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-    -property installationPath
-if (-not $installPath) { throw 'No VS install with C++ tools detected.' }
-$vsdevcmd = Join-Path $installPath 'Common7\Tools\VsDevCmd.bat'
-if (-not (Test-Path $vsdevcmd)) { throw "VsDevCmd.bat not found: $vsdevcmd" }
+Write-Host "Using VsDevCmd at: $vsdevcmd"
 
 # Capture the environment that vsdevcmd produces.
 $envDump = & cmd.exe /s /c "`"$vsdevcmd`" -arch=amd64 -host_arch=amd64 && set"

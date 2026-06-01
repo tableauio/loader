@@ -14,13 +14,20 @@
 # Build context is .devcontainer/ (the parent of this directory) so that
 # `COPY shared\...` resolves. devcontainer.json sets `"context": ".."`.
 #
-# Why servercore (not nanoserver):
-#   vcpkg compiles protobuf from source via MSVC — that needs a real
-#   Win32 environment (PowerShell, Win32 APIs, CRT) that nanoserver does
-#   not provide. ltsc2022 matches GitHub Actions' windows-latest runner
-#   family, so the post-install assertion's resolved versions match CI.
+# Why mcr.microsoft.com/visualstudio/buildtools (not windows/servercore):
+#
+#   The modern VS 2022 Build Tools installer (`vs_BuildTools.exe`)
+#   requires Windows servicing components that `windows/servercore`
+#   strips out. Attempting to install via Chocolatey or directly fails
+#   with installer exit code -2146232797 deep into the install. Microsoft
+#   publishes `mcr.microsoft.com/visualstudio/buildtools:ltsc2022`
+#   specifically to solve this — the image is based on servercore but
+#   ships the VS 2022 Build Tools (VC++ workload) pre-installed, with
+#   `C:\BuildTools\Common7\Tools\VsDevCmd.bat` ready to source.
+#
+#   ltsc2022 matches GitHub Actions' windows-latest runner family.
 
-FROM mcr.microsoft.com/windows/servercore:ltsc2022
+FROM mcr.microsoft.com/visualstudio/buildtools:ltsc2022
 
 SHELL ["powershell", "-NoProfile", "-NoLogo", "-ExecutionPolicy", "Bypass", "-Command", "$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue';"]
 
@@ -45,8 +52,7 @@ SHELL ["powershell", "-NoProfile", "-NoLogo", "-ExecutionPolicy", "Bypass", "-Co
 
 # ---------------------------------------------------------------------------
 # Chocolatey — bootstrap the package manager that installs Git, CMake,
-# .NET, Node, and the MSVC build tools. Same channel `prepare.bat` uses
-# on a bare-metal Windows host.
+# Ninja, .NET, and Node. (MSVC Build Tools come from the base image.)
 # ---------------------------------------------------------------------------
 RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; `
     Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
@@ -65,14 +71,6 @@ RUN choco install -y --no-progress git ninja; `
 # Refresh PATH so the new tools are visible in this build session.
 RUN $env:PATH = [System.Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('PATH','User'); `
     [System.Environment]::SetEnvironmentVariable('PATH', $env:PATH, 'Process')
-
-# ---------------------------------------------------------------------------
-# Visual Studio 2022 Build Tools (VC++ workload). This is the heavy layer
-# (~6 GB on disk). Matches the `prepare.bat` Step 3 install pattern.
-# `--passive --wait --norestart` so Docker doesn't see a hung installer.
-# ---------------------------------------------------------------------------
-RUN choco install -y --no-progress visualstudio2022buildtools `
-        --package-parameters '\"--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --passive --wait --norestart --locale en-US\"'
 
 # ---------------------------------------------------------------------------
 # Go SDK — official MSI to C:\Go. Pinned to versions.env's GO_VERSION.
@@ -120,8 +118,9 @@ RUN git clone https://github.com/microsoft/vcpkg.git $env:VCPKG_ROOT; `
 
 # Render the manifest (PROTOBUF_VERSION build-arg overrides versions.env if set),
 # then install via vcpkg, then assert the resolved version matches what we asked for.
-# vcpkg compiles protobuf from source under MSVC, which needs the VS Build Tools
-# environment active — load it from vsdevcmd.bat into the build session.
+# vcpkg compiles protobuf from source under MSVC; vcpkg-install.ps1 activates
+# the VS Build Tools env via vsdevcmd.bat (now at C:\BuildTools\... since the
+# base image is mcr.microsoft.com/visualstudio/buildtools).
 COPY windows\vcpkg-install.ps1 C:\loader\vcpkg-install.ps1
 RUN $effective = if ($env:PROTOBUF_VERSION) { $env:PROTOBUF_VERSION } else { `
         ([System.Environment]::GetEnvironmentVariable('PROTOBUF_VERSION','Machine')) }; `
@@ -137,7 +136,7 @@ ENV CMAKE_PREFIX_PATH=C:\vcpkg-manifest\vcpkg_installed\x64-windows-static
 
 # ---------------------------------------------------------------------------
 # .NET SDK + Node.js LTS. Versions from versions.env. Chocolatey is the
-# install channel for both — same one prepare.bat uses for VS Build Tools.
+# install channel for both.
 # ---------------------------------------------------------------------------
 RUN $dotnetPkg = \"dotnet-${env:DOTNET_VERSION}-sdk\"; `
     choco install -y --no-progress $dotnetPkg; `
@@ -154,7 +153,10 @@ COPY shared\postcreate-banner.ps1 C:\loader\postcreate-banner.ps1
 WORKDIR C:\workspaces\loader
 
 # Drop back to a normal shell for the running container — the build-time
-# version-import shell is no longer needed.
+# version-import shell is no longer needed. Override the base image's
+# ENTRYPOINT (which auto-runs vsdevcmd) so a plain `docker run` lands
+# the user in a clean PowerShell — vsdevcmd is invoked on demand by
+# vcpkg-install.ps1 and any user shell that needs cl.exe.
 SHELL ["powershell", "-NoProfile", "-NoLogo", "-Command"]
-
+ENTRYPOINT []
 CMD ["powershell.exe", "-NoLogo"]

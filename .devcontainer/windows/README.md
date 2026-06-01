@@ -52,29 +52,37 @@ variant, same default sourced from
 
 ## Architecture
 
-Single Dockerfile based on `mcr.microsoft.com/windows/servercore:ltsc2022`:
+Single Dockerfile based on `mcr.microsoft.com/visualstudio/buildtools:ltsc2022`
+— Microsoft's official Windows-container image with VS 2022 Build Tools
+(VC++ workload) pre-installed. The plain `windows/servercore:ltsc2022`
+strips Windows servicing components that `vs_BuildTools.exe` requires;
+that's why we use the buildtools image instead.
+
+Build layers:
 
 1. Imports `versions.env` into machine-wide env so each `RUN` sees `$env:KEY`.
 2. Chocolatey bootstrap.
 3. Git, Ninja, CMake (CMake version pinned by `versions.env`).
-4. Visual Studio 2022 Build Tools — VC++ workload.
-5. Go SDK — official MSI, version from `versions.env`.
-6. buf CLI — single-binary release, version from `versions.env`.
-7. vcpkg (pinned to `VCPKG_BASELINE_COMMIT`) + protobuf via manifest mode
+4. Go SDK — official MSI, version from `versions.env`.
+5. buf CLI — single-binary release, version from `versions.env`.
+6. vcpkg (pinned to `VCPKG_BASELINE_COMMIT`) + protobuf via manifest mode
    with the `x64-windows-static` triplet — same triplet `prepare.bat`
    uses on bare metal, so a developer moving between native and
    container builds avoids the LNK2038 `_ITERATOR_DEBUG_LEVEL` CRT-mismatch
-   trap. Post-install assertion catches version drift.
-8. .NET SDK + Node.js LTS via Chocolatey.
-9. `ENV CMAKE_PREFIX_PATH=C:\vcpkg-manifest\vcpkg_installed\x64-windows-static`
+   trap. `vcpkg-install.ps1` activates the Build Tools env from
+   `C:\BuildTools\Common7\Tools\VsDevCmd.bat` before invoking vcpkg.
+   Post-install assertion catches version drift.
+7. .NET SDK + Node.js LTS via Chocolatey.
+8. `ENV CMAKE_PREFIX_PATH=C:\vcpkg-manifest\vcpkg_installed\x64-windows-static`
    so `find_package(Protobuf CONFIG)` resolves automatically.
 
 ## Why is the image so large?
 
-`visualstudio2022buildtools` with the VC++ workload is ~6 GB on disk; the
-Windows base image is another ~5 GB. There is no nanoserver path because
-vcpkg compiles protobuf from source under MSVC and that needs the full
-Win32 environment.
+`mcr.microsoft.com/visualstudio/buildtools:ltsc2022` is ~14 GB compressed
+(VS 2022 Build Tools + servercore base). The ~6 GB of Build Tools is
+unavoidable — vcpkg compiles protobuf from source under MSVC and that
+needs the full VC++ toolchain. There is no nanoserver path because
+nanoserver lacks the Win32 environment vcpkg's compile depends on.
 
 ## Why isolation=hyperv?
 
