@@ -1,8 +1,17 @@
-# Dev Container
+# Dev Container — Linux variant (recommended)
 
 The recommended way to develop on `tableauio/loader`. One container, all
-four target languages (C++17, Go 1.24, .NET 8, Node 20) plus protobuf
-6.33.4 via vcpkg, pinned to the exact toolchain CI uses.
+four target languages (C++17, Go, .NET, Node) plus protobuf via vcpkg,
+pinned to the exact toolchain CI uses. All version pins live in
+[`../shared/versions.env`](../shared/versions.env) — bumping any of them
+is a one-line change consumed by this Dockerfile, the Windows-container
+sibling, `prepare.bat`, and the CI workflows.
+
+Use this variant on **every** host that can run Docker: Linux (amd64 +
+arm64), macOS (Intel + Apple Silicon), and Windows + WSL2. The
+[Windows-container variant](../windows/) is only relevant if you
+specifically need a native MSVC environment inside the container on a
+Windows host.
 
 ## Prerequisites
 
@@ -16,8 +25,10 @@ code .                # in the repo root
 ```
 
 In VS Code, run **Dev Containers: Reopen in Container** from the command
-palette. First build is one-time ~25 minutes (vcpkg compiles protobuf
-6.33.4 from source); subsequent reopens are near-instant.
+palette. If both `linux/` and `windows/` are present, VS Code shows a
+picker — choose **tableauio/loader (linux)**. First build is one-time
+~25 minutes (vcpkg compiles protobuf from source); subsequent reopens
+are near-instant.
 
 When the container is ready, the integrated terminal prints a banner with
 five toolchain versions. After that, every command from the per-language
@@ -26,8 +37,10 @@ no PATH dance, no extra cmake flags.
 
 ## Pin a different protobuf version
 
-Daily dev runs against protobuf 6.33.4 (CI's "modern" matrix entry). To
-rebuild against the legacy v3 line:
+Daily dev runs against the `PROTOBUF_VERSION` set in
+[`../shared/versions.env`](../shared/versions.env) (CI's "modern" matrix
+entry). To rebuild against the legacy v3 line for one container only,
+without editing the shared file:
 
 ```sh
 LOADER_PROTOBUF_VERSION=3.21.12 code .
@@ -58,18 +71,24 @@ Single-stage Dockerfile based on
 `mcr.microsoft.com/devcontainers/cpp:1-ubuntu-24.04`, with these layers:
 
 1. Architecture detection (`TARGETARCH` → Go arch, buf arch, vcpkg triplet)
-2. Go 1.24.0 (official tarball, multi-arch)
-3. buf 1.67.0 (single-binary release, multi-arch)
-4. vcpkg pinned to `dc8d75c…df932`, protobuf installed via vcpkg manifest
-   mode and asserted against the requested version
-5. .NET SDK 8.0 (Microsoft apt repo)
-6. Node.js 20 LTS (NodeSource apt repo)
+2. Go (official tarball, multi-arch) — version from `versions.env`
+3. buf (single-binary release, multi-arch) — version from `versions.env`
+4. vcpkg pinned to `versions.env`'s `VCPKG_BASELINE_COMMIT`, protobuf
+   installed via vcpkg manifest mode and asserted against the requested
+   version
+5. .NET SDK (Microsoft apt repo) — version from `versions.env`
+6. Node.js LTS (NodeSource apt repo) — version from `versions.env`
 7. `ENV CMAKE_PREFIX_PATH=/opt/vcpkg/active` so `find_package(Protobuf CONFIG)`
    resolves automatically
 
 The architecture choice is detected from BuildKit's `TARGETARCH` and fed
 into Go / buf / vcpkg triplet selection. Docker auto-selects the host
 arch on build.
+
+The `dockerfile` field in `devcontainer.json` is `Dockerfile`, but the
+build `context` is the parent `.devcontainer/` directory so the
+Dockerfile's `COPY shared/versions.env …` and `COPY shared/postcreate-banner.sh …`
+lines resolve.
 
 ## Troubleshooting
 
@@ -99,7 +118,13 @@ directory. A fresh clone doesn't have these stale artefacts.
 ## Falling back
 
 If you can't run Docker (corp policy, restricted machines, etc.) the
-existing manual setup paths in the [repo README](../README.md) — Windows
-`prepare.bat`, per-language `Install protobuf` instructions — still work.
-The devcontainer is the recommended path; the rest is the supported
-fallback.
+existing manual setup paths in the [repo README](../../README.md) —
+Windows `prepare.bat`, per-language `Install protobuf` instructions —
+still work. The devcontainer is the recommended path; the rest is the
+supported fallback.
+
+For a Windows host that wants a containerized environment but with
+native MSVC inside the container (no WSL2), see the
+[Windows-container variant](../windows/). For macOS hosts where you'd
+rather not run a Linux container at all, see the
+[macOS notes](../macos/).

@@ -29,6 +29,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Read pinned versions
+        uses: ./.github/actions/load-versions
+
       - name: Install Go
         uses: actions/setup-go@v6
         with:
@@ -39,7 +42,7 @@ jobs:
       - name: Install Buf
         uses: bufbuild/buf-action@v1
         with:
-          version: 1.67.0
+          version: ${{ env.BUF_VERSION }}
           setup_only: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 

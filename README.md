@@ -27,20 +27,36 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 ### Recommended: Dev Container (any host OS)
 
 The fastest way to get a reproducible build environment is to open the
-repo in VS Code and choose **Reopen in Container**. The devcontainer
-under [`.devcontainer/`](./.devcontainer/) has everything pinned to the
-exact versions CI uses (Go 1.24, buf 1.67.0, protobuf 6.33.4 via vcpkg,
-.NET 8.0, Node 20). First container build is one-time ~25 minutes (vcpkg
-compiles protobuf from source); subsequent reopens are near-instant.
+repo in VS Code and choose **Reopen in Container**. The
+[`.devcontainer/`](./.devcontainer/) directory ships **two** container
+variants plus a macOS docs path:
 
-After the container starts you can skip the per-language setup below and
-jump straight to **[C++](#c)** / **[Go](#go)** / **[C#](#c-1)** /
+- [`.devcontainer/linux/`](./.devcontainer/linux/) — recommended for
+  every host (Linux, macOS Intel + Apple Silicon, Windows + WSL2).
+  Multi-arch (linux/amd64 + linux/arm64).
+- [`.devcontainer/windows/`](./.devcontainer/windows/) —
+  Windows-host-only (windows/amd64), for users who specifically need a
+  native MSVC environment inside the container without WSL2.
+- [`.devcontainer/macos/`](./.devcontainer/macos/) — documentation only.
+  Apple's licence forbids macOS containers; macOS users use the Linux
+  variant.
+
+When you run **Dev Containers: Reopen in Container** and both `linux/`
+and `windows/` are present, VS Code shows a picker — choose whichever
+matches your host. All version pins (Go, buf, protobuf, vcpkg baseline,
+.NET, Node, CMake) live in
+[`.devcontainer/shared/versions.env`](./.devcontainer/shared/versions.env),
+the single source of truth shared with `prepare.bat` and CI. First
+container build is one-time ~25 min (Linux) / ~45 min (Windows); vcpkg
+compiles protobuf from source. Subsequent reopens are near-instant.
+
+After the container starts you can skip the per-language setup below
+and jump straight to **[C++](#c)** / **[Go](#go)** / **[C#](#c-1)** /
 **[TypeScript](#typescript)**.
 
 Requirements: Docker Desktop (Windows + macOS) or Docker Engine (Linux),
-and the VS Code "Dev Containers" extension. See
-[`.devcontainer/README.md`](./.devcontainer/README.md) for the longer
-how-to.
+and the VS Code "Dev Containers" extension. See the per-variant READMEs
+linked above for the longer how-to.
 
 ### Install protobuf
 

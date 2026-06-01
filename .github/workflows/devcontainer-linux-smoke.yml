@@ -1,0 +1,104 @@
+name: Devcontainer Linux Smoke
+
+# Builds the Linux-container variant of the devcontainer and runs a
+# minimal smoke test inside it. Triggered only when files that affect
+# the Linux image change, so we don't burn CI minutes on unrelated PRs.
+#
+# What this catches that testing-cpp.yml does not:
+#   1. arm64 coverage. The Linux Dockerfile claims linux/amd64 +
+#      linux/arm64; testing-cpp.yml only exercises amd64. This workflow
+#      builds the image natively on ubuntu-24.04-arm runners.
+#   2. shared/versions.env regressions. A typo in the shared file (stray
+#      space, quote, etc.) silently breaks the devcontainer build for
+#      anyone running `Reopen in Container`. The other testing-*.yml
+#      workflows now consume versions.env too, but only the keys they
+#      need; only this workflow exercises the full file in a real
+#      Dockerfile build.
+#
+# What this DOES NOT do:
+#   - Run the full C++ / C# test matrices. Those are testing-{cpp,csharp}.yml,
+#     which use lukka/run-vcpkg directly on the runner (much faster than
+#     building the devcontainer image first). The container is for
+#     local-dev parity, not the primary CI test path.
+
+on:
+  pull_request:
+    paths:
+      - '.devcontainer/linux/**'
+      - '.devcontainer/shared/**'
+      - '.github/workflows/devcontainer-linux-smoke.yml'
+  push:
+    branches: [master, main]
+    paths:
+      - '.devcontainer/linux/**'
+      - '.devcontainer/shared/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        # amd64 is partially covered by testing-cpp.yml's ubuntu-latest
+        # job (vcpkg+protobuf, x64-linux). arm64 is the genuinely-new
+        # coverage this workflow adds: GitHub-hosted ubuntu-24.04-arm
+        # runners build the image natively, no QEMU emulation.
+        include:
+          - runner: ubuntu-latest
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    name: build linux devcontainer + smoke (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build devcontainer image
+        working-directory: .devcontainer
+        run: |
+          # Context is .devcontainer/ so `COPY shared/...` resolves.
+          # --load puts the image into the local docker daemon so the
+          # subsequent `docker run` smoke steps can use it.
+          docker buildx build \
+            --load \
+            --file linux/Dockerfile \
+            --tag loader-devcontainer-linux:smoke \
+            .
+
+      - name: Smoke — version banner
+        run: |
+          # Confirms the image runs at all and that all five toolchain
+          # binaries (go, buf, protoc, dotnet, node) resolve.
+          docker run --rm loader-devcontainer-linux:smoke \
+            /usr/local/bin/loader-devcontainer-banner
+
+      - name: Smoke — buf generate (Go)
+        run: |
+          # Bind-mount the checkout into the container's workspace dir
+          # and regenerate Go protoconf. Catches protoc/buf integration
+          # regressions that wouldn't show up in the banner.
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspaces/loader" \
+            -w /workspaces/loader/test/go-tableau-loader \
+            loader-devcontainer-linux:smoke \
+            buf generate ..
+
+      - name: Smoke — go vet (plugin packages only)
+        run: |
+          # Vet the plugin sources and shared internal packages. Skip
+          # ./test/... and ./internal/index — those depend on freshly
+          # generated *.pb.go that we don't produce in this smoke job.
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspaces/loader" \
+            -w /workspaces/loader \
+            loader-devcontainer-linux:smoke \
+            go vet ./cmd/... ./pkg/... ./internal/options/... ./internal/loadutil/... ./internal/xproto/...

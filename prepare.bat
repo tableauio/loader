@@ -4,7 +4,8 @@ setlocal enabledelayedexpansion
 REM ===========================================================================
 REM prepare.bat — bootstrap a Windows build environment for the C++ loader.
 REM
-REM Installs (only if missing): Chocolatey, Ninja, CMake 3.31.8, MSVC Build
+REM Installs (only if missing): Chocolatey, Ninja, CMake (version pinned in
+REM .devcontainer/shared/versions.env), MSVC Build
 REM Tools (Visual Studio 2022 Build Tools), buf CLI, and vcpkg.
 REM
 REM Then installs `protobuf` (and friends) into vcpkg using the static-CRT
@@ -49,6 +50,32 @@ if "%DRY_RUN%"=="1"        echo [DRY-RUN] No changes will be made to the system.
 if "%SIMULATE_CLEAN%"=="1" echo [DRY-RUN] Simulating a clean machine (all tools treated as not installed).
 
 echo [INFO] Preparing build environment...
+
+REM -----------------------------------------------------------------------
+REM Load pinned tool versions from .devcontainer/shared/versions.env.
+REM
+REM Single source of truth shared with the Linux/Windows devcontainers
+REM and with the .github/workflows/*.yml CI workflows. Format is one
+REM KEY=VALUE per line, no quotes, no $VAR expansion. See
+REM .devcontainer/shared/README.md for the full format spec.
+REM -----------------------------------------------------------------------
+set "VERSIONS_FILE=%~dp0.devcontainer\shared\versions.env"
+if not exist "%VERSIONS_FILE%" (
+    echo [ERROR] Missing %VERSIONS_FILE%; cannot resolve pinned tool versions.
+    exit /b 1
+)
+for /f "usebackq tokens=1,2 delims==" %%a in ("%VERSIONS_FILE%") do (
+    set "_KEY=%%a"
+    set "_VAL=%%b"
+    REM Skip blank lines and comment lines (start with #).
+    if defined _KEY if not "!_KEY:~0,1!"=="#" (
+        set "!_KEY!=!_VAL!"
+    )
+)
+set "_KEY="
+set "_VAL="
+echo [INFO] Pinned versions: cmake=%CMAKE_VERSION% buf=%BUF_VERSION% vcpkg-baseline=%VCPKG_BASELINE_COMMIT%
+
 
 REM -----------------------------------------------------------------------
 REM Step 0: Ensure Chocolatey is installed
@@ -151,7 +178,7 @@ if "%NINJA_FOUND%"=="0" (
 )
 
 REM -----------------------------------------------------------------------
-REM Step 2: Ensure CMake 3.31.8 is installed
+REM Step 2: Ensure CMake (CMAKE_VERSION from versions.env) is installed
 REM         Try Chocolatey first; fall back to direct MSI download.
 REM -----------------------------------------------------------------------
 set "CMAKE_FOUND=0"
@@ -160,15 +187,15 @@ if "%SIMULATE_CLEAN%"=="0" (
     if not errorlevel 1 set "CMAKE_FOUND=1"
 )
 if "%CMAKE_FOUND%"=="0" (
-    echo [INFO] cmake.exe not found. Installing CMake 3.31.8...
+    echo [INFO] cmake.exe not found. Installing CMake %CMAKE_VERSION%...
     if "%DRY_RUN%"=="0" (
         set "CMAKE_INSTALLED=0"
         REM --- Attempt 1: Chocolatey ---
-        choco install cmake --version=3.31.8 --installargs "'ADD_CMAKE_TO_PATH=System'" -y --no-progress >nul 2>&1 && set "CMAKE_INSTALLED=1"
+        choco install cmake --version=%CMAKE_VERSION% --installargs "'ADD_CMAKE_TO_PATH=System'" -y --no-progress >nul 2>&1 && set "CMAKE_INSTALLED=1"
         if "!CMAKE_INSTALLED!"=="0" (
             echo [WARN] choco install cmake failed. Falling back to direct MSI download...
-            set "CMAKE_MSI=%TEMP%\cmake-3.31.8-windows-x86_64.msi"
-            powershell -NoProfile -Command "(New-Object Net.WebClient).DownloadFile('https://github.com/Kitware/CMake/releases/download/v3.31.8/cmake-3.31.8-windows-x86_64.msi','!CMAKE_MSI!')"
+            set "CMAKE_MSI=%TEMP%\cmake-%CMAKE_VERSION%-windows-x86_64.msi"
+            powershell -NoProfile -Command "(New-Object Net.WebClient).DownloadFile('https://github.com/Kitware/CMake/releases/download/v%CMAKE_VERSION%/cmake-%CMAKE_VERSION%-windows-x86_64.msi','!CMAKE_MSI!')"
             if not exist "!CMAKE_MSI!" (
                 echo [ERROR] Failed to download CMake MSI.
                 exit /b 1
@@ -181,7 +208,7 @@ if "%CMAKE_FOUND%"=="0" (
             del /q "!CMAKE_MSI!" 2>nul
         )
     ) else (
-        echo [DRY-RUN] Would run: choco install cmake --version=3.31.8 ... (or fallback to MSI download)
+        echo [DRY-RUN] Would run: choco install cmake --version=%CMAKE_VERSION% ... (or fallback to MSI download)
     )
     REM Add cmake to current session PATH
     set "CMAKE_PATH=C:\Program Files\CMake\bin"
@@ -278,8 +305,8 @@ REM         The CI workflow uses bufbuild/buf-action@v1 (also pinned to
 REM         BUF_VERSION below) to do the same thing.
 REM         buf is a single self-contained .exe; install it under
 REM         %LOCALAPPDATA%\buf\bin\buf.exe to avoid requiring admin rights.
+REM         BUF_VERSION is sourced from .devcontainer/shared/versions.env.
 REM -----------------------------------------------------------------------
-set "BUF_VERSION=1.67.0"
 set "BUF_FOUND=0"
 if "%SIMULATE_CLEAN%"=="0" (
     where buf.exe >nul 2>&1
@@ -365,9 +392,10 @@ if errorlevel 1 (
 )
 
 REM Pin both the vcpkg checkout and the manifest's builtin-baseline to the
-REM same commit testing-cpp.yml uses. Bumping vcpkg? Bump both this value
-REM and VCPKG_COMMIT in .github/workflows/testing-cpp.yml in lockstep.
-set "VCPKG_BASELINE_COMMIT=dc8d75cfc3281b8e2a4ed8ee4163c891190df932"
+REM same commit testing-cpp.yml uses. VCPKG_BASELINE_COMMIT is sourced from
+REM .devcontainer/shared/versions.env (the single source of truth for the
+REM Linux + Windows devcontainers, prepare.bat, and CI). To bump vcpkg,
+REM edit that file.
 set "VCPKG_TRIPLET=x64-windows-static"
 set "VCPKG_EXE="
 

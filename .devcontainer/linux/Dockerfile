@@ -1,11 +1,25 @@
 # syntax=docker/dockerfile:1.7
-# tableauio/loader devcontainer
+# tableauio/loader devcontainer (linux)
 #
 # Single-stage, multi-arch (amd64 + arm64) image bringing the full
-# C++/Go/.NET/Node toolchain plus protobuf 6.33.4 (via vcpkg) at the
-# exact versions CI uses. See docs/superpowers/specs/2026-05-29-devcontainer-design.md.
+# C++/Go/.NET/Node toolchain plus protobuf at the exact versions CI uses.
+#
+# All version pins are read from ../shared/versions.env (the single source
+# of truth shared with the Windows container, prepare.bat, and CI). To bump
+# Go / buf / protobuf / .NET / Node / vcpkg-baseline, edit that file — not
+# this one.
+#
+# Build context is .devcontainer/ (the parent of this directory), so that
+# `COPY shared/...` resolves. devcontainer.json sets `"context": ".."`.
 
 FROM mcr.microsoft.com/devcontainers/cpp:1-ubuntu-24.04
+
+# ---------------------------------------------------------------------------
+# Pull pinned versions from the shared file. We `COPY` it into a build-stage
+# location and `source` it in every RUN that needs the values; ARG/ENV alone
+# don't survive across RUN boundaries in BuildKit, so we re-source per layer.
+# ---------------------------------------------------------------------------
+COPY shared/versions.env /opt/versions.env
 
 # ---------------------------------------------------------------------------
 # Architecture detection. BuildKit auto-populates TARGETARCH; we resolve it
@@ -27,15 +41,15 @@ printf 'GO_ARCH=%s\nBUF_ARCH=%s\nVCPKG_TRIPLET=%s\n' \
 EOF
 
 # ---------------------------------------------------------------------------
-# Go 1.24.0 — official tarball into /usr/local/go.
+# Go — official tarball into /usr/local/go.
 #
 # PATH is set via ENV (not /etc/profile.d/) so non-interactive shells like
 # the postCreateCommand and downstream RUNs see Go without sourcing profile.
 # /home/vscode/go/bin lands `go install`-placed binaries on PATH automatically.
 # ---------------------------------------------------------------------------
-ARG GO_VERSION=1.24.0
 RUN <<EOF
 set -eux
+. /opt/versions.env
 . /opt/buildargs.env
 curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" \
   | tar -C /usr/local -xz
@@ -43,11 +57,11 @@ EOF
 ENV PATH=/usr/local/go/bin:/home/vscode/go/bin:${PATH}
 
 # ---------------------------------------------------------------------------
-# buf 1.67.0 — single-binary release on PATH.
+# buf — single-binary release on PATH.
 # ---------------------------------------------------------------------------
-ARG BUF_VERSION=1.67.0
 RUN <<EOF
 set -eux
+. /opt/versions.env
 . /opt/buildargs.env
 curl -fsSL -o /usr/local/bin/buf \
   "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-Linux-${BUF_ARCH}"
@@ -57,10 +71,11 @@ EOF
 # ---------------------------------------------------------------------------
 # vcpkg + protobuf via manifest mode.
 #
-# Pins:
+# Pins (all from /opt/versions.env):
 #   VCPKG_BASELINE_COMMIT — same commit testing-cpp.yml's VCPKG_COMMIT and
-#       prepare.bat's VCPKG_BASELINE_COMMIT use. Bumping vcpkg = bump all three.
-#   PROTOBUF_VERSION    — defaults to the modern 6.33.4 line (CI's primary).
+#       prepare.bat's VCPKG_BASELINE_COMMIT use. Bumping vcpkg = bump that
+#       one line in versions.env.
+#   PROTOBUF_VERSION    — defaults to versions.env's value (CI's primary).
 #       Override at build time:
 #         docker build --build-arg PROTOBUF_VERSION=3.21.12 ...
 #       devcontainer.json wires this to the LOADER_PROTOBUF_VERSION host env var.
@@ -70,13 +85,24 @@ EOF
 # post-install assertion catches the case where vcpkg's resolution still picks
 # a different port revision than requested.
 # ---------------------------------------------------------------------------
-ARG VCPKG_BASELINE_COMMIT=dc8d75cfc3281b8e2a4ed8ee4163c891190df932
-ARG PROTOBUF_VERSION=6.33.4
+ARG PROTOBUF_VERSION=
 ENV VCPKG_ROOT=/opt/vcpkg
 
+# `_ARG_PROTOBUF_VERSION` captures the Dockerfile ARG via Dockerfile-level
+# variable expansion BEFORE we source versions.env in the heredoc body
+# (otherwise the file default would clobber the build-arg). Empty string
+# means "no override; use file default".
 RUN <<EOF
 set -eux
+_ARG_PROTOBUF_VERSION="${PROTOBUF_VERSION}"
+. /opt/versions.env
 . /opt/buildargs.env
+
+# Prefer the build-arg when non-empty; otherwise the value just sourced
+# from versions.env stays.
+if [ -n "${_ARG_PROTOBUF_VERSION:-}" ]; then
+  PROTOBUF_VERSION="${_ARG_PROTOBUF_VERSION}"
+fi
 
 # 1. Bring up vcpkg pinned to the baseline commit.
 git clone https://github.com/microsoft/vcpkg.git "${VCPKG_ROOT}"
@@ -113,8 +139,9 @@ case "$(basename "${INFO_FILE:-/missing}" 2>/dev/null)" in
   *)
     echo "ERROR: installed protobuf does not match requested version ${PROTOBUF_VERSION}."
     echo "       vcpkg installed-file marker: ${INFO_FILE:-<none>}"
-    echo "       Bump VCPKG_BASELINE_COMMIT (in this Dockerfile, prepare.bat,"
-    echo "       and testing-cpp.yml) to a commit that knows about the requested version."
+    echo "       Bump VCPKG_BASELINE_COMMIT in .devcontainer/shared/versions.env"
+    echo "       (and prepare.bat + testing-cpp.yml will pick it up automatically)"
+    echo "       to a commit that knows about the requested version."
     exit 1
     ;;
 esac
@@ -126,19 +153,20 @@ ln -s /opt/vcpkg/active/tools/protobuf/protoc /usr/local/bin/protoc
 EOF
 
 # ---------------------------------------------------------------------------
-# .NET SDK 8.0 + Node.js 20 LTS — apt-based installs from the official
-# Microsoft and NodeSource repositories. apt-get clean + rm /var/lib/apt/lists
-# at the end keeps the layer small.
+# .NET SDK + Node.js — apt-based installs from the official Microsoft and
+# NodeSource repositories. Versions are read from /opt/versions.env.
+# apt-get clean + rm /var/lib/apt/lists at the end keeps the layer small.
 # ---------------------------------------------------------------------------
 RUN <<EOF
 set -eux
+. /opt/versions.env
 curl -fsSL https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb \
     -o /tmp/ms.deb
 dpkg -i /tmp/ms.deb
 rm /tmp/ms.deb
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
 apt-get install -y --no-install-recommends \
-    dotnet-sdk-8.0 \
+    "dotnet-sdk-${DOTNET_VERSION}" \
     nodejs
 apt-get clean
 rm -rf /var/lib/apt/lists/*
@@ -149,7 +177,10 @@ EOF
 # tree, find_package(Protobuf CONFIG) resolves automatically — the existing
 # README's "Dev at Linux → CMake (system protobuf)" recipe works as written
 # inside the container.
-# VCPKG_ROOT is set above (Task 5) for users who want to invoke the toolchain
-# file explicitly: -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake.
 # ---------------------------------------------------------------------------
 ENV CMAKE_PREFIX_PATH=/opt/vcpkg/active
+
+# Copy the post-create banner script into a stable on-image path so
+# devcontainer.json can call it without needing the workspace mount.
+COPY shared/postcreate-banner.sh /usr/local/bin/loader-devcontainer-banner
+RUN chmod +x /usr/local/bin/loader-devcontainer-banner

@@ -1,0 +1,33 @@
+name: Load pinned versions
+description: >
+  Reads .devcontainer/shared/versions.env (the single source of truth shared
+  with the devcontainers and prepare.bat) and exports each KEY=VALUE pair to
+  $GITHUB_ENV so subsequent steps can reference them as ${{ env.KEY }}.
+
+  Format rules of versions.env (kept simple so every consumer can parse it
+  with a builtin):
+    - One KEY=VALUE per line, no quotes, no spaces around `=`.
+    - Comments start with `#` at column 0.
+    - Blank lines are ignored.
+
+runs:
+  using: composite
+  steps:
+    - name: Export versions.env to $GITHUB_ENV
+      shell: bash
+      run: |
+        set -eu
+        file=.devcontainer/shared/versions.env
+        if [ ! -f "$file" ]; then
+          echo "::error::Missing $file; cannot resolve pinned tool versions."
+          exit 1
+        fi
+        while IFS='=' read -r k v; do
+          [ -z "$k" ] && continue
+          case "$k" in \#*) continue ;; esac
+          printf '%s=%s\n' "$k" "$v" >> "$GITHUB_ENV"
+        done < "$file"
+        # Mirror VCPKG_BASELINE_COMMIT under VCPKG_COMMIT for backward
+        # compat with testing-cpp.yml's pre-existing variable name.
+        grep '^VCPKG_BASELINE_COMMIT=' "$file" \
+          | sed 's/^VCPKG_BASELINE_COMMIT=/VCPKG_COMMIT=/' >> "$GITHUB_ENV"
