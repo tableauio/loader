@@ -46,5 +46,8 @@
 
   // One-line ready banner so the developer knows the container is healthy.
   // Pure echo — no installs, no version-pinning at runtime, no surprises.
-  "postCreateCommand": "printf 'tableauio/loader devcontainer ready.\\n  go: %s\\n  buf: %s\\n  protoc: %s\\n  dotnet: %s\\n  node: %s\\n' \"$(go version | cut -d' ' -f3)\" \"$(buf --version)\" \"$(protoc --version)\" \"$(dotnet --version)\" \"$(node --version)\""
+  // Also fix ownership of the named volume mounted at /home/vscode/go: Docker
+  // creates named volumes as root:root by default, which makes the Go module
+  // cache (GOPATH/pkg) unwritable for the `vscode` user.
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/go && printf 'tableauio/loader devcontainer ready.\\n  go: %s\\n  buf: %s\\n  protoc: %s\\n  dotnet: %s\\n  node: %s\\n' \"$(go version | cut -d' ' -f3)\" \"$(buf --version)\" \"$(protoc --version)\" \"$(dotnet --version)\" \"$(node --version)\""
 }
