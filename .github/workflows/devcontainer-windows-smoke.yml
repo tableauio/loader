@@ -94,8 +94,11 @@ jobs:
         run: |
           # Context is .devcontainer/ so `COPY shared\...` resolves.
           # Tag mirrors the devcontainer.json name so it's recognisable
-          # in `docker images`.
+          # in `docker images`. -m 2GB is required for the VS Build Tools
+          # install (Microsoft's documented minimum; default 1 GB silently
+          # fails partway through).
           docker build `
+            --memory 2GB `
             --file windows\Dockerfile `
             --tag loader-devcontainer-windows:smoke `
             .

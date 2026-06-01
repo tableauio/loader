@@ -14,21 +14,56 @@
 # Build context is .devcontainer/ (the parent of this directory) so that
 # `COPY shared\...` resolves. devcontainer.json sets `"context": ".."`.
 #
-# Why mcr.microsoft.com/visualstudio/buildtools (not windows/servercore):
+# Why mcr.microsoft.com/dotnet/framework/runtime (not windows/servercore):
 #
 #   The modern VS 2022 Build Tools installer (`vs_BuildTools.exe`)
-#   requires Windows servicing components that `windows/servercore`
-#   strips out. Attempting to install via Chocolatey or directly fails
-#   with installer exit code -2146232797 deep into the install. Microsoft
-#   publishes `mcr.microsoft.com/visualstudio/buildtools:ltsc2022`
-#   specifically to solve this — the image is based on servercore but
-#   ships the VS 2022 Build Tools (VC++ workload) pre-installed, with
-#   `C:\BuildTools\Common7\Tools\VsDevCmd.bat` ready to source.
+#   requires .NET Framework runtime support that `windows/servercore`
+#   strips out. Microsoft's own guidance — see
+#   https://learn.microsoft.com/en-us/visualstudio/install/build-tools-container
+#   — explicitly says: "If you base your image directly on
+#   microsoft/windowsservercore, the .NET Framework might not install
+#   properly … Instead, base your image on microsoft/dotnet-framework:4.7.1
+#   or later." We use 4.8-windowsservercore-ltsc2022, which is also one
+#   of the images pre-cached on GitHub's windows-2022 runners.
 #
 #   ltsc2022 matches GitHub Actions' windows-latest runner family.
+#
+#   Build memory: pass `docker build -m 2GB` (or higher). vs_BuildTools
+#   exhausts the default 1 GB silently. CI's windows-2022 runners have
+#   plenty of RAM but you must set the flag.
 
-FROM mcr.microsoft.com/visualstudio/buildtools:ltsc2022
+FROM mcr.microsoft.com/dotnet/framework/runtime:4.8-windowsservercore-ltsc2022
 
+# Restore cmd as the default shell so the vs_BuildTools install RUN below
+# matches Microsoft's documented pattern. We switch back to PowerShell
+# right after.
+SHELL ["cmd", "/S", "/C"]
+
+# ---------------------------------------------------------------------------
+# Visual Studio 2022 Build Tools — VC++ workload only.
+#
+# Mirrors Microsoft's documented Dockerfile from
+# https://learn.microsoft.com/en-us/visualstudio/install/build-tools-container
+# but with `--add Microsoft.VisualStudio.Workload.VCTools` (we don't need
+# the AzureBuildTools workload) and the same `--remove` flags for old
+# Windows SDKs that can't install in a container.
+#
+# Exit code 3010 is "success, reboot required" — fine inside a container.
+# ---------------------------------------------------------------------------
+RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/17/release/vs_buildtools.exe `
+    && (start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
+        --installPath "C:\BuildTools" `
+        --add Microsoft.VisualStudio.Workload.VCTools `
+        --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+        --add Microsoft.VisualStudio.Component.Windows11SDK.22621 `
+        --remove Microsoft.VisualStudio.Component.Windows10SDK.10240 `
+        --remove Microsoft.VisualStudio.Component.Windows10SDK.10586 `
+        --remove Microsoft.VisualStudio.Component.Windows10SDK.14393 `
+        --remove Microsoft.VisualStudio.Component.Windows81SDK `
+        || IF "%ERRORLEVEL%"=="3010" EXIT 0) `
+    && del /q vs_buildtools.exe
+
+# Switch to PowerShell for the rest of the Dockerfile.
 SHELL ["powershell", "-NoProfile", "-NoLogo", "-ExecutionPolicy", "Bypass", "-Command", "$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue';"]
 
 # ---------------------------------------------------------------------------
