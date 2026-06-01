@@ -2,7 +2,8 @@ name: Load pinned versions
 description: >
   Reads .devcontainer/shared/versions.env (the single source of truth shared
   with the devcontainers and prepare.bat) and exports each KEY=VALUE pair to
-  $GITHUB_ENV so subsequent steps can reference them as ${{ env.KEY }}.
+  GITHUB_ENV so subsequent steps can reference them as env-context values
+  (e.g. env.BUF_VERSION).
 
   Format rules of versions.env (kept simple so every consumer can parse it
   with a builtin):
