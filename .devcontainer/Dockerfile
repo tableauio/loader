@@ -1,16 +1,15 @@
 # syntax=docker/dockerfile:1.7
-# tableauio/loader devcontainer (linux)
+# tableauio/loader devcontainer
 #
 # Single-stage, multi-arch (amd64 + arm64) image bringing the full
 # C++/Go/.NET/Node toolchain plus protobuf at the exact versions CI uses.
 #
-# All version pins are read from ../shared/versions.env (the single source
-# of truth shared with the Windows container, prepare.bat, and CI). To bump
-# Go / buf / protobuf / .NET / Node / vcpkg-baseline, edit that file — not
-# this one.
+# All version pins are read from ./versions.env (the single source of
+# truth shared with prepare.bat and the CI workflows). To bump Go / buf /
+# protobuf / .NET / Node / vcpkg-baseline, edit that file — not this one.
 #
-# Build context is .devcontainer/ (the parent of this directory), so that
-# `COPY shared/...` resolves. devcontainer.json sets `"context": ".."`.
+# Build context is .devcontainer/ (the directory containing this file),
+# so `COPY versions.env ...` resolves directly.
 
 FROM mcr.microsoft.com/devcontainers/cpp:1-ubuntu-24.04
 
@@ -19,7 +18,7 @@ FROM mcr.microsoft.com/devcontainers/cpp:1-ubuntu-24.04
 # location and `source` it in every RUN that needs the values; ARG/ENV alone
 # don't survive across RUN boundaries in BuildKit, so we re-source per layer.
 # ---------------------------------------------------------------------------
-COPY shared/versions.env /opt/versions.env
+COPY versions.env /opt/versions.env
 
 # ---------------------------------------------------------------------------
 # Architecture detection. BuildKit auto-populates TARGETARCH; we resolve it
@@ -139,7 +138,7 @@ case "$(basename "${INFO_FILE:-/missing}" 2>/dev/null)" in
   *)
     echo "ERROR: installed protobuf does not match requested version ${PROTOBUF_VERSION}."
     echo "       vcpkg installed-file marker: ${INFO_FILE:-<none>}"
-    echo "       Bump VCPKG_BASELINE_COMMIT in .devcontainer/shared/versions.env"
+    echo "       Bump VCPKG_BASELINE_COMMIT in .devcontainer/versions.env"
     echo "       (and prepare.bat + testing-cpp.yml will pick it up automatically)"
     echo "       to a commit that knows about the requested version."
     exit 1
@@ -182,5 +181,5 @@ ENV CMAKE_PREFIX_PATH=/opt/vcpkg/active
 
 # Copy the post-create banner script into a stable on-image path so
 # devcontainer.json can call it without needing the workspace mount.
-COPY shared/postcreate-banner.sh /usr/local/bin/loader-devcontainer-banner
+COPY postcreate-banner.sh /usr/local/bin/loader-devcontainer-banner
 RUN chmod +x /usr/local/bin/loader-devcontainer-banner

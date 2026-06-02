@@ -5,7 +5,7 @@ REM ===========================================================================
 REM prepare.bat — bootstrap a Windows build environment for the C++ loader.
 REM
 REM Installs (only if missing): Chocolatey, Ninja, CMake (version pinned in
-REM .devcontainer/shared/versions.env), MSVC Build
+REM .devcontainer/versions.env), MSVC Build
 REM Tools (Visual Studio 2022 Build Tools), buf CLI, and vcpkg.
 REM
 REM Then installs `protobuf` (and friends) into vcpkg using the static-CRT
@@ -52,14 +52,13 @@ if "%SIMULATE_CLEAN%"=="1" echo [DRY-RUN] Simulating a clean machine (all tools 
 echo [INFO] Preparing build environment...
 
 REM -----------------------------------------------------------------------
-REM Load pinned tool versions from .devcontainer/shared/versions.env.
+REM Load pinned tool versions from .devcontainer/versions.env.
 REM
-REM Single source of truth shared with the Linux/Windows devcontainers
-REM and with the .github/workflows/*.yml CI workflows. Format is one
-REM KEY=VALUE per line, no quotes, no $VAR expansion. See
-REM .devcontainer/shared/README.md for the full format spec.
+REM Single source of truth shared with the devcontainer and with the
+REM .github/workflows/*.yml CI workflows. Format is one KEY=VALUE per
+REM line, no quotes, no $VAR expansion.
 REM -----------------------------------------------------------------------
-set "VERSIONS_FILE=%~dp0.devcontainer\shared\versions.env"
+set "VERSIONS_FILE=%~dp0.devcontainer\versions.env"
 if not exist "%VERSIONS_FILE%" (
     echo [ERROR] Missing %VERSIONS_FILE%; cannot resolve pinned tool versions.
     exit /b 1
@@ -305,7 +304,7 @@ REM         The CI workflow uses bufbuild/buf-action@v1 (also pinned to
 REM         BUF_VERSION below) to do the same thing.
 REM         buf is a single self-contained .exe; install it under
 REM         %LOCALAPPDATA%\buf\bin\buf.exe to avoid requiring admin rights.
-REM         BUF_VERSION is sourced from .devcontainer/shared/versions.env.
+REM         BUF_VERSION is sourced from .devcontainer/versions.env.
 REM -----------------------------------------------------------------------
 set "BUF_FOUND=0"
 if "%SIMULATE_CLEAN%"=="0" (
@@ -393,7 +392,7 @@ if errorlevel 1 (
 
 REM Pin both the vcpkg checkout and the manifest's builtin-baseline to the
 REM same commit testing-cpp.yml uses. VCPKG_BASELINE_COMMIT is sourced from
-REM .devcontainer/shared/versions.env (the single source of truth for the
+REM .devcontainer/versions.env (the single source of truth for the
 REM Linux + Windows devcontainers, prepare.bat, and CI). To bump vcpkg,
 REM edit that file.
 set "VCPKG_TRIPLET=x64-windows-static"

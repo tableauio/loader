@@ -5,7 +5,7 @@
     // Bare-metal Windows users (no Docker) bootstrap via prepare.bat at
     // the repo root.
     //
-    // See ../shared/versions.env for all toolchain pins.
+    // See ./versions.env for all toolchain pins.
     "name": "tableauio/loader",
     // Build args wire host env to Dockerfile ARGs:
     //   LOADER_PROTOBUF_VERSION on the host -> PROTOBUF_VERSION inside.
@@ -13,11 +13,11 @@
     // matrix entry). To rebuild against the legacy v3 line:
     //   LOADER_PROTOBUF_VERSION=3.21.12 code .   # then Reopen in Container.
     //
-    // "context" is the parent .devcontainer/ directory so the Dockerfile's
-    // `COPY shared/...` lines resolve.
+    // "context" defaults to the directory holding this devcontainer.json
+    // (.devcontainer/), so the Dockerfile's `COPY versions.env ...`
+    // resolves directly.
     "build": {
         "dockerfile": "Dockerfile",
-        "context": "..",
         "args": {
             "PROTOBUF_VERSION": "${localEnv:LOADER_PROTOBUF_VERSION:}"
         }

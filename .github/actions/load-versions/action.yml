@@ -1,7 +1,7 @@
 name: Load pinned versions
 description: >
-  Reads .devcontainer/shared/versions.env (the single source of truth shared
-  with the devcontainers and prepare.bat) and exports each KEY=VALUE pair to
+  Reads .devcontainer/versions.env (the single source of truth shared
+  with the devcontainer and prepare.bat) and exports each KEY=VALUE pair to
   GITHUB_ENV so subsequent steps can reference them as env-context values
   (e.g. env.BUF_VERSION).
 
@@ -18,7 +18,7 @@ runs:
       shell: bash
       run: |
         set -eu
-        file=.devcontainer/shared/versions.env
+        file=.devcontainer/versions.env
         if [ ! -f "$file" ]; then
           echo "::error::Missing $file; cannot resolve pinned tool versions."
           exit 1

@@ -3,14 +3,14 @@
 The recommended way to develop on `tableauio/loader`. One container, all
 four target languages (C++17, Go, .NET, Node) plus protobuf via vcpkg,
 pinned to the exact toolchain CI uses. All version pins live in
-[`../shared/versions.env`](../shared/versions.env) — bumping any of them
-is a one-line change consumed by this Dockerfile, `prepare.bat`, and
-the CI workflows.
+[`./versions.env`](./versions.env) — bumping any of them is a one-line
+change consumed by this Dockerfile, `prepare.bat`, and the CI
+workflows.
 
-Use this variant on **every** host that can run Docker: Linux (amd64 +
-arm64), macOS (Intel + Apple Silicon), and Windows + WSL2. For Windows
-hosts that prefer bare-metal native dev (no Docker, no WSL2), see the
-[`prepare.bat`](../../prepare.bat) bootstrap at the repo root.
+Use the devcontainer on **every** host that can run Docker: Linux
+(amd64 + arm64), macOS (Intel + Apple Silicon), and Windows + WSL2. For
+Windows hosts that prefer bare-metal native dev (no Docker, no WSL2),
+see the [`prepare.bat`](../prepare.bat) bootstrap at the repo root.
 
 ## Prerequisites
 
@@ -35,9 +35,9 @@ no PATH dance, no extra cmake flags.
 ## Pin a different protobuf version
 
 Daily dev runs against the `PROTOBUF_VERSION` set in
-[`../shared/versions.env`](../shared/versions.env) (CI's "modern" matrix
-entry). To rebuild against the legacy v3 line for one container only,
-without editing the shared file:
+[`./versions.env`](./versions.env) (CI's "modern" matrix entry). To
+rebuild against the legacy v3 line for one container only, without
+editing the shared file:
 
 ```sh
 LOADER_PROTOBUF_VERSION=3.21.12 code .
@@ -82,10 +82,44 @@ The architecture choice is detected from BuildKit's `TARGETARCH` and fed
 into Go / buf / vcpkg triplet selection. Docker auto-selects the host
 arch on build.
 
-The `dockerfile` field in `devcontainer.json` is `Dockerfile`, but the
-build `context` is the parent `.devcontainer/` directory so the
-Dockerfile's `COPY shared/versions.env …` and `COPY shared/postcreate-banner.sh …`
-lines resolve.
+The build context defaults to the directory containing `devcontainer.json`
+(this `.devcontainer/` directory), so the Dockerfile's
+`COPY versions.env …` and `COPY postcreate-banner.sh …` lines resolve
+directly.
+
+## `versions.env` parsing rules
+
+`versions.env` is consumed by the Dockerfile, `prepare.bat`, and the CI
+workflows. The format is intentionally minimal so every consumer can
+parse it with a builtin:
+
+- One assignment per line, exactly `KEY=VALUE`.
+- No quotes, no spaces around `=`, no inline comments after the value.
+- Comments start at column 0 with `#`.
+- Blank lines are ignored.
+- No shell expansion — values are bare literals.
+
+Quick parsers per consumer:
+
+```sh
+# POSIX shell (Dockerfile)
+. .devcontainer/versions.env
+echo "$GO_VERSION"
+```
+
+```cmd
+:: Windows cmd (prepare.bat)
+for /f "tokens=1,2 delims==" %%a in (.devcontainer\versions.env) do (
+    if not "%%a"=="" if not "%%a:~0,1%"=="#" set "%%a=%%b"
+)
+echo %GO_VERSION%
+```
+
+```yaml
+# GitHub Actions
+- uses: ./.github/actions/load-versions
+# subsequent steps reference the values as ${{ env.GO_VERSION }} etc.
+```
 
 ## Troubleshooting
 
@@ -115,15 +149,7 @@ directory. A fresh clone doesn't have these stale artefacts.
 ## Falling back
 
 If you can't run Docker (corp policy, restricted machines, etc.) the
-existing manual setup paths in the [repo README](../../README.md) —
-Windows `prepare.bat`, per-language `Install protobuf` instructions —
-still work. The devcontainer is the recommended path; the rest is the
-supported fallback.
-
-For a Windows host that prefers bare-metal native dev (no Docker, no
-WSL2), see [`prepare.bat`](../../prepare.bat) at the repo root — it
-bootstraps the C++ toolchain (MSVC, CMake, Ninja, vcpkg+protobuf, buf).
-You'll additionally need Go, .NET SDK, and Node.js, which one-line winget
-installs cover (see the repo root [README](../../README.md)). For macOS
-hosts where you'd rather not run a Linux container at all, see the
-[macOS notes](../macos/).
+existing manual setup paths in the [repo README](../README.md) — Windows
+`prepare.bat`, per-language `Install protobuf` instructions, the macOS
+Homebrew recipe — still work. The devcontainer is the recommended path;
+the rest is the supported fallback.

@@ -10,40 +10,38 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
   gencode/runtime version check via `PROTOBUF_VERSION` in the generated
   headers, so a mismatched `protoc` and `libprotobuf` will fail to link.
 
-> **Migrating from the bundled-protobuf layout?** Loader used to vendor
-> protobuf as a git submodule under `third_party/_submodules/protobuf` plus
-> an `init.sh` / `init.bat` build pipeline. Both are gone. If you've checked
-> the repo out before this change, clean up the orphan worktree and submodule
-> metadata before building:
->
-> ```sh
-> git submodule deinit -f third_party/_submodules/protobuf
-> rm -rf third_party/_submodules/protobuf .git/modules/third_party/_submodules/protobuf
-> ```
->
-> Then install protobuf via one of the channels documented in
-> [Install protobuf](#install-protobuf).
-
 ### Recommended: Dev Container (any host OS)
 
 The fastest way to get a reproducible build environment is to open the
 repo in VS Code and choose **Reopen in Container**. The
-[`.devcontainer/linux/`](./.devcontainer/linux/) directory ships a
-multi-arch (linux/amd64 + linux/arm64) container that works on every
-host that can run Docker: Linux, macOS (Intel + Apple Silicon), and
-Windows + WSL2.
+[`.devcontainer/`](./.devcontainer/) directory ships a multi-arch
+(linux/amd64 + linux/arm64) container that works on every host that
+can run Docker: Linux, macOS (Intel + Apple Silicon), and Windows +
+WSL2.
 
 All version pins (Go, buf, protobuf, vcpkg baseline, .NET, Node, CMake)
 live in
-[`.devcontainer/shared/versions.env`](./.devcontainer/shared/versions.env),
-the single source of truth shared with `prepare.bat` and CI. First
+[`.devcontainer/versions.env`](./.devcontainer/versions.env), the
+single source of truth shared with `prepare.bat` and CI. First
 container build is one-time ~25 min (vcpkg compiles protobuf from
 source). Subsequent reopens are near-instant.
 
 For hosts that can't or won't run Docker:
-- **macOS** — see [`.devcontainer/macos/`](./.devcontainer/macos/) for
-  a native `brew install` recipe with versions pinned to `versions.env`.
-- **Windows (bare-metal, native MSVC)** — see
+
+- **macOS (native, no container).** Install via Homebrew. Versions
+  follow whatever the brew formula currently ships, which is usually
+  close enough; the loader's [`Install protobuf`](#install-protobuf)
+  section below covers the protobuf gotcha if you need an exact pin:
+
+  ```sh
+  # Toolchain via Homebrew
+  brew install go buf protobuf dotnet@8 node@20 cmake ninja
+  ```
+
+  > Apple Silicon: nothing in the loader requires Rosetta. If you see
+  > x86_64 Homebrew complaints, run `arch -arm64 brew ...`.
+
+- **Windows (bare-metal, native MSVC).** Run
   [`prepare.bat`](./prepare.bat) for the C++ toolchain (MSVC, CMake,
   Ninja, vcpkg + protobuf, buf), plus one-line winget installs for
   Go / .NET / Node:
@@ -59,8 +57,9 @@ and jump straight to **[C++](#c)** / **[Go](#go)** / **[C#](#c-1)** /
 **[TypeScript](#typescript)**.
 
 Requirements: Docker Desktop (Windows + macOS) or Docker Engine (Linux),
-and the VS Code "Dev Containers" extension. See the per-variant READMEs
-linked above for the longer how-to.
+and the VS Code "Dev Containers" extension. See
+[`.devcontainer/README.md`](./.devcontainer/README.md) for the longer
+how-to.
 
 ### Install protobuf
 
