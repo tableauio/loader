@@ -40,7 +40,12 @@ jobs:
           # Desktop) and default to Linux-containers mode. The legacy
           # `DockerCli.exe -SwitchDaemon` helper is not present on current
           # runner images. Flip the daemon by re-registering the `docker`
-          # Windows service without the `dockerd-default` (Linux) backend.
+          # Windows service.
+          #
+          # `dockerd.exe`'s install path is not stable across runner-image
+          # versions (Microsoft's MobyOnWindowsRunner installer doesn't
+          # commit to one), so we resolve it from the registered service's
+          # ImagePath rather than guessing common Program Files locations.
           $ErrorActionPreference = 'Stop'
 
           $current = (docker info --format '{{.OSType}}' 2>$null)
@@ -51,26 +56,34 @@ jobs:
               exit 0
           }
 
-          # Locate dockerd.exe. Moby Engine on the runner lives under
-          # %ProgramFiles%\docker\; Docker Desktop (older runners) used
-          # %ProgramFiles%\Docker\Docker\. Probe both.
-          $candidates = @(
-              "$env:ProgramFiles\docker\dockerd.exe",
-              "$env:ProgramFiles\Docker\Docker\resources\dockerd.exe",
-              "$env:ProgramFiles\Docker\dockerd.exe"
-          )
-          $dockerd = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-          if (-not $dockerd) {
-              Write-Error "dockerd.exe not found in any of: $($candidates -join '; ')"
-              Write-Host '--- diagnostic: Get-Service docker ---'
-              Get-Service docker -ErrorAction SilentlyContinue | Format-List *
-              Write-Host '--- diagnostic: ProgramFiles tree ---'
-              Get-ChildItem "$env:ProgramFiles\docker", "$env:ProgramFiles\Docker" -ErrorAction SilentlyContinue
-              exit 1
+          # Discover dockerd.exe via the registered `docker` service's
+          # ImagePath in the registry. This works regardless of where the
+          # runner image installed Docker.
+          $svcKey = 'HKLM:\SYSTEM\CurrentControlSet\Services\docker'
+          if (-not (Test-Path $svcKey)) {
+              Write-Host '--- diagnostic: docker service not registered ---'
+              Get-Service docker* -ErrorAction SilentlyContinue | Format-List Name,Status,StartType
+              Get-Command dockerd -ErrorAction SilentlyContinue | Format-List Name,Source
+              throw 'docker service is not registered; cannot determine dockerd.exe path.'
+          }
+          $imagePath = (Get-ItemProperty -Path $svcKey -Name ImagePath).ImagePath
+          Write-Host "Service ImagePath: $imagePath"
+          # ImagePath may be quoted and may include trailing args; extract
+          # the first token (the .exe path) and strip surrounding quotes.
+          if ($imagePath -match '^"([^"]+)"' -or $imagePath -match '^(\S+\.exe)') {
+              $dockerd = $Matches[1]
+          } else {
+              $dockerd = ($imagePath -split '\s+')[0]
+          }
+          if (-not (Test-Path $dockerd)) {
+              Write-Host '--- diagnostic: dockerd path from registry does not exist ---'
+              Write-Host "  resolved path: $dockerd"
+              Get-Command dockerd -ErrorAction SilentlyContinue | Format-List Name,Source
+              throw "dockerd.exe not found at $dockerd"
           }
           Write-Host "Using dockerd at: $dockerd"
 
-          # Stop, re-register without `-G docker` Linux args, restart.
+          # Stop, re-register the service, restart.
           Stop-Service docker
           & $dockerd --unregister-service
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -82,9 +95,9 @@ jobs:
           $after = (docker info --format '{{.OSType}}' 2>$null)
           Write-Host "Current OSType after switch: $after"
           if ($after -ne 'windows') {
-              Write-Error "Docker daemon did not switch to Windows containers (OSType=$after)."
+              Write-Host 'docker info dump on failure:'
               docker info
-              exit 1
+              throw "Docker daemon did not switch to Windows containers (OSType=$after)."
           }
           docker info | Select-String -Pattern 'OSType|Server Version|Operating System'
 
