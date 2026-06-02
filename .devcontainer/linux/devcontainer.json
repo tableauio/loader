@@ -1,14 +1,12 @@
 {
-    // tableauio/loader Dev Container — Linux variant (recommended).
-    //
-    // Multi-arch: builds linux/amd64 on x64 hosts, linux/arm64 on Apple
-    // Silicon and Windows-on-ARM. Use this on every host that can run
-    // Docker Desktop / Docker Engine; the Windows-container variant under
-    // ../windows/ is only for Windows hosts that need native MSVC inside
-    // the container.
+    // The loader's only devcontainer. Multi-arch: builds linux/amd64 on
+    // x64 hosts, linux/arm64 on Apple Silicon and Windows-on-ARM. Use
+    // this on every host that can run Docker Desktop or Docker Engine.
+    // Bare-metal Windows users (no Docker) bootstrap via prepare.bat at
+    // the repo root.
     //
     // See ../shared/versions.env for all toolchain pins.
-    "name": "tableauio/loader (linux)",
+    "name": "tableauio/loader",
     // Build args wire host env to Dockerfile ARGs:
     //   LOADER_PROTOBUF_VERSION on the host -> PROTOBUF_VERSION inside.
     // Default falls through to versions.env's PROTOBUF_VERSION (CI's modern

@@ -1,9 +1,8 @@
 #!/bin/sh
 # Post-create banner for the Linux devcontainer.
 # Pure echo — no installs, no version-pinning at runtime, no surprises.
-# Mirrors the same five-line summary the previous inline postCreateCommand
-# emitted; extracted to a script so the Windows container can have a
-# parallel postcreate-banner.ps1 with the same shape.
+# Five-line summary that prints when the container becomes ready, so the
+# developer can confirm at a glance which toolchain versions landed.
 set -e
 printf 'tableauio/loader devcontainer ready (linux).\n'
 printf '  go:     %s\n' "$(go version | cut -d' ' -f3)"

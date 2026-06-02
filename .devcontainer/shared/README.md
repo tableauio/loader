@@ -1,16 +1,15 @@
 # tableauio/loader — `.devcontainer/shared/`
 
-Files in this directory are consumed by **multiple** devcontainer paths
-(`linux/`, `windows/`) and by host-side scripts (`prepare.bat`, CI
-workflows). Edit them with cross-platform parsing in mind.
+Files in this directory are consumed by the Linux devcontainer
+(`../linux/`) and by host-side scripts (`prepare.bat`, CI workflows).
+Edit them with cross-platform parsing in mind.
 
 ## Files
 
 | File | Consumers | Format |
 | --- | --- | --- |
-| [`versions.env`](./versions.env) | All Dockerfiles, `prepare.bat`, every `.github/workflows/*.yml` | `KEY=VALUE`, one per line, no quotes, no `$VAR` expansion |
+| [`versions.env`](./versions.env) | `linux/Dockerfile`, `prepare.bat`, every `.github/workflows/*.yml` | `KEY=VALUE`, one per line, no quotes, no `$VAR` expansion |
 | [`postcreate-banner.sh`](./postcreate-banner.sh) | `linux/devcontainer.json` `postCreateCommand` | POSIX `sh` |
-| [`postcreate-banner.ps1`](./postcreate-banner.ps1) | `windows/devcontainer.json` `postCreateCommand` | PowerShell |
 
 ## `versions.env` parsing rules
 
@@ -31,14 +30,6 @@ Quick parsers per language:
 echo "$GO_VERSION"
 ```
 
-```powershell
-# PowerShell (Windows Dockerfile)
-$v = Get-Content .devcontainer/shared/versions.env |
-     Where-Object { $_ -and $_ -notmatch '^\s*#' } |
-     ConvertFrom-StringData
-$v.GO_VERSION
-```
-
 ```cmd
 :: Windows cmd (prepare.bat)
 for /f "tokens=1,2 delims==" %%a in (.devcontainer\shared\versions.env) do (
@@ -48,15 +39,9 @@ echo %GO_VERSION%
 ```
 
 ```yaml
-# GitHub Actions (read once, export to $GITHUB_ENV)
-- name: Read pinned versions
-  shell: bash
-  run: |
-    while IFS='=' read -r k v; do
-      [ -z "$k" ] && continue
-      [ "${k#\#}" != "$k" ] && continue
-      printf '%s=%s\n' "$k" "$v" >> "$GITHUB_ENV"
-    done < .devcontainer/shared/versions.env
+# GitHub Actions
+- uses: ./.github/actions/load-versions
+# subsequent steps reference the values as ${{ env.GO_VERSION }} etc.
 ```
 
 ## Lockstep rule
@@ -65,5 +50,5 @@ echo %GO_VERSION%
 `PROTOBUF_VERSION` value used anywhere (devcontainer default + every
 `testing-cpp.yml` matrix entry). Bumping `PROTOBUF_VERSION` to a value
 the current baseline doesn't know is caught at build time by the
-post-install assertion in both Dockerfiles and `prepare.bat` — fail loud,
-no silent wrong-version installs.
+post-install assertion in `linux/Dockerfile` and `prepare.bat` — fail
+loud, no silent wrong-version installs.

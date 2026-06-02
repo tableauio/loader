@@ -28,27 +28,31 @@ The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
 The fastest way to get a reproducible build environment is to open the
 repo in VS Code and choose **Reopen in Container**. The
-[`.devcontainer/`](./.devcontainer/) directory ships **two** container
-variants plus a macOS docs path:
+[`.devcontainer/linux/`](./.devcontainer/linux/) directory ships a
+multi-arch (linux/amd64 + linux/arm64) container that works on every
+host that can run Docker: Linux, macOS (Intel + Apple Silicon), and
+Windows + WSL2.
 
-- [`.devcontainer/linux/`](./.devcontainer/linux/) — recommended for
-  every host (Linux, macOS Intel + Apple Silicon, Windows + WSL2).
-  Multi-arch (linux/amd64 + linux/arm64).
-- [`.devcontainer/windows/`](./.devcontainer/windows/) —
-  Windows-host-only (windows/amd64), for users who specifically need a
-  native MSVC environment inside the container without WSL2.
-- [`.devcontainer/macos/`](./.devcontainer/macos/) — documentation only.
-  Apple's licence forbids macOS containers; macOS users use the Linux
-  variant.
-
-When you run **Dev Containers: Reopen in Container** and both `linux/`
-and `windows/` are present, VS Code shows a picker — choose whichever
-matches your host. All version pins (Go, buf, protobuf, vcpkg baseline,
-.NET, Node, CMake) live in
+All version pins (Go, buf, protobuf, vcpkg baseline, .NET, Node, CMake)
+live in
 [`.devcontainer/shared/versions.env`](./.devcontainer/shared/versions.env),
 the single source of truth shared with `prepare.bat` and CI. First
-container build is one-time ~25 min (Linux) / ~45 min (Windows); vcpkg
-compiles protobuf from source. Subsequent reopens are near-instant.
+container build is one-time ~25 min (vcpkg compiles protobuf from
+source). Subsequent reopens are near-instant.
+
+For hosts that can't or won't run Docker:
+- **macOS** — see [`.devcontainer/macos/`](./.devcontainer/macos/) for
+  a native `brew install` recipe with versions pinned to `versions.env`.
+- **Windows (bare-metal, native MSVC)** — see
+  [`prepare.bat`](./prepare.bat) for the C++ toolchain (MSVC, CMake,
+  Ninja, vcpkg + protobuf, buf), plus one-line winget installs for
+  Go / .NET / Node:
+
+  ```cmd
+  winget install --id GoLang.Go.1.24 -e
+  winget install --id Microsoft.DotNet.SDK.8 -e
+  winget install --id OpenJS.NodeJS.LTS -e
+  ```
 
 After the container starts you can skip the per-language setup below
 and jump straight to **[C++](#c)** / **[Go](#go)** / **[C#](#c-1)** /

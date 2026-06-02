@@ -1,17 +1,16 @@
-# Dev Container — Linux variant (recommended)
+# Dev Container
 
 The recommended way to develop on `tableauio/loader`. One container, all
 four target languages (C++17, Go, .NET, Node) plus protobuf via vcpkg,
 pinned to the exact toolchain CI uses. All version pins live in
 [`../shared/versions.env`](../shared/versions.env) — bumping any of them
-is a one-line change consumed by this Dockerfile, the Windows-container
-sibling, `prepare.bat`, and the CI workflows.
+is a one-line change consumed by this Dockerfile, `prepare.bat`, and
+the CI workflows.
 
 Use this variant on **every** host that can run Docker: Linux (amd64 +
-arm64), macOS (Intel + Apple Silicon), and Windows + WSL2. The
-[Windows-container variant](../windows/) is only relevant if you
-specifically need a native MSVC environment inside the container on a
-Windows host.
+arm64), macOS (Intel + Apple Silicon), and Windows + WSL2. For Windows
+hosts that prefer bare-metal native dev (no Docker, no WSL2), see the
+[`prepare.bat`](../../prepare.bat) bootstrap at the repo root.
 
 ## Prerequisites
 
@@ -25,10 +24,8 @@ code .                # in the repo root
 ```
 
 In VS Code, run **Dev Containers: Reopen in Container** from the command
-palette. If both `linux/` and `windows/` are present, VS Code shows a
-picker — choose **tableauio/loader (linux)**. First build is one-time
-~25 minutes (vcpkg compiles protobuf from source); subsequent reopens
-are near-instant.
+palette. First build is one-time ~25 minutes (vcpkg compiles protobuf
+from source); subsequent reopens are near-instant.
 
 When the container is ready, the integrated terminal prints a banner with
 five toolchain versions. After that, every command from the per-language
@@ -123,8 +120,10 @@ Windows `prepare.bat`, per-language `Install protobuf` instructions —
 still work. The devcontainer is the recommended path; the rest is the
 supported fallback.
 
-For a Windows host that wants a containerized environment but with
-native MSVC inside the container (no WSL2), see the
-[Windows-container variant](../windows/). For macOS hosts where you'd
-rather not run a Linux container at all, see the
+For a Windows host that prefers bare-metal native dev (no Docker, no
+WSL2), see [`prepare.bat`](../../prepare.bat) at the repo root — it
+bootstraps the C++ toolchain (MSVC, CMake, Ninja, vcpkg+protobuf, buf).
+You'll additionally need Go, .NET SDK, and Node.js, which one-line winget
+installs cover (see the repo root [README](../../README.md)). For macOS
+hosts where you'd rather not run a Linux container at all, see the
 [macOS notes](../macos/).
