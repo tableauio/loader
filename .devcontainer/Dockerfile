@@ -86,12 +86,38 @@ EOF
 # ---------------------------------------------------------------------------
 ARG PROTOBUF_VERSION=
 ENV VCPKG_ROOT=/opt/vcpkg
+# Tell vcpkg to share its compiled binaries via /vcpkg-binarycache. The
+# directory is mounted from BuildKit's persistent cache via
+# `RUN --mount=type=cache,...` below; that cache survives across
+# `docker build` invocations on the same host (and across CI runs when
+# `cache-to=type=gha,mode=max` is configured in the smoke workflow).
+#
+# The win: when an unrelated layer earlier in the Dockerfile changes
+# (e.g. you bump BUF_VERSION in versions.env), Docker re-runs the vcpkg
+# layer because its inputs changed, but vcpkg itself short-circuits the
+# expensive ~15-30 min compile and just relinks the protobuf binaries
+# from cache. First build pays the full cost; every later build with the
+# same VCPKG_BASELINE_COMMIT + PROTOBUF_VERSION is fast.
+ENV VCPKG_DEFAULT_BINARY_CACHE=/vcpkg-binarycache
 
 # `_ARG_PROTOBUF_VERSION` captures the Dockerfile ARG via Dockerfile-level
 # variable expansion BEFORE we source versions.env in the heredoc body
 # (otherwise the file default would clobber the build-arg). Empty string
 # means "no override; use file default".
-RUN <<EOF
+#
+# `--mount=type=cache,target=/vcpkg-binarycache` is a BuildKit cache
+# mount: a directory whose contents persist across `docker build`
+# invocations on this host (or, on CI, in the GHA cache when
+# `cache-to=type=gha,mode=max` is set on the build action). vcpkg writes
+# every compiled package into this dir, keyed by ABI hash; on a later
+# build it skips the compile and uses the cached .zip directly. The
+# directory is empty at the start of every fresh build — only its
+# *contents* persist, not its mountpoint state — which is exactly what
+# we want.
+#
+# `sharing=locked` serializes concurrent builds against the same cache
+# (matters only on multi-builder hosts; safe default).
+RUN --mount=type=cache,target=/vcpkg-binarycache,sharing=locked <<EOF
 set -eux
 _ARG_PROTOBUF_VERSION="${PROTOBUF_VERSION}"
 . /opt/versions.env
@@ -107,6 +133,10 @@ fi
 git clone https://github.com/microsoft/vcpkg.git "${VCPKG_ROOT}"
 git -C "${VCPKG_ROOT}" checkout "${VCPKG_BASELINE_COMMIT}"
 "${VCPKG_ROOT}/bootstrap-vcpkg.sh" -disableMetrics
+
+# Make sure the binary-cache dir exists. The RUN's --mount=type=cache
+# creates it, but vcpkg can be picky about owner/perms on first use.
+mkdir -p "${VCPKG_DEFAULT_BINARY_CACHE}"
 
 # 2. Render a minimal manifest with builtin-baseline + the protobuf override.
 mkdir -p /opt/vcpkg-manifest

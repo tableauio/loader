@@ -33,6 +33,9 @@ on:
 
 permissions:
   contents: read
+  # actions: write is required for `cache-to: type=gha` to push BuildKit
+  # cache entries to the per-repo Actions cache (~10 GB free quota).
+  actions: write
 
 jobs:
   build-and-smoke:
@@ -60,16 +63,25 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build devcontainer image
-        working-directory: .devcontainer
-        run: |
-          # Context is .devcontainer/ so `COPY versions.env` etc. resolve.
-          # --load puts the image into the local docker daemon so the
-          # subsequent `docker run` smoke steps can use it.
-          docker buildx build \
-            --load \
-            --file Dockerfile \
-            --tag loader-devcontainer:smoke \
-            .
+        # Use docker/build-push-action so we can point BuildKit at GitHub's
+        # Actions cache (10 GB free per repo). Cold first run is unchanged
+        # (~25 min — vcpkg compiles protobuf from source). Subsequent runs
+        # restore every layer from cache and complete in ~3-5 min, matching
+        # what testing-cpp.yml achieves via its actions/cache step on
+        # ${VCPKG_INSTALLED_DIR}.
+        #
+        # mode=max writes every intermediate layer to cache, not just the
+        # final image. That trades cache size (still under the 10 GB ceiling
+        # for this image) for the ability to skip vcpkg's compile layer on
+        # any later run, even when an unrelated layer above it changed.
+        uses: docker/build-push-action@v6
+        with:
+          context: .devcontainer
+          file: .devcontainer/Dockerfile
+          tags: loader-devcontainer:smoke
+          load: true
+          cache-from: type=gha,scope=devcontainer-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=devcontainer-${{ matrix.arch }}
 
       - name: Smoke — version banner
         run: |
