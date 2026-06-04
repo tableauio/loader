@@ -51,10 +51,11 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Vet
-        run: go vet ./...
-
       - name: Test
+        # `make.py test --lang go` runs `buf generate` then `go test`, which
+        # transitively vets every package (compilation = type-check + vet).
+        # Plugin-only `go vet` is covered by devcontainer-smoke.yml's
+        # `make.py test --lang go --smoke` step.
         # Explicit --race so Windows CI matches Linux (Windows runners have
         # MSVC available; -race needs cgo + a C compiler). On a fresh
         # Windows dev machine without MSVC, make.py's default is --no-race;
