@@ -22,7 +22,14 @@ python make.py test  --lang ts       # TypeScript (experimental)
 
 Recommended environment: [devcontainer](./.devcontainer/) (open in VS Code → **Dev Containers: Reopen in Container**). Inside the container, `setup` is a no-op.
 
-Native hosts: `python make.py setup` installs everything via `brew` (macOS), `apt`/`dnf` (Linux), or Chocolatey + MSVC + vcpkg (Windows). On Windows it must be run from **cmd as Administrator** the first time; subsequent runs work from any shell because each subprocess sources `vcvarsall.bat` itself — your shell PATH/INCLUDE/LIB are never mutated.
+Native hosts: `python make.py setup` installs everything pinned to [`./.devcontainer/versions.env`](./.devcontainer/versions.env) — the same versions CI and the devcontainer use. Toolchain layout per host:
+
+- **Go** — official tarball from go.dev to `~/.local/go/` (Linux/macOS) or winget (Windows).
+- **buf** — pinned binary from GitHub releases to `~/.local/bin/` (Linux/macOS) or `%LOCALAPPDATA%\buf\bin\` (Windows).
+- **protobuf** — vcpkg at `VCPKG_BASELINE_COMMIT` on every native host (Linux/macOS/Windows). Switch versions per-test with `--protobuf-version`.
+- **.NET / Node / cmake / ninja** — Homebrew (macOS), Microsoft+NodeSource apt repos (Linux), winget+Chocolatey (Windows).
+
+On Windows, run setup from **cmd as Administrator** the first time. Subsequent commands work from any shell because each subprocess sources `vcvarsall.bat` itself — your shell PATH/INCLUDE/LIB are never mutated.
 
 ## Commands
 

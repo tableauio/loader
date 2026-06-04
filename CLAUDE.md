@@ -30,9 +30,11 @@ python make.py env                       # diagnostic JSON
 python make.py --version
 ```
 
-C++ wipes `test/cpp-tableau-loader/{build,src/tableau,src/protoconf}` before regenerating (gitignored `*.pb.*` shadows fresh codegen). `--no-clean` skips it.
+C++ wipes `test/cpp-tableau-loader/{build,src/tableau,src/protoconf}` before regenerating (gitignored `*.pb.*` shadows fresh codegen). `--no-clean` skips it. A leftover `vcpkg.json` from a previous `--protobuf-version` run is auto-removed in classic mode so cmake doesn't accidentally re-enter manifest mode.
 
 On Windows, `make.py` wraps every C++ subprocess in `cmd /c "call vcvarsall.bat x64 >nul && <cmd>"` so MSVC env lives per-subprocess; the shell PATH is never mutated.
+
+`make.py setup` pins every toolchain dimension (matches CI + devcontainer): Go via official go.dev tarball to `~/.local/go/`, buf via GitHub release binary, protobuf via **vcpkg at `VCPKG_BASELINE_COMMIT` on every host (macOS/Linux/Windows)**, .NET / Node via Microsoft+NodeSource (Linux) or Homebrew (macOS) or winget (Windows), cmake/ninja via the host's package manager. Resolved paths cached in `~/.loader-env.json` so subsequent `make.py test --lang cpp` invocations pick them up without re-running setup.
 
 ### Dev container
 

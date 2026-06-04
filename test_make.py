@@ -141,13 +141,41 @@ class TestPlatform:
         p = make.Platform(sys_platform="linux", machine="x86_64", in_devcontainer=True)
         assert p.cmake_toolchain_args() == []
 
-    def test_cmake_toolchain_args_linux_is_empty(self):
+    def test_cmake_toolchain_args_linux_no_vcpkg_is_empty(self, monkeypatch):
+        # Without vcpkg installed (no VCPKG_ROOT), cmake falls back to
+        # system protobuf via find_package — no -D flags needed.
+        monkeypatch.delenv("VCPKG_ROOT", raising=False)
         p = make.Platform(sys_platform="linux", machine="x86_64", in_devcontainer=False)
         assert p.cmake_toolchain_args() == []
 
-    def test_cmake_toolchain_args_macos_is_empty(self):
+    def test_cmake_toolchain_args_linux_with_vcpkg_emits_flags(self, tmp_path):
+        # After `make.py setup --lang cpp` populates ~/vcpkg, native Linux
+        # builds also route through vcpkg. Same protobuf pin as Windows.
+        p = make.Platform(
+            sys_platform="linux",
+            machine="x86_64",
+            in_devcontainer=False,
+            vcpkg_root=tmp_path,
+        )
+        args = p.cmake_toolchain_args()
+        assert any("CMAKE_TOOLCHAIN_FILE" in a for a in args)
+        assert any("VCPKG_TARGET_TRIPLET=x64-linux" in a for a in args)
+
+    def test_cmake_toolchain_args_macos_no_vcpkg_is_empty(self, monkeypatch):
+        monkeypatch.delenv("VCPKG_ROOT", raising=False)
         p = make.Platform(sys_platform="darwin", machine="arm64", in_devcontainer=False)
         assert p.cmake_toolchain_args() == []
+
+    def test_cmake_toolchain_args_macos_with_vcpkg_emits_flags(self, tmp_path):
+        p = make.Platform(
+            sys_platform="darwin",
+            machine="arm64",
+            in_devcontainer=False,
+            vcpkg_root=tmp_path,
+        )
+        args = p.cmake_toolchain_args()
+        assert any("CMAKE_TOOLCHAIN_FILE" in a for a in args)
+        assert any("VCPKG_TARGET_TRIPLET=arm64-osx" in a for a in args)
 
     def test_cmake_toolchain_args_windows_with_vcpkg_root(self, tmp_path):
         p = make.Platform(
@@ -751,7 +779,69 @@ class TestDryRunClean:
 # ---------------------------------------------------------------------------
 
 
-class TestSetupDevcontainer:
+class TestCrossPlatformPinning:
+    """Unit tests for the macOS/Linux pinning helpers (Go tarball, buf
+    binary, vcpkg). Network calls are guarded by --dry-run."""
+
+    def test_go_arch_macos_intel(self, monkeypatch):
+        monkeypatch.setattr(make._stdlib_platform, "machine", lambda: "x86_64")
+        assert make._go_arch_macos() == "amd64"
+
+    def test_go_arch_macos_apple_silicon(self, monkeypatch):
+        monkeypatch.setattr(make._stdlib_platform, "machine", lambda: "arm64")
+        assert make._go_arch_macos() == "arm64"
+
+    def test_go_arch_linux_x64(self, monkeypatch):
+        monkeypatch.setattr(make._stdlib_platform, "machine", lambda: "x86_64")
+        assert make._go_arch_linux() == "amd64"
+
+    def test_go_arch_linux_arm64(self, monkeypatch):
+        monkeypatch.setattr(make._stdlib_platform, "machine", lambda: "aarch64")
+        assert make._go_arch_linux() == "arm64"
+
+    def test_setup_macos_dispatches_to_vcpkg(self, monkeypatch, capsys):
+        # Simulate macOS host with brew available. Dry-run so no real install.
+        # The handler's _setup_vcpkg call should print the cloning hint.
+        monkeypatch.setattr(make.Platform, "detect", classmethod(
+            lambda cls: make.Platform(sys_platform="darwin", machine="x86_64",
+                                      in_devcontainer=False)))
+        monkeypatch.setattr(make, "_which", lambda name: "/usr/local/bin/brew" if name == "brew" else None)
+        ctx = make.Context(
+            repo_root=REPO_ROOT,
+            versions=make.Versions.load(REPO_ROOT),
+            platform=make.Platform.detect(),
+            runner=make.Runner(verbose=False, dry_run=True),
+        )
+        args = type("Args", (), {"lang": "cpp", "skip_vcpkg": False})()
+        rc = make.cmd_setup(args, ctx)
+        assert rc == 0
+        out = capsys.readouterr().out
+        # Must mention vcpkg (cross-platform install path).
+        assert "vcpkg" in out.lower()
+
+    def test_setup_linux_dispatches_to_vcpkg(self, monkeypatch, capsys):
+        monkeypatch.setattr(make.Platform, "detect", classmethod(
+            lambda cls: make.Platform(sys_platform="linux", machine="x86_64",
+                                      in_devcontainer=False)))
+        # Stub _which to make apt-get appear available, brew/dnf absent.
+        which_table = {"apt-get": "/usr/bin/apt-get"}
+        monkeypatch.setattr(make, "_which", lambda name: which_table.get(name))
+        # Stub os.geteuid (not present on Windows test host).
+        monkeypatch.setattr(make.os, "geteuid", lambda: 1000, raising=False)
+        ctx = make.Context(
+            repo_root=REPO_ROOT,
+            versions=make.Versions.load(REPO_ROOT),
+            platform=make.Platform.detect(),
+            runner=make.Runner(verbose=False, dry_run=True),
+        )
+        args = type("Args", (), {"lang": "cpp", "skip_vcpkg": False})()
+        rc = make.cmd_setup(args, ctx)
+        assert rc == 0
+        out = capsys.readouterr().out
+        assert "vcpkg" in out.lower()
+
+
+
     def test_setup_skips_inside_devcontainer(self, monkeypatch, tmp_path):
         # Simulate devcontainer detection by patching Platform.detect.
         original_detect = make.Platform.detect

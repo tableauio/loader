@@ -184,34 +184,31 @@ class Platform:
     ) -> list[str]:
         """Extra cmake -D flags to pick up vcpkg's protobuf, when applicable.
 
-        Default behaviour (force_vcpkg=False):
-          - devcontainer:  []  (Dockerfile presets CMAKE_PREFIX_PATH)
-          - macOS/Linux:   []  (system protobuf via brew/apt)
-          - Windows:       toolchain + triplet flags (always uses vcpkg)
+        Default behaviour:
+          - devcontainer:           []  (Dockerfile presets CMAKE_PREFIX_PATH).
+          - any host with VCPKG_ROOT: toolchain + triplet flags.
+          - host without vcpkg installed (Linux/macOS, no setup run yet):
+                                      []  (cmake will fall back to system
+                                           protobuf via find_package).
 
-        With force_vcpkg=True, every host (incl. Linux/macOS) gets the
-        toolchain flags. Used when --protobuf-version is set, because
-        manifest-mode means we ARE using vcpkg regardless of host.
+        force_vcpkg=True forces the toolchain flags even inside the
+        devcontainer (used by manifest-mode invocations that point cmake
+        at a custom vcpkg_installed/ dir).
         """
         if self.in_devcontainer and not force_vcpkg:
             return []  # Dockerfile presets CMAKE_PREFIX_PATH=/opt/vcpkg/active.
-        if not self.is_windows and not force_vcpkg:
-            # macOS/Linux native: system protobuf or homebrew/apt resolves via
-            # find_package(Protobuf) without a toolchain file.
-            return []
-        # Locate VCPKG_ROOT (cached attr or env). Required on Windows always,
-        # and on every OS when force_vcpkg=True (manifest mode).
+        # Locate VCPKG_ROOT (cached attr or env). If absent on macOS/Linux,
+        # we silently fall through to system protobuf (apt/brew). On Windows
+        # / manifest mode the cpp handler errors with an actionable message
+        # before we get here.
         vcpkg_root = self.vcpkg_root or _env_path("VCPKG_ROOT")
         if vcpkg_root is None:
-            # Best-effort fallback so cmake configure fails with a useful
-            # message rather than us emitting an empty -D flag.
             return []
         toolchain = vcpkg_root / "scripts" / "buildsystems" / "vcpkg.cmake"
-        args = [
+        return [
             f"-DCMAKE_TOOLCHAIN_FILE={toolchain}",
             f"-DVCPKG_TARGET_TRIPLET={triplet or self.vcpkg_triplet}",
         ]
-        return args
 
     def windows_msvc_wrap(self, cmd: list[str]) -> list[str]:
         """Wrap a command so it runs inside an MSVC-environment subshell.
@@ -463,22 +460,27 @@ def save_loader_env(data: dict, runner: Runner) -> None:
 
 
 def hydrate_platform_from_env(plat: Platform) -> None:
-    """Populate Platform from $VCPKG_ROOT and ~/.loader-env.json (Windows)."""
-    if not plat.is_windows:
-        return
+    """Populate Platform from $VCPKG_ROOT and ~/.loader-env.json.
+
+    Cross-platform: macOS / Linux / Windows. Cache file is shared between
+    `make.py setup` (which writes it) and subsequent `make.py test`
+    invocations (which read it).
+    """
     if plat.vcpkg_root is None:
         plat.vcpkg_root = _env_path("VCPKG_ROOT")
     cache = load_loader_env()
     if plat.vcpkg_root is None and cache.get("vcpkg_root"):
         plat.vcpkg_root = Path(cache["vcpkg_root"])
-    if plat.vcvarsall_path is None and cache.get("vcvarsall_path"):
-        candidate = Path(cache["vcvarsall_path"])
-        if candidate.is_file():
-            plat.vcvarsall_path = candidate
     if plat.protoc_tools_dir is None and cache.get("protoc_tools_dir"):
         plat.protoc_tools_dir = Path(cache["protoc_tools_dir"])
     if plat.vcpkg_installed_dir is None and cache.get("vcpkg_installed_dir"):
         plat.vcpkg_installed_dir = Path(cache["vcpkg_installed_dir"])
+    # vcvarsall is Windows-only.
+    if plat.is_windows:
+        if plat.vcvarsall_path is None and cache.get("vcvarsall_path"):
+            candidate = Path(cache["vcvarsall_path"])
+            if candidate.is_file():
+                plat.vcvarsall_path = candidate
 
 
 # ---------------------------------------------------------------------------
@@ -529,20 +531,37 @@ def _setup_macos(langs: list[str], ctx: "Context") -> int:
             file=sys.stderr,
         )
         return 1
+    cache = load_loader_env()
+
+    # Brew packages: only the version-tolerant pieces (cmake, ninja, build
+    # essentials). Go and protobuf are pinned via tarball / vcpkg below;
+    # buf is pinned via direct download. dotnet@N and node@N are pinnable
+    # via brew's versioned formulae.
     pkgs: list[str] = []
-    if "go" in langs:
-        pkgs.append("go")
     if "cpp" in langs:
-        pkgs.extend(["protobuf", "cmake", "ninja"])
+        pkgs.extend(["cmake", "ninja"])
     if "csharp" in langs:
-        # Homebrew dotnet@8 cask covers .NET 8.
-        pkgs.append(f"dotnet@{ctx.versions.dotnet_version or '8'}")
+        # `dotnet@8` (cask) covers .NET 8.x. Use the major.
+        major = (ctx.versions.dotnet_version or "8.0").split(".")[0]
+        pkgs.append(f"dotnet@{major}")
     if "ts" in langs:
         pkgs.append(f"node@{ctx.versions.node_version or '20'}")
-    pkgs.append("buf")
-    pkgs = list(dict.fromkeys(pkgs))  # de-dup, preserving order
-    ctx.runner.run(["brew", "update"], check=False)
-    ctx.runner.run(["brew", "install", *pkgs], check=False)
+    if pkgs:
+        ctx.runner.run(["brew", "update"], check=False)
+        ctx.runner.run(["brew", "install", *pkgs], check=False)
+
+    # Pinned Go via official tarball (matches devcontainer).
+    if "go" in langs or "cpp" in langs or "csharp" in langs:
+        _ensure_go_tarball(ctx, "darwin")
+
+    # Pinned buf via GitHub release.
+    _ensure_buf_unix(ctx, os_label="Darwin")
+
+    # Pinned protobuf via vcpkg (matches devcontainer + Windows).
+    if "cpp" in langs:
+        _setup_vcpkg(ctx, cache)
+
+    save_loader_env(cache, ctx.runner)
     print("[info] macOS toolchain ready.")
     return 0
 
@@ -556,63 +575,60 @@ def _setup_linux(langs: list[str], ctx: "Context") -> int:
             file=sys.stderr,
         )
         return 1
+    cache = load_loader_env()
 
+    # Distro packages: only the version-tolerant pieces (cmake, ninja, build
+    # essentials, git). Go is pinned via tarball; buf via GitHub release;
+    # protobuf via vcpkg; .NET via Microsoft repo helper; Node via NodeSource.
     base_pkgs: list[str] = []
     if "cpp" in langs:
         if apt:
             base_pkgs.extend(
-                [
-                    "protobuf-compiler",
-                    "libprotobuf-dev",
-                    "cmake",
-                    "ninja-build",
-                    "build-essential",
-                    "git",
-                ]
+                ["cmake", "ninja-build", "build-essential", "git", "curl", "zip", "unzip", "tar", "pkg-config"]
             )
         else:
             base_pkgs.extend(
-                [
-                    "protobuf-compiler",
-                    "protobuf-devel",
-                    "cmake",
-                    "ninja-build",
-                    "gcc-c++",
-                    "git",
-                ]
+                ["cmake", "ninja-build", "gcc-c++", "git", "curl", "zip", "unzip", "tar", "pkgconf-pkg-config"]
             )
-    if "go" in langs and apt:
-        base_pkgs.append("golang")
-    if "go" in langs and dnf:
-        base_pkgs.append("golang")
 
     if base_pkgs:
+        sudo_prefix = ["sudo"] if os.geteuid() != 0 else []
         if apt:
-            sudo_prefix = ["sudo"] if os.geteuid() != 0 else []
             ctx.runner.run([*sudo_prefix, "apt-get", "update"], check=False)
             ctx.runner.run(
                 [*sudo_prefix, "apt-get", "install", "-y", *base_pkgs], check=False
             )
         else:
-            sudo_prefix = ["sudo"] if os.geteuid() != 0 else []
             ctx.runner.run(
                 [*sudo_prefix, "dnf", "install", "-y", *base_pkgs], check=False
             )
 
-    # buf, .NET, Node are not always packaged at our pinned version; install
-    # via direct download / vendor scripts to ~/.local/.
-    if "go" in langs or "cpp" in langs or "csharp" in langs or "ts" in langs:
-        _ensure_buf_linux(ctx)
+    # Pinned Go via official tarball.
+    if "go" in langs or "cpp" in langs or "csharp" in langs:
+        _ensure_go_tarball(ctx, "linux")
+
+    # Pinned buf via GitHub release.
+    _ensure_buf_unix(ctx, os_label="Linux")
+
     if "csharp" in langs:
         _ensure_dotnet_linux(ctx)
     if "ts" in langs:
         _ensure_node_linux(ctx)
 
+    # Pinned protobuf via vcpkg (matches devcontainer + Windows).
+    if "cpp" in langs:
+        _setup_vcpkg(ctx, cache)
+
+    save_loader_env(cache, ctx.runner)
     print("[info] Linux toolchain ready.")
     return 0
 
 
-def _ensure_buf_linux(ctx: "Context") -> None:
+def _ensure_buf_unix(ctx: "Context", os_label: str) -> None:
+    """Download the pinned buf release to ~/.local/bin/buf.
+
+    os_label: "Linux" or "Darwin" (matches the GitHub release naming).
+    """
     if _which("buf") is not None:
         return
     ver = ctx.versions.buf_version
@@ -623,11 +639,11 @@ def _ensure_buf_linux(ctx: "Context") -> None:
         if _stdlib_platform.machine().lower() in ("x86_64", "amd64")
         else "aarch64"
     )
-    url = f"https://github.com/bufbuild/buf/releases/download/v{ver}/buf-Linux-{arch}"
+    url = f"https://github.com/bufbuild/buf/releases/download/v{ver}/buf-{os_label}-{arch}"
     target_dir = Path.home() / ".local" / "bin"
     ctx.runner.mkdirp(target_dir)
     target = target_dir / "buf"
-    print(f"[info] Downloading buf {ver} -> {target}")
+    print(f"[info] Downloading buf {ver} ({os_label}/{arch}) -> {target}")
     if not ctx.runner.dry_run:
         urllib.request.urlretrieve(url, str(target))
         target.chmod(0o755)
@@ -648,6 +664,47 @@ def _ensure_dotnet_linux(ctx: "Context") -> None:
         [str(script), "--channel", ver, "--install-dir", str(install_dir)],
         check=False,
     )
+
+
+def _go_arch_macos() -> str:
+    return "arm64" if _stdlib_platform.machine().lower() in ("arm64", "aarch64") else "amd64"
+
+
+def _go_arch_linux() -> str:
+    return "arm64" if _stdlib_platform.machine().lower() in ("arm64", "aarch64") else "amd64"
+
+
+def _ensure_go_tarball(ctx: "Context", os_label: str) -> None:
+    """Install the official Go tarball at GO_VERSION into ~/.local/go/.
+
+    Mirrors the devcontainer Dockerfile's Go layer. `go` already on PATH is
+    accepted as-is — bumping versions.env's GO_VERSION on a machine with an
+    older Go installed is the user's call (we don't auto-replace).
+    """
+    if _which("go") is not None:
+        return
+    ver = ctx.versions.go_version
+    if not ver:
+        return
+    arch = _go_arch_macos() if os_label == "darwin" else _go_arch_linux()
+    url = f"https://go.dev/dl/go{ver}.{os_label}-{arch}.tar.gz"
+    target_root = Path.home() / ".local"
+    ctx.runner.mkdirp(target_root)
+    print(f"[info] Downloading Go {ver} ({os_label}/{arch}) -> {target_root}/go")
+    if ctx.runner.dry_run:
+        print(f"[dry-run] curl -L {url} | tar -C {target_root} -xz")
+        return
+    import tempfile
+    import tarfile
+    with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tmp:
+        urllib.request.urlretrieve(url, tmp.name)
+        tarball = tmp.name
+    with tarfile.open(tarball, "r:gz") as tf:
+        tf.extractall(target_root)
+    os.unlink(tarball)
+    bin_dir = target_root / "go" / "bin"
+    print(f"[info] Go {ver} installed. Add to your shell profile:")
+    print(f"    export PATH={bin_dir}:$PATH")
 
 
 def _ensure_node_linux(ctx: "Context") -> None:
@@ -753,7 +810,7 @@ def _setup_windows(langs: list[str], ctx: "Context", skip_vcpkg: bool) -> int:
 
     # Step 5: vcpkg + protobuf
     if "cpp" in langs and not skip_vcpkg:
-        _setup_vcpkg_windows(ctx, cache)
+        _setup_vcpkg(ctx, cache)
 
     # Optional: Go / .NET / Node
     if "go" in langs and _which("go") is None:
@@ -777,26 +834,42 @@ def _setup_windows(langs: list[str], ctx: "Context", skip_vcpkg: bool) -> int:
     return 0
 
 
-def _setup_vcpkg_windows(ctx: "Context", cache: dict) -> None:
+def _setup_vcpkg(ctx: "Context", cache: dict) -> None:
+    """Cross-platform vcpkg + protobuf installer (Windows / macOS / Linux).
+
+    Mirrors the devcontainer Dockerfile's vcpkg layer so native dev gets the
+    same protobuf version pin as CI and the container. Idempotent — second
+    runs detect existing checkout and skip.
+    """
     triplet = ctx.platform.vcpkg_triplet
     baseline = ctx.versions.vcpkg_baseline_commit
+    is_windows = ctx.platform.is_windows
+    bootstrap_name = "bootstrap-vcpkg.bat" if is_windows else "bootstrap-vcpkg.sh"
+    vcpkg_bin_name = "vcpkg.exe" if is_windows else "vcpkg"
+    protoc_bin_name = "protoc.exe" if is_windows else "protoc"
 
+    # Resolve a usable vcpkg root: existing $VCPKG_ROOT, then cache, then a
+    # standard location under the user's home dir.
     vcpkg_root = ctx.platform.vcpkg_root or _env_path("VCPKG_ROOT")
     if vcpkg_root is None and cache.get("vcpkg_root"):
         vcpkg_root = Path(cache["vcpkg_root"])
 
-    # Reject manifest-only vcpkg under VS install dir (no bootstrap-vcpkg.bat).
-    if vcpkg_root is not None and not (vcpkg_root / "bootstrap-vcpkg.bat").is_file():
+    # Reject manifest-only vcpkg (no bootstrap script). On Windows this filters
+    # the VS-bundled vcpkg under `<VS>\VC\vcpkg\` which refuses classic mode.
+    if vcpkg_root is not None and not (vcpkg_root / bootstrap_name).is_file():
         print(f"[warn] {vcpkg_root} looks like a manifest-only vcpkg; ignoring.")
         vcpkg_root = None
 
-    if vcpkg_root is None:
-        candidate = Path(os.environ.get("USERPROFILE", str(Path.home()))) / "vcpkg"
-        if (candidate / "bootstrap-vcpkg.bat").is_file():
-            vcpkg_root = candidate
+    home_default = (
+        Path(os.environ.get("USERPROFILE", str(Path.home()))) / "vcpkg"
+        if is_windows
+        else Path.home() / "vcpkg"
+    )
+    if vcpkg_root is None and (home_default / bootstrap_name).is_file():
+        vcpkg_root = home_default
 
     if vcpkg_root is None:
-        vcpkg_root = Path(os.environ.get("USERPROFILE", str(Path.home()))) / "vcpkg"
+        vcpkg_root = home_default
         print(f"[info] Cloning vcpkg into {vcpkg_root}...")
         ctx.runner.run(
             ["git", "clone", "https://github.com/microsoft/vcpkg.git", str(vcpkg_root)],
@@ -811,28 +884,41 @@ def _setup_vcpkg_windows(ctx: "Context", cache: dict) -> None:
                 ["git", "-C", str(vcpkg_root), "checkout", "--quiet", baseline],
                 check=False,
             )
-        # Bootstrap requires MSVC env on Windows.
-        bootstrap = vcpkg_root / "bootstrap-vcpkg.bat"
-        ctx.runner.run(
-            ctx.platform.windows_msvc_wrap([str(bootstrap), "-disableMetrics"]),
-            check=False,
-        )
+        # Bootstrap. On Windows it shells out to MSVC's link.exe so wrap in
+        # vcvarsall; Unix bootstrap is self-contained (downloads prebuilt
+        # vcpkg binary or builds from source via cc).
+        bootstrap_path = vcpkg_root / bootstrap_name
+        bootstrap_cmd: list[str] = [str(bootstrap_path), "-disableMetrics"]
+        if is_windows:
+            ctx.runner.run(
+                ctx.platform.windows_msvc_wrap(bootstrap_cmd),
+                check=False,
+            )
+        else:
+            # Make sure bootstrap.sh is executable (clone preserves permissions
+            # but a fresh git config sometimes drops the +x bit on Windows).
+            if not ctx.runner.dry_run and bootstrap_path.is_file():
+                bootstrap_path.chmod(0o755)
+            ctx.runner.run(bootstrap_cmd, check=False)
 
     cache["vcpkg_root"] = str(vcpkg_root)
     ctx.platform.vcpkg_root = vcpkg_root
 
-    vcpkg_exe = vcpkg_root / "vcpkg.exe"
+    vcpkg_exe = vcpkg_root / vcpkg_bin_name
     print(f"[info] vcpkg at: {vcpkg_root}")
 
     print(f"[info] Installing protobuf:{triplet} via vcpkg (classic mode)...")
-    ctx.runner.run(
-        ctx.platform.windows_msvc_wrap(
-            [str(vcpkg_exe), "install", f"protobuf:{triplet}"]
-        ),
-        check=False,
-    )
+    install_cmd = [str(vcpkg_exe), "install", f"protobuf:{triplet}"]
+    if is_windows:
+        ctx.runner.run(
+            ctx.platform.windows_msvc_wrap(install_cmd),
+            check=False,
+        )
+    else:
+        ctx.runner.run(install_cmd, check=False)
+
     protoc_dir = vcpkg_root / "installed" / triplet / "tools" / "protobuf"
-    if (protoc_dir / "protoc.exe").is_file():
+    if (protoc_dir / protoc_bin_name).is_file() or ctx.runner.dry_run:
         cache["protoc_tools_dir"] = str(protoc_dir)
         ctx.platform.protoc_tools_dir = protoc_dir
 
@@ -864,13 +950,10 @@ def _buf_generate(
     #   - protoc_dir_override (manifest-mode protoc from this build's
     #     vcpkg_installed/) wins — required when --protobuf-version is set,
     #     so codegen matches the libprotobuf headers cmake will use.
-    #   - Else the classic-mode protoc cached in ~/.loader-env.json.
+    #   - Else the classic-mode protoc cached in ~/.loader-env.json
+    #     (populated on every host by `make.py setup`).
     protoc_dir = protoc_dir_override or ctx.platform.protoc_tools_dir
-    if protoc_dir is not None and ctx.platform.is_windows:
-        env["PATH"] = f"{protoc_dir}{os.pathsep}{env.get('PATH', '')}"
-    elif protoc_dir is not None and not ctx.platform.is_windows:
-        # On Linux/macOS the manifest-mode protoc dir matters for vcpkg
-        # manifest builds too (CI testing-cpp.yml does this on Linux).
+    if protoc_dir is not None:
         env["PATH"] = f"{protoc_dir}{os.pathsep}{env.get('PATH', '')}"
     ctx.runner.run(cmd, cwd=cwd, env=env)
 
