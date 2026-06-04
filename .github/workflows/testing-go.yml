@@ -46,16 +46,20 @@ jobs:
           setup_only: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate protoconf
-        working-directory: test/go-tableau-loader
-        run: buf generate ..
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
 
       - name: Vet
         run: go vet ./...
 
-      - name: Unittest
-        run: go test -v -timeout 30m -race ./... -coverprofile=coverage.txt
-          -covermode=atomic
+      - name: Test
+        # Explicit --race so Windows CI matches Linux (Windows runners have
+        # MSVC available; -race needs cgo + a C compiler). On a fresh
+        # Windows dev machine without MSVC, make.py's default is --no-race;
+        # CI overrides that.
+        run: python make.py test --lang go --race --coverage
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5

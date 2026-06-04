@@ -70,10 +70,10 @@ jobs:
           setup_only: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate protoconf
-        working-directory: test/csharp-tableau-loader
-        run: buf generate ..
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
 
       - name: Test
-        working-directory: test/csharp-tableau-loader
-        run: dotnet test --nologo --logger "console;verbosity=normal"
+        run: python make.py test --lang csharp

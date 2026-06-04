@@ -2,271 +2,69 @@
 
 The official config loader for [Tableau](https://github.com/tableauio/tableau).
 
-## Prerequisites
+| Plugin | Language | Generated extension |
+| --- | --- | --- |
+| `protoc-gen-go-tableau-loader` | Go | `*.pc.go` |
+| `protoc-gen-cpp-tableau-loader` | C++17 | `*.pc.h` / `*.pc.cc` |
+| `protoc-gen-csharp-tableau-loader` | C# (Unity 2022.3 LTS / .NET 8) | `*.pc.cs` |
 
-- C++ standard: at least C++17
-- A working **`protoc` + `libprotobuf`** toolchain on your machine. The same
-  protobuf release **must** provide both: protobuf v22+ enforces a strict
-  gencode/runtime version check via `PROTOBUF_VERSION` in the generated
-  headers, so a mismatched `protoc` and `libprotobuf` will fail to link.
+## Quick start
 
-### Recommended: Dev Container (any host OS)
+Use [`make.py`](./make.py) (Python 3.10+, stdlib only):
 
-The fastest way to get a reproducible build environment is to open the
-repo in VS Code and choose **Reopen in Container**. The
-[`.devcontainer/`](./.devcontainer/) directory ships a multi-arch
-(linux/amd64 + linux/arm64) container that works on every host that
-can run Docker: Linux, macOS (Intel + Apple Silicon), and Windows +
-WSL2.
-
-All version pins (Go, buf, protobuf, vcpkg baseline, .NET, Node, CMake)
-live in
-[`.devcontainer/versions.env`](./.devcontainer/versions.env), the
-single source of truth shared with `prepare.bat` and CI. First
-container build is one-time ~25 min (vcpkg compiles protobuf from
-source). Subsequent reopens are near-instant.
-
-For hosts that can't or won't run Docker:
-
-- **macOS (native, no container).** Install via Homebrew. Versions
-  follow whatever the brew formula currently ships, which is usually
-  close enough; the loader's [`Install protobuf`](#install-protobuf)
-  section below covers the protobuf gotcha if you need an exact pin:
-
-  ```sh
-  # Toolchain via Homebrew
-  brew install go buf protobuf dotnet@8 node@20 cmake ninja
-  ```
-
-  > Apple Silicon: nothing in the loader requires Rosetta. If you see
-  > x86_64 Homebrew complaints, run `arch -arm64 brew ...`.
-
-- **Windows (bare-metal, native MSVC).** Run
-  [`prepare.bat`](./prepare.bat) for the C++ toolchain (MSVC, CMake,
-  Ninja, vcpkg + protobuf, buf), plus one-line winget installs for
-  Go / .NET / Node:
-
-  ```cmd
-  winget install --id GoLang.Go.1.24 -e
-  winget install --id Microsoft.DotNet.SDK.8 -e
-  winget install --id OpenJS.NodeJS.LTS -e
-  ```
-
-After the container starts you can skip the per-language setup below
-and jump straight to **[C++](#c)** / **[Go](#go)** / **[C#](#c-1)** /
-**[TypeScript](#typescript)**.
-
-Requirements: Docker Desktop (Windows + macOS) or Docker Engine (Linux),
-and the VS Code "Dev Containers" extension. See
-[`.devcontainer/README.md`](./.devcontainer/README.md) for the longer
-how-to.
-
-### Install protobuf
-
-> **Skip this section if you're using the [devcontainer](#recommended-dev-container-any-host-os).**
-> The instructions below cover the manual fallback for hosts where
-> Docker isn't available.
-
-Pick whichever channel fits your platform; loader does not bundle protobuf.
-
-- **vcpkg (recommended, cross-platform):**
-  ```sh
-  git clone https://github.com/microsoft/vcpkg.git ~/vcpkg
-  ~/vcpkg/bootstrap-vcpkg.sh                       # macOS / Linux
-  # .\vcpkg\bootstrap-vcpkg.bat                    # Windows
-  ~/vcpkg/vcpkg install protobuf                   # Linux:   x64-linux
-  # ~/vcpkg/vcpkg install protobuf:x64-osx         # macOS
-  # .\vcpkg\vcpkg install protobuf:x64-windows-static  # Windows (matches loader's static CRT)
-  ```
-  This installs whatever protobuf version the vcpkg checkout's baseline ships
-  (currently the 6.x line). To pin a specific version, use vcpkg **manifest
-  mode**: drop a `vcpkg.json` in your build directory with a `builtin-baseline`
-  + `overrides`, e.g.
-
-  ```json
-  {
-    "name": "loader-build",
-    "version": "0.1.0",
-    "dependencies": ["protobuf"],
-    "overrides": [{ "name": "protobuf", "version": "3.21.12" }],
-    "builtin-baseline": "<recent-vcpkg-commit-sha>"
-  }
-  ```
-
-  > **Note:** classic-mode `vcpkg install --x-version=...` is silently a no-op;
-  > version pinning only works in manifest mode. See
-  > `.github/workflows/testing-cpp.yml` for the exact pattern CI uses.
-
-  Then put `protoc` on `PATH` (so `buf generate` works) and pass
-  `-DCMAKE_TOOLCHAIN_FILE=<vcpkg-root>/scripts/buildsystems/vcpkg.cmake` to
-  CMake. See [Dev at Linux](#dev-at-linux) / [Dev at Windows](#dev-at-windows)
-  for the exact commands.
-
-- **Linux (system package):**
-  ```sh
-  sudo apt-get install -y protobuf-compiler libprotobuf-dev   # Debian / Ubuntu
-  ```
-  > **Avoid `dnf` / `yum` on RHEL-family distros.** The `protobuf-devel`
-  > shipped by Fedora / RHEL / TencentOS repos is typically stuck on
-  > protobuf **3.5.x**, which is far behind what loader expects and predates
-  > the v22 / Abseil split. Use vcpkg or build from source instead.
-
-- **macOS (Homebrew):**
-  ```sh
-  brew install protobuf
-  ```
-
-- **From source:** see [Protocol Buffers C++ Installation](https://github.com/protocolbuffers/protobuf/tree/master/src).
-  After installing, point CMake at it with `-DCMAKE_PREFIX_PATH=/path/to/protobuf-install`
-  (or `-DProtobuf_ROOT=...`).
-
-### Windows: bootstrap the rest of the toolchain
-
-> **Skip this section if you're using the [devcontainer](#recommended-dev-container-any-host-os).**
-> `prepare.bat` is the manual fallback for Windows hosts that can't run
-> Docker.
-
-Run `prepare.bat` **as Administrator** to install everything you need on a
-fresh Windows machine: [Chocolatey](https://chocolatey.org/),
-[CMake](https://github.com/Kitware/CMake/releases),
-[Ninja](https://ninja-build.org/), MSVC build tools, [buf](https://buf.build/),
-**vcpkg**, and `protobuf:x64-windows-static`. It also activates the MSVC
-compiler environment for the current cmd session.
-
-```bat
-.\prepare.bat
+```sh
+python make.py setup --lang all      # one-time host toolchain install
+python make.py test  --lang go       # Go
+python make.py test  --lang cpp      # C++
+python make.py test  --lang csharp   # C#
+python make.py test  --lang ts       # TypeScript (experimental)
 ```
 
-> ⚠️ **Admin required:** This script uses Chocolatey and MSI installers that write to system-protected directories (`C:\ProgramData`, `C:\Program Files`). Right-click Command Prompt → **Run as administrator**, then execute the script.
->
-> Preview what the script would do without making any changes:
-> ```bat
-> .\prepare.bat --dry-run
-> ```
->
-> Override the protobuf vcpkg port version (e.g. for the legacy v3 ABI):
-> ```bat
-> set PROTOBUF_VCPKG_VERSION=3.21.12 && .\prepare.bat
-> ```
-> Setting this switches the script to vcpkg **manifest mode** — the only mode
-> in which the version pin actually takes effect. The install root moves from
-> `%VCPKG_ROOT%\installed\x64-windows-static\` to a manifest dir under
-> `%LOCALAPPDATA%\loader\vcpkg-manifest\vcpkg_installed\`, and `prepare.bat`
-> exports its path as `%VCPKG_INSTALLED_DIR%`. Your downstream CMake invocation
-> must then add `-DVCPKG_INSTALLED_DIR=%VCPKG_INSTALLED_DIR%` and
-> `-DVCPKG_MANIFEST_INSTALL=OFF` (see [Dev at Windows](#dev-at-windows)).
+Recommended environment: [devcontainer](./.devcontainer/) (open in VS Code → **Dev Containers: Reopen in Container**). Inside the container, `setup` is a no-op.
 
-> **Note:** The **installation** part of `prepare.bat` only runs once per machine — it detects already-installed tools (Chocolatey, Ninja, CMake, MSVC Build Tools, buf, vcpkg, protobuf) and skips them, so no manual installation is required.
->
-> However, the MSVC compiler environment (`cl.exe` on `PATH`, plus `INCLUDE` / `LIB` / `LIBPATH` / `WindowsSdkDir` / `VCToolsInstallDir`) is exported to the **current cmd session only** — `vcvarsall.bat` does not (and should not) write these into the persistent user `PATH`. You therefore need to re-run `.\prepare.bat` in **every new cmd window** before building the loader. Subsequent runs are near-instant since no installation work is repeated.
+Native hosts: `python make.py setup` installs everything via `brew` (macOS), `apt`/`dnf` (Linux), or Chocolatey + MSVC + vcpkg (Windows). On Windows it must be run from **cmd as Administrator** the first time; subsequent runs work from any shell because each subprocess sources `vcvarsall.bat` itself — your shell PATH/INCLUDE/LIB are never mutated.
 
-### References
+## Commands
 
-- [Chocolatey](https://chocolatey.org/)
-- [CMake 3.31.8](https://github.com/Kitware/CMake/releases/tag/v3.31.8)
-- [Ninja](https://ninja-build.org/)
-- [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/)
-- [Use the Microsoft C++ Build Tools from the command line](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170)
+```
+python make.py setup    [--lang go|cpp|csharp|ts|all]
+python make.py generate --lang go|cpp|csharp|ts
+python make.py build    --lang go|cpp|csharp|ts [--cxx-std 17|20] [--cxx-compiler msvc|clang|gcc]
+                                                [--protobuf-version <ver>] [--triplet <triplet>]
+python make.py test     --lang go|cpp|csharp|ts [-k <filter>] [--smoke] [--coverage] [--no-race]
+                                                (+ all build flags)
+python make.py clean    [--lang ...] [--all]
+python make.py env                   # diagnostic JSON
+python make.py --version
+```
+
+Global flags: `--verbose / -v`, `--dry-run`, `--cwd <path>`.
+
+Examples:
+
+```sh
+python make.py test --lang go     -k Test_ActivityConf_OrderedMap
+python make.py test --lang go     --race          # opt in (Windows default is off; needs cgo+MSVC)
+python make.py test --lang cpp    --protobuf-version 3.21.12
+python make.py test --lang csharp -k HubTest.Load
+python make.py test --lang cpp    --no-clean   # skip pre-build wipe
+```
+
+The C++ flow wipes `test/cpp-tableau-loader/{build,src/tableau,src/protoconf}` by default (gitignored `*.pb.*` from a prior protobuf version shadows fresh codegen).
+
+## Tests for `make.py` itself
+
+```sh
+pip install pytest
+python -m pytest test_make.py -v
+```
+
+CI: [`.github/workflows/testing-make.yml`](.github/workflows/testing-make.yml).
+
+## References
+
+- [Protocol Buffers C++ Reference](https://protobuf.dev/reference/cpp/)
+- [Protocol Buffers Go Reference](https://protobuf.dev/reference/go/)
 - [vcpkg](https://github.com/microsoft/vcpkg)
 - [buf CLI](https://buf.build/docs/cli/)
-
-## C++
-
-### Dev at Linux
-
-- Change dir: `cd test/cpp-tableau-loader`
-- Generate protoconf: `buf generate ..` (assumes `protoc` is on `PATH`; if you installed via vcpkg, prepend `<vcpkg-root>/installed/x64-linux/tools/protobuf` to `PATH`)
-- CMake (system protobuf):
-  - C++17: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug`
-  - C++20: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=20`
-  - clang: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++`
-- CMake (vcpkg-provided protobuf):
-  ```sh
-  cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
-      -DCMAKE_TOOLCHAIN_FILE=<vcpkg-root>/scripts/buildsystems/vcpkg.cmake
-  ```
-- Build: `cmake --build build --parallel`
-- Test: `ctest --test-dir build --output-on-failure`
-
-### Dev at Windows
-
-> **Important:** CMake with Ninja requires MSVC environment variables (`cl.exe`, `INCLUDE`, `LIB`, etc.) to be active. Run `.\prepare.bat` from the **loader** root in the **same cmd session** (use **cmd**, not PowerShell — `prepare.bat` exports vars via `endlocal & set ...` which only works for a cmd parent process) before switching to the test directory. Opening a new terminal window will lose these variables.
->
-> **Build type:** vcpkg's `x64-windows-static` triplet (and our `prepare.bat`) builds protobuf as **Debug** with the static CRT (`/MTd`). To avoid LNK2038 `_ITERATOR_DEBUG_LEVEL` / `RuntimeLibrary` CRT-mismatch errors, the loader must also be built as Debug. `CMakeLists.txt` does not set a default, so always pass `-DCMAKE_BUILD_TYPE=Debug` explicitly — also required for multi-config generators (Visual Studio default = Debug, but stay explicit to match the protobuf you installed).
-
-- Initialize MSVC environment (from loader root): `.\prepare.bat`
-- Change dir: `cd test\cpp-tableau-loader`, or change directory with Drive, e.g.: `cd /D D:\GitHub\loader\test\cpp-tableau-loader`
-- Generate protoconf: `buf generate ..` (the `prepare.bat` step above already puts the vcpkg-built `protoc.exe` on `PATH`)
-- CMake (vcpkg-provided protobuf, classic mode — default):
-  - C++17: `cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static`
-  - C++20: append `-DCMAKE_CXX_STANDARD=20`
-- CMake (vcpkg manifest mode — only when you ran `prepare.bat` with `PROTOBUF_VCPKG_VERSION` set):
-  - C++17: `cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static -DVCPKG_INSTALLED_DIR="%VCPKG_INSTALLED_DIR%" -DVCPKG_MANIFEST_INSTALL=OFF`
-- Build: `cmake --build build --parallel`
-- Test: `ctest --test-dir build --output-on-failure`
-
-> **Note:** Tests are written with [GoogleTest](https://github.com/google/googletest), pulled in via CMake `FetchContent` (no manual installation needed).
-
-### References
-
-- [Protocol Buffers C++ Installation](https://github.com/protocolbuffers/protobuf/tree/master/src)
-- [Protocol Buffers C++ Reference](https://protobuf.dev/reference/cpp/)
-
-## Go
-
-- Install: **go1.24** or above
-- Change dir: `cd test/go-tableau-loader`
-- Generate protoconf: `buf generate ..`
-- Test: `go test ./...`
-
-### References
-
-- [Protocol Buffers Go Reference](https://protobuf.dev/reference/go/)
-
-## C#
-
-### Requirements
-
-- Unity 2022.3 LTS (C# 9)
-- dotnet-sdk-8.0
-
-### Test
-
-- Install: **dotnet-sdk-8.0**
-- Change dir: `cd test/csharp-tableau-loader`
-- Generate protoconf: `buf generate ..` (requires `protoc` on `PATH`; install protobuf as described in [Install protobuf](#install-protobuf))
-- Test: `dotnet test`
-
-> **Note:** Tests are written with [xUnit](https://xunit.net/).
-
-## TypeScript
-
-### Requirements
-
-- nodejs v16.0.0
-- protobufjs v7.2.3
-
-### Test
-
-- Change dir: `cd test/ts-tableau-loader`
-- Install depedencies: `npm install`
-- Generate protoconf: `npm run generate`
-- Test: `npm run test`
-
-### Problems in [protobufjs](https://github.com/protobufjs/protobuf.js):
-
-- [Unable to use Google well known types](https://github.com/protobufjs/protobuf.js/issues/1042)
-- [google.protobuf.Timestamp deserialization incompatible with canonical JSON representation](https://github.com/protobufjs/protobuf.js/issues/893)
-- [Implement wrapper for google.protobuf.Timestamp, and correctly generate wrappers for static target.](https://github.com/protobufjs/protobuf.js/pull/1258)
-
-
-> [protobufjs: Reflection vs. static code](https://github.com/protobufjs/protobuf.js/blob/master/cli/README.md#reflection-vs-static-code) 
-
-If using reflection (`.proto` or `JSON`) but not static code, and for well-known types support, then [proto3-json-serializer](https://github.com/googleapis/proto3-json-serializer-nodejs) is a good option. This library implements proto3 JSON serialization and deserialization for
-[protobuf.js](https://www.npmjs.com/package/protobufjs) protobuf objects
-according to the [spec](https://protobuf.dev/programming-guides/proto3/#json).
-
-### References:
-
-- [How to Setup a TypeScript + Node.js Project](https://khalilstemmler.com/blogs/typescript/node-starter-project/)
 - [proto3-json-serializer](https://github.com/googleapis/proto3-json-serializer-nodejs)

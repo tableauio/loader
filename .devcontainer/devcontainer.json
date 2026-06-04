@@ -2,7 +2,7 @@
     // The loader's only devcontainer. Multi-arch: builds linux/amd64 on
     // x64 hosts, linux/arm64 on Apple Silicon and Windows-on-ARM. Use
     // this on every host that can run Docker Desktop or Docker Engine.
-    // Bare-metal Windows users (no Docker) bootstrap via prepare.bat at
+    // Native users (no Docker) bootstrap via `python make.py setup` at
     // the repo root.
     //
     // See ./versions.env for all toolchain pins.

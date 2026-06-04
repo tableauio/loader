@@ -5,7 +5,7 @@
 # C++/Go/.NET/Node toolchain plus protobuf at the exact versions CI uses.
 #
 # All version pins are read from ./versions.env (the single source of
-# truth shared with prepare.bat and the CI workflows). To bump Go / buf /
+# truth shared with make.py and the CI workflows). To bump Go / buf /
 # protobuf / .NET / Node / vcpkg-baseline, edit that file — not this one.
 #
 # Build context is .devcontainer/ (the directory containing this file),
@@ -72,7 +72,7 @@ EOF
 #
 # Pins (all from /opt/versions.env):
 #   VCPKG_BASELINE_COMMIT — same commit testing-cpp.yml's VCPKG_COMMIT and
-#       prepare.bat's VCPKG_BASELINE_COMMIT use. Bumping vcpkg = bump that
+#       make.py's vcpkg setup use. Bumping vcpkg = bump that
 #       one line in versions.env.
 #   PROTOBUF_VERSION    — defaults to versions.env's value (CI's primary).
 #       Override at build time:
@@ -169,7 +169,7 @@ case "$(basename "${INFO_FILE:-/missing}" 2>/dev/null)" in
     echo "ERROR: installed protobuf does not match requested version ${PROTOBUF_VERSION}."
     echo "       vcpkg installed-file marker: ${INFO_FILE:-<none>}"
     echo "       Bump VCPKG_BASELINE_COMMIT in .devcontainer/versions.env"
-    echo "       (and prepare.bat + testing-cpp.yml will pick it up automatically)"
+    echo "       (and make.py + testing-cpp.yml will pick it up automatically)"
     echo "       to a commit that knows about the requested version."
     exit 1
     ;;

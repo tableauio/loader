@@ -1,7 +1,7 @@
 name: Load pinned versions
 description: >
   Reads .devcontainer/versions.env (the single source of truth shared
-  with the devcontainer and prepare.bat) and exports each KEY=VALUE pair to
+  with the devcontainer and make.py) and exports each KEY=VALUE pair to
   GITHUB_ENV so subsequent steps can reference them as env-context values
   (e.g. env.BUF_VERSION).
 

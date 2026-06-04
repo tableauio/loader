@@ -59,6 +59,11 @@ jobs:
               if: runner.os == 'Windows'
               uses: ilammy/msvc-dev-cmd@v1
 
+            - name: Setup Python
+              uses: actions/setup-python@v6
+              with:
+                  python-version: "3.12"
+
             - name: Render vcpkg.json
               working-directory: test/cpp-tableau-loader
               shell: bash
@@ -98,12 +103,6 @@ jobs:
               shell: pwsh
               run: Add-Content -Path $env:GITHUB_PATH -Value "$env:VCPKG_INSTALLED_DIR\${{ matrix.triplet }}\tools\protobuf"
 
-            - name: Verify protoc
-              shell: bash
-              run: |
-                  which protoc
-                  protoc --version
-
             - name: Install Buf
               uses: bufbuild/buf-action@v1
               with:
@@ -111,25 +110,10 @@ jobs:
                   setup_only: true
                   github_token: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Generate protoconf
-              working-directory: test/cpp-tableau-loader
-              run: buf generate ..
-
-            - name: CMake Configure
-              working-directory: test/cpp-tableau-loader
+            - name: Test
               run: >
-                  cmake -S . -B build -G Ninja
-                  -DCMAKE_BUILD_TYPE=Debug
-                  -DCMAKE_CXX_STANDARD=17
-                  -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
-                  -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
-                  -DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }}
-                  -DVCPKG_MANIFEST_INSTALL=OFF
-
-            - name: CMake Build
-              working-directory: test/cpp-tableau-loader
-              run: cmake --build build --parallel
-
-            - name: Run tests
-              working-directory: test/cpp-tableau-loader
-              run: ctest --test-dir build --output-on-failure
+                  python make.py test --lang cpp
+                  --protobuf-version ${{ matrix.config.protobuf-version }}
+                  --triplet ${{ matrix.triplet }}
+                  --no-clean
+                  --no-vcpkg-install

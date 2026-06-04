@@ -1,0 +1,50 @@
+name: Testing make.py
+
+# Regression tests for make.py itself: unit tests + dry-run snapshot
+# tests of the orchestrator. Catches make.py bugs before the slower
+# testing-{go,cpp,csharp}.yml E2E workflows even start.
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'make.py'
+      - 'test_make.py'
+      - '.devcontainer/versions.env'
+      - '.github/workflows/testing-make.yml'
+  pull_request:
+    paths:
+      - 'make.py'
+      - 'test_make.py'
+      - '.devcontainer/versions.env'
+      - '.github/workflows/testing-make.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install pytest
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Run make.py tests
+        run: python -m pytest test_make.py -v
