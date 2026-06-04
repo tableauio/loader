@@ -968,6 +968,30 @@ def _cpp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
         ctx.runner.rmtree(cwd / "src" / "tableau")
         ctx.runner.rmtree(cwd / "src" / "protoconf")
 
+    # Classic mode: a stale vcpkg.json from a previous --protobuf-version run
+    # would silently switch cmake's vcpkg toolchain into manifest mode and
+    # build the wrong libprotobuf into build/vcpkg_installed/. Always remove
+    # it here unless we're about to render a fresh one below.
+    if not protobuf_version:
+        manifest_path = cwd / "vcpkg.json"
+        if manifest_path.is_file():
+            if ctx.runner.dry_run:
+                print(f"[dry-run] rm {manifest_path}")
+            else:
+                manifest_path.unlink()
+
+    # Classic mode: a stale vcpkg.json from a previous --protobuf-version run
+    # would silently switch cmake's vcpkg toolchain into manifest mode and
+    # build the wrong libprotobuf into build/vcpkg_installed/. Always remove
+    # it here unless we're about to render a fresh one below.
+    if not protobuf_version:
+        manifest_path = cwd / "vcpkg.json"
+        if manifest_path.is_file():
+            if ctx.runner.dry_run:
+                print(f"[dry-run] rm {manifest_path}")
+            else:
+                manifest_path.unlink()
+
     # Manifest mode: render vcpkg.json pinning the requested protobuf-version,
     # then run `vcpkg install` to populate vcpkg_installed/. This matches CI's
     # testing-cpp.yml flow (which uses lukka/run-vcpkg with runVcpkgInstall:

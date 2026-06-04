@@ -2,118 +2,118 @@ name: Testing C++
 
 # Trigger on pushes, PRs (excluding documentation changes), and nightly.
 on:
-    push:
-        branches: [master, main]
-    pull_request:
-    schedule:
-        - cron: 0 0 * * * # daily at 00:00
-    workflow_dispatch:
+  push:
+    branches: [master, main]
+  pull_request:
+  schedule:
+    - cron: 0 0 * * * # daily at 00:00
+  workflow_dispatch:
 
 permissions:
-    contents: read
+  contents: read
 
 jobs:
-    test:
-        strategy:
-            fail-fast: false
-            matrix:
-                os: [ubuntu-latest, windows-latest]
-                config:
-                    - label: modern
-                      protobuf-version: "6.33.4"
-                    - label: legacy-v3
-                      protobuf-version: "3.21.12"
-                include:
-                    - os: ubuntu-latest
-                      triplet: x64-linux
-                    - os: windows-latest
-                      triplet: x64-windows-static
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        config:
+          - label: modern
+            protobuf-version: "6.33.4"
+          - label: legacy-v3
+            protobuf-version: "3.21.12"
+        include:
+          - os: ubuntu-latest
+            triplet: x64-linux
+          - os: windows-latest
+            triplet: x64-windows-static
 
-        name: test (${{ matrix.os }}, ${{ matrix.config.label }})
-        runs-on: ${{ matrix.os }}
-        timeout-minutes: 45
+    name: test (${{ matrix.os }}, ${{ matrix.config.label }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
 
-        env:
-            VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
-            VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+    env:
+      VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
+      VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
 
-        steps:
-            - name: Checkout Code
-              uses: actions/checkout@v6
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
 
-            - name: Read pinned versions
-              uses: ./.github/actions/load-versions
+      - name: Read pinned versions
+        uses: ./.github/actions/load-versions
 
-            - name: Install Go
-              uses: actions/setup-go@v6
-              with:
-                  go-version-file: go.mod
-                  cache-dependency-path: go.sum
-                  cache: true
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+          cache: true
 
-            - name: Install Ninja (Ubuntu)
-              if: runner.os == 'Linux'
-              run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Install Ninja (Ubuntu)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
 
-            - name: Setup MSVC (Windows)
-              if: runner.os == 'Windows'
-              uses: ilammy/msvc-dev-cmd@v1
+      - name: Setup MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
 
-            - name: Setup Python
-              uses: actions/setup-python@v6
-              with:
-                  python-version: "3.12"
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
 
-            - name: Render vcpkg.json
-              working-directory: test/cpp-tableau-loader
-              shell: bash
-              run: |
-                  cat > vcpkg.json <<EOF
-                  {
-                    "name": "loader-cpp-test",
-                    "version": "0.1.0",
-                    "dependencies": ["protobuf"],
-                    "overrides": [
-                      { "name": "protobuf", "version": "${{ matrix.config.protobuf-version }}" }
-                    ],
-                    "builtin-baseline": "${{ env.VCPKG_COMMIT }}"
-                  }
-                  EOF
+      - name: Render vcpkg.json
+        working-directory: test/cpp-tableau-loader
+        shell: bash
+        run: |
+          cat > vcpkg.json <<EOF
+          {
+            "name": "loader-cpp-test",
+            "version": "0.1.0",
+            "dependencies": ["protobuf"],
+            "overrides": [
+              { "name": "protobuf", "version": "${{ matrix.config.protobuf-version }}" }
+            ],
+            "builtin-baseline": "${{ env.VCPKG_COMMIT }}"
+          }
+          EOF
 
-            - name: Cache vcpkg_installed
-              id: cache-vcpkg-installed
-              uses: actions/cache@v4
-              with:
-                  path: ${{ env.VCPKG_INSTALLED_DIR }}
-                  key: vcpkg-installed-${{ runner.os }}-${{ matrix.triplet }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('test/cpp-tableau-loader/vcpkg.json') }}
+      - name: Cache vcpkg_installed
+        id: cache-vcpkg-installed
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_INSTALLED_DIR }}
+          key: vcpkg-installed-${{ runner.os }}-${{ matrix.triplet }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('test/cpp-tableau-loader/vcpkg.json') }}
 
-            - name: Setup vcpkg & install protobuf
-              uses: lukka/run-vcpkg@v11
-              with:
-                  vcpkgGitCommitId: ${{ env.VCPKG_COMMIT }}
-                  vcpkgJsonGlob: "test/cpp-tableau-loader/vcpkg.json"
-                  runVcpkgInstall: true
+      - name: Setup vcpkg & install protobuf
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT }}
+          vcpkgJsonGlob: "test/cpp-tableau-loader/vcpkg.json"
+          runVcpkgInstall: true
 
-            - name: Add vcpkg-installed protoc to PATH (Linux)
-              if: runner.os == 'Linux'
-              run: echo "$VCPKG_INSTALLED_DIR/${{ matrix.triplet }}/tools/protobuf" >> "$GITHUB_PATH"
+      - name: Add vcpkg-installed protoc to PATH (Linux)
+        if: runner.os == 'Linux'
+        run: echo "$VCPKG_INSTALLED_DIR/${{ matrix.triplet }}/tools/protobuf" >> "$GITHUB_PATH"
 
-            - name: Add vcpkg-installed protoc to PATH (Windows)
-              if: runner.os == 'Windows'
-              shell: pwsh
-              run: Add-Content -Path $env:GITHUB_PATH -Value "$env:VCPKG_INSTALLED_DIR\${{ matrix.triplet }}\tools\protobuf"
+      - name: Add vcpkg-installed protoc to PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Add-Content -Path $env:GITHUB_PATH -Value "$env:VCPKG_INSTALLED_DIR\${{ matrix.triplet }}\tools\protobuf"
 
-            - name: Install Buf
-              uses: bufbuild/buf-action@v1
-              with:
-                  version: ${{ env.BUF_VERSION }}
-                  setup_only: true
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Buf
+        uses: bufbuild/buf-action@v1
+        with:
+          version: ${{ env.BUF_VERSION }}
+          setup_only: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Test
-              run: >
-                  python make.py test --lang cpp
-                  --protobuf-version ${{ matrix.config.protobuf-version }}
-                  --triplet ${{ matrix.triplet }}
-                  --no-clean
-                  --no-vcpkg-install
+      - name: Test
+        run: >
+          python make.py test --lang cpp
+          --protobuf-version ${{ matrix.config.protobuf-version }}
+          --triplet ${{ matrix.triplet }}
+          --no-clean
+          --no-vcpkg-install

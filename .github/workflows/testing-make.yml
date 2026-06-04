@@ -8,16 +8,16 @@ on:
   push:
     branches: [master, main]
     paths:
-      - 'make.py'
-      - 'test_make.py'
-      - '.devcontainer/versions.env'
-      - '.github/workflows/testing-make.yml'
+      - "make.py"
+      - "test_make.py"
+      - ".devcontainer/versions.env"
+      - ".github/workflows/testing-make.yml"
   pull_request:
     paths:
-      - 'make.py'
-      - 'test_make.py'
-      - '.devcontainer/versions.env'
-      - '.github/workflows/testing-make.yml'
+      - "make.py"
+      - "test_make.py"
+      - ".devcontainer/versions.env"
+      - ".github/workflows/testing-make.yml"
   workflow_dispatch:
 
 permissions:
@@ -41,7 +41,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install pytest
         run: python -m pip install --upgrade pip pytest

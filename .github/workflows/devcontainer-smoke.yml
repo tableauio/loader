@@ -23,12 +23,12 @@ name: Devcontainer Smoke
 on:
   pull_request:
     paths:
-      - '.devcontainer/**'
-      - '.github/workflows/devcontainer-smoke.yml'
+      - ".devcontainer/**"
+      - ".github/workflows/devcontainer-smoke.yml"
   push:
     branches: [master, main]
     paths:
-      - '.devcontainer/**'
+      - ".devcontainer/**"
   workflow_dispatch:
 
 permissions:
