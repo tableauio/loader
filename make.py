@@ -179,17 +179,28 @@ class Platform:
             return "x64-linux"
         return "x64-linux"
 
-    def cmake_toolchain_args(self, triplet: Optional[str] = None) -> list[str]:
-        """Extra cmake -D flags to pick up vcpkg's protobuf, when applicable."""
-        if self.in_devcontainer:
+    def cmake_toolchain_args(
+        self, triplet: Optional[str] = None, force_vcpkg: bool = False
+    ) -> list[str]:
+        """Extra cmake -D flags to pick up vcpkg's protobuf, when applicable.
+
+        Default behaviour (force_vcpkg=False):
+          - devcontainer:  []  (Dockerfile presets CMAKE_PREFIX_PATH)
+          - macOS/Linux:   []  (system protobuf via brew/apt)
+          - Windows:       toolchain + triplet flags (always uses vcpkg)
+
+        With force_vcpkg=True, every host (incl. Linux/macOS) gets the
+        toolchain flags. Used when --protobuf-version is set, because
+        manifest-mode means we ARE using vcpkg regardless of host.
+        """
+        if self.in_devcontainer and not force_vcpkg:
             return []  # Dockerfile presets CMAKE_PREFIX_PATH=/opt/vcpkg/active.
-        if not self.is_windows:
+        if not self.is_windows and not force_vcpkg:
             # macOS/Linux native: system protobuf or homebrew/apt resolves via
             # find_package(Protobuf) without a toolchain file.
             return []
-        # Windows: VCPKG_ROOT must be set, either by `make.py setup` or by
-        # the CI's lukka/run-vcpkg step. The toolchain file location is
-        # canonical inside any vcpkg root.
+        # Locate VCPKG_ROOT (cached attr or env). Required on Windows always,
+        # and on every OS when force_vcpkg=True (manifest mode).
         vcpkg_root = self.vcpkg_root or _env_path("VCPKG_ROOT")
         if vcpkg_root is None:
             # Best-effort fallback so cmake configure fails with a useful
@@ -985,13 +996,21 @@ def _cpp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
         # it's the system or devcontainer vcpkg.
         vcpkg_root = ctx.platform.vcpkg_root or _env_path("VCPKG_ROOT")
         if vcpkg_root is None:
-            print(
-                "[error] --protobuf-version requires VCPKG_ROOT to be set "
-                "(run `python make.py setup --lang cpp` first, or set "
-                "VCPKG_ROOT in your environment).",
-                file=sys.stderr,
-            )
-            return 1
+            if ctx.runner.dry_run:
+                # Dry-run: print what would happen with a placeholder so the
+                # snapshot test can still verify the command sequence.
+                vcpkg_root = Path("<VCPKG_ROOT>")
+            else:
+                print(
+                    "[error] --protobuf-version requires VCPKG_ROOT to be set "
+                    "(run `python make.py setup --lang cpp` first, or set "
+                    "VCPKG_ROOT in your environment).",
+                    file=sys.stderr,
+                )
+                return 1
+        # Surface the resolved root on the platform so cmake_toolchain_args
+        # picks it up for the configure command.
+        ctx.platform.vcpkg_root = vcpkg_root
         vcpkg_exe = vcpkg_root / ("vcpkg.exe" if ctx.platform.is_windows else "vcpkg")
 
         # Install the manifest: must `cd` into the manifest dir for vcpkg to
@@ -1041,7 +1060,15 @@ def _cpp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
         configure_cmd.append(f"-DCMAKE_CXX_COMPILER={compiler}")
     if shutil.which("ninja") is not None:
         configure_cmd.extend(["-G", "Ninja"])
-    configure_cmd.extend(ctx.platform.cmake_toolchain_args(triplet=triplet))
+    configure_cmd.extend(
+        ctx.platform.cmake_toolchain_args(
+            triplet=triplet,
+            # Manifest mode means we ARE using vcpkg regardless of host;
+            # force the toolchain flags even on Linux/macOS so cmake's
+            # find_package(Protobuf) resolves against vcpkg_installed/.
+            force_vcpkg=bool(protobuf_version),
+        )
+    )
     configure_cmd.extend(cmake_extra)
 
     ctx.runner.run(ctx.platform.windows_msvc_wrap(configure_cmd), cwd=cwd)

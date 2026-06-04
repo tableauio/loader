@@ -596,6 +596,49 @@ class TestDryRunCpp:
         # Triplet must be plumbed through.
         assert "--triplet=x64-windows-static" in out
 
+    def test_test_lang_cpp_manifest_no_vcpkg_root_dry_run_ok(self, monkeypatch):
+        # On a host with no VCPKG_ROOT (e.g. CI runner of testing-make.yml),
+        # --dry-run must still print the command sequence rather than abort.
+        # Real (non-dry-run) execution still hard-errors via a separate code
+        # path; that's covered by the unit test in TestPlatform.
+        monkeypatch.delenv("VCPKG_ROOT", raising=False)
+        proc = run_make(
+            "--dry-run",
+            "test",
+            "--lang",
+            "cpp",
+            "--protobuf-version",
+            "3.21.12",
+            "--triplet",
+            "x64-linux",
+            "--no-clean",
+        )
+        assert proc.returncode == 0, proc.stderr
+        assert "-DVCPKG_INSTALLED_DIR=" in proc.stdout
+        assert "-DVCPKG_MANIFEST_INSTALL=OFF" in proc.stdout
+
+    def test_test_lang_cpp_manifest_forces_toolchain_on_linux(self, monkeypatch):
+        # Manifest mode must emit -DCMAKE_TOOLCHAIN_FILE even on Linux:
+        # find_package(Protobuf) needs vcpkg's vcpkg.cmake to resolve the
+        # manifest-installed protobuf. Plain Linux (no --protobuf-version)
+        # would correctly get [] (system protobuf via apt).
+        monkeypatch.setenv("VCPKG_ROOT", "/tmp/fake-vcpkg")
+        proc = run_make(
+            "--dry-run",
+            "test",
+            "--lang",
+            "cpp",
+            "--protobuf-version",
+            "3.21.12",
+            "--triplet",
+            "x64-linux",
+            "--no-clean",
+        )
+        assert proc.returncode == 0, proc.stderr
+        # Must have toolchain flags for the manifest install to be picked up.
+        assert "-DCMAKE_TOOLCHAIN_FILE=" in proc.stdout
+        assert "-DVCPKG_TARGET_TRIPLET=x64-linux" in proc.stdout
+
     def test_test_lang_cpp_no_vcpkg_install_skips_install(self):
         proc = run_make(
             "--dry-run",
