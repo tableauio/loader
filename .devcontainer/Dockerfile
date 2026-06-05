@@ -2,11 +2,11 @@
 # tableauio/loader devcontainer
 #
 # Single-stage, multi-arch (amd64 + arm64) image bringing the full
-# C++/Go/.NET/Node toolchain plus protobuf at the exact versions CI uses.
+# C++/Go/.NET toolchain plus protobuf at the exact versions CI uses.
 #
 # All version pins are read from ./versions.env (the single source of
 # truth shared with make.py and the CI workflows). To bump Go / buf /
-# protobuf / .NET / Node / vcpkg-baseline, edit that file — not this one.
+# protobuf / .NET / vcpkg-baseline, edit that file — not this one.
 #
 # Build context is .devcontainer/ (the directory containing this file),
 # so `COPY versions.env ...` resolves directly.
@@ -182,8 +182,8 @@ ln -s /opt/vcpkg/active/tools/protobuf/protoc /usr/local/bin/protoc
 EOF
 
 # ---------------------------------------------------------------------------
-# .NET SDK + Node.js — apt-based installs from the official Microsoft and
-# NodeSource repositories. Versions are read from /opt/versions.env.
+# .NET SDK — apt-based install from the official Microsoft repository.
+# Version is read from /opt/versions.env.
 # apt-get clean + rm /var/lib/apt/lists at the end keeps the layer small.
 # ---------------------------------------------------------------------------
 RUN <<EOF
@@ -193,10 +193,8 @@ curl -fsSL https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft
     -o /tmp/ms.deb
 dpkg -i /tmp/ms.deb
 rm /tmp/ms.deb
-curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash -
 apt-get install -y --no-install-recommends \
-    "dotnet-sdk-${DOTNET_VERSION}" \
-    nodejs
+    "dotnet-sdk-${DOTNET_VERSION}"
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOF
