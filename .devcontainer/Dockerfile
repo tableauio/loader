@@ -85,7 +85,6 @@ EOF
 # a different port revision than requested.
 # ---------------------------------------------------------------------------
 ARG DEFAULT_VARIANT=
-ARG DEFAULT_VARIANT=
 ARG PROTOBUF_VERSION=
 ENV VCPKG_ROOT=/opt/vcpkg
 # Tell vcpkg to share its compiled binaries via /vcpkg-binarycache. The

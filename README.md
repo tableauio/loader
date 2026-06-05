@@ -72,6 +72,6 @@ CI: [`.github/workflows/testing-make.yml`](.github/workflows/testing-make.yml).
 
 - [Protocol Buffers C++ Reference](https://protobuf.dev/reference/cpp/)
 - [Protocol Buffers Go Reference](https://protobuf.dev/reference/go/)
+- [protobuf-es](https://github.com/bufbuild/protobuf-es)
 - [vcpkg](https://github.com/microsoft/vcpkg)
 - [buf CLI](https://buf.build/docs/cli/)
-- [proto3-json-serializer](https://github.com/googleapis/proto3-json-serializer-nodejs)

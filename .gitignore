@@ -37,6 +37,7 @@ node_modules
 
 *.pb.*
 __pycache__/
+.pytest_cache
 
 cmd/protoc-gen-cpp-tableau-loader/protoc-gen-cpp-tableau-loader
 cmd/protoc-gen-go-tableau-loader/protoc-gen-go-tableau-loader
