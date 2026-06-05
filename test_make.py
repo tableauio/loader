@@ -215,8 +215,10 @@ class TestPlatform:
         not just the loader devcontainer. The detect() heuristic must NOT
         treat its presence as a devcontainer signal."""
         # Simulate: only /.dockerenv exists; /opt/vcpkg/active does NOT.
+        # Use as_posix() so the literal compares correctly on Windows where
+        # str(WindowsPath('/.dockerenv')) renders with backslashes.
         def fake_exists(self):
-            return str(self) == "/.dockerenv"
+            return self.as_posix() == "/.dockerenv"
         monkeypatch.setattr(make.Path, "exists", fake_exists)
         p = make.Platform.detect()
         assert p.in_devcontainer is False, (
@@ -227,7 +229,7 @@ class TestPlatform:
         """Positive: /opt/vcpkg/active is the marker the devcontainer's
         Dockerfile actually sets. Its presence is the sole devcontainer signal."""
         def fake_exists(self):
-            return str(self) == "/opt/vcpkg/active"
+            return self.as_posix() == "/opt/vcpkg/active"
         monkeypatch.setattr(make.Path, "exists", fake_exists)
         p = make.Platform.detect()
         assert p.in_devcontainer is True
