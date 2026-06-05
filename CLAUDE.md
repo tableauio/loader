@@ -16,7 +16,7 @@ Generated code is opinionated: every worksheet message becomes a `Messager` with
 
 ## Common commands
 
-Build/test happens **per language** under `test/<lang>-tableau-loader/` (TS lives under `_lab/ts/`). The repo root only hosts the Go module + plugin sources; `go test ./...` from root only exercises shared packages (`internal/index`, `internal/loadutil`, `pkg/treemap`, `pkg/udiff`).
+Build/test happens **per language** under `test/<lang>-tableau-loader/`. The repo root only hosts the Go module + plugin sources; `go test ./...` from root only exercises shared packages (`internal/index`, `internal/loadutil`, `pkg/treemap`, `pkg/udiff`).
 
 The single cross-platform driver is **`make.py`** (Python 3.10+, stdlib only). It works on Windows, macOS, Linux, and inside the devcontainer, and is what CI calls.
 
@@ -76,9 +76,6 @@ python make.py test --lang cpp --protobuf-version 3.21.12            # legacy v3
 # C#
 python make.py test --lang csharp                                    # full
 python make.py test --lang csharp -k HubTest.Load                    # FullyQualifiedName~HubTest.Load
-
-# TypeScript (experimental, not in CI)
-python make.py test --lang ts                                        # npm install + generate + test
 ```
 
 GoogleTest is fetched via CMake `FetchContent` — no manual install.
