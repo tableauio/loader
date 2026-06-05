@@ -459,6 +459,136 @@ def save_loader_env(data: dict, runner: Runner) -> None:
     LOADER_ENV_PATH.write_text(text, encoding="utf-8")
 
 
+# ---------------------------------------------------------------------------
+# vcpkg baseline lookup
+# ---------------------------------------------------------------------------
+#
+# Pinning protobuf via `overrides` while leaving `builtin-baseline` on a newer
+# vcpkg commit lets transitive deps (abseil/utf8-range/re2/...) drift forward
+# and breaks ABI (e.g. missing `absl::if_constexpr`). Instead we pin the
+# baseline itself to the vcpkg commit whose `versions/baseline.json` had our
+# target protobuf — that whole snapshot is by construction self-consistent.
+#
+# Resolution: `git log -S '"X.Y.Z"' -- versions/baseline.json` → for each hit,
+# verify `default.protobuf.baseline == X.Y.Z` at that commit (guards against
+# the literal appearing in unrelated ports). Results cached in
+# ~/.loader-env.json under "vcpkg_baseline_for_protobuf".
+
+
+def _resolve_vcpkg_baseline_for_protobuf(
+    protobuf_version: str,
+    vcpkg_root: Path,
+    runner: Runner,
+) -> str:
+    """Find the vcpkg commit whose baseline.json has protobuf == protobuf_version.
+
+    Raises RuntimeError if no such commit can be found in the local vcpkg
+    checkout — caller should surface a clear error and suggest `git fetch`
+    or a different --protobuf-version.
+    """
+    # Cache hit?
+    cache = load_loader_env()
+    cached_map = cache.get("vcpkg_baseline_for_protobuf", {}) or {}
+    cached = cached_map.get(protobuf_version)
+    if cached:
+        # Validate the cached commit still has the expected protobuf — the
+        # user might have re-cloned vcpkg or rewritten history.
+        if _vcpkg_baseline_has_protobuf(vcpkg_root, cached, protobuf_version):
+            return cached
+        # Cache is stale; fall through to re-resolve.
+        cached_map.pop(protobuf_version, None)
+
+    if runner.dry_run:
+        # Dry-run: don't shell out to git, return a placeholder so snapshot
+        # tests can still verify the command sequence.
+        return f"<baseline-for-protobuf-{protobuf_version}>"
+
+    if not (vcpkg_root / ".git").exists():
+        raise RuntimeError(
+            f"{vcpkg_root} is not a git checkout; cannot resolve a vcpkg "
+            f"baseline commit for protobuf {protobuf_version}."
+        )
+
+    # Step 1: candidate commits via pickaxe search on the literal version string.
+    try:
+        out = subprocess.check_output(
+            [
+                "git",
+                "-C",
+                str(vcpkg_root),
+                "log",
+                "-S",
+                f'"{protobuf_version}"',
+                "--reverse",
+                "--format=%H",
+                "--",
+                "versions/baseline.json",
+            ],
+            text=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(
+            f"git log failed while searching vcpkg history for protobuf "
+            f"{protobuf_version}: {e}"
+        ) from e
+
+    candidates = [line.strip() for line in out.splitlines() if line.strip()]
+    if not candidates:
+        raise RuntimeError(
+            f"No commit in {vcpkg_root} touches versions/baseline.json with "
+            f'the literal "{protobuf_version}". Possible causes:\n'
+            f"  - your local vcpkg checkout is shallow / out-of-date "
+            f"(`git -C {vcpkg_root} fetch --unshallow origin master` may help)\n"
+            f"  - protobuf {protobuf_version} was never the vcpkg baseline "
+            f"(use --vcpkg-baseline=<commit> to point at a custom snapshot)"
+        )
+
+    # Step 2: validate each candidate by reading baseline.json at that commit.
+    for sha in candidates:
+        if _vcpkg_baseline_has_protobuf(vcpkg_root, sha, protobuf_version):
+            cached_map[protobuf_version] = sha
+            cache["vcpkg_baseline_for_protobuf"] = cached_map
+            save_loader_env(cache, runner)
+            print(
+                f"[info] resolved vcpkg baseline for protobuf "
+                f"{protobuf_version} -> {sha[:12]}",
+                file=sys.stderr,
+            )
+            return sha
+
+    raise RuntimeError(
+        f'Found {len(candidates)} commits mentioning "{protobuf_version}" in '
+        f"versions/baseline.json but none had default.protobuf.baseline set "
+        f"to that exact version. Pass --vcpkg-baseline=<commit> manually."
+    )
+
+
+def _vcpkg_baseline_has_protobuf(
+    vcpkg_root: Path, commit_sha: str, expected_version: str
+) -> bool:
+    """Read versions/baseline.json at commit_sha; return True iff protobuf matches."""
+    try:
+        blob = subprocess.check_output(
+            [
+                "git",
+                "-C",
+                str(vcpkg_root),
+                "show",
+                f"{commit_sha}:versions/baseline.json",
+            ],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError:
+        return False
+    try:
+        data = json.loads(blob)
+    except ValueError:
+        return False
+    entry = data.get("default", {}).get("protobuf", {})
+    return entry.get("baseline") == expected_version
+
+
 def hydrate_platform_from_env(plat: Platform) -> None:
     """Populate Platform from $VCPKG_ROOT and ~/.loader-env.json.
 
@@ -1063,44 +1193,19 @@ def _cpp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
             else:
                 manifest_path.unlink()
 
-    # Classic mode: a stale vcpkg.json from a previous --protobuf-version run
-    # would silently switch cmake's vcpkg toolchain into manifest mode and
-    # build the wrong libprotobuf into build/vcpkg_installed/. Always remove
-    # it here unless we're about to render a fresh one below.
-    if not protobuf_version:
-        manifest_path = cwd / "vcpkg.json"
-        if manifest_path.is_file():
-            if ctx.runner.dry_run:
-                print(f"[dry-run] rm {manifest_path}")
-            else:
-                manifest_path.unlink()
-
     # Manifest mode: render vcpkg.json pinning the requested protobuf-version,
     # then run `vcpkg install` to populate vcpkg_installed/. This matches CI's
     # testing-cpp.yml flow (which uses lukka/run-vcpkg with runVcpkgInstall:
     # true) and means switching --protobuf-version Just Works without
     # re-running `make.py setup`. Idempotent: vcpkg detects already-installed
     # packages and skips them.
+    #
+    # Baseline resolution order (no `overrides` — see module comment above):
+    #   1. --vcpkg-baseline=<sha>                       (explicit override)
+    #   2. _resolve_vcpkg_baseline_for_protobuf(...)    (auto: git-search vcpkg)
     cmake_extra: list[str] = []
     if protobuf_version:
-        baseline = ctx.versions.vcpkg_baseline_commit or ""
-        manifest = {
-            "name": "loader-cpp-test",
-            "version": "0.1.0",
-            "dependencies": ["protobuf"],
-            "overrides": [{"name": "protobuf", "version": protobuf_version}],
-            "builtin-baseline": baseline,
-        }
-        manifest_path = cwd / "vcpkg.json"
-        if not ctx.runner.dry_run:
-            manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-        installed_dir = Path(
-            os.environ.get("VCPKG_INSTALLED_DIR", str(cwd / "vcpkg_installed"))
-        )
-
-        # Locate vcpkg.exe / vcpkg. On Windows we hydrated VCPKG_ROOT from
-        # ~/.loader-env.json; on CI it's set by lukka/run-vcpkg; on Linux
-        # it's the system or devcontainer vcpkg.
+        # Need a vcpkg checkout to resolve the baseline by git history.
         vcpkg_root = ctx.platform.vcpkg_root or _env_path("VCPKG_ROOT")
         if vcpkg_root is None:
             if ctx.runner.dry_run:
@@ -1118,6 +1223,38 @@ def _cpp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
         # Surface the resolved root on the platform so cmake_toolchain_args
         # picks it up for the configure command.
         ctx.platform.vcpkg_root = vcpkg_root
+
+        explicit_baseline = getattr(args, "vcpkg_baseline", None)
+        if explicit_baseline:
+            baseline = explicit_baseline
+            print(f"[info] using --vcpkg-baseline={baseline[:12]}", file=sys.stderr)
+        else:
+            try:
+                baseline = _resolve_vcpkg_baseline_for_protobuf(
+                    protobuf_version, vcpkg_root, ctx.runner
+                )
+            except RuntimeError as e:
+                print(f"[error] {e}", file=sys.stderr)
+                print(
+                    "[hint] If you know a vcpkg commit whose baseline matches "
+                    "your protobuf, pass --vcpkg-baseline=<sha> to skip auto-resolution.",
+                    file=sys.stderr,
+                )
+                return 1
+
+        manifest = {
+            "name": "loader-cpp-test",
+            "version": "0.1.0",
+            "dependencies": ["protobuf"],
+            "builtin-baseline": baseline,
+        }
+        manifest_path = cwd / "vcpkg.json"
+        if not ctx.runner.dry_run:
+            manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        installed_dir = Path(
+            os.environ.get("VCPKG_INSTALLED_DIR", str(cwd / "vcpkg_installed"))
+        )
+
         vcpkg_exe = vcpkg_root / ("vcpkg.exe" if ctx.platform.is_windows else "vcpkg")
 
         # Install the manifest: must `cd` into the manifest dir for vcpkg to
@@ -1379,6 +1516,15 @@ def _add_build_flags(sp: argparse.ArgumentParser) -> None:
         type=str,
         default=None,
         help="(cpp) pin vcpkg protobuf port to this version (manifest mode)",
+    )
+    sp.add_argument(
+        "--vcpkg-baseline",
+        type=str,
+        default=None,
+        help=(
+            "(cpp manifest mode) explicit vcpkg builtin-baseline commit; "
+            "skips auto-resolution from --protobuf-version"
+        ),
     )
     sp.add_argument(
         "--triplet", type=str, default=None, help="(cpp) vcpkg triplet override"

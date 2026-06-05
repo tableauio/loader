@@ -19,10 +19,28 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         config:
+          # vcpkg-commit pins the `builtin-baseline` for each protobuf
+          # version. We use the baseline (not `overrides`) so that abseil /
+          # utf8-range / re2 are pulled from the same self-consistent vcpkg
+          # snapshot as protobuf — `overrides` alone would let those
+          # transitive deps drift forward and break ABI.
+          #
+          # CI passes the SHA explicitly via --vcpkg-baseline so the run is
+          # fully reproducible and independent of vcpkg's git history (which
+          # `lukka/run-vcpkg` checks out shallowly). For ad-hoc local runs
+          # `make.py` can auto-resolve the SHA from $VCPKG_ROOT instead — see
+          # `_resolve_vcpkg_baseline_for_protobuf`.
+          #
+          # To pin a new protobuf version, run on a full vcpkg checkout:
+          #   git -C $VCPKG_ROOT log -S '"X.Y.Z"' -- versions/baseline.json
+          # then pick the newest commit whose baseline.json has
+          # default.protobuf.baseline == "X.Y.Z".
           - label: modern
             protobuf-version: "6.33.4"
+            vcpkg-commit: "1f6bbba3da511773189e5075b6781222402d10fa"
           - label: legacy-v3
             protobuf-version: "3.21.12"
+            vcpkg-commit: "6245ce44a03f04d19be125ab1bbab578d0933e85"
         include:
           - os: ubuntu-latest
             triplet: x64-linux
@@ -65,6 +83,10 @@ jobs:
           python-version: "3.12"
 
       - name: Render vcpkg.json
+        # `lukka/run-vcpkg` runs `vcpkg install` before `make.py test`, so
+        # the manifest must exist beforehand. We render the same shape
+        # `make.py` would (baseline-only, no `overrides`) keyed on the same
+        # SHA, so the cache key and the eventual build see one manifest.
         working-directory: test/cpp-tableau-loader
         shell: bash
         run: |
@@ -73,10 +95,7 @@ jobs:
             "name": "loader-cpp-test",
             "version": "0.1.0",
             "dependencies": ["protobuf"],
-            "overrides": [
-              { "name": "protobuf", "version": "${{ matrix.config.protobuf-version }}" }
-            ],
-            "builtin-baseline": "${{ env.VCPKG_COMMIT }}"
+            "builtin-baseline": "${{ matrix.config.vcpkg-commit }}"
           }
           EOF
 
@@ -85,12 +104,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.VCPKG_INSTALLED_DIR }}
-          key: vcpkg-installed-${{ runner.os }}-${{ matrix.triplet }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('test/cpp-tableau-loader/vcpkg.json') }}
+          key: vcpkg-installed-${{ runner.os }}-${{ matrix.triplet }}-${{ matrix.config.vcpkg-commit }}-${{ hashFiles('test/cpp-tableau-loader/vcpkg.json') }}
 
       - name: Setup vcpkg & install protobuf
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT }}
+          vcpkgGitCommitId: ${{ matrix.config.vcpkg-commit }}
           vcpkgJsonGlob: "test/cpp-tableau-loader/vcpkg.json"
           runVcpkgInstall: true
 
@@ -111,9 +130,13 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Test
+        # Pass --vcpkg-baseline explicitly so make.py reuses the SHA we
+        # already rendered into vcpkg.json above, instead of auto-resolving
+        # from the vcpkg checkout (which is shallow on the CI runner).
         run: >
           python make.py test --lang cpp
           --protobuf-version ${{ matrix.config.protobuf-version }}
+          --vcpkg-baseline ${{ matrix.config.vcpkg-commit }}
           --triplet ${{ matrix.triplet }}
           --no-clean
           --no-vcpkg-install
