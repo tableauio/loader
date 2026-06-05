@@ -3,14 +3,14 @@
 make.py — single cross-platform entrypoint for the tableauio/loader repo.
 
 Consolidates per-language `buf generate` / `cmake` / `go test` / `dotnet test`
-/ `npm test` recipes into one Python tool that works identically on
+recipes into one Python tool that works identically on
 native Windows, macOS, Linux, and inside the devcontainer.
 
 Usage (high level):
-    python make.py setup    [--lang go|cpp|csharp|ts|all] [--dry-run]
-    python make.py generate --lang go|cpp|csharp|ts
-    python make.py build    --lang go|cpp|csharp|ts [build flags]
-    python make.py test     --lang go|cpp|csharp|ts [build flags] [-k FILTER] [--smoke]
+    python make.py setup    [--lang go|cpp|csharp|all] [--dry-run]
+    python make.py generate --lang go|cpp|csharp
+    python make.py build    --lang go|cpp|csharp [build flags]
+    python make.py test     --lang go|cpp|csharp [build flags] [-k FILTER] [--smoke]
     python make.py clean    [--lang ...] [--all]
     python make.py env
     python make.py --version
@@ -100,10 +100,6 @@ class Versions:
     @property
     def dotnet_version(self) -> Optional[str]:
         return self.raw.get("DOTNET_VERSION")
-
-    @property
-    def node_version(self) -> Optional[str]:
-        return self.raw.get("NODE_VERSION")
 
     @property
     def cmake_version(self) -> Optional[str]:
@@ -620,7 +616,7 @@ def hydrate_platform_from_env(plat: Platform) -> None:
 # ---------------------------------------------------------------------------
 
 
-LANGS_ALL = ("go", "cpp", "csharp", "ts")
+LANGS_ALL = ("go", "cpp", "csharp")
 
 
 def _which(name: str) -> Optional[str]:
@@ -667,8 +663,8 @@ def _setup_macos(langs: list[str], ctx: "Context") -> int:
 
     # Brew packages: only the version-tolerant pieces (cmake, ninja, build
     # essentials). Go and protobuf are pinned via tarball / vcpkg below;
-    # buf is pinned via direct download. dotnet@N and node@N are pinnable
-    # via brew's versioned formulae.
+    # buf is pinned via direct download. dotnet@N is pinnable via brew's
+    # versioned formulae.
     pkgs: list[str] = []
     if "cpp" in langs:
         pkgs.extend(["cmake", "ninja"])
@@ -676,8 +672,6 @@ def _setup_macos(langs: list[str], ctx: "Context") -> int:
         # `dotnet@8` (cask) covers .NET 8.x. Use the major.
         major = (ctx.versions.dotnet_version or "8.0").split(".")[0]
         pkgs.append(f"dotnet@{major}")
-    if "ts" in langs:
-        pkgs.append(f"node@{ctx.versions.node_version or '20'}")
     if pkgs:
         ctx.runner.run(["brew", "update"], check=False)
         ctx.runner.run(["brew", "install", *pkgs], check=False)
@@ -744,8 +738,6 @@ def _setup_linux(langs: list[str], ctx: "Context") -> int:
 
     if "csharp" in langs:
         _ensure_dotnet_linux(ctx)
-    if "ts" in langs:
-        _ensure_node_linux(ctx)
 
     # Pinned protobuf via vcpkg (matches devcontainer + Windows).
     if "cpp" in langs:
@@ -837,12 +829,6 @@ def _ensure_go_tarball(ctx: "Context", os_label: str) -> None:
     bin_dir = target_root / "go" / "bin"
     print(f"[info] Go {ver} installed. Add to your shell profile:")
     print(f"    export PATH={bin_dir}:$PATH")
-
-
-def _ensure_node_linux(ctx: "Context") -> None:
-    if _which("node") is not None:
-        return
-    print("[info] Node not found; install via your distro or NodeSource manually.")
 
 
 def _setup_windows(langs: list[str], ctx: "Context", skip_vcpkg: bool) -> int:
@@ -953,10 +939,6 @@ def _setup_windows(langs: list[str], ctx: "Context", skip_vcpkg: bool) -> int:
         ctx.runner.run(
             ["winget", "install", "--id", "Microsoft.DotNet.SDK.8", "-e"], check=False
         )
-    if "ts" in langs and _which("node") is None:
-        ctx.runner.run(
-            ["winget", "install", "--id", "OpenJS.NodeJS.LTS", "-e"], check=False
-        )
 
     save_loader_env(cache, ctx.runner)
     print("[info] Windows toolchain ready.")
@@ -1061,8 +1043,6 @@ def _setup_vcpkg(ctx: "Context", cache: dict) -> None:
 
 
 def _lang_dir(repo_root: Path, lang: str) -> Path:
-    if lang == "ts":
-        return repo_root / "_lab" / "ts"
     return repo_root / "test" / f"{lang}-tableau-loader"
 
 
@@ -1070,12 +1050,6 @@ def _buf_generate(
     ctx: "Context", lang: str, protoc_dir_override: Optional[Path] = None
 ) -> None:
     cwd = _lang_dir(ctx.repo_root, lang)
-    if lang == "ts":
-        # The TypeScript scratchpad has its own `npm run generate` script.
-        ctx.runner.run(
-            ["npm", "run", "generate"], cwd=cwd, shell=ctx.platform.is_windows
-        )
-        return
     cmd = ctx.platform.windows_msvc_wrap(["buf", "generate", ".."])
     env = os.environ.copy()
     # Pick the protoc to put on PATH:
@@ -1111,8 +1085,6 @@ def _build_or_test(args, ctx: "Context", run_tests: bool) -> int:
         return _cpp_build_or_test(args, ctx, run_tests)
     if lang == "csharp":
         return _csharp_build_or_test(args, ctx, run_tests)
-    if lang == "ts":
-        return _ts_build_or_test(args, ctx, run_tests)
     print(f"[error] unknown --lang {lang}", file=sys.stderr)
     return 2
 
@@ -1350,22 +1322,6 @@ def _csharp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
     return 0
 
 
-# ----- TypeScript -----
-
-
-def _ts_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
-    cwd = _lang_dir(ctx.repo_root, "ts")
-    if not (cwd / "node_modules").is_dir():
-        ctx.runner.run(["npm", "install"], cwd=cwd, shell=ctx.platform.is_windows)
-    if not getattr(args, "no_generate", False):
-        ctx.runner.run(
-            ["npm", "run", "generate"], cwd=cwd, shell=ctx.platform.is_windows
-        )
-    if run_tests:
-        ctx.runner.run(["npm", "run", "test"], cwd=cwd, shell=ctx.platform.is_windows)
-    return 0
-
-
 # ----- clean / env -----
 
 
@@ -1387,9 +1343,6 @@ def cmd_clean(args, ctx: "Context") -> int:
             ctx.runner.rmtree(cwd / "protoconf")
         elif lang == "go":
             ctx.runner.rmtree(cwd / "protoconf")
-        elif lang == "ts":
-            ctx.runner.rmtree(cwd / "node_modules")
-            ctx.runner.rmtree(cwd / "dist")
     return 0
 
 
@@ -1417,8 +1370,6 @@ def cmd_env(args, ctx: "Context") -> int:
             "cmake": _which("cmake"),
             "ninja": _which("ninja"),
             "dotnet": _which("dotnet"),
-            "node": _which("node"),
-            "npm": _which("npm"),
         },
         "versions_env": ctx.versions.raw,
     }

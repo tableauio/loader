@@ -46,7 +46,6 @@ class TestVersions:
             "PROTOBUF_VERSION",
             "VCPKG_BASELINE_COMMIT",
             "DOTNET_VERSION",
-            "NODE_VERSION",
             "CMAKE_VERSION",
         ):
             assert key in v.raw, f"Expected {key} in versions.env"
@@ -59,7 +58,6 @@ class TestVersions:
         assert v.protobuf_version == v.raw["PROTOBUF_VERSION"]
         assert v.vcpkg_baseline_commit == v.raw["VCPKG_BASELINE_COMMIT"]
         assert v.dotnet_version == v.raw["DOTNET_VERSION"]
-        assert v.node_version == v.raw["NODE_VERSION"]
         assert v.cmake_version == v.raw["CMAKE_VERSION"]
 
     def test_protobuf_version_looks_like_semver(self):
@@ -449,10 +447,6 @@ class TestLangDir:
             == REPO_ROOT / "test" / "csharp-tableau-loader"
         )
 
-    def test_ts_lives_under_lab(self):
-        # TS is special-cased to _lab/ts/ per CLAUDE.md.
-        assert make._lang_dir(REPO_ROOT, "ts") == REPO_ROOT / "_lab" / "ts"
-
 
 # ---------------------------------------------------------------------------
 # Subprocess helpers
@@ -499,7 +493,6 @@ class TestTopLevel:
             "PROTOBUF_VERSION",
             "VCPKG_BASELINE_COMMIT",
             "DOTNET_VERSION",
-            "NODE_VERSION",
             "CMAKE_VERSION",
         ):
             assert key in proc.stdout, f"--version missing {key}"
@@ -791,7 +784,7 @@ class TestDryRunClean:
         proc = run_make("--dry-run", "clean", "--all")
         assert proc.returncode == 0
         out = proc.stdout
-        # Should mention dirs from at least cpp, csharp, go, ts.
+        # Should mention dirs from at least cpp, csharp, go.
         assert "cpp-tableau-loader" in out
         assert "csharp-tableau-loader" in out
         assert "go-tableau-loader" in out
