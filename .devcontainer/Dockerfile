@@ -193,6 +193,7 @@ curl -fsSL https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft
     -o /tmp/ms.deb
 dpkg -i /tmp/ms.deb
 rm /tmp/ms.deb
+apt-get update
 apt-get install -y --no-install-recommends \
     "dotnet-sdk-${DOTNET_VERSION}"
 apt-get clean
