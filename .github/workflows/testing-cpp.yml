@@ -46,6 +46,19 @@ jobs:
             triplet: x64-linux
           - os: windows-latest
             triplet: x64-windows-static
+        exclude:
+          # The 2023-01-15 vcpkg snapshot pinned by legacy-v3 references
+          # MSYS2 distfiles that have since been pruned from repo.msys2.org;
+          # the protobuf:x64-windows port pulls them in via vcpkg_acquire_msys
+          # → vcpkg_fixup_pkgconfig and fails the download. Linux uses the
+          # system pkg-config so it isn't affected. Keep legacy-v3 as a
+          # Linux-only smoke test for the protobuf-3 ABI; modern still
+          # exercises the Windows build path.
+          - os: windows-latest
+            config:
+              label: legacy-v3
+              protobuf-version: "3.21.12"
+              vcpkg-commit: "6245ce44a03f04d19be125ab1bbab578d0933e85"
 
     name: test (${{ matrix.os }}, ${{ matrix.config.label }})
     runs-on: ${{ matrix.os }}
