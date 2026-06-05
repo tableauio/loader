@@ -8,10 +8,15 @@
     // See ./versions.env for all toolchain pins.
     "name": "tableauio/loader",
     // Build args wire host env to Dockerfile ARGs:
+    //   LOADER_DEFAULT_VARIANT on the host -> DEFAULT_VARIANT inside.
+    //     Switches both protobuf AND vcpkg baseline atomically; values come
+    //     from versions.env's MODERN_*/LEGACY_V3_* rows.
     //   LOADER_PROTOBUF_VERSION on the host -> PROTOBUF_VERSION inside.
-    // Default falls through to versions.env's PROTOBUF_VERSION (CI's modern
-    // matrix entry). To rebuild against the legacy v3 line:
-    //   LOADER_PROTOBUF_VERSION=3.21.12 code .   # then Reopen in Container.
+    //     Surgical: overrides ONLY the protobuf version, vcpkg baseline
+    //     stays at the variant's pin. For a clean variant switch, prefer
+    //     LOADER_DEFAULT_VARIANT.
+    // Both default empty (versions.env's DEFAULT_VARIANT row wins). Example:
+    //   LOADER_DEFAULT_VARIANT=legacy-v3 code .   # then Reopen in Container.
     //
     // "context" defaults to the directory holding this devcontainer.json
     // (.devcontainer/), so the Dockerfile's `COPY versions.env ...`
@@ -19,6 +24,7 @@
     "build": {
         "dockerfile": "Dockerfile",
         "args": {
+            "DEFAULT_VARIANT": "${localEnv:LOADER_DEFAULT_VARIANT:}",
             "PROTOBUF_VERSION": "${localEnv:LOADER_PROTOBUF_VERSION:}"
         }
     },

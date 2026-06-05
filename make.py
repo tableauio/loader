@@ -91,11 +91,52 @@ class Versions:
 
     @property
     def protobuf_version(self) -> Optional[str]:
-        return self.raw.get("PROTOBUF_VERSION")
+        """Resolved protobuf version for the active (DEFAULT_VARIANT) row."""
+        return self._variant_value("PROTOBUF_VERSION")
 
     @property
     def vcpkg_baseline_commit(self) -> Optional[str]:
-        return self.raw.get("VCPKG_BASELINE_COMMIT")
+        """Resolved vcpkg baseline SHA for the active (DEFAULT_VARIANT) row."""
+        return self._variant_value("VCPKG_BASELINE_COMMIT")
+
+    @property
+    def default_variant(self) -> str:
+        """Active variant label (e.g. ``modern`` / ``legacy_v3``).
+
+        Matched case-insensitively against variant-prefixed keys: a value of
+        ``modern`` resolves keys with prefix ``MODERN_``; ``legacy-v3`` /
+        ``legacy_v3`` both resolve ``LEGACY_V3_``. Defaults to ``modern`` if
+        the key is absent (preserves behaviour of older versions.env files).
+        """
+        return (self.raw.get("DEFAULT_VARIANT") or "modern").strip().lower()
+
+    def variants(self) -> dict[str, dict[str, str]]:
+        """Enumerate every (protobuf, vcpkg-baseline) variant defined.
+
+        Returns ``{variant_label: {"protobuf_version": ..., "vcpkg_baseline_commit": ...}}``
+        keyed by lowercase label. Labels that are missing one of the two keys
+        are still reported with the key they have, so callers can detect a
+        half-defined variant.
+        """
+        suffixes = {
+            "_PROTOBUF_VERSION": "protobuf_version",
+            "_VCPKG_BASELINE_COMMIT": "vcpkg_baseline_commit",
+        }
+        out: dict[str, dict[str, str]] = {}
+        for k, v in self.raw.items():
+            for sfx, field_name in suffixes.items():
+                if k.endswith(sfx):
+                    label = k[: -len(sfx)].lower()
+                    out.setdefault(label, {})[field_name] = v
+                    break
+        return out
+
+    def _variant_value(self, suffix: str) -> Optional[str]:
+        """Resolve ``<DEFAULT_VARIANT>_<suffix>`` (uppercase). Falls back to
+        the unprefixed key for backward compat with old versions.env files
+        that used the flat ``PROTOBUF_VERSION`` / ``VCPKG_BASELINE_COMMIT``."""
+        prefix = self.default_variant.upper().replace("-", "_")
+        return self.raw.get(f"{prefix}_{suffix}") or self.raw.get(suffix)
 
     @property
     def dotnet_version(self) -> Optional[str]:

@@ -84,6 +84,8 @@ EOF
 # post-install assertion catches the case where vcpkg's resolution still picks
 # a different port revision than requested.
 # ---------------------------------------------------------------------------
+ARG DEFAULT_VARIANT=
+ARG DEFAULT_VARIANT=
 ARG PROTOBUF_VERSION=
 ENV VCPKG_ROOT=/opt/vcpkg
 # Tell vcpkg to share its compiled binaries via /vcpkg-binarycache. The
@@ -119,12 +121,38 @@ ENV VCPKG_DEFAULT_BINARY_CACHE=/vcpkg-binarycache
 # (matters only on multi-builder hosts; safe default).
 RUN --mount=type=cache,target=/vcpkg-binarycache,sharing=locked <<EOF
 set -eux
+_ARG_DEFAULT_VARIANT="${DEFAULT_VARIANT}"
 _ARG_PROTOBUF_VERSION="${PROTOBUF_VERSION}"
 . /opt/versions.env
 . /opt/buildargs.env
 
-# Prefer the build-arg when non-empty; otherwise the value just sourced
-# from versions.env stays.
+# Prefer the build-arg variant when non-empty; otherwise versions.env's
+# DEFAULT_VARIANT wins. Empty means "no override".
+if [ -n "${_ARG_DEFAULT_VARIANT:-}" ]; then
+  DEFAULT_VARIANT="${_ARG_DEFAULT_VARIANT}"
+fi
+
+# Resolve the (PROTOBUF_VERSION, VCPKG_BASELINE_COMMIT) pair from the active
+# variant. versions.env declares one row per variant (MODERN_*, LEGACY_V3_*);
+# DEFAULT_VARIANT picks which one is in effect for this image build.
+case "${DEFAULT_VARIANT:-modern}" in
+  modern)
+    PROTOBUF_VERSION="${MODERN_PROTOBUF_VERSION}"
+    VCPKG_BASELINE_COMMIT="${MODERN_VCPKG_BASELINE_COMMIT}"
+    ;;
+  legacy-v3|legacy_v3)
+    PROTOBUF_VERSION="${LEGACY_V3_PROTOBUF_VERSION}"
+    VCPKG_BASELINE_COMMIT="${LEGACY_V3_VCPKG_BASELINE_COMMIT}"
+    ;;
+  *)
+    echo "[error] unknown DEFAULT_VARIANT: ${DEFAULT_VARIANT}" >&2
+    exit 1
+    ;;
+esac
+
+# Surgical override: when LOADER_PROTOBUF_VERSION is set, use it for the
+# protobuf pin only — keep the variant's vcpkg baseline. Mostly useful for
+# bisecting protobuf releases against a known-good vcpkg snapshot.
 if [ -n "${_ARG_PROTOBUF_VERSION:-}" ]; then
   PROTOBUF_VERSION="${_ARG_PROTOBUF_VERSION}"
 fi

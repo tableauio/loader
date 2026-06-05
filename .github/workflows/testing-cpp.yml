@@ -25,6 +25,12 @@ jobs:
           # snapshot as protobuf — `overrides` alone would let those
           # transitive deps drift forward and break ABI.
           #
+          # The labels and SHAs below mirror .devcontainer/versions.env's
+          # MODERN_*/LEGACY_V3_* entries — keep them in sync when bumping.
+          # GitHub Actions matrices are evaluated at workflow parse time,
+          # so we can't read them from versions.env via the load-versions
+          # composite action; the duplication is intentional.
+          #
           # CI passes the SHA explicitly via --vcpkg-baseline so the run is
           # fully reproducible and independent of vcpkg's git history (which
           # `lukka/run-vcpkg` checks out shallowly). For ad-hoc local runs
@@ -37,7 +43,7 @@ jobs:
           # default.protobuf.baseline == "X.Y.Z".
           - label: modern
             protobuf-version: "6.33.4"
-            vcpkg-commit: "1f6bbba3da511773189e5075b6781222402d10fa"
+            vcpkg-commit: "56bb2411609227288b70117ead2c47585ba07713"
           - label: legacy-v3
             protobuf-version: "3.21.12"
             vcpkg-commit: "6245ce44a03f04d19be125ab1bbab578d0933e85"

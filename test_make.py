@@ -43,8 +43,11 @@ class TestVersions:
         for key in (
             "GO_VERSION",
             "BUF_VERSION",
-            "PROTOBUF_VERSION",
-            "VCPKG_BASELINE_COMMIT",
+            "DEFAULT_VARIANT",
+            "MODERN_PROTOBUF_VERSION",
+            "MODERN_VCPKG_BASELINE_COMMIT",
+            "LEGACY_V3_PROTOBUF_VERSION",
+            "LEGACY_V3_VCPKG_BASELINE_COMMIT",
             "DOTNET_VERSION",
             "CMAKE_VERSION",
         ):
@@ -55,10 +58,46 @@ class TestVersions:
         v = make.Versions.load(REPO_ROOT)
         assert v.go_version == v.raw["GO_VERSION"]
         assert v.buf_version == v.raw["BUF_VERSION"]
-        assert v.protobuf_version == v.raw["PROTOBUF_VERSION"]
-        assert v.vcpkg_baseline_commit == v.raw["VCPKG_BASELINE_COMMIT"]
         assert v.dotnet_version == v.raw["DOTNET_VERSION"]
         assert v.cmake_version == v.raw["CMAKE_VERSION"]
+        # default_variant is lowercased.
+        assert v.default_variant == v.raw["DEFAULT_VARIANT"].lower()
+        # protobuf_version / vcpkg_baseline_commit resolve through DEFAULT_VARIANT
+        # to the corresponding MODERN_/LEGACY_V3_-prefixed key.
+        prefix = v.default_variant.upper().replace("-", "_")
+        assert v.protobuf_version == v.raw[f"{prefix}_PROTOBUF_VERSION"]
+        assert v.vcpkg_baseline_commit == v.raw[f"{prefix}_VCPKG_BASELINE_COMMIT"]
+
+    def test_variants_enumerates_all_rows(self):
+        v = make.Versions.load(REPO_ROOT)
+        variants = v.variants()
+        # Both rows declared in versions.env must be present and complete.
+        assert "modern" in variants
+        assert "legacy_v3" in variants
+        for label, row in variants.items():
+            assert row.get("protobuf_version"), f"{label} missing protobuf_version"
+            assert row.get("vcpkg_baseline_commit"), f"{label} missing vcpkg_baseline_commit"
+
+    def test_default_variant_falls_back_to_modern(self):
+        # Old versions.env files without DEFAULT_VARIANT default to 'modern'.
+        v = make.Versions(raw={})
+        assert v.default_variant == "modern"
+
+    def test_variant_value_falls_back_to_unprefixed_key(self):
+        # Backward compat: a flat versions.env (legacy schema) still resolves.
+        v = make.Versions(raw={"PROTOBUF_VERSION": "9.9.9", "VCPKG_BASELINE_COMMIT": "f" * 40})
+        assert v.protobuf_version == "9.9.9"
+        assert v.vcpkg_baseline_commit == "f" * 40
+
+    def test_default_variant_label_with_dash_resolves(self):
+        # 'legacy-v3' (CI label form) and 'legacy_v3' (env-key form) both work.
+        v = make.Versions(raw={
+            "DEFAULT_VARIANT": "legacy-v3",
+            "LEGACY_V3_PROTOBUF_VERSION": "3.21.12",
+            "LEGACY_V3_VCPKG_BASELINE_COMMIT": "a" * 40,
+        })
+        assert v.protobuf_version == "3.21.12"
+        assert v.vcpkg_baseline_commit == "a" * 40
 
     def test_protobuf_version_looks_like_semver(self):
         v = make.Versions.load(REPO_ROOT)
@@ -492,8 +531,11 @@ class TestTopLevel:
         for key in (
             "GO_VERSION",
             "BUF_VERSION",
-            "PROTOBUF_VERSION",
-            "VCPKG_BASELINE_COMMIT",
+            "DEFAULT_VARIANT",
+            "MODERN_PROTOBUF_VERSION",
+            "MODERN_VCPKG_BASELINE_COMMIT",
+            "LEGACY_V3_PROTOBUF_VERSION",
+            "LEGACY_V3_VCPKG_BASELINE_COMMIT",
             "DOTNET_VERSION",
             "CMAKE_VERSION",
         ):

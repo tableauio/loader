@@ -34,13 +34,13 @@ C++ wipes `test/cpp-tableau-loader/{build,src/tableau,src/protoconf}` before reg
 
 On Windows, `make.py` wraps every C++ subprocess in `cmd /c "call vcvarsall.bat x64 >nul && <cmd>"` so MSVC env lives per-subprocess; the shell PATH is never mutated.
 
-`make.py setup` pins every toolchain dimension (matches CI + devcontainer): Go via official go.dev tarball to `~/.local/go/`, buf via GitHub release binary, protobuf via **vcpkg at `VCPKG_BASELINE_COMMIT` on every host (macOS/Linux/Windows)**, .NET / Node via Microsoft+NodeSource (Linux) or Homebrew (macOS) or winget (Windows), cmake/ninja via the host's package manager. Resolved paths cached in `~/.loader-env.json` so subsequent `make.py test --lang cpp` invocations pick them up without re-running setup.
+`make.py setup` pins every toolchain dimension (matches CI + devcontainer): Go via official go.dev tarball to `~/.local/go/`, buf via GitHub release binary, protobuf via **vcpkg at the active variant's baseline commit on every host (macOS/Linux/Windows)**, .NET via Microsoft repo (Linux) or Homebrew (macOS) or winget (Windows), cmake/ninja via the host's package manager. Resolved paths cached in `~/.loader-env.json` so subsequent `make.py test --lang cpp` invocations pick them up without re-running setup.
 
 ### Dev container
 
 - `.devcontainer/` → **Dev Containers: Reopen in Container**. Ubuntu 24.04 + all toolchains pinned. First build ~25 min; reopens instant.
 - Inside: `python make.py setup` is a no-op. `python make.py test --lang <X>` works for all languages — Dockerfile presets `CMAKE_PREFIX_PATH=/opt/vcpkg/active`.
-- Override protobuf version: `LOADER_PROTOBUF_VERSION=3.21.12 code .` then **Rebuild Container**.
+- Override protobuf version: `LOADER_DEFAULT_VARIANT=legacy-v3 code .` then **Rebuild Container** (switches both protobuf and vcpkg baseline atomically). Variants are declared as `<NAME>_PROTOBUF_VERSION` + `<NAME>_VCPKG_BASELINE_COMMIT` pairs in `.devcontainer/versions.env`. For a surgical override of just the protobuf version, `LOADER_PROTOBUF_VERSION=X.Y.Z` still works.
 - Single source of truth for all toolchain versions: **`.devcontainer/versions.env`**.
 
 CI primary tests (`testing-{cpp,go,csharp}.yml`) use `lukka/run-vcpkg` for cached vcpkg installs + `python make.py test --lang <X>` for build/test. `devcontainer-smoke.yml` builds the image on `.devcontainer/**` PRs (amd64 + arm64). `testing-make.yml` runs the make.py unit + dry-run regression suite on every push.
