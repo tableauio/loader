@@ -212,6 +212,29 @@ class TestPlatform:
         assert p.cmake_toolchain_args() == []
 
 
+    def test_detect_ignores_dockerenv_marker(self, monkeypatch):
+        """Bug fix: /.dockerenv is created by Docker for *every* container,
+        not just the loader devcontainer. The detect() heuristic must NOT
+        treat its presence as a devcontainer signal."""
+        # Simulate: only /.dockerenv exists; /opt/vcpkg/active does NOT.
+        def fake_exists(self):
+            return str(self) == "/.dockerenv"
+        monkeypatch.setattr(make.Path, "exists", fake_exists)
+        p = make.Platform.detect()
+        assert p.in_devcontainer is False, (
+            "/.dockerenv alone must NOT be treated as devcontainer"
+        )
+
+    def test_detect_recognizes_vcpkg_active_marker(self, monkeypatch):
+        """Positive: /opt/vcpkg/active is the marker the devcontainer's
+        Dockerfile actually sets. Its presence is the sole devcontainer signal."""
+        def fake_exists(self):
+            return str(self) == "/opt/vcpkg/active"
+        monkeypatch.setattr(make.Path, "exists", fake_exists)
+        p = make.Platform.detect()
+        assert p.in_devcontainer is True
+
+
 # ---------------------------------------------------------------------------
 # Unit: Platform.windows_msvc_wrap
 # ---------------------------------------------------------------------------

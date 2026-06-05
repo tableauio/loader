@@ -143,9 +143,11 @@ class Platform:
     def detect(cls) -> "Platform":
         sys_platform = sys.platform
         machine = _stdlib_platform.machine().lower()
-        in_devcontainer = (
-            Path("/opt/vcpkg/active").exists() or Path("/.dockerenv").exists()
-        )
+        # Devcontainer signal: only the marker the .devcontainer/Dockerfile
+        # actually sets. /.dockerenv is created by Docker for EVERY container
+        # and is too broad — using it would silently no-op `setup` in any
+        # plain Docker container.
+        in_devcontainer = Path("/opt/vcpkg/active").exists()
         return cls(
             sys_platform=sys_platform,
             machine=machine,
