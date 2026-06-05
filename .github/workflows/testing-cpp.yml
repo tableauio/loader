@@ -107,6 +107,14 @@ jobs:
           key: vcpkg-installed-${{ runner.os }}-${{ matrix.triplet }}-${{ matrix.config.vcpkg-commit }}-${{ hashFiles('test/cpp-tableau-loader/vcpkg.json') }}
 
       - name: Setup vcpkg & install protobuf
+        # Disable lukka/run-vcpkg's auto-injected `x-gha` binary cache:
+        # the `x-gha` provider only exists in vcpkg ≳ 2023, while our
+        # legacy matrix row pins a 2022-era vcpkg snapshot that errors
+        # out with "unknown binary provider type". `actions/cache` above
+        # already caches vcpkg_installed/, so we lose nothing here.
+        # `lukka/run-vcpkg` honours a pre-set VCPKG_BINARY_SOURCES.
+        env:
+          VCPKG_BINARY_SOURCES: clear
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgGitCommitId: ${{ matrix.config.vcpkg-commit }}
