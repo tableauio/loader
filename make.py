@@ -759,6 +759,25 @@ def _which(name: str) -> Optional[str]:
     return shutil.which(name)
 
 
+def _prepend_path(directory: Path) -> None:
+    """Prepend ``directory`` to ``os.environ['PATH']`` (idempotent, in-process).
+
+    This makes a freshly-installed tool visible to (a) subsequent ``_which``
+    probes inside the same ``setup`` run and (b) every child process spawned
+    by ``Runner`` afterwards (we never override ``env=``, so they inherit
+    ``os.environ``). No-op if the directory is already on PATH.
+    """
+    p = str(directory)
+    sep = os.pathsep
+    current = os.environ.get("PATH", "")
+    parts = current.split(sep) if current else []
+    # Case-insensitive comparison on Windows; exact match elsewhere.
+    norm = (lambda s: s.lower()) if os.name == "nt" else (lambda s: s)
+    if any(norm(x) == norm(p) for x in parts if x):
+        return
+    os.environ["PATH"] = p + (sep + current if current else "")
+
+
 def cmd_setup(args, ctx: "Context") -> int:
     """Install host toolchains. OS-dispatched. Idempotent."""
     if ctx.platform.in_devcontainer:
@@ -888,11 +907,26 @@ def _ensure_buf_unix(ctx: "Context", os_label: str) -> None:
     """Download the pinned buf release to ~/.local/bin/buf.
 
     os_label: "Linux" or "Darwin" (matches the GitHub release naming).
+
+    On a fresh host ``~/.local/bin`` is rarely on PATH (distros add it lazily
+    via ``~/.profile``, which a non-login shell never sources). After we drop
+    ``buf`` there we eagerly prepend the directory to ``os.environ['PATH']``
+    so ``generate``/``test`` invoked later in the same ``setup`` run — and
+    every child process Runner spawns — can resolve ``buf`` without the user
+    having to relog or edit shell rc files.
     """
     if _which("buf") is not None:
         return
     ver = ctx.versions.buf_version
     if not ver:
+        return
+    target_dir = Path.home() / ".local" / "bin"
+    target = target_dir / "buf"
+    # Previously-installed binary that's just not on this shell's PATH —
+    # don't redownload, just expose it.
+    if target.exists():
+        print(f"[info] buf already present at {target}; reusing.")
+        _prepend_path(target_dir)
         return
     arch = (
         "x86_64"
@@ -900,13 +934,12 @@ def _ensure_buf_unix(ctx: "Context", os_label: str) -> None:
         else "aarch64"
     )
     url = f"https://github.com/bufbuild/buf/releases/download/v{ver}/buf-{os_label}-{arch}"
-    target_dir = Path.home() / ".local" / "bin"
     ctx.runner.mkdirp(target_dir)
-    target = target_dir / "buf"
     print(f"[info] Downloading buf {ver} ({os_label}/{arch}) -> {target}")
     if not ctx.runner.dry_run:
         urllib.request.urlretrieve(url, str(target))
         target.chmod(0o755)
+    _prepend_path(target_dir)
 
 
 def _ensure_dotnet_linux(ctx: "Context") -> None:
@@ -1052,13 +1085,28 @@ def _setup_windows(langs: list[str], ctx: "Context", skip_vcpkg: bool) -> int:
             buf_dir = (
                 Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "buf" / "bin"
             )
-            ctx.runner.mkdirp(buf_dir)
             buf_exe = buf_dir / "buf.exe"
-            url = f"https://github.com/bufbuild/buf/releases/download/v{ver}/buf-Windows-x86_64.exe"
-            print(f"[info] Downloading buf {ver} -> {buf_exe}")
-            if not ctx.runner.dry_run:
-                urllib.request.urlretrieve(url, str(buf_exe))
-            print(f"[info] buf installed at {buf_exe}; add to PATH manually if needed.")
+            if buf_exe.exists():
+                # Previously-installed binary that just isn't on this shell's
+                # PATH — reuse it instead of redownloading.
+                print(f"[info] buf already present at {buf_exe}; reusing.")
+                _prepend_path(buf_dir)
+            else:
+                ctx.runner.mkdirp(buf_dir)
+                url = f"https://github.com/bufbuild/buf/releases/download/v{ver}/buf-Windows-x86_64.exe"
+                print(f"[info] Downloading buf {ver} -> {buf_exe}")
+                if not ctx.runner.dry_run:
+                    urllib.request.urlretrieve(url, str(buf_exe))
+                # Make buf usable for the rest of this `setup` run and any
+                # child process Runner spawns afterwards. Persisting the
+                # entry in the user's permanent PATH (registry / shell rc)
+                # is intentionally left to the user — modifying global env
+                # vars from a build script is too invasive.
+                _prepend_path(buf_dir)
+                print(
+                    f"[info] buf installed at {buf_exe} (added to this session's PATH; "
+                    f"add {buf_dir} to your user PATH to make it permanent)."
+                )
     else:
         print("[info] buf already on PATH.")
 
