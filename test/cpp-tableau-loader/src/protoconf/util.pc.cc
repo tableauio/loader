@@ -111,7 +111,7 @@ bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Messag
 
   // Iterates over every populated field.
   for (auto fd : fields) {
-    const tableau::FieldOptions& opts = fd->options().GetExtension(tableau::field);
+    const tableau::FieldOptions& opts = util::GetExtension(fd->options(), tableau::field);
     tableau::Patch patch = opts.prop().patch();
     if (patch == tableau::PATCH_REPLACE) {
       dst_reflection->ClearField(&dst, fd);

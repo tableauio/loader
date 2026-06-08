@@ -63,7 +63,7 @@ bool LoadMessagerInDir(google::protobuf::Message& msg, const std::filesystem::pa
 
   const google::protobuf::Descriptor* descriptor = msg.GetDescriptor();
   // access the extension directly using the generated identifier
-  const tableau::WorksheetOptions& worksheet_options = descriptor->options().GetExtension(tableau::worksheet);
+  const tableau::WorksheetOptions& worksheet_options = util::GetExtension(descriptor->options(), tableau::worksheet);
   if (worksheet_options.patch() != tableau::PATCH_NONE) {
     return LoadMessagerWithPatch(msg, path, fmt, worksheet_options.patch(), options);
   }

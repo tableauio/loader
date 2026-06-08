@@ -580,6 +580,7 @@ def _resolve_vcpkg_baseline_for_protobuf(
             f"(`git -C {vcpkg_root} fetch --unshallow origin master` may help)\n"
             f"  - protobuf {protobuf_version} was never the vcpkg baseline "
             f"(use --vcpkg-baseline=<commit> to point at a custom snapshot)"
+            f"{_format_known_protobuf_versions_hint(vcpkg_root)}"
         )
 
     # Step 2: validate each candidate by reading baseline.json at that commit.
@@ -598,7 +599,101 @@ def _resolve_vcpkg_baseline_for_protobuf(
     raise RuntimeError(
         f'Found {len(candidates)} commits mentioning "{protobuf_version}" in '
         f"versions/baseline.json but none had default.protobuf.baseline set "
-        f"to that exact version. Pass --vcpkg-baseline=<commit> manually."
+        f"to that exact version (the literal likely appears in unrelated "
+        f"ports). Pass --vcpkg-baseline=<commit> manually."
+        f"{_format_known_protobuf_versions_hint(vcpkg_root)}"
+    )
+
+
+# Earliest protobuf version usable as a vcpkg `builtin-baseline`.
+# vcpkg's versions/baseline.json was introduced 2021-01-21, and its very
+# first commit already pinned `default.protobuf.baseline = "3.14.0"`. Port
+# versions older than this (3.0.2, 3.2.0, ..., 3.13.0) exist in
+# versions/p-/protobuf.json but were never the global baseline and so can't
+# serve as builtin-baseline. The user-facing error message uses a rounder
+# "~3.18" wording on purpose; the precise floor lives only here.
+_VCPKG_PROTOBUF_BASELINE_FLOOR = (3, 14, 0)
+
+
+def _parse_protobuf_version_tuple(v: str) -> Optional[tuple[int, ...]]:
+    """Parse "3.14.0" / "3.21.12" / "5.29.5" into a numeric tuple for ordering.
+
+    Returns None for anything that isn't pure dotted-numeric (defensive: the
+    registry has historically been numeric-only for protobuf, but we'd
+    rather drop a weird entry than crash a hint formatter).
+    """
+    parts = v.split(".")
+    if not all(p.isdigit() for p in parts) or not parts:
+        return None
+    return tuple(int(p) for p in parts)
+
+
+def _list_known_protobuf_versions(vcpkg_root: Path) -> list[str]:
+    """Return protobuf versions usable as a vcpkg `builtin-baseline`.
+
+    Reads `versions/p-/protobuf.json` at HEAD (cheap: one `git show`) — this
+    is vcpkg's authoritative list of protobuf versions the registry has ever
+    known. Returned in registry order (newest first), de-duplicated, and
+    filtered to `>= _VCPKG_PROTOBUF_BASELINE_FLOOR` so the caller can blindly
+    surface every entry as something the user can actually pass to
+    `--protobuf-version`. On any failure returns [] so callers can degrade
+    gracefully.
+    """
+    try:
+        blob = subprocess.check_output(
+            [
+                "git",
+                "-C",
+                str(vcpkg_root),
+                "show",
+                "HEAD:versions/p-/protobuf.json",
+            ],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return []
+    try:
+        data = json.loads(blob)
+    except ValueError:
+        return []
+    seen: set[str] = set()
+    versions: list[str] = []
+    for entry in data.get("versions", []):
+        v = (
+            entry.get("version")
+            or entry.get("version-semver")
+            or entry.get("version-string")
+        )
+        if not v or v in seen:
+            continue
+        tup = _parse_protobuf_version_tuple(v)
+        if tup is None or tup < _VCPKG_PROTOBUF_BASELINE_FLOOR:
+            continue
+        seen.add(v)
+        versions.append(v)
+    return versions
+
+
+def _format_known_protobuf_versions_hint(vcpkg_root: Path) -> str:
+    """Render a human-readable bullet listing known protobuf versions.
+
+    Returns "" (caller can append unconditionally) when the version DB
+    can't be read. Otherwise returns a leading "\n  - known versions: ..."
+    suitable for tacking onto the end of a RuntimeError message.
+    """
+    versions = _list_known_protobuf_versions(vcpkg_root)
+    if not versions:
+        return ""
+    # Newest first (registry order). The list is already filtered to versions
+    # that can serve as a builtin-baseline.
+    head = ", ".join(versions[:20])
+    tail = f" (+{len(versions) - 20} older)" if len(versions) > 20 else ""
+    return (
+        f"\n  - known protobuf versions in {vcpkg_root}/versions/p-/protobuf.json "
+        f"(newest first): {head}{tail}\n"
+        f"  - note: versions older than 3.14.0 predate vcpkg's baseline.json "
+        f"and cannot be used as builtin-baseline"
     )
 
 
@@ -1189,36 +1284,16 @@ def _cpp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
     cxx_std = getattr(args, "cxx_std", "17")
     cxx_compiler = getattr(args, "cxx_compiler", None)
 
-    # Stale-codegen wipe (gitignored *.pb.* files left over from a previous
-    # protoc version shadow fresh codegen). Skip with --no-clean.
-    if not getattr(args, "no_clean", False):
-        ctx.runner.rmtree(cwd / "build")
-        ctx.runner.rmtree(cwd / "src" / "tableau")
-        ctx.runner.rmtree(cwd / "src" / "protoconf")
-
-    # Classic mode: a stale vcpkg.json from a previous --protobuf-version run
-    # would silently switch cmake's vcpkg toolchain into manifest mode and
-    # build the wrong libprotobuf into build/vcpkg_installed/. Always remove
-    # it here unless we're about to render a fresh one below.
-    if not protobuf_version:
-        manifest_path = cwd / "vcpkg.json"
-        if manifest_path.is_file():
-            if ctx.runner.dry_run:
-                print(f"[dry-run] rm {manifest_path}")
-            else:
-                manifest_path.unlink()
-
-    # Manifest mode: render vcpkg.json pinning the requested protobuf-version,
-    # then run `vcpkg install` to populate vcpkg_installed/. This matches CI's
-    # testing-cpp.yml flow (which uses lukka/run-vcpkg with runVcpkgInstall:
-    # true) and means switching --protobuf-version Just Works without
-    # re-running `make.py setup`. Idempotent: vcpkg detects already-installed
-    # packages and skips them.
+    # Resolve the vcpkg baseline up-front when --protobuf-version is given.
+    # This MUST happen before the stale-codegen rmtree below: an invalid
+    # --protobuf-version that would later raise should not have already
+    # wiped the user's src/protoconf, src/tableau, build/ trees.
     #
     # Baseline resolution order (no `overrides` — see module comment above):
     #   1. --vcpkg-baseline=<sha>                       (explicit override)
     #   2. _resolve_vcpkg_baseline_for_protobuf(...)    (auto: git-search vcpkg)
-    cmake_extra: list[str] = []
+    vcpkg_root: Optional[Path] = None
+    baseline: Optional[str] = None
     if protobuf_version:
         # Need a vcpkg checkout to resolve the baseline by git history.
         vcpkg_root = ctx.platform.vcpkg_root or _env_path("VCPKG_ROOT")
@@ -1249,6 +1324,7 @@ def _cpp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
                     protobuf_version, vcpkg_root, ctx.runner
                 )
             except RuntimeError as e:
+                # Fail fast — user trees on disk are still untouched.
                 print(f"[error] {e}", file=sys.stderr)
                 print(
                     "[hint] If you know a vcpkg commit whose baseline matches "
@@ -1256,6 +1332,37 @@ def _cpp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
                     file=sys.stderr,
                 )
                 return 1
+
+    # Stale-codegen wipe (gitignored *.pb.* files left over from a previous
+    # protoc version shadow fresh codegen). Skip with --no-clean.
+    if not getattr(args, "no_clean", False):
+        ctx.runner.rmtree(cwd / "build")
+        ctx.runner.rmtree(cwd / "src" / "tableau")
+        ctx.runner.rmtree(cwd / "src" / "protoconf")
+
+    # Classic mode: a stale vcpkg.json from a previous --protobuf-version run
+    # would silently switch cmake's vcpkg toolchain into manifest mode and
+    # build the wrong libprotobuf into build/vcpkg_installed/. Always remove
+    # it here unless we're about to render a fresh one below.
+    if not protobuf_version:
+        manifest_path = cwd / "vcpkg.json"
+        if manifest_path.is_file():
+            if ctx.runner.dry_run:
+                print(f"[dry-run] rm {manifest_path}")
+            else:
+                manifest_path.unlink()
+
+    # Manifest mode: render vcpkg.json pinning the requested protobuf-version,
+    # then run `vcpkg install` to populate vcpkg_installed/. This matches CI's
+    # testing-cpp.yml flow (which uses lukka/run-vcpkg with runVcpkgInstall:
+    # true) and means switching --protobuf-version Just Works without
+    # re-running `make.py setup`. Idempotent: vcpkg detects already-installed
+    # packages and skips them.
+    cmake_extra: list[str] = []
+    if protobuf_version:
+        # vcpkg_root and baseline were resolved above; assert for the type
+        # checker (both are guaranteed non-None inside this branch).
+        assert vcpkg_root is not None and baseline is not None
 
         manifest = {
             "name": "loader-cpp-test",
