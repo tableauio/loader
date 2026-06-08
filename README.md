@@ -33,7 +33,7 @@ On Windows, run setup from **cmd as Administrator** the first time. Subsequent c
 
 ## Commands
 
-```
+```sh
 python make.py setup    [--lang go|cpp|csharp|ts|all]
 python make.py generate --lang go|cpp|csharp|ts
 python make.py build    --lang go|cpp|csharp|ts [--cxx-std 17|20] [--cxx-compiler msvc|clang|gcc]
