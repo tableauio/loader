@@ -75,47 +75,28 @@ const std::string& Format2Ext(Format fmt);
 // PatchMessage patches src into dst, which must be a message with the same descriptor.
 bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Message& src);
 
-// GetExtension reads a typed custom-option extension off any *Options message
-// (e.g. MessageOptions, FieldOptions). It transparently works around a
-// protobuf static-initialization-order quirk present on runtimes < v3.15.0:
-// when a .pb.cc that *defines* an extension (e.g. tableau.pb.cc ->
-// `tableau::worksheet`) is initialized after the descriptors that *carry* it
-// have already been built, the custom-option payload ends up parked in the
-// options message's unknown_fields, and `options.GetExtension(id)` then
-// returns the default instance.
+// GetExtension reads a typed custom-option extension off any *Options
+// message (e.g. MessageOptions, FieldOptions).
 //
-// The fix is to round-trip the options bytes through a fresh OptionsT instance
-// at call time: by then all static initializers (including the extension's
-// generated registration via `descriptor_table_*` / `dynamic_init_dummy_*`)
-// have run, so the second parse resolves the extension correctly.
-//
-// Verified by checkout-build-and-test against protoc/libprotobuf at the same
-// tag: v3.14.0 reproduces (PatchTest fails when this fallback is bypassed),
-// v3.15.0 is clean. The v3.15.0 release notes don't call out this specific
-// symptom, but two C++ entries plausibly cover it by reshaping static
-// initialization: "Constant initialize the global message instances" and
-// "Use init_seg in MSVC to push initialization to an earlier phase". On
-// runtimes >= 3.15.0 we just forward to the native call with no overhead.
-//
+// On protobuf runtimes < v3.15.0 a static-initialization-order quirk can
+// leave the extension payload parked in the options' unknown_fields, so
+// `options.GetExtension(id)` returns the default instance. We work around
+// it by serializing and reparsing into a fresh OptionsT at call time, by
+// which point all extension registrations have run.
 // Reference: https://github.com/protocolbuffers/protobuf/releases/tag/v3.15.0
 template <typename OptionsT, typename ExtT>
-#if GOOGLE_PROTOBUF_VERSION < 3015000
-// Returns by value (a freshly reparsed OptionsT extension copy).
 inline auto GetExtension(const OptionsT& options, const ExtT& id)
     -> typename std::decay<decltype(options.GetExtension(id))>::type {
+#if GOOGLE_PROTOBUF_VERSION < 3015000
   OptionsT reparsed;
   std::string buf;
   options.SerializeToString(&buf);
   reparsed.ParseFromString(buf);
   return reparsed.GetExtension(id);
-}
 #else
-// Returns by const-reference (zero-copy passthrough).
-inline auto GetExtension(const OptionsT& options, const ExtT& id)
-    -> decltype(options.GetExtension(id)) {
   return options.GetExtension(id);
-}
 #endif
+}
 
 #if TABLEAU_PB_LOG_LEGACY
 // ProtobufLogHandler redirects protobuf internal logs to tableau logger.
