@@ -928,3 +928,82 @@ class TestCrossPlatformPinning:
             assert rc == 0
         finally:
             make.Platform.detect = original_detect
+
+
+# ---------------------------------------------------------------------------
+# Unit: Windows setup
+# ---------------------------------------------------------------------------
+
+
+class TestSetupWindows:
+    """Windows-specific setup invariants. Runs on every host because
+    --dry-run intercepts the subprocess; we only assert against the printed
+    command sequence."""
+
+    def _windows_ctx(self, monkeypatch, versions=None):
+        """Pretend we're a clean Windows host: nothing on PATH, no MSVC."""
+        monkeypatch.setattr(
+            make.Platform,
+            "detect",
+            classmethod(
+                lambda cls: make.Platform(
+                    sys_platform="win32", machine="amd64", in_devcontainer=False
+                )
+            ),
+        )
+        monkeypatch.setattr(make, "_which", lambda name: None)
+        # locate_vcvarsall already returns None off-Windows; explicit for clarity.
+        monkeypatch.setattr(make, "locate_vcvarsall", lambda: None)
+        return make.Context(
+            repo_root=REPO_ROOT,
+            versions=versions or make.Versions.load(REPO_ROOT),
+            platform=make.Platform.detect(),
+            runner=make.Runner(verbose=False, dry_run=True),
+        )
+
+    def test_installs_go_for_cpp_lang(self, monkeypatch, capsys):
+        """Regression: --lang cpp on Windows must still install Go.
+        buf-generate runs the Go protoc plugins via `go run`, so without
+        Go on PATH every codegen step fails — for every target language."""
+        ctx = self._windows_ctx(monkeypatch)
+        args = type("Args", (), {"lang": "cpp", "skip_vcpkg": True})()
+        rc = make.cmd_setup(args, ctx)
+        assert rc == 0
+        out = capsys.readouterr().out
+        assert "GoLang.Go" in out, "--lang cpp on Windows must still install Go"
+
+    def test_installs_go_for_csharp_lang(self, monkeypatch, capsys):
+        """Same as above but for --lang csharp."""
+        ctx = self._windows_ctx(monkeypatch)
+        args = type("Args", (), {"lang": "csharp", "skip_vcpkg": True})()
+        rc = make.cmd_setup(args, ctx)
+        assert rc == 0
+        out = capsys.readouterr().out
+        assert "GoLang.Go" in out, "--lang csharp on Windows must still install Go"
+
+    def test_go_winget_id_uses_versions_env_major_minor(self, monkeypatch, capsys):
+        """winget id must derive from GO_VERSION (not hardcoded) so bumping
+        versions.env alone is enough to bump the host pin — matches the
+        macOS/Linux tarball flow which already reads ctx.versions.go_version."""
+        versions = make.Versions(raw={"GO_VERSION": "1.99.7", "DOTNET_VERSION": "8.0"})
+        ctx = self._windows_ctx(monkeypatch, versions=versions)
+        args = type("Args", (), {"lang": "go", "skip_vcpkg": True})()
+        rc = make.cmd_setup(args, ctx)
+        assert rc == 0
+        out = capsys.readouterr().out
+        # GoLang.Go winget id is `<major>.<minor>` — patch level is dropped.
+        assert "GoLang.Go.1.99" in out, f"Expected pinned 1.99 winget id; got: {out}"
+        # Hardcoded 1.24 from the old code path must NOT leak through.
+        assert "GoLang.Go.1.24" not in out
+
+    def test_dotnet_winget_id_uses_versions_env_major(self, monkeypatch, capsys):
+        """winget .NET SDK id format is `Microsoft.DotNet.SDK.<major>` —
+        derive from DOTNET_VERSION instead of hardcoding `.8`."""
+        versions = make.Versions(raw={"GO_VERSION": "1.24.0", "DOTNET_VERSION": "9.0"})
+        ctx = self._windows_ctx(monkeypatch, versions=versions)
+        args = type("Args", (), {"lang": "csharp", "skip_vcpkg": True})()
+        rc = make.cmd_setup(args, ctx)
+        assert rc == 0
+        out = capsys.readouterr().out
+        assert "Microsoft.DotNet.SDK.9" in out
+        assert "Microsoft.DotNet.SDK.8" not in out

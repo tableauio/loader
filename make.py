@@ -1114,14 +1114,36 @@ def _setup_windows(langs: list[str], ctx: "Context", skip_vcpkg: bool) -> int:
     if "cpp" in langs and not skip_vcpkg:
         _setup_vcpkg(ctx, cache)
 
-    # Optional: Go / .NET / Node
-    if "go" in langs and _which("go") is None:
+    # Step 6: Go (always required — every buf-generate invokes the Go
+    # protoc plugins via `go run ../../cmd/protoc-gen-...`, so Go must be
+    # on PATH regardless of which language is being built. Mirrors the
+    # macOS/Linux setup paths which install Go for any --lang.).
+    if _which("go") is None:
+        go_ver = ctx.versions.go_version or "1.24.0"
+        # winget package id format is `GoLang.Go.<major>.<minor>`; the patch
+        # level isn't part of the id (the package itself tracks it).
+        go_major_minor = ".".join(go_ver.split(".")[:2])
         ctx.runner.run(
-            ["winget", "install", "--id", "GoLang.Go.1.24", "-e"], check=False
+            ["winget", "install", "--id", f"GoLang.Go.{go_major_minor}", "-e"],
+            check=False,
         )
+    else:
+        print("[info] go already on PATH.")
+
+    # Step 7: .NET SDK (only when csharp tests are requested).
     if "csharp" in langs and _which("dotnet") is None:
+        dotnet_ver = ctx.versions.dotnet_version or "8.0"
+        # winget package id format is `Microsoft.DotNet.SDK.<major>`.
+        dotnet_major = dotnet_ver.split(".")[0]
         ctx.runner.run(
-            ["winget", "install", "--id", "Microsoft.DotNet.SDK.8", "-e"], check=False
+            [
+                "winget",
+                "install",
+                "--id",
+                f"Microsoft.DotNet.SDK.{dotnet_major}",
+                "-e",
+            ],
+            check=False,
         )
 
     save_loader_env(cache, ctx.runner)
