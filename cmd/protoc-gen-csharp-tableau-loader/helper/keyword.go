@@ -43,7 +43,19 @@ func escapeIdentifier(str string) string {
 // csharpKeywords is the set of C# reserved keywords used by escapeIdentifier
 // to detect and escape naming conflicts.
 //
-// Ref: https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords
+// Note on protobuf parity: protobuf's own C# generator does NOT keep a C#
+// language-keyword list, because it emits PascalCase property names that never
+// collide with the (lower-case) C# keywords; it only guards against its own
+// generated member names (e.g. Types/Descriptor/Equals/Parser...) and the
+// containing type name, appending "_" on collision (see GetPropertyName in
+// csharp_helpers.cc). This loader instead emits lowerCamelCase parameter
+// identifiers, which CAN collide with C# keywords, so it maintains the language
+// keyword set itself. The authoritative source for that set is the C# spec.
+//
+// Ref:
+//
+//	https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/compiler/csharp/csharp_helpers.cc (GetPropertyName)
+//	https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords
 func init() {
 	csharpKeywords = map[string]bool{
 		"abstract":   true,

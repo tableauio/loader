@@ -29,19 +29,23 @@ func escapeIdentifier(str string) string {
 	return str
 }
 
+// cppKeywords mirrors protoc's C++ codegen reserved-identifier list
+// (kKeywordList). Keeping them in sync ensures we escape identifiers exactly
+// the way protoc does (append a trailing underscore on collision), so the
+// names we emit match the generated *.pb.h symbols.
+//
 // Ref:
 //
-//	https://en.cppreference.com/w/cpp/keyword
+//	https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/compiler/cpp/helpers.cc
 func init() {
 	cppKeywords = map[string]bool{
+		"NULL":             true,
 		"alignas":          true,
 		"alignof":          true,
 		"and":              true,
 		"and_eq":           true,
 		"asm":              true,
-		"atomic_cancel":    true,
-		"atomic_commit":    true,
-		"atomic_noexcept":  true,
+		"assert":           true,
 		"auto":             true,
 		"bitand":           true,
 		"bitor":            true,
@@ -50,21 +54,12 @@ func init() {
 		"case":             true,
 		"catch":            true,
 		"char":             true,
-		"char8_t":          true,
-		"char16_t":         true,
-		"char32_t":         true,
 		"class":            true,
 		"compl":            true,
-		"concept":          true,
 		"const":            true,
-		"consteval":        true,
 		"constexpr":        true,
-		"constinit":        true,
 		"const_cast":       true,
 		"continue":         true,
-		"co_await":         true,
-		"co_return":        true,
-		"co_yield":         true,
 		"decltype":         true,
 		"default":          true,
 		"delete":           true,
@@ -99,9 +94,7 @@ func init() {
 		"protected":        true,
 		"public":           true,
 		"register":         true,
-		"reflexpr":         true,
 		"reinterpret_cast": true,
-		"requires":         true,
 		"return":           true,
 		"short":            true,
 		"signed":           true,
@@ -111,7 +104,6 @@ func init() {
 		"static_cast":      true,
 		"struct":           true,
 		"switch":           true,
-		"synchronized":     true,
 		"template":         true,
 		"this":             true,
 		"thread_local":     true,
@@ -131,5 +123,15 @@ func init() {
 		"while":            true,
 		"xor":              true,
 		"xor_eq":           true,
+		"char8_t":          true,
+		"char16_t":         true,
+		"char32_t":         true,
+		"concept":          true,
+		"consteval":        true,
+		"constinit":        true,
+		"co_await":         true,
+		"co_return":        true,
+		"co_yield":         true,
+		"requires":         true,
 	}
 }
