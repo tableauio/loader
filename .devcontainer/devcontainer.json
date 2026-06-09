@@ -1,0 +1,67 @@
+{
+    // The loader's only devcontainer. Multi-arch: builds linux/amd64 on
+    // x64 hosts, linux/arm64 on Apple Silicon and Windows-on-ARM. Use
+    // this on every host that can run Docker Desktop or Docker Engine.
+    // Native users (no Docker) bootstrap via `python3 make.py setup` at
+    // the repo root.
+    //
+    // See ./versions.env for all toolchain pins.
+    "name": "tableauio/loader",
+    // Build args wire host env to Dockerfile ARGs:
+    //   LOADER_DEFAULT_VARIANT on the host -> DEFAULT_VARIANT inside.
+    //     Switches both protobuf AND vcpkg baseline atomically; values come
+    //     from versions.env's MODERN_*/LEGACY_V3_* rows.
+    //   LOADER_PROTOBUF_VERSION on the host -> PROTOBUF_VERSION inside.
+    //     Surgical: overrides ONLY the protobuf version, vcpkg baseline
+    //     stays at the variant's pin. For a clean variant switch, prefer
+    //     LOADER_DEFAULT_VARIANT.
+    // Both default empty (versions.env's DEFAULT_VARIANT row wins). Example:
+    //   LOADER_DEFAULT_VARIANT=legacy-v3 code .   # then Reopen in Container.
+    //
+    // "context" defaults to the directory holding this devcontainer.json
+    // (.devcontainer/), so the Dockerfile's `COPY versions.env ...`
+    // resolves directly.
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            "DEFAULT_VARIANT": "${localEnv:LOADER_DEFAULT_VARIANT:}",
+            "PROTOBUF_VERSION": "${localEnv:LOADER_PROTOBUF_VERSION:}"
+        }
+    },
+    // Persist the Go module cache across container rebuilds. Workspace itself
+    // uses VS Code's default bind-mount so edits sync to the host.
+    "mounts": [
+        "source=loader-go-mod,target=/home/vscode/go,type=volume"
+    ],
+    "remoteUser": "vscode",
+    "workspaceFolder": "/workspaces/loader",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go",
+                "ms-vscode.cmake-tools",
+                "ms-vscode.cpptools",
+                "ms-dotnettools.csharp",
+                "bufbuild.vscode-buf",
+                "DrBlury.protobuf-vsc"
+            ],
+            "settings": {
+                // Don't auto-install gopls and friends on first open — let the user
+                // do it explicitly from the Go extension's command palette.
+                "go.toolsManagement.autoUpdate": false,
+                // Don't auto-cmake-configure on workspace open; we run cmake manually
+                // per the existing README recipes.
+                "cmake.configureOnOpen": false
+            }
+        }
+    },
+    // Ready banner so the developer knows the container is healthy.
+    // Script is baked into the image at build time (see Dockerfile).
+    "postCreateCommand": "/usr/local/bin/loader-devcontainer-banner",
+    // The loader-go-mod named volume is mounted at /home/vscode/go (see "mounts"
+    // above). Docker creates named volumes root-owned by default, masking any
+    // ownership set in the Dockerfile. Re-chown on every start so `go install`
+    // (e.g. gopls auto-install from the Go extension) can write into GOPATH.
+    // Idempotent and ~50ms on an already-correct tree.
+    "postStartCommand": "sudo chown -R vscode:vscode /home/vscode/go"
+}

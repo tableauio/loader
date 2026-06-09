@@ -32,38 +32,43 @@ else()
 endif()
 
 # google protobuf
-# Try to find protobuf from local submodule first, then fallback to system.
-# Protobuf's install.cmake generates config files under:
-#   - Linux:   build/lib64/cmake/protobuf/ (via CMAKE_INSTALL_LIBDIR)
-#   - Windows: build/cmake/                (MSVC uses "cmake" directly)
-# Setting CMAKE_PREFIX_PATH to the build dir allows CMake to search both layouts.
-set(LOCAL_PROTOBUF_INSTALL_DIR "${PROJECT_SOURCE_DIR}/../../third_party/_submodules/protobuf/.build/_install")
-set(LOCAL_PROTOBUF_SRC_DIR "${PROJECT_SOURCE_DIR}/../../third_party/_submodules/protobuf/src")
-if(EXISTS "${LOCAL_PROTOBUF_INSTALL_DIR}" AND EXISTS "${LOCAL_PROTOBUF_SRC_DIR}")
-    message(STATUS "Found local protobuf submodule, using it preferentially.")
-    list(PREPEND CMAKE_PREFIX_PATH "${LOCAL_PROTOBUF_INSTALL_DIR}")
-endif()
-
-# Use CONFIG mode explicitly to pick up protobuf's own protobuf-config.cmake
-# instead of CMake's built-in FindProtobuf.cmake module, which may not handle
-# the local build directory layout correctly.
+#
+# This project does NOT vendor or build protobuf. Bring your own toolchain
+# (matching protoc + libprotobuf, since protobuf v22+ enforces a strict
+# gencode/runtime version check via PROTOBUF_VERSION in the generated headers).
+#
+# Common ways to point CMake at your protobuf install:
+#   - vcpkg (recommended, cross-platform):
+#       cmake -S . -B build \
+#         -DCMAKE_TOOLCHAIN_FILE=<vcpkg-root>/scripts/buildsystems/vcpkg.cmake
+#   - System package (apt's libprotobuf-dev, Homebrew's protobuf, ...): no
+#     extra flag needed; find_package picks it up from the default prefixes.
+#   - Custom install prefix:
+#       cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/protobuf-install
+#       (or -DProtobuf_ROOT=/path/to/protobuf-install)
+#
+# CONFIG mode is used explicitly so we get protobuf's own protobuf-config.cmake
+# (and the modern protobuf::libprotobuf imported target with proper
+# INTERFACE_INCLUDE_DIRECTORIES) instead of CMake's bundled FindProtobuf.cmake.
 find_package(Protobuf CONFIG REQUIRED)
 message(STATUS "Using protobuf ${Protobuf_VERSION}")
 
 # GoogleTest via FetchContent, pinned to a stable release. Using FetchContent
-# (instead of add_subdirectory on protobuf's bundled googletest) gives a
-# consistent test framework regardless of which protobuf version is in use.
+# (instead of relying on a system gtest) gives a consistent test framework
+# regardless of which protobuf version is in use.
 #
 # gtest_force_shared_crt:
 #   OFF  -> let CMAKE_MSVC_RUNTIME_LIBRARY decide (we set it to MultiThreaded[Debug]
 #           above, i.e. static CRT /MT or /MTd).
 #   ON   -> force googletest to use the DYNAMIC CRT (/MD or /MDd).
-# Our protobuf submodule is built with protobuf_MSVC_STATIC_RUNTIME=ON (static
-# CRT), and our loader_lib also targets static CRT. Forcing gtest to a different
-# CRT would mix two C runtimes inside loader.exe; the link may still succeed but
-# global-destructor sequencing at process exit can hit an Access Violation
-# (gtest's STL objects holding handles allocated by a different heap). Keep gtest
-# on the same static CRT as everything else.
+# On Windows we expect protobuf to come from vcpkg's x64-windows-static triplet
+# (or any other build that uses the static CRT) so that loader_lib, gtest and
+# libprotobuf all share one CRT. Mixing CRTs inside loader.exe might still link
+# but global-destructor sequencing at process exit can hit an Access Violation
+# (gtest's STL objects holding handles allocated by a different heap). If you
+# bring a libprotobuf built against the dynamic CRT, also pass
+# -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>DLL and
+# flip gtest_force_shared_crt to ON to keep everything in sync.
 include(FetchContent)
 set(gtest_force_shared_crt OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(

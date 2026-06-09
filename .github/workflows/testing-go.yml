@@ -15,11 +15,11 @@ permissions:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        protobuf-version: ["32.0", "3.19.3"]
 
-    name: test (${{ matrix.os }}, protobuf ${{ matrix.protobuf-version }})
+    name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
 
@@ -28,6 +28,9 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
+
+      - name: Read pinned versions
+        uses: ./.github/actions/load-versions
 
       - name: Install Go
         uses: actions/setup-go@v6
@@ -39,20 +42,25 @@ jobs:
       - name: Install Buf
         uses: bufbuild/buf-action@v1
         with:
-          version: 1.67.0
+          version: ${{ env.BUF_VERSION }}
           setup_only: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate protoconf
-        working-directory: test/go-tableau-loader
-        run: buf generate ..
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
 
-      - name: Vet
-        run: go vet ./...
-
-      - name: Unittest
-        run: go test -v -timeout 30m -race ./... -coverprofile=coverage.txt
-          -covermode=atomic
+      - name: Test
+        # `make.py test --lang go` runs `buf generate` then `go test`, which
+        # transitively vets every package (compilation = type-check + vet).
+        # Plugin-only `go vet` is covered by devcontainer-smoke.yml's
+        # `make.py test --lang go --smoke` step.
+        # Explicit --race so Windows CI matches Linux (Windows runners have
+        # MSVC available; -race needs cgo + a C compiler). On a fresh
+        # Windows dev machine without MSVC, make.py's default is --no-race;
+        # CI overrides that.
+        run: python3 make.py test --lang go --race --coverage
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5

@@ -15,24 +15,71 @@ permissions:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        protobuf-version: ["32.0", "3.19.3"]
+        config:
+          # vcpkg-commit pins the `builtin-baseline` for each protobuf
+          # version. We use the baseline (not `overrides`) so that abseil /
+          # utf8-range / re2 are pulled from the same self-consistent vcpkg
+          # snapshot as protobuf — `overrides` alone would let those
+          # transitive deps drift forward and break ABI.
+          #
+          # The labels and SHAs below mirror .devcontainer/versions.env's
+          # MODERN_*/LEGACY_V3_* entries — keep them in sync when bumping.
+          # GitHub Actions matrices are evaluated at workflow parse time,
+          # so we can't read them from versions.env via the load-versions
+          # composite action; the duplication is intentional.
+          #
+          # CI passes the SHA explicitly via --vcpkg-baseline so the run is
+          # fully reproducible and independent of vcpkg's git history (which
+          # `lukka/run-vcpkg` checks out shallowly). For ad-hoc local runs
+          # `make.py` can auto-resolve the SHA from $VCPKG_ROOT instead — see
+          # `_resolve_vcpkg_baseline_for_protobuf`.
+          #
+          # To pin a new protobuf version, run on a full vcpkg checkout:
+          #   git -C $VCPKG_ROOT log -S '"X.Y.Z"' -- versions/baseline.json
+          # then pick the newest commit whose baseline.json has
+          # default.protobuf.baseline == "X.Y.Z".
+          - label: modern
+            protobuf-version: "6.33.4"
+            vcpkg-commit: "56bb2411609227288b70117ead2c47585ba07713"
+          - label: legacy-v3
+            protobuf-version: "3.21.12"
+            vcpkg-commit: "6245ce44a03f04d19be125ab1bbab578d0933e85"
         include:
           - os: ubuntu-latest
-            init_script: bash init.sh
+            triplet: x64-linux
           - os: windows-latest
-            init_script: cmd /c init.bat
+            triplet: x64-windows-static
+        exclude:
+          # The 2023-01-15 vcpkg snapshot pinned by legacy-v3 references
+          # MSYS2 distfiles that have since been pruned from repo.msys2.org;
+          # the protobuf:x64-windows port pulls them in via vcpkg_acquire_msys
+          # → vcpkg_fixup_pkgconfig and fails the download. Linux uses the
+          # system pkg-config so it isn't affected. Keep legacy-v3 as a
+          # Linux-only smoke test for the protobuf-3 ABI; modern still
+          # exercises the Windows build path.
+          - os: windows-latest
+            config:
+              label: legacy-v3
+              protobuf-version: "3.21.12"
+              vcpkg-commit: "6245ce44a03f04d19be125ab1bbab578d0933e85"
 
-    name: test (${{ matrix.os }}, protobuf ${{ matrix.protobuf-version }})
+    name: test (${{ matrix.os }}, ${{ matrix.config.label }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 45
+
+    env:
+      VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
+      VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
-        with:
-          submodules: true
+
+      - name: Read pinned versions
+        uses: ./.github/actions/load-versions
 
       - name: Install Go
         uses: actions/setup-go@v6
@@ -41,7 +88,7 @@ jobs:
           cache-dependency-path: go.sum
           cache: true
 
-      - name: Install dependencies (Ubuntu)
+      - name: Install Ninja (Ubuntu)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y ninja-build
 
@@ -49,54 +96,74 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Cache protobuf install
-        id: cache-protobuf
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Render vcpkg.json
+        # `lukka/run-vcpkg` runs `vcpkg install` before `make.py test`, so
+        # the manifest must exist beforehand. We render the same shape
+        # `make.py` would (baseline-only, no `overrides`) keyed on the same
+        # SHA, so the cache key and the eventual build see one manifest.
+        working-directory: test/cpp-tableau-loader
+        shell: bash
+        run: |
+          cat > vcpkg.json <<EOF
+          {
+            "name": "loader-cpp-test",
+            "version": "0.1.0",
+            "dependencies": ["protobuf"],
+            "builtin-baseline": "${{ matrix.config.vcpkg-commit }}"
+          }
+          EOF
+
+      - name: Cache vcpkg_installed
+        id: cache-vcpkg-installed
         uses: actions/cache@v4
         with:
-          path: |
-            third_party/_submodules/protobuf/.build/_install
-          key: protobuf-${{ matrix.os }}-${{ matrix.protobuf-version }}-${{ hashFiles('init.sh', 'init.bat', '.gitmodules') }}
-          restore-keys: |
-            protobuf-${{ matrix.os }}-${{ matrix.protobuf-version }}-
+          path: ${{ env.VCPKG_INSTALLED_DIR }}
+          key: vcpkg-installed-${{ runner.os }}-${{ matrix.triplet }}-${{ matrix.config.vcpkg-commit }}-${{ hashFiles('test/cpp-tableau-loader/vcpkg.json') }}
 
-      - name: Init submodules and build protobuf
-        run: ${{ matrix.init_script }}
+      - name: Setup vcpkg & install protobuf
+        # Disable lukka/run-vcpkg's auto-injected `x-gha` binary cache:
+        # the `x-gha` provider only exists in vcpkg ≳ 2023, while our
+        # legacy matrix row pins a 2022-era vcpkg snapshot that errors
+        # out with "unknown binary provider type". `actions/cache` above
+        # already caches vcpkg_installed/, so we lose nothing here.
+        # `lukka/run-vcpkg` honours a pre-set VCPKG_BINARY_SOURCES.
         env:
-          PROTOBUF_REF: v${{ matrix.protobuf-version }}
-
-      - name: Install Protoc
-        if: "!startsWith(matrix.protobuf-version, '3.')"
-        uses: arduino/setup-protoc@v3
+          VCPKG_BINARY_SOURCES: clear
+        uses: lukka/run-vcpkg@v11
         with:
-          version: ${{ matrix.protobuf-version }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          vcpkgGitCommitId: ${{ matrix.config.vcpkg-commit }}
+          vcpkgJsonGlob: "test/cpp-tableau-loader/vcpkg.json"
+          runVcpkgInstall: true
 
-      - name: Install Protoc (legacy)
-        if: startsWith(matrix.protobuf-version, '3.')
-        uses: arduino/setup-protoc@v1
-        with:
-          version: ${{ matrix.protobuf-version }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add vcpkg-installed protoc to PATH (Linux)
+        if: runner.os == 'Linux'
+        run: echo "$VCPKG_INSTALLED_DIR/${{ matrix.triplet }}/tools/protobuf" >> "$GITHUB_PATH"
+
+      - name: Add vcpkg-installed protoc to PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Add-Content -Path $env:GITHUB_PATH -Value "$env:VCPKG_INSTALLED_DIR\${{ matrix.triplet }}\tools\protobuf"
 
       - name: Install Buf
         uses: bufbuild/buf-action@v1
         with:
-          version: 1.67.0
+          version: ${{ env.BUF_VERSION }}
           setup_only: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate protoconf
-        working-directory: test/cpp-tableau-loader
-        run: buf generate ..
-
-      - name: CMake Configure
-        working-directory: test/cpp-tableau-loader
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=17
-
-      - name: CMake Build
-        working-directory: test/cpp-tableau-loader
-        run: cmake --build build --parallel
-
-      - name: Run tests
-        working-directory: test/cpp-tableau-loader
-        run: ctest --test-dir build --output-on-failure
+      - name: Test
+        # Pass --vcpkg-baseline explicitly so make.py reuses the SHA we
+        # already rendered into vcpkg.json above, instead of auto-resolving
+        # from the vcpkg checkout (which is shallow on the CI runner).
+        run: >
+          python3 make.py test --lang cpp
+          --protobuf-version ${{ matrix.config.protobuf-version }}
+          --vcpkg-baseline ${{ matrix.config.vcpkg-commit }}
+          --triplet ${{ matrix.triplet }}
+          --no-clean
+          --no-vcpkg-install

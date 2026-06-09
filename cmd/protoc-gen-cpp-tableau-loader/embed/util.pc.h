@@ -5,6 +5,7 @@
 #include <chrono>
 #include <filesystem>
 #include <string>
+#include <type_traits>
 
 // Protobuf versions before v4.22.0 (GOOGLE_PROTOBUF_VERSION < 4022000) use the legacy
 // logging interface (LogLevel, SetLogHandler). Newer versions removed it in favor of Abseil logging.
@@ -67,6 +68,29 @@ const std::string& Format2Ext(Format fmt);
 
 // PatchMessage patches src into dst, which must be a message with the same descriptor.
 bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Message& src);
+
+// GetExtension reads a typed custom-option extension off any *Options
+// message (e.g. MessageOptions, FieldOptions).
+//
+// On protobuf runtimes < v3.15.0 a static-initialization-order quirk can
+// leave the extension payload parked in the options' unknown_fields, so
+// `options.GetExtension(id)` returns the default instance. We work around
+// it by serializing and reparsing into a fresh OptionsT at call time, by
+// which point all extension registrations have run.
+// Reference: https://github.com/protocolbuffers/protobuf/releases/tag/v3.15.0
+template <typename OptionsT, typename ExtT>
+inline auto GetExtension(const OptionsT& options, const ExtT& id)
+    -> typename std::decay<decltype(options.GetExtension(id))>::type {
+#if GOOGLE_PROTOBUF_VERSION < 3015000
+  OptionsT reparsed;
+  std::string buf;
+  options.SerializeToString(&buf);
+  reparsed.ParseFromString(buf);
+  return reparsed.GetExtension(id);
+#else
+  return options.GetExtension(id);
+#endif
+}
 
 #if TABLEAU_PB_LOG_LEGACY
 // ProtobufLogHandler redirects protobuf internal logs to tableau logger.

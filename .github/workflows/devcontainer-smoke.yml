@@ -1,0 +1,114 @@
+name: Devcontainer Smoke
+
+# Builds the devcontainer image and runs a minimal smoke test inside it.
+# Triggered only when files that affect the image change, so we don't
+# burn CI minutes on unrelated PRs.
+#
+# What this catches that testing-cpp.yml does not:
+#   1. arm64 coverage. The Dockerfile claims linux/amd64 + linux/arm64;
+#      testing-cpp.yml only exercises amd64. This workflow builds the
+#      image natively on ubuntu-24.04-arm runners.
+#   2. versions.env regressions. A typo in the shared file (stray space,
+#      quote, etc.) silently breaks the devcontainer build for anyone
+#      running `Reopen in Container`. The testing-*.yml workflows
+#      consume versions.env too, but only the keys they need; only this
+#      workflow exercises the full file in a real Dockerfile build.
+#
+# What this DOES NOT do:
+#   - Run the full C++ / C# test matrices. Those are testing-{cpp,csharp}.yml,
+#     which use lukka/run-vcpkg directly on the runner (much faster than
+#     building the devcontainer image first). The container is for
+#     local-dev parity, not the primary CI test path.
+
+on:
+  pull_request:
+    paths:
+      - ".devcontainer/**"
+      - ".github/workflows/devcontainer-smoke.yml"
+  push:
+    branches: [master, main]
+    paths:
+      - ".devcontainer/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # actions: write is required for `cache-to: type=gha` to push BuildKit
+  # cache entries to the per-repo Actions cache (~10 GB free quota).
+  actions: write
+
+jobs:
+  build-and-smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        # amd64 is partially covered by testing-cpp.yml's ubuntu-latest
+        # job (vcpkg+protobuf, x64-linux). arm64 is the genuinely-new
+        # coverage this workflow adds: GitHub-hosted ubuntu-24.04-arm
+        # runners build the image natively, no QEMU emulation.
+        include:
+          - runner: ubuntu-latest
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    name: build devcontainer + smoke (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build devcontainer image
+        # Use docker/build-push-action so we can point BuildKit at GitHub's
+        # Actions cache (10 GB free per repo). Cold first run is unchanged
+        # (~25 min — vcpkg compiles protobuf from source). Subsequent runs
+        # restore every layer from cache and complete in ~3-5 min, matching
+        # what testing-cpp.yml achieves via its actions/cache step on
+        # ${VCPKG_INSTALLED_DIR}.
+        #
+        # mode=max writes every intermediate layer to cache, not just the
+        # final image. That trades cache size (still under the 10 GB ceiling
+        # for this image) for the ability to skip vcpkg's compile layer on
+        # any later run, even when an unrelated layer above it changed.
+        uses: docker/build-push-action@v6
+        with:
+          context: .devcontainer
+          file: .devcontainer/Dockerfile
+          tags: loader-devcontainer:smoke
+          load: true
+          cache-from: type=gha,scope=devcontainer-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=devcontainer-${{ matrix.arch }}
+
+      - name: Smoke — version banner
+        run: |
+          # Confirms the image runs at all and that all five toolchain
+          # binaries (go, buf, protoc, dotnet, node) resolve.
+          docker run --rm loader-devcontainer:smoke \
+            /usr/local/bin/loader-devcontainer-banner
+
+      - name: Smoke — buf generate (Go)
+        run: |
+          # Bind-mount the checkout into the container's workspace dir
+          # and regenerate Go protoconf via make.py. Catches protoc/buf
+          # integration regressions that wouldn't show up in the banner.
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspaces/loader" \
+            -w /workspaces/loader \
+            loader-devcontainer:smoke \
+            python3 make.py generate --lang go
+
+      - name: Smoke — go vet (plugin packages only)
+        run: |
+          # Vet the plugin sources and shared internal packages via the
+          # make.py --smoke shortcut. Skips ./test/... and ./internal/index
+          # — those depend on freshly generated *.pb.go that we don't
+          # produce in this smoke job.
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspaces/loader" \
+            -w /workspaces/loader \
+            loader-devcontainer:smoke \
+            python3 make.py test --lang go --smoke

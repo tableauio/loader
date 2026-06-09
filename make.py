@@ -1,0 +1,2005 @@
+#!/usr/bin/env python3
+"""
+make.py — single cross-platform entrypoint for the tableauio/loader repo.
+
+Consolidates per-language `buf generate` / `cmake` / `go test` / `dotnet test`
+recipes into one Python tool that works identically on
+native Windows, macOS, Linux, and inside the devcontainer.
+
+Usage (high level):
+    python3 make.py setup    [--lang go|cpp|csharp|all] [--dry-run]
+    python3 make.py generate --lang go|cpp|csharp
+    python3 make.py build    --lang go|cpp|csharp [build flags]
+    python3 make.py test     --lang go|cpp|csharp [build flags] [-k FILTER] [--smoke]
+    python3 make.py clean    [--lang ...] [--all]
+    python3 make.py env
+    python3 make.py --version
+
+Standard flags (apply to every subcommand):
+    --verbose / -v   echo every subprocess
+    --dry-run        print but do not execute
+    --cwd <path>     repo root (default: auto-detect from versions.env)
+
+The Windows MSVC env trick: every command that needs cl.exe / vcpkg-protoc
+runs through Platform.windows_msvc_wrap(), which transparently wraps the
+command in `cmd /c "<vcvarsall.bat> x64 && <cmd>"`. The user's shell
+PATH/INCLUDE/LIB is never mutated.
+
+Stdlib only — no `pip install` required. Targets Python >= 3.10.
+"""
+
+import argparse
+import json
+import os
+import platform as _stdlib_platform
+import shlex  # noqa: F401  (kept for potential future POSIX shell quoting)
+import shutil
+import subprocess
+import sys
+import urllib.request
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Optional
+
+MAKE_PY_VERSION = "0.1.0"
+
+# ---------------------------------------------------------------------------
+# Versions
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class Versions:
+    """Parsed view of .devcontainer/versions.env.
+
+    The format rules (documented in .devcontainer/README.md):
+      - One KEY=VALUE per line, no quotes, no spaces around `=`.
+      - Comments start with `#` at column 0.
+      - Blank lines are ignored.
+      - No shell expansion.
+    """
+
+    raw: dict[str, str] = field(default_factory=dict)
+
+    @classmethod
+    def load(cls, repo_root: Path) -> "Versions":
+        path = repo_root / ".devcontainer" / "versions.env"
+        if not path.is_file():
+            raise FileNotFoundError(
+                f"Missing {path}; cannot resolve pinned tool versions."
+            )
+        raw: dict[str, str] = {}
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line or line.startswith("#"):
+                continue
+            if "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            raw[k.strip()] = v.strip()
+        return cls(raw=raw)
+
+    def get(self, key: str, default: Optional[str] = None) -> Optional[str]:
+        return self.raw.get(key, default)
+
+    @property
+    def go_version(self) -> Optional[str]:
+        return self.raw.get("GO_VERSION")
+
+    @property
+    def buf_version(self) -> Optional[str]:
+        return self.raw.get("BUF_VERSION")
+
+    @property
+    def protobuf_version(self) -> Optional[str]:
+        """Resolved protobuf version for the active (DEFAULT_VARIANT) row."""
+        return self._variant_value("PROTOBUF_VERSION")
+
+    @property
+    def vcpkg_baseline_commit(self) -> Optional[str]:
+        """Resolved vcpkg baseline SHA for the active (DEFAULT_VARIANT) row."""
+        return self._variant_value("VCPKG_BASELINE_COMMIT")
+
+    @property
+    def default_variant(self) -> str:
+        """Active variant label (e.g. ``modern`` / ``legacy_v3``).
+
+        Matched case-insensitively against variant-prefixed keys: a value of
+        ``modern`` resolves keys with prefix ``MODERN_``; ``legacy-v3`` /
+        ``legacy_v3`` both resolve ``LEGACY_V3_``. Defaults to ``modern`` if
+        the key is absent (preserves behaviour of older versions.env files).
+        """
+        return (self.raw.get("DEFAULT_VARIANT") or "modern").strip().lower()
+
+    def variants(self) -> dict[str, dict[str, str]]:
+        """Enumerate every (protobuf, vcpkg-baseline) variant defined.
+
+        Returns ``{variant_label: {"protobuf_version": ..., "vcpkg_baseline_commit": ...}}``
+        keyed by lowercase label. Labels that are missing one of the two keys
+        are still reported with the key they have, so callers can detect a
+        half-defined variant.
+        """
+        suffixes = {
+            "_PROTOBUF_VERSION": "protobuf_version",
+            "_VCPKG_BASELINE_COMMIT": "vcpkg_baseline_commit",
+        }
+        out: dict[str, dict[str, str]] = {}
+        for k, v in self.raw.items():
+            for sfx, field_name in suffixes.items():
+                if k.endswith(sfx):
+                    label = k[: -len(sfx)].lower()
+                    out.setdefault(label, {})[field_name] = v
+                    break
+        return out
+
+    def _variant_value(self, suffix: str) -> Optional[str]:
+        """Resolve ``<DEFAULT_VARIANT>_<suffix>`` (uppercase). Falls back to
+        the unprefixed key for backward compat with old versions.env files
+        that used the flat ``PROTOBUF_VERSION`` / ``VCPKG_BASELINE_COMMIT``."""
+        prefix = self.default_variant.upper().replace("-", "_")
+        return self.raw.get(f"{prefix}_{suffix}") or self.raw.get(suffix)
+
+    @property
+    def dotnet_version(self) -> Optional[str]:
+        return self.raw.get("DOTNET_VERSION")
+
+    @property
+    def cmake_version(self) -> Optional[str]:
+        return self.raw.get("CMAKE_VERSION")
+
+
+# ---------------------------------------------------------------------------
+# Platform
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class Platform:
+    """Host OS / arch / devcontainer detection plus a few helpers.
+
+    The two helpers worth highlighting:
+
+      - cmake_toolchain_args(): returns the right `-DCMAKE_TOOLCHAIN_FILE=...
+        -DVCPKG_TARGET_TRIPLET=...` flags on Windows; returns [] inside the
+        devcontainer (CMAKE_PREFIX_PATH=/opt/vcpkg/active is preset by the
+        Dockerfile) and on macOS / Linux (system protobuf is on PATH).
+
+      - windows_msvc_wrap(cmd): on Windows wraps the command in
+        `cmd /c "<vcvarsall> x64 && <cmd>"` so MSVC env lives only in the
+        single child process. On all other OSes returns cmd unchanged.
+    """
+
+    sys_platform: str
+    machine: str
+    in_devcontainer: bool
+    vcpkg_root: Optional[Path] = None
+    vcvarsall_path: Optional[Path] = None
+    protoc_tools_dir: Optional[Path] = None
+    vcpkg_installed_dir: Optional[Path] = None  # manifest mode only
+
+    @classmethod
+    def detect(cls) -> "Platform":
+        sys_platform = sys.platform
+        machine = _stdlib_platform.machine().lower()
+        # Devcontainer signal: only the marker the .devcontainer/Dockerfile
+        # actually sets. /.dockerenv is created by Docker for EVERY container
+        # and is too broad — using it would silently no-op `setup` in any
+        # plain Docker container.
+        in_devcontainer = Path("/opt/vcpkg/active").exists()
+        return cls(
+            sys_platform=sys_platform,
+            machine=machine,
+            in_devcontainer=in_devcontainer,
+        )
+
+    @property
+    def is_windows(self) -> bool:
+        return self.sys_platform.startswith("win")
+
+    @property
+    def is_macos(self) -> bool:
+        return self.sys_platform == "darwin"
+
+    @property
+    def is_linux(self) -> bool:
+        return self.sys_platform.startswith("linux")
+
+    @property
+    def vcpkg_triplet(self) -> str:
+        """Default vcpkg triplet for the host. Mirrors the Dockerfile lines 32-36."""
+        if self.is_windows:
+            return "x64-windows-static"
+        if self.is_macos:
+            if self.machine in ("arm64", "aarch64"):
+                return "arm64-osx"
+            return "x64-osx"
+        if self.is_linux:
+            if self.machine in ("arm64", "aarch64"):
+                return "arm64-linux"
+            return "x64-linux"
+        return "x64-linux"
+
+    def cmake_toolchain_args(
+        self, triplet: Optional[str] = None, force_vcpkg: bool = False
+    ) -> list[str]:
+        """Extra cmake -D flags to pick up vcpkg's protobuf, when applicable.
+
+        Default behaviour:
+          - devcontainer:           []  (Dockerfile presets CMAKE_PREFIX_PATH).
+          - any host with VCPKG_ROOT: toolchain + triplet flags.
+          - host without vcpkg installed (Linux/macOS, no setup run yet):
+                                      []  (cmake will fall back to system
+                                           protobuf via find_package).
+
+        force_vcpkg=True forces the toolchain flags even inside the
+        devcontainer (used by manifest-mode invocations that point cmake
+        at a custom vcpkg_installed/ dir).
+        """
+        if self.in_devcontainer and not force_vcpkg:
+            return []  # Dockerfile presets CMAKE_PREFIX_PATH=/opt/vcpkg/active.
+        # Locate VCPKG_ROOT (cached attr or env). If absent on macOS/Linux,
+        # we silently fall through to system protobuf (apt/brew). On Windows
+        # / manifest mode the cpp handler errors with an actionable message
+        # before we get here.
+        vcpkg_root = self.vcpkg_root or _env_path("VCPKG_ROOT")
+        if vcpkg_root is None:
+            return []
+        toolchain = vcpkg_root / "scripts" / "buildsystems" / "vcpkg.cmake"
+        return [
+            f"-DCMAKE_TOOLCHAIN_FILE={toolchain}",
+            f"-DVCPKG_TARGET_TRIPLET={triplet or self.vcpkg_triplet}",
+        ]
+
+    def windows_msvc_wrap(self, cmd: list[str]) -> list[str]:
+        """Wrap a command so it runs inside an MSVC-environment subshell.
+
+        On Windows, returns a single-element list containing one cmd-shell
+        command string of the form:
+            'call "<vcvarsall>" x64 >nul && <quoted cmd>'
+
+        Runner.run() detects the [windows-shell-string] pattern (via the
+        first element having no path separators but containing spaces) and
+        passes it to subprocess with shell=True so cmd parses it natively
+        — bypassing Python's Win32 CreateProcess quoting that otherwise
+        backslash-escapes the inner double quotes and breaks cmd's parser.
+
+        On every other OS this returns `cmd` unchanged.
+        """
+        if not self.is_windows:
+            return cmd
+        vcvars = self.vcvarsall_path or locate_vcvarsall()
+        if vcvars is None:
+            # No MSVC available — return cmd unchanged so the caller's
+            # subprocess fails with a useful "cl.exe not found" error rather
+            # than a more confusing wrapping failure.
+            return cmd
+        self.vcvarsall_path = vcvars
+        inner = " ".join(_winquote(arg) for arg in cmd)
+        # Single string: `call "<vcvars>" x64 >nul && <inner>`.
+        # `call` is required so vcvarsall returns control to our `&&`.
+        # `>nul` swallows vcvarsall's banner (cosmetic).
+        line = f'call "{vcvars}" x64 >nul && {inner}'
+        return [_WIN_SHELL_MARKER + line]
+
+
+# Sentinel prefix used to flag a Runner.run() argv as "single shell string,
+# please run via cmd". Using a prefix instead of a separate kwarg keeps
+# windows_msvc_wrap() composable with the rest of the runner pipeline.
+_WIN_SHELL_MARKER = "\x00CMDSHELL\x00"
+
+
+def _env_path(name: str) -> Optional[Path]:
+    v = os.environ.get(name)
+    return Path(v) if v else None
+
+
+def _winquote(arg: str) -> str:
+    """Quote an argument for the Windows cmd shell.
+
+    cmd's quoting is famously bad. Wrap in double quotes if there is any
+    whitespace, ampersand, or other shell metacharacter.
+    """
+    if not arg:
+        return '""'
+    if any(c in arg for c in ' &|<>^"()'):
+        # Escape embedded quotes by doubling them (cmd convention).
+        return '"' + arg.replace('"', '""') + '"'
+    return arg
+
+
+def locate_vcvarsall() -> Optional[Path]:
+    """Find vcvarsall.bat on a Windows host.
+
+    Strategy:
+      1. Try vswhere.exe (the canonical method since VS 2017).
+      2. Fall back to a few well-known install paths.
+    Returns None if MSVC isn't installed.
+    """
+    if sys.platform != "win32":
+        return None
+    pf86 = os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
+    pf = os.environ.get("ProgramFiles", r"C:\Program Files")
+    for base in (pf86, pf):
+        vswhere = Path(base) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+        if vswhere.is_file():
+            try:
+                out = subprocess.run(
+                    [
+                        str(vswhere),
+                        "-latest",
+                        "-products",
+                        "*",
+                        "-requires",
+                        "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+                        "-property",
+                        "installationPath",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                inst = out.stdout.strip().splitlines()
+                if inst:
+                    candidate = (
+                        Path(inst[0]) / "VC" / "Auxiliary" / "Build" / "vcvarsall.bat"
+                    )
+                    if candidate.is_file():
+                        return candidate
+            except OSError:
+                pass
+    # Hardcoded fallbacks for VS 2022 Build Tools / Community / Enterprise.
+    for base in (pf86, pf):
+        for edition in ("BuildTools", "Community", "Professional", "Enterprise"):
+            candidate = (
+                Path(base)
+                / "Microsoft Visual Studio"
+                / "2022"
+                / edition
+                / "VC"
+                / "Auxiliary"
+                / "Build"
+                / "vcvarsall.bat"
+            )
+            if candidate.is_file():
+                return candidate
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Runner — subprocess helper
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class Runner:
+    """Thin wrapper around subprocess.run with verbose / dry-run support."""
+
+    verbose: bool = False
+    dry_run: bool = False
+
+    def run(
+        self,
+        cmd: list[str],
+        cwd: Optional[Path] = None,
+        env: Optional[dict[str, str]] = None,
+        check: bool = True,
+        shell: bool = False,
+    ) -> int:
+        # Detect the windows_msvc_wrap sentinel: a single-element argv whose
+        # value starts with _WIN_SHELL_MARKER. Strip the marker and run via
+        # cmd's native parser (shell=True) so Python's Win32 CreateProcess
+        # quoting doesn't mangle the embedded double quotes.
+        if (
+            len(cmd) == 1
+            and isinstance(cmd[0], str)
+            and cmd[0].startswith(_WIN_SHELL_MARKER)
+        ):
+            line = cmd[0][len(_WIN_SHELL_MARKER) :]
+            location = f" (cwd={cwd})" if cwd else ""
+            if self.dry_run:
+                print(f"[dry-run] {line}{location}")
+                return 0
+            if self.verbose:
+                print(f"[run-shell] {line}{location}")
+            proc = subprocess.run(
+                line,
+                cwd=str(cwd) if cwd else None,
+                env=env,
+                check=False,
+                shell=True,
+            )
+            if check and proc.returncode != 0:
+                raise SystemExit(
+                    f"[error] command failed with exit code {proc.returncode}: {line}"
+                )
+            return proc.returncode
+
+        printable = " ".join(_winquote(c) if " " in c else c for c in cmd)
+        location = f" (cwd={cwd})" if cwd else ""
+        if self.dry_run:
+            print(f"[dry-run] {printable}{location}")
+            return 0
+        if self.verbose:
+            print(f"[run] {printable}{location}")
+        proc = subprocess.run(
+            cmd,
+            cwd=str(cwd) if cwd else None,
+            env=env,
+            check=False,
+            shell=shell,
+        )
+        if check and proc.returncode != 0:
+            raise SystemExit(
+                f"[error] command failed with exit code {proc.returncode}: {printable}"
+            )
+        return proc.returncode
+
+    def rmtree(self, path: Path) -> None:
+        if self.dry_run:
+            # Always announce the wipe in dry-run, even if path is missing —
+            # it's the orchestrator's *intent* we want to capture.
+            print(f"[dry-run] rm -rf {path}")
+            return
+        if not path.exists():
+            return
+        if self.verbose:
+            print(f"[rm-rf] {path}")
+        shutil.rmtree(path, ignore_errors=True)
+
+    def mkdirp(self, path: Path) -> None:
+        if self.dry_run:
+            print(f"[dry-run] mkdir -p {path}")
+            return
+        if path.exists():
+            return
+        if self.verbose:
+            print(f"[mkdir-p] {path}")
+        path.mkdir(parents=True, exist_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# Repo root discovery
+# ---------------------------------------------------------------------------
+
+
+def find_repo_root(start: Optional[Path] = None) -> Path:
+    """Locate the repo root by walking upward to find .devcontainer/versions.env."""
+    here = (start or Path(__file__).resolve()).parent if start is None else start
+    here = here.resolve()
+    for candidate in [here, *here.parents]:
+        if (candidate / ".devcontainer" / "versions.env").is_file():
+            return candidate
+    raise SystemExit(
+        "[error] Could not locate repo root (no .devcontainer/versions.env found)."
+    )
+
+
+# ---------------------------------------------------------------------------
+# ~/.loader-env.json — Windows toolchain cache
+# ---------------------------------------------------------------------------
+
+
+LOADER_ENV_PATH = Path.home() / ".loader-env.json"
+
+
+def load_loader_env() -> dict:
+    if not LOADER_ENV_PATH.is_file():
+        return {}
+    try:
+        return json.loads(LOADER_ENV_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def save_loader_env(data: dict, runner: Runner) -> None:
+    text = json.dumps(data, indent=2, sort_keys=True)
+    if runner.dry_run:
+        print(f"[dry-run] write {LOADER_ENV_PATH}: {text}")
+        return
+    LOADER_ENV_PATH.write_text(text, encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# vcpkg baseline lookup
+# ---------------------------------------------------------------------------
+#
+# Pinning protobuf via `overrides` while leaving `builtin-baseline` on a newer
+# vcpkg commit lets transitive deps (abseil/utf8-range/re2/...) drift forward
+# and breaks ABI (e.g. missing `absl::if_constexpr`). So for protobuf versions
+# vcpkg's baseline.json knows about (>= 3.14.0), we pin the baseline itself to
+# the vcpkg commit whose `versions/baseline.json` had our target protobuf —
+# that whole snapshot is by construction self-consistent.
+#
+# Resolution: `git log -S '"X.Y.Z"' -- versions/baseline.json` → for each hit,
+# verify `default.protobuf.baseline == X.Y.Z` at that commit (guards against
+# the literal appearing in unrelated ports). Results cached in
+# ~/.loader-env.json under "vcpkg_baseline_for_protobuf".
+#
+# Exception — protobuf < 3.14.0 (predates baseline.json, so no snapshot can
+# carry it): we pin `builtin-baseline` at the *floor* (3.14.0) commit and add
+# an `overrides` entry for the older protobuf. The ABI-drift hazard above does
+# NOT apply here because pre-3.14 protobuf is dependency-light (no abseil /
+# utf8-range / re2), and 3.14.0 is the oldest baseline available, so its
+# transitive deps are already as old as vcpkg knows about. See
+# `_resolve_vcpkg_protobuf_pin`.
+
+
+def _resolve_vcpkg_baseline_for_protobuf(
+    protobuf_version: str,
+    vcpkg_root: Path,
+    runner: Runner,
+) -> str:
+    """Find the vcpkg commit whose baseline.json has protobuf == protobuf_version.
+
+    Raises RuntimeError if no such commit can be found in the local vcpkg
+    checkout — caller should surface a clear error and suggest `git fetch`
+    or a different --protobuf-version.
+    """
+    # Cache hit?
+    cache = load_loader_env()
+    cached_map = cache.get("vcpkg_baseline_for_protobuf", {}) or {}
+    cached = cached_map.get(protobuf_version)
+    if cached:
+        # Validate the cached commit still has the expected protobuf — the
+        # user might have re-cloned vcpkg or rewritten history.
+        if _vcpkg_baseline_has_protobuf(vcpkg_root, cached, protobuf_version):
+            return cached
+        # Cache is stale; fall through to re-resolve.
+        cached_map.pop(protobuf_version, None)
+
+    if runner.dry_run:
+        # Dry-run: don't shell out to git, return a placeholder so snapshot
+        # tests can still verify the command sequence.
+        return f"<baseline-for-protobuf-{protobuf_version}>"
+
+    if not (vcpkg_root / ".git").exists():
+        raise RuntimeError(
+            f"{vcpkg_root} is not a git checkout; cannot resolve a vcpkg "
+            f"baseline commit for protobuf {protobuf_version}."
+        )
+
+    # Step 1: candidate commits via pickaxe search on the literal version string.
+    try:
+        out = subprocess.check_output(
+            [
+                "git",
+                "-C",
+                str(vcpkg_root),
+                "log",
+                "-S",
+                f'"{protobuf_version}"',
+                "--reverse",
+                "--format=%H",
+                "--",
+                "versions/baseline.json",
+            ],
+            text=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(
+            f"git log failed while searching vcpkg history for protobuf "
+            f"{protobuf_version}: {e}"
+        ) from e
+
+    candidates = [line.strip() for line in out.splitlines() if line.strip()]
+    if not candidates:
+        raise RuntimeError(
+            f"No commit in {vcpkg_root} touches versions/baseline.json with "
+            f'the literal "{protobuf_version}". Possible causes:\n'
+            f"  - your local vcpkg checkout is shallow / out-of-date "
+            f"(`git -C {vcpkg_root} fetch --unshallow origin master` may help)\n"
+            f"  - protobuf {protobuf_version} was never the vcpkg baseline "
+            f"(use --vcpkg-baseline=<commit> to point at a custom snapshot)"
+            f"{_format_known_protobuf_versions_hint(vcpkg_root)}"
+        )
+
+    # Step 2: validate each candidate by reading baseline.json at that commit.
+    for sha in candidates:
+        if _vcpkg_baseline_has_protobuf(vcpkg_root, sha, protobuf_version):
+            cached_map[protobuf_version] = sha
+            cache["vcpkg_baseline_for_protobuf"] = cached_map
+            save_loader_env(cache, runner)
+            print(
+                f"[info] resolved vcpkg baseline for protobuf "
+                f"{protobuf_version} -> {sha[:12]}",
+                file=sys.stderr,
+            )
+            return sha
+
+    raise RuntimeError(
+        f'Found {len(candidates)} commits mentioning "{protobuf_version}" in '
+        f"versions/baseline.json but none had default.protobuf.baseline set "
+        f"to that exact version (the literal likely appears in unrelated "
+        f"ports). Pass --vcpkg-baseline=<commit> manually."
+        f"{_format_known_protobuf_versions_hint(vcpkg_root)}"
+    )
+
+
+# Earliest protobuf version usable as a vcpkg `builtin-baseline`.
+# vcpkg's versions/baseline.json was introduced 2021-01-21, and its very
+# first commit already pinned `default.protobuf.baseline = "3.14.0"`. Port
+# versions older than this (3.0.2, 3.2.0, ..., 3.13.0) exist in
+# versions/p-/protobuf.json but were never the global baseline and so can't
+# serve as builtin-baseline. The user-facing error message uses a rounder
+# "~3.18" wording on purpose; the precise floor lives only here.
+_VCPKG_PROTOBUF_BASELINE_FLOOR = (3, 14, 0)
+
+# Hard *support* floor — distinct from the vcpkg baseline floor above. Below
+# 3.8.0 the C++ tableau-loader / generated code is known not to compile, even
+# though vcpkg can still fetch those ancient ports via `overrides`. We refuse
+# such versions up-front (before touching the user's trees) unless --force is
+# given — a user may deliberately pick an unsupported version to investigate
+# the compile breakage. Must stay <= _VCPKG_PROTOBUF_BASELINE_FLOOR so the
+# below-baseline (overrides) range it gates is non-empty.
+_PROTOBUF_MIN_SUPPORTED = (3, 8, 0)
+
+
+def _parse_protobuf_version_tuple(v: str) -> Optional[tuple[int, ...]]:
+    """Parse "3.14.0" / "3.21.12" / "5.29.5" into a numeric tuple for ordering.
+
+    Returns None for anything that isn't pure dotted-numeric (defensive: the
+    registry has historically been numeric-only for protobuf, but we'd
+    rather drop a weird entry than crash a hint formatter).
+    """
+    parts = v.split(".")
+    if not all(p.isdigit() for p in parts) or not parts:
+        return None
+    return tuple(int(p) for p in parts)
+
+
+def _ge_supported_floor(v: str) -> bool:
+    """True iff dotted version `v` parses and is >= the 3.8.0 support floor.
+
+    Unparseable versions are treated as not-below-floor-worthy (returns False)
+    so they're dropped from below-floor listings rather than crashing.
+    """
+    tup = _parse_protobuf_version_tuple(v)
+    return tup is not None and tup >= _PROTOBUF_MIN_SUPPORTED
+
+
+def _read_protobuf_registry_versions(vcpkg_root: Path) -> list[str]:
+    """All protobuf versions in versions/p-/protobuf.json at HEAD.
+
+    Reads the file with one cheap `git show` — vcpkg's authoritative list of
+    every protobuf version the registry has ever known. Returned in registry
+    order (newest first), de-duplicated, and *unfiltered* (includes pre-3.14
+    versions). On any failure returns [] so callers can degrade gracefully.
+    """
+    try:
+        blob = subprocess.check_output(
+            [
+                "git",
+                "-C",
+                str(vcpkg_root),
+                "show",
+                "HEAD:versions/p-/protobuf.json",
+            ],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return []
+    try:
+        data = json.loads(blob)
+    except ValueError:
+        return []
+    seen: set[str] = set()
+    versions: list[str] = []
+    for entry in data.get("versions", []):
+        v = (
+            entry.get("version")
+            or entry.get("version-semver")
+            or entry.get("version-string")
+        )
+        if not v or v in seen:
+            continue
+        seen.add(v)
+        versions.append(v)
+    return versions
+
+
+def _list_known_protobuf_versions(vcpkg_root: Path) -> list[str]:
+    """Return protobuf versions usable as a vcpkg `builtin-baseline`.
+
+    Same source as `_read_protobuf_registry_versions`, filtered to
+    `>= _VCPKG_PROTOBUF_BASELINE_FLOOR` so the caller can blindly surface every
+    entry as something the user can pass to `--protobuf-version` and have pinned
+    *as the baseline* (older versions are still usable, but only via overrides).
+    """
+    versions: list[str] = []
+    for v in _read_protobuf_registry_versions(vcpkg_root):
+        tup = _parse_protobuf_version_tuple(v)
+        if tup is None or tup < _VCPKG_PROTOBUF_BASELINE_FLOOR:
+            continue
+        versions.append(v)
+    return versions
+
+
+def _protobuf_version_in_registry(vcpkg_root: Path, version: str) -> bool:
+    """True iff `version` appears in versions/p-/protobuf.json at HEAD.
+
+    This is the precondition for pinning it via `overrides`: vcpkg resolves an
+    override's version through the registry's version DB at the current
+    checkout, so a version absent here can never be installed.
+    """
+    return version in set(_read_protobuf_registry_versions(vcpkg_root))
+
+
+def _format_known_protobuf_versions_hint(
+    vcpkg_root: Path, include_below_floor: bool = False
+) -> str:
+    """Render a human-readable bullet listing known protobuf versions.
+
+    Returns "" (caller can append unconditionally) when the version DB
+    can't be read. Otherwise returns a leading "\n  - known versions: ..."
+    suitable for tacking onto the end of a RuntimeError message. When
+    `include_below_floor` is set, below-baseline versions are listed too —
+    down to the hard support floor (3.8.0) and *without* truncation — so a user
+    who asked for a missing older version can see every version they could pin
+    via `overrides`. Versions below the support floor are omitted (they won't
+    compile, so there's no point suggesting them).
+    """
+    if include_below_floor:
+        versions = [
+            v
+            for v in _read_protobuf_registry_versions(vcpkg_root)
+            if _ge_supported_floor(v)
+        ]
+    else:
+        versions = _list_known_protobuf_versions(vcpkg_root)
+    if not versions:
+        return ""
+    # Newest first (registry order). For the below-floor listing show the full
+    # range down to 3.8.0 (no truncation); for the baseline-only listing keep
+    # the compact head + "(+N older)" form.
+    if include_below_floor:
+        listed = ", ".join(versions)
+    else:
+        head = ", ".join(versions[:20])
+        tail = f" (+{len(versions) - 20} older)" if len(versions) > 20 else ""
+        listed = f"{head}{tail}"
+    return (
+        f"\n  - known protobuf versions in {vcpkg_root}/versions/p-/protobuf.json "
+        f"(newest first, down to the {_PROTOBUF_MIN_SUPPORTED_STR} support "
+        f"floor): {listed}\n"
+        f"  - note: versions older than 3.14.0 predate vcpkg's baseline.json, "
+        f"so they're pinned via `overrides` on the 3.14.0 baseline rather than "
+        f"as builtin-baseline (handled automatically by --protobuf-version)\n"
+        f"  - note: {_PROTOBUF_MIN_SUPPORTED_STR} is the minimum supported "
+        f"version; anything older won't compile (pass --force to try anyway)"
+    )
+
+
+def _vcpkg_baseline_has_protobuf(
+    vcpkg_root: Path, commit_sha: str, expected_version: str
+) -> bool:
+    """Read versions/baseline.json at commit_sha; return True iff protobuf matches."""
+    try:
+        blob = subprocess.check_output(
+            [
+                "git",
+                "-C",
+                str(vcpkg_root),
+                "show",
+                f"{commit_sha}:versions/baseline.json",
+            ],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError:
+        return False
+    try:
+        data = json.loads(blob)
+    except ValueError:
+        return False
+    entry = data.get("default", {}).get("protobuf", {})
+    return entry.get("baseline") == expected_version
+
+
+# The floor expressed as a dotted string ("3.14.0"), derived once from the
+# tuple so the two never drift apart. This is the baseline we pin when a
+# requested protobuf version predates vcpkg's baseline.json.
+_VCPKG_PROTOBUF_BASELINE_FLOOR_STR = ".".join(
+    str(n) for n in _VCPKG_PROTOBUF_BASELINE_FLOOR
+)
+
+# The hard support floor as a dotted string ("3.8.0"), derived from the tuple.
+_PROTOBUF_MIN_SUPPORTED_STR = ".".join(str(n) for n in _PROTOBUF_MIN_SUPPORTED)
+
+
+def _check_protobuf_min_supported(protobuf_version: str, force: bool) -> None:
+    """Guard against protobuf versions below the hard support floor (3.8.0).
+
+    Below this floor the C++ loader / generated code is known not to compile.
+    Purely a version-number check (no vcpkg checkout needed), so it runs first
+    — before any baseline resolution or tree wipe.
+
+    - version >= floor (or unparseable): no-op.
+    - version <  floor, force=False:     raise RuntimeError (caller fails fast).
+    - version <  floor, force=True:      warn loudly and continue, so the user
+                                         can reproduce / investigate the break.
+    """
+    tup = _parse_protobuf_version_tuple(protobuf_version)
+    if tup is None or tup >= _PROTOBUF_MIN_SUPPORTED:
+        return
+    if force:
+        print(
+            f"[warn] protobuf {protobuf_version} is below the supported floor "
+            f"{_PROTOBUF_MIN_SUPPORTED_STR} and is NOT expected to compile; "
+            f"proceeding anyway because --force was given",
+            file=sys.stderr,
+        )
+        return
+    raise RuntimeError(
+        f"protobuf {protobuf_version} is below the minimum supported version "
+        f"{_PROTOBUF_MIN_SUPPORTED_STR}; the C++ loader is not expected to "
+        f"compile against it, so the build is refused. Pass --force (-f) to "
+        f"attempt it anyway (e.g. to investigate the compile failure)."
+    )
+
+
+@dataclass
+class VcpkgProtobufPin:
+    """How to pin protobuf into a generated vcpkg.json manifest.
+
+    baseline:         value for the manifest's ``builtin-baseline``.
+    override_version: when set, the requested protobuf predates vcpkg's
+                      baseline.json, so it is pinned via an ``overrides``
+                      entry layered on top of the floor ``baseline``. ``None``
+                      means the baseline snapshot already carries the exact
+                      protobuf version (no ``overrides`` needed).
+    """
+
+    baseline: str
+    override_version: Optional[str] = None
+
+
+def _resolve_below_floor_override(
+    protobuf_version: str,
+    vcpkg_root: Path,
+    runner: Runner,
+) -> Optional[str]:
+    """Decide whether `protobuf_version` must be pinned via `overrides`.
+
+    Returns the version string when it predates the baseline.json floor (so the
+    caller should layer an `overrides` entry on the floor baseline), or None
+    when it is >= floor (pinned as the baseline itself).
+
+    Raises RuntimeError when the version is below the floor *and* absent from
+    the vcpkg versions registry — letting callers fail fast (before wiping
+    codegen/build trees) instead of rendering a manifest that `vcpkg install`
+    would only reject minutes later. Skipped in dry-run, where there is no real
+    checkout to consult.
+    """
+    tup = _parse_protobuf_version_tuple(protobuf_version)
+    if tup is None or tup >= _VCPKG_PROTOBUF_BASELINE_FLOOR:
+        return None
+    if not runner.dry_run and not _protobuf_version_in_registry(
+        vcpkg_root, protobuf_version
+    ):
+        raise RuntimeError(
+            f"protobuf {protobuf_version} predates vcpkg's baseline.json floor "
+            f"({_VCPKG_PROTOBUF_BASELINE_FLOOR_STR}) and is not present in "
+            f"{vcpkg_root}/versions/p-/protobuf.json, so it cannot be pinned via "
+            f"`overrides`. Possible causes:\n"
+            f"  - typo in --protobuf-version\n"
+            f"  - your local vcpkg checkout is shallow / out-of-date "
+            f"(`git -C {vcpkg_root} fetch origin master` may help)"
+            f"{_format_known_protobuf_versions_hint(vcpkg_root, include_below_floor=True)}"
+        )
+    return protobuf_version
+
+
+def _resolve_vcpkg_protobuf_pin(
+    protobuf_version: str,
+    vcpkg_root: Path,
+    runner: Runner,
+) -> VcpkgProtobufPin:
+    """Resolve baseline (+ optional override) for a requested protobuf version.
+
+    protobuf >= floor (3.14.0): pin the self-consistent baseline whose
+    ``versions/baseline.json`` carries that exact version — no ``overrides``
+    (see module comment on transitive-dep ABI drift).
+
+    protobuf < floor: pin the floor baseline and pin the older protobuf via
+    ``overrides``. Safe because pre-3.14 protobuf has no abseil/utf8-range/re2
+    dependency, and the floor is the oldest baseline vcpkg has, so nothing
+    drifts forward. Raises RuntimeError early if the version doesn't exist.
+    """
+    override = _resolve_below_floor_override(protobuf_version, vcpkg_root, runner)
+    if override is not None:
+        baseline = _resolve_vcpkg_baseline_for_protobuf(
+            _VCPKG_PROTOBUF_BASELINE_FLOOR_STR, vcpkg_root, runner
+        )
+        print(
+            f"[info] protobuf {protobuf_version} predates vcpkg's baseline.json "
+            f"(floor {_VCPKG_PROTOBUF_BASELINE_FLOOR_STR}); pinning baseline "
+            f"{baseline[:12]} and adding overrides protobuf={protobuf_version}",
+            file=sys.stderr,
+        )
+        return VcpkgProtobufPin(baseline=baseline, override_version=override)
+    baseline = _resolve_vcpkg_baseline_for_protobuf(protobuf_version, vcpkg_root, runner)
+    return VcpkgProtobufPin(baseline=baseline)
+
+
+def hydrate_platform_from_env(plat: Platform) -> None:
+    """Populate Platform from $VCPKG_ROOT and ~/.loader-env.json.
+
+    Cross-platform: macOS / Linux / Windows. Cache file is shared between
+    `make.py setup` (which writes it) and subsequent `make.py test`
+    invocations (which read it).
+    """
+    if plat.vcpkg_root is None:
+        plat.vcpkg_root = _env_path("VCPKG_ROOT")
+    cache = load_loader_env()
+    if plat.vcpkg_root is None and cache.get("vcpkg_root"):
+        plat.vcpkg_root = Path(cache["vcpkg_root"])
+    if plat.protoc_tools_dir is None and cache.get("protoc_tools_dir"):
+        plat.protoc_tools_dir = Path(cache["protoc_tools_dir"])
+    if plat.vcpkg_installed_dir is None and cache.get("vcpkg_installed_dir"):
+        plat.vcpkg_installed_dir = Path(cache["vcpkg_installed_dir"])
+    # vcvarsall is Windows-only.
+    if plat.is_windows:
+        if plat.vcvarsall_path is None and cache.get("vcvarsall_path"):
+            candidate = Path(cache["vcvarsall_path"])
+            if candidate.is_file():
+                plat.vcvarsall_path = candidate
+
+
+# ---------------------------------------------------------------------------
+# Setup commands
+# ---------------------------------------------------------------------------
+
+
+LANGS_ALL = ("go", "cpp", "csharp")
+
+
+def _which(name: str) -> Optional[str]:
+    return shutil.which(name)
+
+
+def _prepend_path(directory: Path) -> None:
+    """Prepend ``directory`` to ``os.environ['PATH']`` (idempotent, in-process).
+
+    This makes a freshly-installed tool visible to (a) subsequent ``_which``
+    probes inside the same ``setup`` run and (b) every child process spawned
+    by ``Runner`` afterwards (we never override ``env=``, so they inherit
+    ``os.environ``). No-op if the directory is already on PATH.
+    """
+    p = str(directory)
+    sep = os.pathsep
+    current = os.environ.get("PATH", "")
+    parts = current.split(sep) if current else []
+    # Case-insensitive comparison on Windows; exact match elsewhere.
+    norm = (lambda s: s.lower()) if os.name == "nt" else (lambda s: s)
+    if any(norm(x) == norm(p) for x in parts if x):
+        return
+    os.environ["PATH"] = p + (sep + current if current else "")
+
+
+def cmd_setup(args, ctx: "Context") -> int:
+    """Install host toolchains. OS-dispatched. Idempotent."""
+    if ctx.platform.in_devcontainer:
+        print("[info] Running inside devcontainer; toolchain already installed.")
+        return 0
+
+    langs = _resolve_langs(args.lang)
+    print(f"[info] Setting up host toolchain for: {', '.join(langs)}")
+    print(f"[info] Pinned versions: {ctx.versions.raw}")
+
+    if ctx.platform.is_macos:
+        return _setup_macos(langs, ctx)
+    if ctx.platform.is_linux:
+        return _setup_linux(langs, ctx)
+    if ctx.platform.is_windows:
+        return _setup_windows(langs, ctx, skip_vcpkg=getattr(args, "skip_vcpkg", False))
+    print(
+        f"[error] Unsupported host platform: {ctx.platform.sys_platform}",
+        file=sys.stderr,
+    )
+    return 1
+
+
+def _resolve_langs(lang: str) -> list[str]:
+    if lang in (None, "all"):
+        return list(LANGS_ALL)
+    return [lang]
+
+
+def _setup_macos(langs: list[str], ctx: "Context") -> int:
+    if _which("brew") is None:
+        print(
+            "[error] Homebrew is required on macOS. Install from https://brew.sh and re-run.",
+            file=sys.stderr,
+        )
+        return 1
+    cache = load_loader_env()
+
+    # Brew packages: only the version-tolerant pieces (cmake, ninja, build
+    # essentials). Go and protobuf are pinned via tarball / vcpkg below;
+    # buf is pinned via direct download. dotnet@N is pinnable via brew's
+    # versioned formulae.
+    pkgs: list[str] = []
+    if "cpp" in langs:
+        pkgs.extend(["cmake", "ninja"])
+    if "csharp" in langs:
+        # `dotnet@8` (cask) covers .NET 8.x. Use the major.
+        major = (ctx.versions.dotnet_version or "8.0").split(".")[0]
+        pkgs.append(f"dotnet@{major}")
+    if pkgs:
+        ctx.runner.run(["brew", "update"], check=False)
+        ctx.runner.run(["brew", "install", *pkgs], check=False)
+
+    # Pinned Go via official tarball (matches devcontainer).
+    if "go" in langs or "cpp" in langs or "csharp" in langs:
+        _ensure_go_tarball(ctx, "darwin")
+
+    # Pinned buf via GitHub release.
+    _ensure_buf_unix(ctx, os_label="Darwin")
+
+    # Pinned protobuf via vcpkg (matches devcontainer + Windows).
+    if "cpp" in langs:
+        _setup_vcpkg(ctx, cache)
+
+    save_loader_env(cache, ctx.runner)
+    print("[info] macOS toolchain ready.")
+    return 0
+
+
+def _setup_linux(langs: list[str], ctx: "Context") -> int:
+    apt = _which("apt-get") is not None
+    dnf = _which("dnf") is not None
+    if not (apt or dnf):
+        print(
+            "[error] Neither apt-get nor dnf found. Install your toolchain manually.",
+            file=sys.stderr,
+        )
+        return 1
+    cache = load_loader_env()
+
+    # Distro packages: only the version-tolerant pieces (cmake, ninja, build
+    # essentials, git). Go is pinned via tarball; buf via GitHub release;
+    # protobuf via vcpkg; .NET via Microsoft repo helper; Node via NodeSource.
+    base_pkgs: list[str] = []
+    if "cpp" in langs:
+        if apt:
+            base_pkgs.extend(
+                ["cmake", "ninja-build", "build-essential", "git", "curl", "zip", "unzip", "tar", "pkg-config"]
+            )
+        else:
+            base_pkgs.extend(
+                ["cmake", "ninja-build", "gcc-c++", "git", "curl", "zip", "unzip", "tar", "pkgconf-pkg-config"]
+            )
+
+    if base_pkgs:
+        sudo_prefix = ["sudo"] if os.geteuid() != 0 else []
+        if apt:
+            ctx.runner.run([*sudo_prefix, "apt-get", "update"], check=False)
+            ctx.runner.run(
+                [*sudo_prefix, "apt-get", "install", "-y", *base_pkgs], check=False
+            )
+        else:
+            ctx.runner.run(
+                [*sudo_prefix, "dnf", "install", "-y", *base_pkgs], check=False
+            )
+
+    # Pinned Go via official tarball.
+    if "go" in langs or "cpp" in langs or "csharp" in langs:
+        _ensure_go_tarball(ctx, "linux")
+
+    # Pinned buf via GitHub release.
+    _ensure_buf_unix(ctx, os_label="Linux")
+
+    if "csharp" in langs:
+        _ensure_dotnet_linux(ctx)
+
+    # Pinned protobuf via vcpkg (matches devcontainer + Windows).
+    if "cpp" in langs:
+        _setup_vcpkg(ctx, cache)
+
+    save_loader_env(cache, ctx.runner)
+    print("[info] Linux toolchain ready.")
+    return 0
+
+
+def _ensure_buf_unix(ctx: "Context", os_label: str) -> None:
+    """Download the pinned buf release to ~/.local/bin/buf.
+
+    os_label: "Linux" or "Darwin" (matches the GitHub release naming).
+
+    On a fresh host ``~/.local/bin`` is rarely on PATH (distros add it lazily
+    via ``~/.profile``, which a non-login shell never sources). After we drop
+    ``buf`` there we eagerly prepend the directory to ``os.environ['PATH']``
+    so ``generate``/``test`` invoked later in the same ``setup`` run — and
+    every child process Runner spawns — can resolve ``buf`` without the user
+    having to relog or edit shell rc files.
+    """
+    if _which("buf") is not None:
+        return
+    ver = ctx.versions.buf_version
+    if not ver:
+        return
+    target_dir = Path.home() / ".local" / "bin"
+    target = target_dir / "buf"
+    # Previously-installed binary that's just not on this shell's PATH —
+    # don't redownload, just expose it.
+    if target.exists():
+        print(f"[info] buf already present at {target}; reusing.")
+        _prepend_path(target_dir)
+        return
+    arch = (
+        "x86_64"
+        if _stdlib_platform.machine().lower() in ("x86_64", "amd64")
+        else "aarch64"
+    )
+    url = f"https://github.com/bufbuild/buf/releases/download/v{ver}/buf-{os_label}-{arch}"
+    ctx.runner.mkdirp(target_dir)
+    print(f"[info] Downloading buf {ver} ({os_label}/{arch}) -> {target}")
+    if not ctx.runner.dry_run:
+        urllib.request.urlretrieve(url, str(target))
+        target.chmod(0o755)
+    _prepend_path(target_dir)
+
+
+def _ensure_dotnet_linux(ctx: "Context") -> None:
+    if _which("dotnet") is not None:
+        return
+    ver = ctx.versions.dotnet_version or "8.0"
+    script = Path.home() / ".local" / "bin" / "dotnet-install.sh"
+    ctx.runner.mkdirp(script.parent)
+    print(f"[info] Bootstrapping .NET {ver} via dotnet-install.sh")
+    if not ctx.runner.dry_run:
+        urllib.request.urlretrieve("https://dot.net/v1/dotnet-install.sh", str(script))
+        script.chmod(0o755)
+    install_dir = Path.home() / ".dotnet"
+    ctx.runner.run(
+        [str(script), "--channel", ver, "--install-dir", str(install_dir)],
+        check=False,
+    )
+
+
+def _go_arch_macos() -> str:
+    return "arm64" if _stdlib_platform.machine().lower() in ("arm64", "aarch64") else "amd64"
+
+
+def _go_arch_linux() -> str:
+    return "arm64" if _stdlib_platform.machine().lower() in ("arm64", "aarch64") else "amd64"
+
+
+def _ensure_go_tarball(ctx: "Context", os_label: str) -> None:
+    """Install the official Go tarball at GO_VERSION into ~/.local/go/.
+
+    Mirrors the devcontainer Dockerfile's Go layer. `go` already on PATH is
+    accepted as-is — bumping versions.env's GO_VERSION on a machine with an
+    older Go installed is the user's call (we don't auto-replace).
+    """
+    if _which("go") is not None:
+        return
+    ver = ctx.versions.go_version
+    if not ver:
+        return
+    arch = _go_arch_macos() if os_label == "darwin" else _go_arch_linux()
+    url = f"https://go.dev/dl/go{ver}.{os_label}-{arch}.tar.gz"
+    target_root = Path.home() / ".local"
+    ctx.runner.mkdirp(target_root)
+    print(f"[info] Downloading Go {ver} ({os_label}/{arch}) -> {target_root}/go")
+    if ctx.runner.dry_run:
+        print(f"[dry-run] curl -L {url} | tar -C {target_root} -xz")
+        return
+    import tempfile
+    import tarfile
+    with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tmp:
+        urllib.request.urlretrieve(url, tmp.name)
+        tarball = tmp.name
+    with tarfile.open(tarball, "r:gz") as tf:
+        tf.extractall(target_root)
+    os.unlink(tarball)
+    bin_dir = target_root / "go" / "bin"
+    print(f"[info] Go {ver} installed. Add to your shell profile:")
+    print(f"    export PATH={bin_dir}:$PATH")
+
+
+def _setup_windows(langs: list[str], ctx: "Context", skip_vcpkg: bool) -> int:
+    """Windows host setup."""
+    cache = load_loader_env()
+
+    # Step 0: Chocolatey
+    choco = _which("choco")
+    if choco is None:
+        print("[info] Chocolatey not found. Installing...")
+        ctx.runner.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                "[System.Net.ServicePointManager]::SecurityProtocol = "
+                "[System.Net.ServicePointManager]::SecurityProtocol -bor 3072; "
+                "iex ((New-Object System.Net.WebClient).DownloadString("
+                "'https://community.chocolatey.org/install.ps1'))",
+            ],
+            check=False,
+        )
+    else:
+        print(f"[info] Chocolatey already installed at: {choco}")
+
+    if "cpp" in langs:
+        # Step 1: Ninja
+        if _which("ninja") is None:
+            print(f"[info] Installing ninja via choco...")
+            ctx.runner.run(
+                ["choco", "install", "ninja", "-y", "--no-progress"], check=False
+            )
+        else:
+            print("[info] ninja already on PATH.")
+
+        # Step 2: CMake
+        if _which("cmake") is None:
+            ver = ctx.versions.cmake_version or "3.31.8"
+            print(f"[info] Installing CMake {ver} via choco...")
+            ctx.runner.run(
+                [
+                    "choco",
+                    "install",
+                    "cmake",
+                    f"--version={ver}",
+                    "--installargs",
+                    "ADD_CMAKE_TO_PATH=System",
+                    "-y",
+                    "--no-progress",
+                ],
+                check=False,
+            )
+        else:
+            print("[info] cmake already on PATH.")
+
+        # Step 3: MSVC Build Tools
+        vcvars = locate_vcvarsall()
+        if vcvars is None:
+            print(
+                "[info] MSVC Build Tools not found. Installing visualstudio2022buildtools..."
+            )
+            ctx.runner.run(
+                [
+                    "choco",
+                    "install",
+                    "visualstudio2022buildtools",
+                    "--package-parameters",
+                    "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --passive --locale en-US",
+                    "-y",
+                ],
+                check=False,
+            )
+            vcvars = locate_vcvarsall()
+        if vcvars is not None:
+            print(f"[info] vcvarsall.bat: {vcvars}")
+            cache["vcvarsall_path"] = str(vcvars)
+            ctx.platform.vcvarsall_path = vcvars
+
+    # Step 4: buf
+    if _which("buf") is None:
+        ver = ctx.versions.buf_version
+        if ver:
+            buf_dir = (
+                Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "buf" / "bin"
+            )
+            buf_exe = buf_dir / "buf.exe"
+            if buf_exe.exists():
+                # Previously-installed binary that just isn't on this shell's
+                # PATH — reuse it instead of redownloading.
+                print(f"[info] buf already present at {buf_exe}; reusing.")
+                _prepend_path(buf_dir)
+            else:
+                ctx.runner.mkdirp(buf_dir)
+                url = f"https://github.com/bufbuild/buf/releases/download/v{ver}/buf-Windows-x86_64.exe"
+                print(f"[info] Downloading buf {ver} -> {buf_exe}")
+                if not ctx.runner.dry_run:
+                    urllib.request.urlretrieve(url, str(buf_exe))
+                # Make buf usable for the rest of this `setup` run and any
+                # child process Runner spawns afterwards. Persisting the
+                # entry in the user's permanent PATH (registry / shell rc)
+                # is intentionally left to the user — modifying global env
+                # vars from a build script is too invasive.
+                _prepend_path(buf_dir)
+                print(
+                    f"[info] buf installed at {buf_exe} (added to this session's PATH; "
+                    f"add {buf_dir} to your user PATH to make it permanent)."
+                )
+    else:
+        print("[info] buf already on PATH.")
+
+    # Step 5: vcpkg + protobuf
+    if "cpp" in langs and not skip_vcpkg:
+        _setup_vcpkg(ctx, cache)
+
+    # Step 6: Go (always required — every buf-generate invokes the Go
+    # protoc plugins via `go run ../../cmd/protoc-gen-...`, so Go must be
+    # on PATH regardless of which language is being built. Mirrors the
+    # macOS/Linux setup paths which install Go for any --lang.).
+    if _which("go") is None:
+        go_ver = ctx.versions.go_version or "1.24.0"
+        # winget package id format is `GoLang.Go.<major>.<minor>`; the patch
+        # level isn't part of the id (the package itself tracks it).
+        go_major_minor = ".".join(go_ver.split(".")[:2])
+        ctx.runner.run(
+            ["winget", "install", "--id", f"GoLang.Go.{go_major_minor}", "-e"],
+            check=False,
+        )
+    else:
+        print("[info] go already on PATH.")
+
+    # Step 7: .NET SDK (only when csharp tests are requested).
+    if "csharp" in langs and _which("dotnet") is None:
+        dotnet_ver = ctx.versions.dotnet_version or "8.0"
+        # winget package id format is `Microsoft.DotNet.SDK.<major>`.
+        dotnet_major = dotnet_ver.split(".")[0]
+        ctx.runner.run(
+            [
+                "winget",
+                "install",
+                "--id",
+                f"Microsoft.DotNet.SDK.{dotnet_major}",
+                "-e",
+            ],
+            check=False,
+        )
+
+    save_loader_env(cache, ctx.runner)
+    print("[info] Windows toolchain ready.")
+    print(
+        "[info] Build/test commands run vcvarsall.bat per-process; your shell PATH is unchanged."
+    )
+    return 0
+
+
+def _setup_vcpkg(ctx: "Context", cache: dict) -> None:
+    """Cross-platform vcpkg + protobuf installer (Windows / macOS / Linux).
+
+    Mirrors the devcontainer Dockerfile's vcpkg layer so native dev gets the
+    same protobuf version pin as CI and the container. Idempotent — second
+    runs detect existing checkout and skip.
+    """
+    triplet = ctx.platform.vcpkg_triplet
+    baseline = ctx.versions.vcpkg_baseline_commit
+    is_windows = ctx.platform.is_windows
+    bootstrap_name = "bootstrap-vcpkg.bat" if is_windows else "bootstrap-vcpkg.sh"
+    vcpkg_bin_name = "vcpkg.exe" if is_windows else "vcpkg"
+    protoc_bin_name = "protoc.exe" if is_windows else "protoc"
+
+    # Resolve a usable vcpkg root: existing $VCPKG_ROOT, then cache, then a
+    # standard location under the user's home dir.
+    vcpkg_root = ctx.platform.vcpkg_root or _env_path("VCPKG_ROOT")
+    if vcpkg_root is None and cache.get("vcpkg_root"):
+        vcpkg_root = Path(cache["vcpkg_root"])
+
+    # Reject manifest-only vcpkg (no bootstrap script). On Windows this filters
+    # the VS-bundled vcpkg under `<VS>\VC\vcpkg\` which refuses classic mode.
+    if vcpkg_root is not None and not (vcpkg_root / bootstrap_name).is_file():
+        print(f"[warn] {vcpkg_root} looks like a manifest-only vcpkg; ignoring.")
+        vcpkg_root = None
+
+    home_default = (
+        Path(os.environ.get("USERPROFILE", str(Path.home()))) / "vcpkg"
+        if is_windows
+        else Path.home() / "vcpkg"
+    )
+    if vcpkg_root is None and (home_default / bootstrap_name).is_file():
+        vcpkg_root = home_default
+
+    if vcpkg_root is None:
+        vcpkg_root = home_default
+        print(f"[info] Cloning vcpkg into {vcpkg_root}...")
+        ctx.runner.run(
+            ["git", "clone", "https://github.com/microsoft/vcpkg.git", str(vcpkg_root)],
+            check=False,
+        )
+        if baseline:
+            ctx.runner.run(
+                ["git", "-C", str(vcpkg_root), "fetch", "--quiet", "origin", baseline],
+                check=False,
+            )
+            ctx.runner.run(
+                ["git", "-C", str(vcpkg_root), "checkout", "--quiet", baseline],
+                check=False,
+            )
+        # Bootstrap. On Windows it shells out to MSVC's link.exe so wrap in
+        # vcvarsall; Unix bootstrap is self-contained (downloads prebuilt
+        # vcpkg binary or builds from source via cc).
+        bootstrap_path = vcpkg_root / bootstrap_name
+        bootstrap_cmd: list[str] = [str(bootstrap_path), "-disableMetrics"]
+        if is_windows:
+            ctx.runner.run(
+                ctx.platform.windows_msvc_wrap(bootstrap_cmd),
+                check=False,
+            )
+        else:
+            # Make sure bootstrap.sh is executable (clone preserves permissions
+            # but a fresh git config sometimes drops the +x bit on Windows).
+            if not ctx.runner.dry_run and bootstrap_path.is_file():
+                bootstrap_path.chmod(0o755)
+            ctx.runner.run(bootstrap_cmd, check=False)
+
+    cache["vcpkg_root"] = str(vcpkg_root)
+    ctx.platform.vcpkg_root = vcpkg_root
+
+    vcpkg_exe = vcpkg_root / vcpkg_bin_name
+    print(f"[info] vcpkg at: {vcpkg_root}")
+
+    print(f"[info] Installing protobuf:{triplet} via vcpkg (classic mode)...")
+    install_cmd = [str(vcpkg_exe), "install", f"protobuf:{triplet}"]
+    if is_windows:
+        ctx.runner.run(
+            ctx.platform.windows_msvc_wrap(install_cmd),
+            check=False,
+        )
+    else:
+        ctx.runner.run(install_cmd, check=False)
+
+    protoc_dir = vcpkg_root / "installed" / triplet / "tools" / "protobuf"
+    if (protoc_dir / protoc_bin_name).is_file() or ctx.runner.dry_run:
+        cache["protoc_tools_dir"] = str(protoc_dir)
+        ctx.platform.protoc_tools_dir = protoc_dir
+
+
+# ---------------------------------------------------------------------------
+# generate / build / test / clean
+# ---------------------------------------------------------------------------
+
+
+def _lang_dir(repo_root: Path, lang: str) -> Path:
+    return repo_root / "test" / f"{lang}-tableau-loader"
+
+
+def _buf_generate(
+    ctx: "Context", lang: str, protoc_dir_override: Optional[Path] = None
+) -> None:
+    cwd = _lang_dir(ctx.repo_root, lang)
+    cmd = ctx.platform.windows_msvc_wrap(["buf", "generate", ".."])
+    env = os.environ.copy()
+    # Pick the protoc to put on PATH:
+    #   - protoc_dir_override (manifest-mode protoc from this build's
+    #     vcpkg_installed/) wins — required when --protobuf-version is set,
+    #     so codegen matches the libprotobuf headers cmake will use.
+    #   - Else the classic-mode protoc cached in ~/.loader-env.json
+    #     (populated on every host by `make.py setup`).
+    protoc_dir = protoc_dir_override or ctx.platform.protoc_tools_dir
+    if protoc_dir is not None:
+        env["PATH"] = f"{protoc_dir}{os.pathsep}{env.get('PATH', '')}"
+    ctx.runner.run(cmd, cwd=cwd, env=env)
+
+
+def cmd_generate(args, ctx: "Context") -> int:
+    _buf_generate(ctx, args.lang)
+    return 0
+
+
+def cmd_build(args, ctx: "Context") -> int:
+    return _build_or_test(args, ctx, run_tests=False)
+
+
+def cmd_test(args, ctx: "Context") -> int:
+    return _build_or_test(args, ctx, run_tests=True)
+
+
+def _build_or_test(args, ctx: "Context", run_tests: bool) -> int:
+    lang = args.lang
+    if lang == "go":
+        return _go_build_or_test(args, ctx, run_tests)
+    if lang == "cpp":
+        return _cpp_build_or_test(args, ctx, run_tests)
+    if lang == "csharp":
+        return _csharp_build_or_test(args, ctx, run_tests)
+    print(f"[error] unknown --lang {lang}", file=sys.stderr)
+    return 2
+
+
+# ----- Go -----
+
+
+def _go_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
+    cwd = _lang_dir(ctx.repo_root, "go")
+
+    if run_tests and getattr(args, "smoke", False):
+        # Devcontainer-smoke equivalent — vet plugin packages only, skip ./test/...
+        # No buf-generate needed: those packages don't depend on freshly
+        # generated *.pb.go.
+        ctx.runner.run(
+            [
+                "go",
+                "vet",
+                "./cmd/...",
+                "./pkg/...",
+                "./internal/options/...",
+                "./internal/loadutil/...",
+                "./internal/xproto/...",
+            ],
+            cwd=ctx.repo_root,
+        )
+        return 0
+
+    # Always regenerate, mirroring CI.
+    if not getattr(args, "no_generate", False):
+        _buf_generate(ctx, "go")
+
+    if not run_tests:
+        ctx.runner.run(["go", "build", "./..."], cwd=cwd)
+        return 0
+
+    cmd = ["go", "test", "-v", "-timeout", "30m"]
+    # Resolve --race default based on host OS. Windows requires cgo (and a
+    # C compiler) for -race; Linux/macOS work out of the box.
+    race = getattr(args, "race", None)
+    if race is None:
+        race = not ctx.platform.is_windows
+    if race:
+        cmd.append("-race")
+    if getattr(args, "coverage", False):
+        cmd.extend(["-coverprofile=coverage.txt", "-covermode=atomic"])
+    cmd.append("./...")
+    if getattr(args, "k", None):
+        cmd.extend(["-run", args.k])
+    ctx.runner.run(cmd, cwd=cwd)
+    return 0
+
+
+# ----- C++ -----
+
+
+def _cpp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
+    cwd = _lang_dir(ctx.repo_root, "cpp")
+    triplet = getattr(args, "triplet", None) or ctx.platform.vcpkg_triplet
+    protobuf_version = getattr(args, "protobuf_version", None)
+    cxx_std = getattr(args, "cxx_std", "17")
+    cxx_compiler = getattr(args, "cxx_compiler", None)
+
+    # Resolve the vcpkg baseline up-front when --protobuf-version is given.
+    # This MUST happen before the stale-codegen rmtree below: an invalid
+    # --protobuf-version that would later raise should not have already
+    # wiped the user's src/protoconf, src/tableau, build/ trees.
+    #
+    # Baseline resolution order:
+    #   1. --vcpkg-baseline=<sha>                       (explicit override)
+    #   2. _resolve_vcpkg_protobuf_pin(...)             (auto: git-search vcpkg)
+    # For protobuf < 3.14.0 an `overrides` entry is layered on top of the
+    # floor baseline (see _resolve_vcpkg_protobuf_pin / module comment).
+    vcpkg_root: Optional[Path] = None
+    baseline: Optional[str] = None
+    override_version: Optional[str] = None
+    if protobuf_version:
+        # Hard support-floor guard first — purely a version-number check (no
+        # vcpkg checkout needed), so it runs before baseline resolution and the
+        # tree wipe below. Refuses protobuf < 3.8.0 unless --force is given.
+        try:
+            _check_protobuf_min_supported(
+                protobuf_version, getattr(args, "force", False)
+            )
+        except RuntimeError as e:
+            print(f"[error] {e}", file=sys.stderr)
+            return 1
+        # Need a vcpkg checkout to resolve the baseline by git history.
+        vcpkg_root = ctx.platform.vcpkg_root or _env_path("VCPKG_ROOT")
+        if vcpkg_root is None:
+            if ctx.runner.dry_run:
+                # Dry-run: print what would happen with a placeholder so the
+                # snapshot test can still verify the command sequence.
+                vcpkg_root = Path("<VCPKG_ROOT>")
+            else:
+                print(
+                    "[error] --protobuf-version requires VCPKG_ROOT to be set "
+                    "(run `python3 make.py setup --lang cpp` first, or set "
+                    "VCPKG_ROOT in your environment).",
+                    file=sys.stderr,
+                )
+                return 1
+        # Surface the resolved root on the platform so cmake_toolchain_args
+        # picks it up for the configure command.
+        ctx.platform.vcpkg_root = vcpkg_root
+
+        explicit_baseline = getattr(args, "vcpkg_baseline", None)
+        try:
+            if explicit_baseline:
+                baseline = explicit_baseline
+                print(
+                    f"[info] using --vcpkg-baseline={baseline[:12]}",
+                    file=sys.stderr,
+                )
+                # A version below the baseline.json floor can't be carried by
+                # any baseline snapshot, so even with an explicit baseline we
+                # must pin it via overrides. _resolve_below_floor_override also
+                # validates the version exists (raises early otherwise).
+                override_version = _resolve_below_floor_override(
+                    protobuf_version, vcpkg_root, ctx.runner
+                )
+                if override_version:
+                    print(
+                        f"[info] protobuf {protobuf_version} predates baseline.json "
+                        f"floor {_VCPKG_PROTOBUF_BASELINE_FLOOR_STR}; adding "
+                        f"overrides protobuf={protobuf_version}",
+                        file=sys.stderr,
+                    )
+            else:
+                pin = _resolve_vcpkg_protobuf_pin(
+                    protobuf_version, vcpkg_root, ctx.runner
+                )
+                baseline = pin.baseline
+                override_version = pin.override_version
+        except RuntimeError as e:
+            # Fail fast — user trees on disk are still untouched.
+            print(f"[error] {e}", file=sys.stderr)
+            print(
+                "[hint] If you know a vcpkg commit whose baseline matches "
+                "your protobuf, pass --vcpkg-baseline=<sha> to skip auto-resolution.",
+                file=sys.stderr,
+            )
+            return 1
+
+    # Stale-codegen wipe (gitignored *.pb.* files left over from a previous
+    # protoc version shadow fresh codegen). Skip with --no-clean.
+    if not getattr(args, "no_clean", False):
+        ctx.runner.rmtree(cwd / "build")
+        ctx.runner.rmtree(cwd / "src" / "tableau")
+        ctx.runner.rmtree(cwd / "src" / "protoconf")
+
+    # Classic mode: a stale vcpkg.json from a previous --protobuf-version run
+    # would silently switch cmake's vcpkg toolchain into manifest mode and
+    # build the wrong libprotobuf into build/vcpkg_installed/. Always remove
+    # it here unless we're about to render a fresh one below.
+    if not protobuf_version:
+        manifest_path = cwd / "vcpkg.json"
+        if manifest_path.is_file():
+            if ctx.runner.dry_run:
+                print(f"[dry-run] rm {manifest_path}")
+            else:
+                manifest_path.unlink()
+
+    # Manifest mode: render vcpkg.json pinning the requested protobuf-version,
+    # then run `vcpkg install` to populate vcpkg_installed/. This matches CI's
+    # testing-cpp.yml flow (which uses lukka/run-vcpkg with runVcpkgInstall:
+    # true) and means switching --protobuf-version Just Works without
+    # re-running `make.py setup`. Idempotent: vcpkg detects already-installed
+    # packages and skips them.
+    cmake_extra: list[str] = []
+    if protobuf_version:
+        # vcpkg_root and baseline were resolved above; assert for the type
+        # checker (both are guaranteed non-None inside this branch).
+        assert vcpkg_root is not None and baseline is not None
+
+        manifest = {
+            "name": "loader-cpp-test",
+            "version": "0.1.0",
+            "dependencies": ["protobuf"],
+            "builtin-baseline": baseline,
+        }
+        # Below-floor protobuf: pin it via overrides on top of the floor
+        # baseline (resolved in _resolve_vcpkg_protobuf_pin).
+        if override_version:
+            manifest["overrides"] = [
+                {"name": "protobuf", "version": override_version}
+            ]
+        manifest_path = cwd / "vcpkg.json"
+        if not ctx.runner.dry_run:
+            manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        installed_dir = Path(
+            os.environ.get("VCPKG_INSTALLED_DIR", str(cwd / "vcpkg_installed"))
+        )
+
+        vcpkg_exe = vcpkg_root / ("vcpkg.exe" if ctx.platform.is_windows else "vcpkg")
+
+        # Install the manifest: must `cd` into the manifest dir for vcpkg to
+        # discover it. Skip when --no-vcpkg-install is passed (CI's
+        # lukka/run-vcpkg already did it).
+        if not getattr(args, "no_vcpkg_install", False):
+            install_cmd = [
+                str(vcpkg_exe),
+                "install",
+                f"--triplet={triplet}",
+                f"--x-install-root={installed_dir}",
+            ]
+            ctx.runner.run(
+                ctx.platform.windows_msvc_wrap(install_cmd),
+                cwd=cwd,
+            )
+
+        cmake_extra.extend(
+            [
+                f"-DVCPKG_INSTALLED_DIR={installed_dir}",
+                "-DVCPKG_MANIFEST_INSTALL=OFF",
+            ]
+        )
+
+    if not getattr(args, "no_generate", False):
+        # In manifest mode, route buf-generate's protoc to the manifest's
+        # tools dir so codegen matches the libprotobuf cmake links against.
+        protoc_dir_override: Optional[Path] = None
+        if protobuf_version:
+            protoc_dir_override = installed_dir / triplet / "tools" / "protobuf"
+        _buf_generate(ctx, "cpp", protoc_dir_override=protoc_dir_override)
+
+    configure_cmd = [
+        "cmake",
+        "-S",
+        ".",
+        "-B",
+        "build",
+        "-DCMAKE_BUILD_TYPE=Debug",
+        f"-DCMAKE_CXX_STANDARD={cxx_std}",
+    ]
+    if cxx_compiler:
+        # Translate friendly names.
+        compiler = {"msvc": "cl", "clang": "clang++", "gcc": "g++"}.get(
+            cxx_compiler, cxx_compiler
+        )
+        configure_cmd.append(f"-DCMAKE_CXX_COMPILER={compiler}")
+    if shutil.which("ninja") is not None:
+        configure_cmd.extend(["-G", "Ninja"])
+    configure_cmd.extend(
+        ctx.platform.cmake_toolchain_args(
+            triplet=triplet,
+            # Manifest mode means we ARE using vcpkg regardless of host;
+            # force the toolchain flags even on Linux/macOS so cmake's
+            # find_package(Protobuf) resolves against vcpkg_installed/.
+            force_vcpkg=bool(protobuf_version),
+        )
+    )
+    configure_cmd.extend(cmake_extra)
+
+    ctx.runner.run(ctx.platform.windows_msvc_wrap(configure_cmd), cwd=cwd)
+    ctx.runner.run(
+        ctx.platform.windows_msvc_wrap(["cmake", "--build", "build", "--parallel"]),
+        cwd=cwd,
+    )
+
+    if run_tests:
+        ctest_cmd = ["ctest", "--test-dir", "build", "--output-on-failure"]
+        if getattr(args, "k", None):
+            ctest_cmd.extend(["-R", args.k])
+        ctx.runner.run(ctx.platform.windows_msvc_wrap(ctest_cmd), cwd=cwd)
+    return 0
+
+
+# ----- C# -----
+
+
+def _csharp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
+    cwd = _lang_dir(ctx.repo_root, "csharp")
+    if not getattr(args, "no_generate", False):
+        _buf_generate(ctx, "csharp")
+
+    if not run_tests:
+        ctx.runner.run(["dotnet", "build", "--nologo"], cwd=cwd)
+        return 0
+
+    cmd = ["dotnet", "test", "--nologo", "--logger", "console;verbosity=normal"]
+    if getattr(args, "k", None):
+        cmd.extend(["--filter", f"FullyQualifiedName~{args.k}"])
+    ctx.runner.run(cmd, cwd=cwd)
+    return 0
+
+
+# ----- clean / env -----
+
+
+def cmd_clean(args, ctx: "Context") -> int:
+    targets: list[str] = []
+    if args.all:
+        targets = list(LANGS_ALL)
+    else:
+        targets = _resolve_langs(args.lang)
+    for lang in targets:
+        cwd = _lang_dir(ctx.repo_root, lang)
+        if lang == "cpp":
+            ctx.runner.rmtree(cwd / "build")
+            ctx.runner.rmtree(cwd / "src" / "tableau")
+            ctx.runner.rmtree(cwd / "src" / "protoconf")
+        elif lang == "csharp":
+            ctx.runner.rmtree(cwd / "bin")
+            ctx.runner.rmtree(cwd / "obj")
+            ctx.runner.rmtree(cwd / "protoconf")
+        elif lang == "go":
+            ctx.runner.rmtree(cwd / "protoconf")
+    return 0
+
+
+def cmd_env(args, ctx: "Context") -> int:
+    info = {
+        "make_py_version": MAKE_PY_VERSION,
+        "repo_root": str(ctx.repo_root),
+        "sys_platform": ctx.platform.sys_platform,
+        "machine": ctx.platform.machine,
+        "in_devcontainer": ctx.platform.in_devcontainer,
+        "vcpkg_triplet": ctx.platform.vcpkg_triplet,
+        "vcpkg_root": str(ctx.platform.vcpkg_root) if ctx.platform.vcpkg_root else None,
+        "vcvarsall_path": (
+            str(ctx.platform.vcvarsall_path) if ctx.platform.vcvarsall_path else None
+        ),
+        "protoc_tools_dir": (
+            str(ctx.platform.protoc_tools_dir)
+            if ctx.platform.protoc_tools_dir
+            else None
+        ),
+        "tools": {
+            "go": _which("go"),
+            "buf": _which("buf"),
+            "protoc": _which("protoc"),
+            "cmake": _which("cmake"),
+            "ninja": _which("ninja"),
+            "dotnet": _which("dotnet"),
+        },
+        "versions_env": ctx.versions.raw,
+    }
+    print(json.dumps(info, indent=2))
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# Context + arg parsing + main
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class Context:
+    repo_root: Path
+    versions: Versions
+    platform: Platform
+    runner: Runner
+
+
+def build_arg_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog="make.py",
+        description="Cross-platform build/test driver for tableauio/loader.",
+    )
+    p.add_argument(
+        "--version", action="store_true", help="print make.py version + versions.env"
+    )
+    p.add_argument("-v", "--verbose", action="store_true")
+    p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--cwd", type=str, default=None, help="repo root override")
+
+    sub = p.add_subparsers(dest="command")
+
+    # setup
+    sp = sub.add_parser("setup", help="Install host toolchain")
+    sp.add_argument("--lang", choices=[*LANGS_ALL, "all"], default="all")
+    sp.add_argument(
+        "--skip-vcpkg",
+        action="store_true",
+        help="(Windows) skip vcpkg install (CI uses lukka/run-vcpkg)",
+    )
+
+    # generate
+    sp = sub.add_parser("generate", help="Run buf generate for a language")
+    sp.add_argument("--lang", choices=LANGS_ALL, required=True)
+
+    # build
+    sp = sub.add_parser("build", help="Compile generated code for a language")
+    _add_build_flags(sp)
+
+    # test
+    sp = sub.add_parser("test", help="Run tests for a language")
+    _add_build_flags(sp)
+    sp.add_argument(
+        "-k",
+        type=str,
+        default=None,
+        help="test filter (go -run / ctest -R / dotnet --filter)",
+    )
+    sp.add_argument(
+        "--smoke", action="store_true", help="(go only) smoke vet, no full test run"
+    )
+    # --race / --no-race: tri-state. Default depends on host OS:
+    #   Linux/macOS -> default ON (-race works out of the box).
+    #   Windows     -> default OFF (-race needs cgo+C compiler; users opt in
+    #                  explicitly via --race once they have MSVC/MinGW).
+    sp.add_argument(
+        "--race",
+        dest="race",
+        action="store_true",
+        default=None,
+        help="enable -race (default on Linux/macOS, off on Windows)",
+    )
+    sp.add_argument(
+        "--no-race", dest="race", action="store_false", help="disable -race"
+    )
+    sp.add_argument("--coverage", action="store_true")
+
+    # clean
+    sp = sub.add_parser("clean", help="Wipe generated code + build outputs")
+    sp.add_argument("--lang", choices=[*LANGS_ALL, "all"], default="all")
+    sp.add_argument("--all", action="store_true")
+
+    # env
+    sub.add_parser("env", help="Print resolved environment as JSON")
+
+    return p
+
+
+def _add_build_flags(sp: argparse.ArgumentParser) -> None:
+    sp.add_argument("--lang", choices=LANGS_ALL, required=True)
+    sp.add_argument("--cxx-std", choices=["17", "20"], default="17")
+    sp.add_argument("--cxx-compiler", choices=["msvc", "clang", "gcc"], default=None)
+    sp.add_argument(
+        "--protobuf-version",
+        type=str,
+        default=None,
+        help="(cpp) pin vcpkg protobuf port to this version (manifest mode)",
+    )
+    sp.add_argument(
+        "--vcpkg-baseline",
+        type=str,
+        default=None,
+        help=(
+            "(cpp manifest mode) explicit vcpkg builtin-baseline commit; "
+            "skips auto-resolution from --protobuf-version"
+        ),
+    )
+    sp.add_argument(
+        "--triplet", type=str, default=None, help="(cpp) vcpkg triplet override"
+    )
+    sp.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help=(
+            "(cpp) attempt the build even with a protobuf version below the "
+            "3.8.0 support floor (expected to fail to compile; useful for "
+            "investigating the breakage)"
+        ),
+    )
+    sp.add_argument(
+        "--no-clean",
+        action="store_true",
+        help="(cpp) skip pre-build wipe of build/ + generated codegen",
+    )
+    sp.add_argument(
+        "--no-vcpkg-install",
+        action="store_true",
+        help="(cpp manifest mode) skip `vcpkg install` (CI uses lukka/run-vcpkg)",
+    )
+    sp.add_argument(
+        "--no-generate", action="store_true", help="skip the buf-generate step"
+    )
+
+
+def main(argv: Optional[list[str]] = None) -> int:
+    parser = build_arg_parser()
+    args = parser.parse_args(argv)
+
+    if args.version:
+        repo = (
+            find_repo_root(Path(args.cwd).resolve()) if args.cwd else find_repo_root()
+        )
+        v = Versions.load(repo)
+        print(f"make.py {MAKE_PY_VERSION}")
+        for k, val in v.raw.items():
+            print(f"  {k}={val}")
+        return 0
+
+    if args.command is None:
+        parser.print_help()
+        return 0
+
+    repo = find_repo_root(Path(args.cwd).resolve()) if args.cwd else find_repo_root()
+    versions = Versions.load(repo)
+    plat = Platform.detect()
+    hydrate_platform_from_env(plat)
+    runner = Runner(verbose=args.verbose, dry_run=args.dry_run)
+    ctx = Context(repo_root=repo, versions=versions, platform=plat, runner=runner)
+
+    dispatch = {
+        "setup": cmd_setup,
+        "generate": cmd_generate,
+        "build": cmd_build,
+        "test": cmd_test,
+        "clean": cmd_clean,
+        "env": cmd_env,
+    }
+    handler = dispatch.get(args.command)
+    if handler is None:
+        parser.print_help()
+        return 2
+    return handler(args, ctx)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

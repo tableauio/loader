@@ -63,6 +63,21 @@ const std::string& Format2Ext(Format fmt) {
 #undef GetMessage
 #endif
 
+// MapKeyFd returns the key FieldDescriptor of a map-entry message.
+//
+// ``Descriptor::map_key()`` is a convenience wrapper added in protobuf
+// v3.12.0; on older runtimes we fall back to ``field(0)``, which is
+// equivalent because map-entry messages always synthesize the key as
+// field 0 (and value as field 1) per the proto3 wire-format contract.
+inline const google::protobuf::FieldDescriptor* MapKeyFd(
+    const google::protobuf::Descriptor* map_entry) {
+#if GOOGLE_PROTOBUF_VERSION < 3012000
+  return map_entry->field(0);
+#else
+  return map_entry->map_key();
+#endif
+}
+
 // PatchMessage patches src into dst, which must be a message with the same descriptor.
 //
 // # Default PatchMessage mechanism
@@ -105,7 +120,7 @@ bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Messag
 
   // Iterates over every populated field.
   for (auto fd : fields) {
-    const tableau::FieldOptions& opts = fd->options().GetExtension(tableau::field);
+    const tableau::FieldOptions& opts = GetExtension(fd->options(), tableau::field);
     tableau::Patch patch = opts.prop().patch();
     if (patch == tableau::PATCH_REPLACE) {
       dst_reflection->ClearField(&dst, fd);
@@ -113,7 +128,7 @@ bool PatchMessage(google::protobuf::Message& dst, const google::protobuf::Messag
     if (fd->is_map()) {
       // Reference:
       // https://github.com/protocolbuffers/protobuf/blob/95ef4134d3f65237b7adfb66e5e7aa10fcfa1fa3/src/google/protobuf/map_field.cc#L500
-      auto key_fd = fd->message_type()->map_key();
+      auto key_fd = MapKeyFd(fd->message_type());
       int src_count = src_reflection->FieldSize(src, fd);
       int dst_count = dst_reflection->FieldSize(dst, fd);
       switch (key_fd->cpp_type()) {

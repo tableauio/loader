@@ -1,0 +1,54 @@
+name: Load pinned versions
+description: >
+  Reads .devcontainer/versions.env (the single source of truth shared
+  with the devcontainer and make.py) and exports each KEY=VALUE pair to
+  GITHUB_ENV so subsequent steps can reference them as env-context values
+  (e.g. env.BUF_VERSION).
+
+  Also resolves the active (DEFAULT_VARIANT) row's MODERN_/LEGACY_V3_-prefixed
+  protobuf+vcpkg pins back to the unprefixed PROTOBUF_VERSION /
+  VCPKG_BASELINE_COMMIT names so existing workflow references keep working.
+
+  Format rules of versions.env (kept simple so every consumer can parse it
+  with a builtin):
+    - One KEY=VALUE per line, no quotes, no spaces around `=`.
+    - Comments start with `#` at column 0.
+    - Blank lines are ignored.
+
+runs:
+  using: composite
+  steps:
+    - name: Export versions.env to $GITHUB_ENV
+      shell: bash
+      run: |
+        set -eu
+        file=.devcontainer/versions.env
+        if [ ! -f "$file" ]; then
+          echo "::error::Missing $file; cannot resolve pinned tool versions."
+          exit 1
+        fi
+        # Pass 1: every KEY=VALUE → $GITHUB_ENV verbatim.
+        declare -A kv
+        while IFS='=' read -r k v; do
+          [ -z "$k" ] && continue
+          case "$k" in \#*) continue ;; esac
+          printf '%s=%s\n' "$k" "$v" >> "$GITHUB_ENV"
+          kv[$k]=$v
+        done < "$file"
+
+        # Pass 2: resolve the active variant's protobuf + vcpkg pins back to
+        # the unprefixed names so workflows can keep referencing
+        # ${{ env.PROTOBUF_VERSION }} / ${{ env.VCPKG_BASELINE_COMMIT }}.
+        variant="${kv[DEFAULT_VARIANT]:-modern}"
+        prefix=$(printf '%s' "$variant" | tr '[:lower:]-' '[:upper:]_')
+        protobuf_key="${prefix}_PROTOBUF_VERSION"
+        vcpkg_key="${prefix}_VCPKG_BASELINE_COMMIT"
+        if [ -z "${kv[$protobuf_key]:-}" ] || [ -z "${kv[$vcpkg_key]:-}" ]; then
+          echo "::error::variant '$variant' missing $protobuf_key and/or $vcpkg_key in $file"
+          exit 1
+        fi
+        printf 'PROTOBUF_VERSION=%s\n' "${kv[$protobuf_key]}" >> "$GITHUB_ENV"
+        printf 'VCPKG_BASELINE_COMMIT=%s\n' "${kv[$vcpkg_key]}" >> "$GITHUB_ENV"
+        # Mirror VCPKG_BASELINE_COMMIT under VCPKG_COMMIT for backward
+        # compat with testing-cpp.yml's pre-existing variable name.
+        printf 'VCPKG_COMMIT=%s\n' "${kv[$vcpkg_key]}" >> "$GITHUB_ENV"
