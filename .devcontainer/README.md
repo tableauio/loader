@@ -17,7 +17,7 @@ code .
 
 Then **Dev Containers: Reopen in Container** from the command palette. First build is one-time ~25 min (vcpkg compiles protobuf); reopens are near-instant.
 
-Inside the container, `python make.py setup` is a no-op. Use `python make.py test --lang <X>` for any language.
+Inside the container, `python3 make.py setup` is a no-op. Use `python3 make.py test --lang <X>` for any language.
 
 ## Pin a different protobuf version
 
@@ -55,7 +55,7 @@ Build context is `.devcontainer/`, so `COPY versions.env …` resolves directly.
 
 Consumers: Dockerfile (sourced as a shell file), [`make.py`](../make.py) (`Versions.load()`), and `.github/actions/load-versions` (exports to `$GITHUB_ENV`).
 
-Use `python make.py env` for a JSON dump of resolved values.
+Use `python3 make.py env` for a JSON dump of resolved values.
 
 ## Troubleshooting
 
@@ -65,8 +65,8 @@ Symptoms:
 - C++: `fatal error: google/protobuf/generated_message_table_driven.h: No such file or directory`
 - C#: hundreds of `error CS0101: The namespace already contains a definition for ...`
 
-The host workspace has gitignored `*.pb.*` from a previous protobuf version that `git pull` didn't remove. Wipe with `python make.py clean --lang cpp` (or `--lang csharp`), then rerun the test.
+The host workspace has gitignored `*.pb.*` from a previous protobuf version that `git pull` didn't remove. Wipe with `python3 make.py clean --lang cpp` (or `--lang csharp`), then rerun the test.
 
 ## Falling back
 
-No Docker? Use [`make.py`](../make.py) directly: `python make.py setup --lang all` then `python make.py test --lang <X>`. Works on macOS / Linux / Windows native.
+No Docker? Use [`make.py`](../make.py) directly: `python3 make.py setup --lang all` then `python3 make.py test --lang <X>`. Works on macOS / Linux / Windows native.

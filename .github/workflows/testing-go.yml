@@ -60,7 +60,7 @@ jobs:
         # MSVC available; -race needs cgo + a C compiler). On a fresh
         # Windows dev machine without MSVC, make.py's default is --no-race;
         # CI overrides that.
-        run: python make.py test --lang go --race --coverage
+        run: python3 make.py test --lang go --race --coverage
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5

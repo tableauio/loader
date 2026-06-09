@@ -161,7 +161,7 @@ jobs:
         # already rendered into vcpkg.json above, instead of auto-resolving
         # from the vcpkg checkout (which is shallow on the CI runner).
         run: >
-          python make.py test --lang cpp
+          python3 make.py test --lang cpp
           --protobuf-version ${{ matrix.config.protobuf-version }}
           --vcpkg-baseline ${{ matrix.config.vcpkg-commit }}
           --triplet ${{ matrix.triplet }}

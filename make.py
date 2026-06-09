@@ -7,13 +7,13 @@ recipes into one Python tool that works identically on
 native Windows, macOS, Linux, and inside the devcontainer.
 
 Usage (high level):
-    python make.py setup    [--lang go|cpp|csharp|all] [--dry-run]
-    python make.py generate --lang go|cpp|csharp
-    python make.py build    --lang go|cpp|csharp [build flags]
-    python make.py test     --lang go|cpp|csharp [build flags] [-k FILTER] [--smoke]
-    python make.py clean    [--lang ...] [--all]
-    python make.py env
-    python make.py --version
+    python3 make.py setup    [--lang go|cpp|csharp|all] [--dry-run]
+    python3 make.py generate --lang go|cpp|csharp
+    python3 make.py build    --lang go|cpp|csharp [build flags]
+    python3 make.py test     --lang go|cpp|csharp [build flags] [-k FILTER] [--smoke]
+    python3 make.py clean    [--lang ...] [--all]
+    python3 make.py env
+    python3 make.py --version
 
 Standard flags (apply to every subcommand):
     --verbose / -v   echo every subprocess
@@ -1353,7 +1353,7 @@ def _cpp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
             else:
                 print(
                     "[error] --protobuf-version requires VCPKG_ROOT to be set "
-                    "(run `python make.py setup --lang cpp` first, or set "
+                    "(run `python3 make.py setup --lang cpp` first, or set "
                     "VCPKG_ROOT in your environment).",
                     file=sys.stderr,
                 )

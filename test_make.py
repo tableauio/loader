@@ -6,7 +6,7 @@ Two layers:
    (Versions, Platform, _winquote, Runner, etc.). No subprocess, no
    network, no filesystem mutation outside pytest's tmp_path.
 
-2. **Dry-run snapshot tests** — spawn `python make.py --dry-run <args>`
+2. **Dry-run snapshot tests** — spawn `python3 make.py --dry-run <args>`
    and assert the printed command sequence. Canonical contract test
    for "the orchestrator still emits the right cmake/ctest/buf calls."
 
@@ -495,7 +495,7 @@ class TestLangDir:
 
 
 def run_make(*args: str, cwd: Path = REPO_ROOT) -> subprocess.CompletedProcess:
-    """Spawn `python make.py <args...>` and capture stdout+stderr."""
+    """Spawn `python3 make.py <args...>` and capture stdout+stderr."""
     return subprocess.run(
         [sys.executable, str(MAKE_PY), *args],
         cwd=str(cwd),

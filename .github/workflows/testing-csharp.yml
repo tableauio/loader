@@ -65,4 +65,4 @@ jobs:
           python-version: '3.12'
 
       - name: Test
-        run: python make.py test --lang csharp
+        run: python3 make.py test --lang csharp

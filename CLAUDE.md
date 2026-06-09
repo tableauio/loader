@@ -21,13 +21,13 @@ Build/test happens **per language** under `test/<lang>-tableau-loader/`. The rep
 The single cross-platform driver is **`make.py`** (Python 3.10+, stdlib only). It works on Windows, macOS, Linux, and inside the devcontainer, and is what CI calls.
 
 ```sh
-python make.py setup    --lang all       # one-time host toolchain install (no-op in container)
-python make.py generate --lang go        # buf generate ..
-python make.py build    --lang cpp
-python make.py test     --lang go
-python make.py test     --lang cpp -k HubTest.Load
-python make.py env                       # diagnostic JSON
-python make.py --version
+python3 make.py setup    --lang all       # one-time host toolchain install (no-op in container)
+python3 make.py generate --lang go        # buf generate ..
+python3 make.py build    --lang cpp
+python3 make.py test     --lang go
+python3 make.py test     --lang cpp -k HubTest.Load
+python3 make.py env                       # diagnostic JSON
+python3 make.py --version
 ```
 
 C++ wipes `test/cpp-tableau-loader/{build,src/tableau,src/protoconf}` before regenerating (gitignored `*.pb.*` shadows fresh codegen). `--no-clean` skips it. A leftover `vcpkg.json` from a previous `--protobuf-version` run is auto-removed in classic mode so cmake doesn't accidentally re-enter manifest mode.
@@ -39,11 +39,11 @@ On Windows, `make.py` wraps every C++ subprocess in `cmd /c "call vcvarsall.bat 
 ### Dev container
 
 - `.devcontainer/` → **Dev Containers: Reopen in Container**. Ubuntu 24.04 + all toolchains pinned. First build ~25 min; reopens instant.
-- Inside: `python make.py setup` is a no-op. `python make.py test --lang <X>` works for all languages — Dockerfile presets `CMAKE_PREFIX_PATH=/opt/vcpkg/active`.
+- Inside: `python3 make.py setup` is a no-op. `python3 make.py test --lang <X>` works for all languages — Dockerfile presets `CMAKE_PREFIX_PATH=/opt/vcpkg/active`.
 - Override protobuf version: `LOADER_DEFAULT_VARIANT=legacy-v3 code .` then **Rebuild Container** (switches both protobuf and vcpkg baseline atomically). Variants are declared as `<NAME>_PROTOBUF_VERSION` + `<NAME>_VCPKG_BASELINE_COMMIT` pairs in `.devcontainer/versions.env`. For a surgical override of just the protobuf version, `LOADER_PROTOBUF_VERSION=X.Y.Z` still works.
 - Single source of truth for all toolchain versions: **`.devcontainer/versions.env`**.
 
-CI primary tests (`testing-{cpp,go,csharp}.yml`) use `lukka/run-vcpkg` for cached vcpkg installs + `python make.py test --lang <X>` for build/test. `devcontainer-smoke.yml` builds the image on `.devcontainer/**` PRs (amd64 + arm64). `testing-make.yml` runs the make.py unit + dry-run regression suite on every push.
+CI primary tests (`testing-{cpp,go,csharp}.yml`) use `lukka/run-vcpkg` for cached vcpkg installs + `python3 make.py test --lang <X>` for build/test. `devcontainer-smoke.yml` builds the image on `.devcontainer/**` PRs (amd64 + arm64). `testing-make.yml` runs the make.py unit + dry-run regression suite on every push.
 
 ### Plugin development (Go module at repo root)
 
@@ -60,22 +60,22 @@ Plugins are invoked through `buf generate` from a test directory (`buf.gen.yaml`
 
 ```sh
 # Go
-python make.py test --lang go                                        # full
-python make.py test --lang go -k Test_ActivityConf_OrderedMap        # filter
-python make.py test --lang go --smoke                                # plugin-only `go vet` (devcontainer-smoke)
-python make.py test --lang go --coverage                             # CI: -coverprofile=coverage.txt -covermode=atomic
-python make.py test --lang go --race                                 # opt in to -race (default off on Windows; needs cgo+MSVC)
+python3 make.py test --lang go                                        # full
+python3 make.py test --lang go -k Test_ActivityConf_OrderedMap        # filter
+python3 make.py test --lang go --smoke                                # plugin-only `go vet` (devcontainer-smoke)
+python3 make.py test --lang go --coverage                             # CI: -coverprofile=coverage.txt -covermode=atomic
+python3 make.py test --lang go --race                                 # opt in to -race (default off on Windows; needs cgo+MSVC)
 
 # C++ (requires matching protoc + libprotobuf — protobuf v22+ enforces gencode/runtime check)
-python make.py test --lang cpp                                       # full
-python make.py test --lang cpp -k HubTest.Load                       # filter
-python make.py test --lang cpp --cxx-std 20                          # C++20
-python make.py test --lang cpp --cxx-compiler clang                  # clang++
-python make.py test --lang cpp --protobuf-version 3.21.12            # legacy v3 (vcpkg manifest mode)
+python3 make.py test --lang cpp                                       # full
+python3 make.py test --lang cpp -k HubTest.Load                       # filter
+python3 make.py test --lang cpp --cxx-std 20                          # C++20
+python3 make.py test --lang cpp --cxx-compiler clang                  # clang++
+python3 make.py test --lang cpp --protobuf-version 3.21.12            # legacy v3 (vcpkg manifest mode)
 
 # C#
-python make.py test --lang csharp                                    # full
-python make.py test --lang csharp -k HubTest.Load                    # FullyQualifiedName~HubTest.Load
+python3 make.py test --lang csharp                                    # full
+python3 make.py test --lang csharp -k HubTest.Load                    # FullyQualifiedName~HubTest.Load
 ```
 
 GoogleTest is fetched via CMake `FetchContent` — no manual install.
