@@ -446,6 +446,219 @@ class TestRunner:
 
 
 # ---------------------------------------------------------------------------
+# Unit: vcpkg protobuf pin (baseline vs. overrides)
+# ---------------------------------------------------------------------------
+
+
+class TestVcpkgProtobufPin:
+    """_resolve_vcpkg_protobuf_pin: baseline vs. overrides selection.
+
+    The git-history search (_resolve_vcpkg_baseline_for_protobuf) is stubbed
+    so these stay hermetic — we only assert the floor-based routing.
+    """
+
+    def _patch_resolver(self, monkeypatch):
+        calls = []
+
+        def fake_resolve(version, vcpkg_root, runner):
+            calls.append(version)
+            return f"sha-for-{version}"
+
+        monkeypatch.setattr(
+            make, "_resolve_vcpkg_baseline_for_protobuf", fake_resolve
+        )
+        return calls
+
+    def test_at_or_above_floor_pins_exact_baseline(self, monkeypatch):
+        calls = self._patch_resolver(monkeypatch)
+        runner = make.Runner(verbose=False, dry_run=True)
+        pin = make._resolve_vcpkg_protobuf_pin("3.21.12", Path("/vcpkg"), runner)
+        assert pin.baseline == "sha-for-3.21.12"
+        assert pin.override_version is None  # no overrides needed
+        assert calls == ["3.21.12"]
+
+    def test_floor_itself_has_no_override(self, monkeypatch):
+        self._patch_resolver(monkeypatch)
+        runner = make.Runner(verbose=False, dry_run=True)
+        pin = make._resolve_vcpkg_protobuf_pin("3.14.0", Path("/vcpkg"), runner)
+        assert pin.baseline == "sha-for-3.14.0"
+        assert pin.override_version is None
+
+    def test_below_floor_pins_floor_baseline_plus_override(self, monkeypatch):
+        calls = self._patch_resolver(monkeypatch)
+        runner = make.Runner(verbose=False, dry_run=True)
+        pin = make._resolve_vcpkg_protobuf_pin("3.12.0", Path("/vcpkg"), runner)
+        # builtin-baseline resolves the FLOOR, not the requested version.
+        assert pin.baseline == "sha-for-3.14.0"
+        assert pin.override_version == "3.12.0"
+        assert calls == ["3.14.0"]
+
+    def test_floor_str_matches_tuple(self):
+        assert make._VCPKG_PROTOBUF_BASELINE_FLOOR_STR == "3.14.0"
+        assert (
+            make._parse_protobuf_version_tuple(
+                make._VCPKG_PROTOBUF_BASELINE_FLOOR_STR
+            )
+            == make._VCPKG_PROTOBUF_BASELINE_FLOOR
+        )
+
+    # ----- below-floor existence validation (fail fast) -----
+
+    def test_below_floor_missing_raises_before_baseline_resolve(self, monkeypatch):
+        # A below-floor version absent from the registry must raise *before*
+        # any baseline git-search happens (so callers fail fast, trees intact).
+        baseline_calls = self._patch_resolver(monkeypatch)
+        monkeypatch.setattr(
+            make, "_protobuf_version_in_registry", lambda root, v: False
+        )
+        runner = make.Runner(verbose=False, dry_run=False)
+        with pytest.raises(RuntimeError) as exc:
+            make._resolve_vcpkg_protobuf_pin("3.12.99", Path("/vcpkg"), runner)
+        # Never reached the baseline resolver.
+        assert baseline_calls == []
+        assert "3.12.99" in str(exc.value)
+        assert "not present" in str(exc.value)
+
+    def test_below_floor_present_resolves(self, monkeypatch):
+        self._patch_resolver(monkeypatch)
+        monkeypatch.setattr(
+            make, "_protobuf_version_in_registry", lambda root, v: True
+        )
+        runner = make.Runner(verbose=False, dry_run=False)
+        pin = make._resolve_vcpkg_protobuf_pin("3.12.0", Path("/vcpkg"), runner)
+        assert pin.baseline == "sha-for-3.14.0"
+        assert pin.override_version == "3.12.0"
+
+    def test_below_floor_dry_run_skips_existence_check(self, monkeypatch):
+        # In dry-run there is no real checkout, so the registry must NOT be
+        # consulted — the pin should resolve via the placeholder path.
+        self._patch_resolver(monkeypatch)
+
+        def boom(root, v):  # pragma: no cover - must never be called
+            raise AssertionError("registry consulted in dry-run")
+
+        monkeypatch.setattr(make, "_protobuf_version_in_registry", boom)
+        runner = make.Runner(verbose=False, dry_run=True)
+        pin = make._resolve_vcpkg_protobuf_pin("3.12.99", Path("/vcpkg"), runner)
+        assert pin.override_version == "3.12.99"
+
+    def test_resolve_below_floor_override_returns_none_above_floor(self, monkeypatch):
+        runner = make.Runner(verbose=False, dry_run=False)
+        assert (
+            make._resolve_below_floor_override("3.21.12", Path("/vcpkg"), runner)
+            is None
+        )
+
+
+# ---------------------------------------------------------------------------
+# Unit: protobuf hard support floor (3.8.0) + --force
+# ---------------------------------------------------------------------------
+
+
+class TestProtobufMinSupported:
+    """_check_protobuf_min_supported: refuse < 3.8.0 unless forced."""
+
+    def test_below_floor_raises_without_force(self):
+        with pytest.raises(RuntimeError) as exc:
+            make._check_protobuf_min_supported("3.5.0", force=False)
+        msg = str(exc.value)
+        assert "3.5.0" in msg
+        assert make._PROTOBUF_MIN_SUPPORTED_STR in msg  # "3.8.0"
+        assert "--force" in msg
+
+    def test_below_floor_with_force_warns_and_returns(self, capsys):
+        # Forced: must NOT raise; emits a warning to stderr instead.
+        make._check_protobuf_min_supported("3.5.0", force=True)
+        err = capsys.readouterr().err
+        assert "3.5.0" in err
+        assert "force" in err.lower()
+
+    def test_at_floor_is_allowed(self):
+        # 3.8.0 itself is supported (boundary inclusive) — no raise, no warning.
+        make._check_protobuf_min_supported("3.8.0", force=False)
+
+    def test_above_floor_is_allowed(self):
+        make._check_protobuf_min_supported("3.21.12", force=False)
+
+    def test_unparseable_version_is_allowed(self):
+        # Defensive: a non-numeric version is left for downstream resolution
+        # rather than rejected by the numeric floor guard.
+        make._check_protobuf_min_supported("main", force=False)
+
+    def test_floor_str_matches_tuple(self):
+        assert make._PROTOBUF_MIN_SUPPORTED_STR == "3.8.0"
+        assert (
+            make._parse_protobuf_version_tuple(make._PROTOBUF_MIN_SUPPORTED_STR)
+            == make._PROTOBUF_MIN_SUPPORTED
+        )
+
+    def test_support_floor_not_above_baseline_floor(self):
+        # The support floor must sit at/below the baseline floor so the
+        # overrides range it gates [support, baseline) is non-empty.
+        assert make._PROTOBUF_MIN_SUPPORTED <= make._VCPKG_PROTOBUF_BASELINE_FLOOR
+
+
+class TestKnownVersionsHintFloor:
+    """_format_known_protobuf_versions_hint: below-floor listing reaches 3.8.0.
+
+    The vcpkg version registry read is stubbed so the test is hermetic and
+    asserts only the floor-filtering / no-truncation behavior.
+    """
+
+    # Newest-first registry, spanning above and below both floors plus a couple
+    # of pre-3.8.0 entries that must be dropped.
+    _REGISTRY = [
+        "6.33.4", "5.29.5", "4.25.1", "3.21.12", "3.18.0", "3.15.8",
+        "3.14.0", "3.13.0", "3.11.0", "3.9.0", "3.8.0", "3.7.0", "3.5.0",
+    ]
+
+    def _patch_registry(self, monkeypatch):
+        monkeypatch.setattr(
+            make,
+            "_read_protobuf_registry_versions",
+            lambda root: list(self._REGISTRY),
+        )
+
+    def _listing_line(self, hint):
+        # The single line that enumerates the versions (starts with the
+        # "known protobuf versions" bullet), isolated from header notes that
+        # also mention the floor strings.
+        for line in hint.splitlines():
+            if "known protobuf versions" in line:
+                return line.split("): ", 1)[1]
+        raise AssertionError("no version-listing line in hint")
+
+    def test_include_below_floor_lists_down_to_support_floor(self, monkeypatch):
+        self._patch_registry(monkeypatch)
+        hint = make._format_known_protobuf_versions_hint(
+            Path("/vcpkg"), include_below_floor=True
+        )
+        listed = self._listing_line(hint)
+        # Reaches the support floor...
+        assert "3.8.0" in listed
+        # ...but excludes anything below it.
+        assert "3.7.0" not in listed
+        assert "3.5.0" not in listed
+        # No truncation marker — the full in-range list is shown.
+        assert "older)" not in hint
+        # Below-baseline versions (>= 3.8, < 3.14) are present.
+        assert "3.9.0" in listed and "3.11.0" in listed
+
+    def test_baseline_only_listing_still_filters_to_baseline_floor(
+        self, monkeypatch
+    ):
+        self._patch_registry(monkeypatch)
+        hint = make._format_known_protobuf_versions_hint(
+            Path("/vcpkg"), include_below_floor=False
+        )
+        listed = self._listing_line(hint)
+        # Default listing only surfaces >= 3.14.0 (usable as builtin-baseline).
+        assert "3.14.0" in listed
+        assert "3.13.0" not in listed
+        assert "3.8.0" not in listed
+
+
+# ---------------------------------------------------------------------------
 # Unit: repo root discovery
 # ---------------------------------------------------------------------------
 

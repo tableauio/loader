@@ -504,14 +504,23 @@ def save_loader_env(data: dict, runner: Runner) -> None:
 #
 # Pinning protobuf via `overrides` while leaving `builtin-baseline` on a newer
 # vcpkg commit lets transitive deps (abseil/utf8-range/re2/...) drift forward
-# and breaks ABI (e.g. missing `absl::if_constexpr`). Instead we pin the
-# baseline itself to the vcpkg commit whose `versions/baseline.json` had our
-# target protobuf — that whole snapshot is by construction self-consistent.
+# and breaks ABI (e.g. missing `absl::if_constexpr`). So for protobuf versions
+# vcpkg's baseline.json knows about (>= 3.14.0), we pin the baseline itself to
+# the vcpkg commit whose `versions/baseline.json` had our target protobuf —
+# that whole snapshot is by construction self-consistent.
 #
 # Resolution: `git log -S '"X.Y.Z"' -- versions/baseline.json` → for each hit,
 # verify `default.protobuf.baseline == X.Y.Z` at that commit (guards against
 # the literal appearing in unrelated ports). Results cached in
 # ~/.loader-env.json under "vcpkg_baseline_for_protobuf".
+#
+# Exception — protobuf < 3.14.0 (predates baseline.json, so no snapshot can
+# carry it): we pin `builtin-baseline` at the *floor* (3.14.0) commit and add
+# an `overrides` entry for the older protobuf. The ABI-drift hazard above does
+# NOT apply here because pre-3.14 protobuf is dependency-light (no abseil /
+# utf8-range / re2), and 3.14.0 is the oldest baseline available, so its
+# transitive deps are already as old as vcpkg knows about. See
+# `_resolve_vcpkg_protobuf_pin`.
 
 
 def _resolve_vcpkg_baseline_for_protobuf(
@@ -614,6 +623,15 @@ def _resolve_vcpkg_baseline_for_protobuf(
 # "~3.18" wording on purpose; the precise floor lives only here.
 _VCPKG_PROTOBUF_BASELINE_FLOOR = (3, 14, 0)
 
+# Hard *support* floor — distinct from the vcpkg baseline floor above. Below
+# 3.8.0 the C++ tableau-loader / generated code is known not to compile, even
+# though vcpkg can still fetch those ancient ports via `overrides`. We refuse
+# such versions up-front (before touching the user's trees) unless --force is
+# given — a user may deliberately pick an unsupported version to investigate
+# the compile breakage. Must stay <= _VCPKG_PROTOBUF_BASELINE_FLOOR so the
+# below-baseline (overrides) range it gates is non-empty.
+_PROTOBUF_MIN_SUPPORTED = (3, 8, 0)
+
 
 def _parse_protobuf_version_tuple(v: str) -> Optional[tuple[int, ...]]:
     """Parse "3.14.0" / "3.21.12" / "5.29.5" into a numeric tuple for ordering.
@@ -628,16 +646,23 @@ def _parse_protobuf_version_tuple(v: str) -> Optional[tuple[int, ...]]:
     return tuple(int(p) for p in parts)
 
 
-def _list_known_protobuf_versions(vcpkg_root: Path) -> list[str]:
-    """Return protobuf versions usable as a vcpkg `builtin-baseline`.
+def _ge_supported_floor(v: str) -> bool:
+    """True iff dotted version `v` parses and is >= the 3.8.0 support floor.
 
-    Reads `versions/p-/protobuf.json` at HEAD (cheap: one `git show`) — this
-    is vcpkg's authoritative list of protobuf versions the registry has ever
-    known. Returned in registry order (newest first), de-duplicated, and
-    filtered to `>= _VCPKG_PROTOBUF_BASELINE_FLOOR` so the caller can blindly
-    surface every entry as something the user can actually pass to
-    `--protobuf-version`. On any failure returns [] so callers can degrade
-    gracefully.
+    Unparseable versions are treated as not-below-floor-worthy (returns False)
+    so they're dropped from below-floor listings rather than crashing.
+    """
+    tup = _parse_protobuf_version_tuple(v)
+    return tup is not None and tup >= _PROTOBUF_MIN_SUPPORTED
+
+
+def _read_protobuf_registry_versions(vcpkg_root: Path) -> list[str]:
+    """All protobuf versions in versions/p-/protobuf.json at HEAD.
+
+    Reads the file with one cheap `git show` — vcpkg's authoritative list of
+    every protobuf version the registry has ever known. Returned in registry
+    order (newest first), de-duplicated, and *unfiltered* (includes pre-3.14
+    versions). On any failure returns [] so callers can degrade gracefully.
     """
     try:
         blob = subprocess.check_output(
@@ -667,33 +692,80 @@ def _list_known_protobuf_versions(vcpkg_root: Path) -> list[str]:
         )
         if not v or v in seen:
             continue
-        tup = _parse_protobuf_version_tuple(v)
-        if tup is None or tup < _VCPKG_PROTOBUF_BASELINE_FLOOR:
-            continue
         seen.add(v)
         versions.append(v)
     return versions
 
 
-def _format_known_protobuf_versions_hint(vcpkg_root: Path) -> str:
+def _list_known_protobuf_versions(vcpkg_root: Path) -> list[str]:
+    """Return protobuf versions usable as a vcpkg `builtin-baseline`.
+
+    Same source as `_read_protobuf_registry_versions`, filtered to
+    `>= _VCPKG_PROTOBUF_BASELINE_FLOOR` so the caller can blindly surface every
+    entry as something the user can pass to `--protobuf-version` and have pinned
+    *as the baseline* (older versions are still usable, but only via overrides).
+    """
+    versions: list[str] = []
+    for v in _read_protobuf_registry_versions(vcpkg_root):
+        tup = _parse_protobuf_version_tuple(v)
+        if tup is None or tup < _VCPKG_PROTOBUF_BASELINE_FLOOR:
+            continue
+        versions.append(v)
+    return versions
+
+
+def _protobuf_version_in_registry(vcpkg_root: Path, version: str) -> bool:
+    """True iff `version` appears in versions/p-/protobuf.json at HEAD.
+
+    This is the precondition for pinning it via `overrides`: vcpkg resolves an
+    override's version through the registry's version DB at the current
+    checkout, so a version absent here can never be installed.
+    """
+    return version in set(_read_protobuf_registry_versions(vcpkg_root))
+
+
+def _format_known_protobuf_versions_hint(
+    vcpkg_root: Path, include_below_floor: bool = False
+) -> str:
     """Render a human-readable bullet listing known protobuf versions.
 
     Returns "" (caller can append unconditionally) when the version DB
     can't be read. Otherwise returns a leading "\n  - known versions: ..."
-    suitable for tacking onto the end of a RuntimeError message.
+    suitable for tacking onto the end of a RuntimeError message. When
+    `include_below_floor` is set, below-baseline versions are listed too —
+    down to the hard support floor (3.8.0) and *without* truncation — so a user
+    who asked for a missing older version can see every version they could pin
+    via `overrides`. Versions below the support floor are omitted (they won't
+    compile, so there's no point suggesting them).
     """
-    versions = _list_known_protobuf_versions(vcpkg_root)
+    if include_below_floor:
+        versions = [
+            v
+            for v in _read_protobuf_registry_versions(vcpkg_root)
+            if _ge_supported_floor(v)
+        ]
+    else:
+        versions = _list_known_protobuf_versions(vcpkg_root)
     if not versions:
         return ""
-    # Newest first (registry order). The list is already filtered to versions
-    # that can serve as a builtin-baseline.
-    head = ", ".join(versions[:20])
-    tail = f" (+{len(versions) - 20} older)" if len(versions) > 20 else ""
+    # Newest first (registry order). For the below-floor listing show the full
+    # range down to 3.8.0 (no truncation); for the baseline-only listing keep
+    # the compact head + "(+N older)" form.
+    if include_below_floor:
+        listed = ", ".join(versions)
+    else:
+        head = ", ".join(versions[:20])
+        tail = f" (+{len(versions) - 20} older)" if len(versions) > 20 else ""
+        listed = f"{head}{tail}"
     return (
         f"\n  - known protobuf versions in {vcpkg_root}/versions/p-/protobuf.json "
-        f"(newest first): {head}{tail}\n"
-        f"  - note: versions older than 3.14.0 predate vcpkg's baseline.json "
-        f"and cannot be used as builtin-baseline"
+        f"(newest first, down to the {_PROTOBUF_MIN_SUPPORTED_STR} support "
+        f"floor): {listed}\n"
+        f"  - note: versions older than 3.14.0 predate vcpkg's baseline.json, "
+        f"so they're pinned via `overrides` on the 3.14.0 baseline rather than "
+        f"as builtin-baseline (handled automatically by --protobuf-version)\n"
+        f"  - note: {_PROTOBUF_MIN_SUPPORTED_STR} is the minimum supported "
+        f"version; anything older won't compile (pass --force to try anyway)"
     )
 
 
@@ -721,6 +793,132 @@ def _vcpkg_baseline_has_protobuf(
         return False
     entry = data.get("default", {}).get("protobuf", {})
     return entry.get("baseline") == expected_version
+
+
+# The floor expressed as a dotted string ("3.14.0"), derived once from the
+# tuple so the two never drift apart. This is the baseline we pin when a
+# requested protobuf version predates vcpkg's baseline.json.
+_VCPKG_PROTOBUF_BASELINE_FLOOR_STR = ".".join(
+    str(n) for n in _VCPKG_PROTOBUF_BASELINE_FLOOR
+)
+
+# The hard support floor as a dotted string ("3.8.0"), derived from the tuple.
+_PROTOBUF_MIN_SUPPORTED_STR = ".".join(str(n) for n in _PROTOBUF_MIN_SUPPORTED)
+
+
+def _check_protobuf_min_supported(protobuf_version: str, force: bool) -> None:
+    """Guard against protobuf versions below the hard support floor (3.8.0).
+
+    Below this floor the C++ loader / generated code is known not to compile.
+    Purely a version-number check (no vcpkg checkout needed), so it runs first
+    — before any baseline resolution or tree wipe.
+
+    - version >= floor (or unparseable): no-op.
+    - version <  floor, force=False:     raise RuntimeError (caller fails fast).
+    - version <  floor, force=True:      warn loudly and continue, so the user
+                                         can reproduce / investigate the break.
+    """
+    tup = _parse_protobuf_version_tuple(protobuf_version)
+    if tup is None or tup >= _PROTOBUF_MIN_SUPPORTED:
+        return
+    if force:
+        print(
+            f"[warn] protobuf {protobuf_version} is below the supported floor "
+            f"{_PROTOBUF_MIN_SUPPORTED_STR} and is NOT expected to compile; "
+            f"proceeding anyway because --force was given",
+            file=sys.stderr,
+        )
+        return
+    raise RuntimeError(
+        f"protobuf {protobuf_version} is below the minimum supported version "
+        f"{_PROTOBUF_MIN_SUPPORTED_STR}; the C++ loader is not expected to "
+        f"compile against it, so the build is refused. Pass --force (-f) to "
+        f"attempt it anyway (e.g. to investigate the compile failure)."
+    )
+
+
+@dataclass
+class VcpkgProtobufPin:
+    """How to pin protobuf into a generated vcpkg.json manifest.
+
+    baseline:         value for the manifest's ``builtin-baseline``.
+    override_version: when set, the requested protobuf predates vcpkg's
+                      baseline.json, so it is pinned via an ``overrides``
+                      entry layered on top of the floor ``baseline``. ``None``
+                      means the baseline snapshot already carries the exact
+                      protobuf version (no ``overrides`` needed).
+    """
+
+    baseline: str
+    override_version: Optional[str] = None
+
+
+def _resolve_below_floor_override(
+    protobuf_version: str,
+    vcpkg_root: Path,
+    runner: Runner,
+) -> Optional[str]:
+    """Decide whether `protobuf_version` must be pinned via `overrides`.
+
+    Returns the version string when it predates the baseline.json floor (so the
+    caller should layer an `overrides` entry on the floor baseline), or None
+    when it is >= floor (pinned as the baseline itself).
+
+    Raises RuntimeError when the version is below the floor *and* absent from
+    the vcpkg versions registry — letting callers fail fast (before wiping
+    codegen/build trees) instead of rendering a manifest that `vcpkg install`
+    would only reject minutes later. Skipped in dry-run, where there is no real
+    checkout to consult.
+    """
+    tup = _parse_protobuf_version_tuple(protobuf_version)
+    if tup is None or tup >= _VCPKG_PROTOBUF_BASELINE_FLOOR:
+        return None
+    if not runner.dry_run and not _protobuf_version_in_registry(
+        vcpkg_root, protobuf_version
+    ):
+        raise RuntimeError(
+            f"protobuf {protobuf_version} predates vcpkg's baseline.json floor "
+            f"({_VCPKG_PROTOBUF_BASELINE_FLOOR_STR}) and is not present in "
+            f"{vcpkg_root}/versions/p-/protobuf.json, so it cannot be pinned via "
+            f"`overrides`. Possible causes:\n"
+            f"  - typo in --protobuf-version\n"
+            f"  - your local vcpkg checkout is shallow / out-of-date "
+            f"(`git -C {vcpkg_root} fetch origin master` may help)"
+            f"{_format_known_protobuf_versions_hint(vcpkg_root, include_below_floor=True)}"
+        )
+    return protobuf_version
+
+
+def _resolve_vcpkg_protobuf_pin(
+    protobuf_version: str,
+    vcpkg_root: Path,
+    runner: Runner,
+) -> VcpkgProtobufPin:
+    """Resolve baseline (+ optional override) for a requested protobuf version.
+
+    protobuf >= floor (3.14.0): pin the self-consistent baseline whose
+    ``versions/baseline.json`` carries that exact version — no ``overrides``
+    (see module comment on transitive-dep ABI drift).
+
+    protobuf < floor: pin the floor baseline and pin the older protobuf via
+    ``overrides``. Safe because pre-3.14 protobuf has no abseil/utf8-range/re2
+    dependency, and the floor is the oldest baseline vcpkg has, so nothing
+    drifts forward. Raises RuntimeError early if the version doesn't exist.
+    """
+    override = _resolve_below_floor_override(protobuf_version, vcpkg_root, runner)
+    if override is not None:
+        baseline = _resolve_vcpkg_baseline_for_protobuf(
+            _VCPKG_PROTOBUF_BASELINE_FLOOR_STR, vcpkg_root, runner
+        )
+        print(
+            f"[info] protobuf {protobuf_version} predates vcpkg's baseline.json "
+            f"(floor {_VCPKG_PROTOBUF_BASELINE_FLOOR_STR}); pinning baseline "
+            f"{baseline[:12]} and adding overrides protobuf={protobuf_version}",
+            file=sys.stderr,
+        )
+        return VcpkgProtobufPin(baseline=baseline, override_version=override)
+    baseline = _resolve_vcpkg_baseline_for_protobuf(protobuf_version, vcpkg_root, runner)
+    return VcpkgProtobufPin(baseline=baseline)
 
 
 def hydrate_platform_from_env(plat: Platform) -> None:
@@ -1359,12 +1557,25 @@ def _cpp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
     # --protobuf-version that would later raise should not have already
     # wiped the user's src/protoconf, src/tableau, build/ trees.
     #
-    # Baseline resolution order (no `overrides` — see module comment above):
+    # Baseline resolution order:
     #   1. --vcpkg-baseline=<sha>                       (explicit override)
-    #   2. _resolve_vcpkg_baseline_for_protobuf(...)    (auto: git-search vcpkg)
+    #   2. _resolve_vcpkg_protobuf_pin(...)             (auto: git-search vcpkg)
+    # For protobuf < 3.14.0 an `overrides` entry is layered on top of the
+    # floor baseline (see _resolve_vcpkg_protobuf_pin / module comment).
     vcpkg_root: Optional[Path] = None
     baseline: Optional[str] = None
+    override_version: Optional[str] = None
     if protobuf_version:
+        # Hard support-floor guard first — purely a version-number check (no
+        # vcpkg checkout needed), so it runs before baseline resolution and the
+        # tree wipe below. Refuses protobuf < 3.8.0 unless --force is given.
+        try:
+            _check_protobuf_min_supported(
+                protobuf_version, getattr(args, "force", False)
+            )
+        except RuntimeError as e:
+            print(f"[error] {e}", file=sys.stderr)
+            return 1
         # Need a vcpkg checkout to resolve the baseline by git history.
         vcpkg_root = ctx.platform.vcpkg_root or _env_path("VCPKG_ROOT")
         if vcpkg_root is None:
@@ -1385,23 +1596,42 @@ def _cpp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
         ctx.platform.vcpkg_root = vcpkg_root
 
         explicit_baseline = getattr(args, "vcpkg_baseline", None)
-        if explicit_baseline:
-            baseline = explicit_baseline
-            print(f"[info] using --vcpkg-baseline={baseline[:12]}", file=sys.stderr)
-        else:
-            try:
-                baseline = _resolve_vcpkg_baseline_for_protobuf(
-                    protobuf_version, vcpkg_root, ctx.runner
-                )
-            except RuntimeError as e:
-                # Fail fast — user trees on disk are still untouched.
-                print(f"[error] {e}", file=sys.stderr)
+        try:
+            if explicit_baseline:
+                baseline = explicit_baseline
                 print(
-                    "[hint] If you know a vcpkg commit whose baseline matches "
-                    "your protobuf, pass --vcpkg-baseline=<sha> to skip auto-resolution.",
+                    f"[info] using --vcpkg-baseline={baseline[:12]}",
                     file=sys.stderr,
                 )
-                return 1
+                # A version below the baseline.json floor can't be carried by
+                # any baseline snapshot, so even with an explicit baseline we
+                # must pin it via overrides. _resolve_below_floor_override also
+                # validates the version exists (raises early otherwise).
+                override_version = _resolve_below_floor_override(
+                    protobuf_version, vcpkg_root, ctx.runner
+                )
+                if override_version:
+                    print(
+                        f"[info] protobuf {protobuf_version} predates baseline.json "
+                        f"floor {_VCPKG_PROTOBUF_BASELINE_FLOOR_STR}; adding "
+                        f"overrides protobuf={protobuf_version}",
+                        file=sys.stderr,
+                    )
+            else:
+                pin = _resolve_vcpkg_protobuf_pin(
+                    protobuf_version, vcpkg_root, ctx.runner
+                )
+                baseline = pin.baseline
+                override_version = pin.override_version
+        except RuntimeError as e:
+            # Fail fast — user trees on disk are still untouched.
+            print(f"[error] {e}", file=sys.stderr)
+            print(
+                "[hint] If you know a vcpkg commit whose baseline matches "
+                "your protobuf, pass --vcpkg-baseline=<sha> to skip auto-resolution.",
+                file=sys.stderr,
+            )
+            return 1
 
     # Stale-codegen wipe (gitignored *.pb.* files left over from a previous
     # protoc version shadow fresh codegen). Skip with --no-clean.
@@ -1440,6 +1670,12 @@ def _cpp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
             "dependencies": ["protobuf"],
             "builtin-baseline": baseline,
         }
+        # Below-floor protobuf: pin it via overrides on top of the floor
+        # baseline (resolved in _resolve_vcpkg_protobuf_pin).
+        if override_version:
+            manifest["overrides"] = [
+                {"name": "protobuf", "version": override_version}
+            ]
         manifest_path = cwd / "vcpkg.json"
         if not ctx.runner.dry_run:
             manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -1699,6 +1935,16 @@ def _add_build_flags(sp: argparse.ArgumentParser) -> None:
     )
     sp.add_argument(
         "--triplet", type=str, default=None, help="(cpp) vcpkg triplet override"
+    )
+    sp.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help=(
+            "(cpp) attempt the build even with a protobuf version below the "
+            "3.8.0 support floor (expected to fail to compile; useful for "
+            "investigating the breakage)"
+        ),
     )
     sp.add_argument(
         "--no-clean",
