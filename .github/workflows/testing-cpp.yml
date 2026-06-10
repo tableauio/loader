@@ -150,11 +150,7 @@ jobs:
         run: Add-Content -Path $env:GITHUB_PATH -Value "$env:VCPKG_INSTALLED_DIR\${{ matrix.triplet }}\tools\protobuf"
 
       - name: Install Buf
-        uses: bufbuild/buf-action@v1
-        with:
-          version: ${{ env.BUF_VERSION }}
-          setup_only: true
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 make.py setup --lang go
 
       - name: Test
         # Pass --vcpkg-baseline explicitly so make.py reuses the SHA we

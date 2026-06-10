@@ -974,6 +974,12 @@ def _prepend_path(directory: Path) -> None:
     if any(norm(x) == norm(p) for x in parts if x):
         return
     os.environ["PATH"] = p + (sep + current if current else "")
+    # GitHub Actions: persist the new entry across subsequent steps so that
+    # tools installed by `make.py setup` are visible to later `run:` commands.
+    gha_path = os.environ.get("GITHUB_PATH")
+    if gha_path:
+        with open(gha_path, "a", encoding="utf-8") as fh:
+            fh.write(p + "\n")
 
 
 def cmd_setup(args, ctx: "Context") -> int:
