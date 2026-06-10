@@ -4,9 +4,7 @@
   </a>
 </p>
 
-<h3 align="center">
-  Official Config Loader for Tableau
-</h3>
+<h3 align="center">Tableau Loader</h3>
 
 <table align="center"><tr>
 <tr>
