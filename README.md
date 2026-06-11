@@ -1,6 +1,53 @@
-# Loader
+<p align="center">
+  <a href="https://tableauio.github.io/">
+    <img alt="Tableau" src="https://avatars.githubusercontent.com/u/97329105?s=200&v=4" width="160">
+  </a>
+</p>
 
-The official config loader for [Tableau](https://github.com/tableauio/tableau).
+<h3 align="center">Tableau Loader</h3>
+
+<table align="center"><tr>
+  <td align="center"><b>Loader</b></td>
+  <td>
+    <a href="https://github.com/tableauio/loader/releases"><img src="https://img.shields.io/github/v/release/tableauio/loader?filter=v*&include_prereleases&style=flat-square" alt="Loader release version"></a>
+    <a href="https://pkg.go.dev/github.com/tableauio/loader"><img src="https://pkg.go.dev/badge/github.com/tableauio/loader.svg" alt="Go pkg"></a>
+  </td>
+</tr><tr>
+  <td align="center"><b>Go</b></td>
+  <td>
+    <a href="https://github.com/tableauio/loader/releases?q=protoc-gen-go-tableau-loader"><img src="https://img.shields.io/github/v/release/tableauio/loader?filter=*protoc-gen-go-tableau-loader*&display_name=release&style=flat-square" alt="Release Go version"></a>
+  </td>
+</tr><tr>
+  <td align="center"><b>C++</b></td>
+  <td>
+    <a href="https://github.com/tableauio/loader/releases?q=protoc-gen-cpp-tableau-loader"><img src="https://img.shields.io/github/v/release/tableauio/loader?filter=*protoc-gen-cpp-tableau-loader*&display_name=release&style=flat-square" alt="Release C++ version"></a>
+  </td>
+</tr><tr>
+  <td align="center"><b>C#</b></td>
+  <td>
+    <a href="https://github.com/tableauio/loader/releases?q=protoc-gen-csharp-tableau-loader"><img src="https://img.shields.io/github/v/release/tableauio/loader?filter=*protoc-gen-csharp-tableau-loader*&display_name=release&style=flat-square" alt="Release C# version"></a>
+  </td>
+</tr><tr>
+  <td align="center"><b>Release</b></td>
+  <td>
+    <a href="https://github.com/tableauio/loader/actions/workflows/release-go.yml"><img src="https://github.com/tableauio/loader/actions/workflows/release-go.yml/badge.svg" alt="Release Go"></a>
+    <a href="https://github.com/tableauio/loader/actions/workflows/release-cpp.yml"><img src="https://github.com/tableauio/loader/actions/workflows/release-cpp.yml/badge.svg" alt="Release C++"></a>
+    <a href="https://github.com/tableauio/loader/actions/workflows/release-csharp.yml"><img src="https://github.com/tableauio/loader/actions/workflows/release-csharp.yml/badge.svg" alt="Release C#"></a>
+  </td>
+</tr><tr>
+  <td align="center"><b>Testing</b></td>
+  <td>
+    <a href="https://github.com/tableauio/loader/actions/workflows/testing-go.yml"><img src="https://github.com/tableauio/loader/actions/workflows/testing-go.yml/badge.svg" alt="Testing Go"></a>
+    <a href="https://github.com/tableauio/loader/actions/workflows/testing-cpp.yml"><img src="https://github.com/tableauio/loader/actions/workflows/testing-cpp.yml/badge.svg" alt="Testing C++"></a>
+    <a href="https://github.com/tableauio/loader/actions/workflows/testing-csharp.yml"><img src="https://github.com/tableauio/loader/actions/workflows/testing-csharp.yml/badge.svg" alt="Testing C#"></a>
+    <a href="https://github.com/tableauio/loader/actions/workflows/testing-make.yml"><img src="https://github.com/tableauio/loader/actions/workflows/testing-make.yml/badge.svg" alt="Testing make.py"></a>
+  </td>
+</tr><tr>
+  <td align="center"><b>License</b></td>
+  <td>
+    <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/github/license/tableauio/loader?style=flat-square" alt="License"></a>
+  </td>
+</tr></table>
 
 | Plugin | Language | Generated extension |
 | --- | --- | --- |

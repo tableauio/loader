@@ -39,17 +39,13 @@ jobs:
           cache-dependency-path: go.sum
           cache: true
 
-      - name: Install Buf
-        uses: bufbuild/buf-action@v1
-        with:
-          version: ${{ env.BUF_VERSION }}
-          setup_only: true
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+
+      - name: Install Buf
+        run: python3 make.py setup --lang go
 
       - name: Test
         # `make.py test --lang go` runs `buf generate` then `go test`, which
