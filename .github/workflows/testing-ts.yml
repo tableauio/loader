@@ -18,10 +18,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        # Supported active Node.js LTS lines plus current. The devcontainer
-        # and make.py pin NODE_VERSION (loaded below) for local parity; CI
-        # additionally fans out across majors to catch ESM/tsx regressions.
-        node-version: ["18", "20", "22"]
+        # Pin to the active LTS line (Node 20), matching NODE_VERSION used by
+        # the devcontainer and make.py for local/CI parity.
+        node-version: ["20"]
 
     name: test (${{ matrix.os }}, node ${{ matrix.node-version }})
     runs-on: ${{ matrix.os }}

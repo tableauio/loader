@@ -1020,7 +1020,9 @@ class TestDryRunTs:
     def test_test_lang_ts_default(self):
         proc = run_make("--dry-run", "test", "--lang", "ts")
         assert proc.returncode == 0
-        out = proc.stdout
+        # On Windows npm is the `npm.cmd` batch shim; normalize so the
+        # assertions below are platform-agnostic.
+        out = proc.stdout.replace("npm.cmd", "npm")
         # Codegen (Go plugins + protobuf-es remote plugin) runs first.
         assert "buf generate .." in out
         # Deps install via the reproducible `npm ci` (lockfile is committed).
@@ -1032,7 +1034,8 @@ class TestDryRunTs:
     def test_build_lang_ts_skips_smoke(self):
         proc = run_make("--dry-run", "build", "--lang", "ts")
         assert proc.returncode == 0
-        out = proc.stdout
+        # Normalize the Windows `npm.cmd` shim to `npm`.
+        out = proc.stdout.replace("npm.cmd", "npm")
         # build == type-check only: buf generate + install + check, no smoke.
         assert "buf generate .." in out
         assert "npm run check" in out
