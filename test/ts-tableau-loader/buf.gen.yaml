@@ -1,0 +1,33 @@
+version: v2
+# Mirror the per-language buf.gen.yaml pattern: a "base" plugin emits the
+# protobuf message types, then protoc-gen-ts-tableau-loader wraps them into
+# Messager/Hub code (exactly like protocolbuffers/go +
+# protoc-gen-go-tableau-loader on the Go side).
+plugins:
+  # protobuf-es generator (BSR remote plugin). Keep this version in lockstep
+  # with the @bufbuild/protobuf runtime in package.json: the generated *_pb.ts
+  # import from @bufbuild/protobuf at runtime, so generator and runtime must
+  # match.
+  - remote: buf.build/bufbuild/es:v2.2.3
+    out: protoconf
+    # The proto files use tableau.* extension options, so the generated
+    # message modules import the tableau/protobuf descriptors; pull those in
+    # here (mirrors include_imports in the cpp/csharp buf.gen.yaml).
+    include_imports: true
+    opt:
+      - target=ts
+      # Emit explicit ".js" extensions on relative imports so the output is
+      # valid under TS's nodenext/node16 ESM resolution (and plain Node ESM).
+      - import_extension=js
+  # tableau-ts loader generator. Emits *_tableau.ts wrappers + hub.ts + the
+  # runtime library (util/load/messager) into "tableau". The base protobuf-es
+  # messages live in the sibling "protoconf" dir, so loader code imports them
+  # via "../protoconf/<prefix>_pb.js" (configured by pb_path below).
+  - local: ["go", "run", "../../cmd/protoc-gen-ts-tableau-loader"]
+    out: tableau
+    opt:
+      - paths=source_relative
+      # Relative path from this loader output dir to the protobuf-es base
+      # output dir ("protoconf"), used to build the base message imports.
+      - pb_path=../protoconf
+    strategy: all

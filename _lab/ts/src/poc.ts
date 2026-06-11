@@ -1,7 +1,7 @@
 /**
  * PoC — validate that protobuf-es (@bufbuild/protobuf) can faithfully consume
  * the protojson that tableau (github.com/tableauio/tableau) emits, so it can
- * serve as the codegen base for `protoc-gen-tableau-ts`.
+ * serve as the codegen base for `protoc-gen-ts-tableau-loader`.
  *
  * Run:  npm run generate && npm run poc
  *

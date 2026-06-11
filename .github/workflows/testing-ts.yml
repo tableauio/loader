@@ -1,0 +1,68 @@
+name: Testing TypeScript
+
+# Trigger on pushes, PRs (excluding documentation changes), and nightly.
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  schedule:
+    - cron: 0 0 * * * # daily at 00:00
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        # Supported active Node.js LTS lines plus current. The devcontainer
+        # and make.py pin NODE_VERSION (loaded below) for local parity; CI
+        # additionally fans out across majors to catch ESM/tsx regressions.
+        node-version: ["18", "20", "22"]
+
+    name: test (${{ matrix.os }}, node ${{ matrix.node-version }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Read pinned versions
+        uses: ./.github/actions/load-versions
+
+      - name: Install Go
+        # buf-generate runs the Go protoc plugins (incl.
+        # protoc-gen-ts-tableau-loader) via `go run`, so Go is required even
+        # though the harness under test is TypeScript.
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+          cache: true
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: test/ts-tableau-loader/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Buf
+        run: python3 make.py setup --lang go
+
+      - name: Test
+        # `make.py test --lang ts` runs `buf generate` (Go plugins + protobuf-es
+        # remote plugin), `npm ci`, `npm run check` (tsc --noEmit type check),
+        # then `npm run smoke` (tsx tests/smoke.ts).
+        run: python3 make.py test --lang ts

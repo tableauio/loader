@@ -76,6 +76,9 @@ python3 make.py test --lang cpp --protobuf-version 3.21.12            # legacy v
 # C#
 python3 make.py test --lang csharp                                    # full
 python3 make.py test --lang csharp -k HubTest.Load                    # FullyQualifiedName~HubTest.Load
+
+# TypeScript
+python3 make.py test --lang ts                                        # npm install + generate + test
 ```
 
 GoogleTest is fetched via CMake `FetchContent` — no manual install.

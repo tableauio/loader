@@ -1,12 +1,13 @@
 {
-  "name": "tableau-ts-lab",
+  "name": "tableau-ts-loader-test",
   "private": true,
   "type": "module",
   "version": "1.0.0",
-  "description": "PoC: validate protobuf-es as the codegen base for protoc-gen-ts-tableau-loader",
+  "description": "Test harness for protoc-gen-ts-tableau-loader generated loaders.",
   "scripts": {
-    "generate": "buf generate ../../test",
-    "poc": "tsx src/poc.ts"
+    "generate": "buf generate ..",
+    "check": "tsc --noEmit",
+    "smoke": "tsx tests/smoke.ts"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.2.3"

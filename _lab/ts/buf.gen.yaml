@@ -1,6 +1,6 @@
 version: v2
 # PoC: mirror the existing per-language buf.gen.yaml pattern, where a "base"
-# plugin emits the message types and (later) protoc-gen-tableau-ts wraps them
+# plugin emits the message types and (later) protoc-gen-ts-tableau-loader wraps them
 # into Messager/Hub/index code — exactly like protocolbuffers/go +
 # protoc-gen-go-tableau-loader on the Go side.
 #

@@ -48,6 +48,7 @@ _lab/ts/src/protoconf
 coverage.txt
 !test/testdata/bin/
 test/csharp-tableau-loader/protoconf
+test/ts-tableau-loader/protoconf
 
 # C# Dev Kit language service cache (VS Code)
 *.lscache
