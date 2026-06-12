@@ -7,7 +7,7 @@
 
 import { create } from "@bufbuild/protobuf";
 import { Messager } from "./messager.pc.js";
-import { Format } from "./util.pc.js";
+import { Format, compareValues, compareTuples, sortMapByKey, TupleKeyMap } from "./util.pc.js";
 import { loadMessagerInDir, type MessagerOptions } from "./load.pc.js";
 import * as protoconf from "./barrel/protoconf.pc.js";
 
@@ -15,7 +15,11 @@ import * as protoconf from "./barrel/protoconf.pc.js";
  * FruitConf is a wrapper around protobuf message protoconf.FruitConf.
  */
 export class FruitConf extends Messager {
-  private data_: protoconf.FruitConf = create(protoconf.FruitConfSchema);
+  #data: protoconf.FruitConf = create(protoconf.FruitConfSchema);
+  #indexItemMap: FruitConf.Index_ItemMap = new Map();
+  #indexItemMap1: Map<number, FruitConf.Index_ItemMap> = new Map();
+  #orderedIndexOrderedFruitMap: FruitConf.OrderedIndex_OrderedFruitMap = new Map();
+  #orderedIndexOrderedFruitMap1: Map<number, FruitConf.OrderedIndex_OrderedFruitMap> = new Map();
 
   /** name returns the FruitConf's message name. */
   name(): string {
@@ -26,7 +30,7 @@ export class FruitConf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.FruitConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.FruitConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load FruitConf`, { cause: e });
     }
@@ -36,30 +40,180 @@ export class FruitConf extends Messager {
 
   /** data returns the FruitConf's inner message data. */
   data(): protoconf.FruitConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the FruitConf's inner message data. */
   override message(): protoconf.FruitConf {
-    return this.data_;
+    return this.#data;
+  }
+
+  /** processAfterLoad builds the index, ordered index and ordered map containers. */
+  override processAfterLoad(): void {
+    // Index init.
+    this.#indexItemMap.clear();
+    this.#indexItemMap1.clear();
+    for (const [k1Str, item1] of Object.entries(this.#data.fruitMap)) {
+      const k1 = Number(k1Str);
+      for (const item2 of Object.values(item1.itemMap)) {
+        {
+          // Index: Price<ID>
+          const key = item2.price;
+          {
+            const list = this.#indexItemMap.get(key);
+            if (list) { list.push(item2); } else { this.#indexItemMap.set(key, [item2]); }
+          }
+          {
+            let map = this.#indexItemMap1.get(k1);
+            if (!map) { map = new Map(); this.#indexItemMap1.set(k1, map); }
+            {
+              const list = map.get(key);
+              if (list) { list.push(item2); } else { map.set(key, [item2]); }
+            }
+          }
+        }
+      }
+    }
+    // Index(sort): Price<ID>
+    const cmpItem = (a: protoconf.FruitConf_Fruit_Item, b: protoconf.FruitConf_Fruit_Item): number => compareTuples([a.id], [b.id]);
+    for (const list of this.#indexItemMap.values()) {
+      list.sort(cmpItem);
+    }
+    for (const m of this.#indexItemMap1.values()) {
+      for (const list of m.values()) {
+        list.sort(cmpItem);
+      }
+    }
+    // OrderedIndex init.
+    this.#orderedIndexOrderedFruitMap.clear();
+    this.#orderedIndexOrderedFruitMap1.clear();
+    for (const [k1Str, item1] of Object.entries(this.#data.fruitMap)) {
+      const k1 = Number(k1Str);
+      for (const item2 of Object.values(item1.itemMap)) {
+        {
+          // OrderedIndex: Price<ID>@OrderedFruit
+          const key = item2.price;
+          {
+            const list = this.#orderedIndexOrderedFruitMap.get(key);
+            if (list) { list.push(item2); } else { this.#orderedIndexOrderedFruitMap.set(key, [item2]); }
+          }
+          {
+            let map = this.#orderedIndexOrderedFruitMap1.get(k1);
+            if (!map) { map = new Map(); this.#orderedIndexOrderedFruitMap1.set(k1, map); }
+            {
+              const list = map.get(key);
+              if (list) { list.push(item2); } else { map.set(key, [item2]); }
+            }
+          }
+        }
+      }
+    }
+    // OrderedIndex(sort): Price<ID>@OrderedFruit
+    const cmpOrderedFruit = (a: protoconf.FruitConf_Fruit_Item, b: protoconf.FruitConf_Fruit_Item): number => compareTuples([a.id], [b.id]);
+    for (const list of this.#orderedIndexOrderedFruitMap.values()) {
+      list.sort(cmpOrderedFruit);
+    }
+    for (const m of this.#orderedIndexOrderedFruitMap1.values()) {
+      for (const list of m.values()) {
+        list.sort(cmpOrderedFruit);
+      }
+    }
+    this.#orderedIndexOrderedFruitMap = sortMapByKey(this.#orderedIndexOrderedFruitMap, compareValues);
+    for (const m of this.#orderedIndexOrderedFruitMap1.values()) {
+      sortMapByKey(m, compareValues);
+    }
   }
 
   /** get1 finds value in the 1st-level map; returns undefined if not found. */
   get1(fruitType: number): protoconf.FruitConf_Fruit | undefined {
-    return this.data_.fruitMap[fruitType];
+    return this.#data.fruitMap[fruitType];
   }
 
   /** get2 finds value in the 2nd-level map; returns undefined if not found. */
   get2(fruitType: number, id: number): protoconf.FruitConf_Fruit_Item | undefined {
     return this.get1(fruitType)?.itemMap[id];
   }
+
+  /** findItemMap returns the index map: key(Price<ID>) -> values. */
+  findItemMap(): FruitConf.Index_ItemMap {
+    return this.#indexItemMap;
+  }
+
+  /** findItem returns all values for the given key(s), or undefined. */
+  findItem(price: number): protoconf.FruitConf_Fruit_Item[] | undefined {
+    return this.#indexItemMap.get(price);
+  }
+
+  /** findFirstItem returns the first value for the given key(s), or undefined. */
+  findFirstItem(price: number): protoconf.FruitConf_Fruit_Item | undefined {
+    return this.findItem(price)?.[0];
+  }
+
+  /** findItemMap1 returns the index map scoped to the upper 1st-level map key(s). */
+  findItemMap1(fruitType: number): FruitConf.Index_ItemMap | undefined {
+    return this.#indexItemMap1.get(fruitType);
+  }
+
+  /** findItem1 returns all values for the given key(s) within the upper 1st-level map. */
+  findItem1(fruitType: number, price: number): protoconf.FruitConf_Fruit_Item[] | undefined {
+    return this.findItemMap1(fruitType)?.get(price);
+  }
+
+  /** findFirstItem1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstItem1(fruitType: number, price: number): protoconf.FruitConf_Fruit_Item | undefined {
+    return this.findItem1(fruitType, price)?.[0];
+  }
+
+  /** findOrderedFruitMap returns the ordered index map: key(Price<ID>@OrderedFruit) -> values. */
+  findOrderedFruitMap(): FruitConf.OrderedIndex_OrderedFruitMap {
+    return this.#orderedIndexOrderedFruitMap;
+  }
+
+  /** findOrderedFruit returns all values for the given key(s), or undefined. */
+  findOrderedFruit(price: number): protoconf.FruitConf_Fruit_Item[] | undefined {
+    return this.#orderedIndexOrderedFruitMap.get(price);
+  }
+
+  /** findFirstOrderedFruit returns the first value for the given key(s), or undefined. */
+  findFirstOrderedFruit(price: number): protoconf.FruitConf_Fruit_Item | undefined {
+    return this.findOrderedFruit(price)?.[0];
+  }
+
+  /** findOrderedFruitMap1 returns the ordered index map scoped to the upper 1st-level map key(s). */
+  findOrderedFruitMap1(fruitType: number): FruitConf.OrderedIndex_OrderedFruitMap | undefined {
+    return this.#orderedIndexOrderedFruitMap1.get(fruitType);
+  }
+
+  /** findOrderedFruit1 returns all values for the given key(s) within the upper 1st-level map. */
+  findOrderedFruit1(fruitType: number, price: number): protoconf.FruitConf_Fruit_Item[] | undefined {
+    return this.findOrderedFruitMap1(fruitType)?.get(price);
+  }
+
+  /** findFirstOrderedFruit1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstOrderedFruit1(fruitType: number, price: number): protoconf.FruitConf_Fruit_Item | undefined {
+    return this.findOrderedFruit1(fruitType, price)?.[0];
+  }
+}
+
+// Type aliases for the index / ordered index / ordered map containers,
+// mirroring the named container types of the other-language loaders so the
+// finder signatures read clearly (e.g. FruitConf.Index_XxxMap).
+export namespace FruitConf {
+  /** Index_ItemMap is the index map: key(Price<ID>) -> values. */
+  export type Index_ItemMap = Map<number, protoconf.FruitConf_Fruit_Item[]>;
+  /** OrderedIndex_OrderedFruitMap is the ordered index map: key(Price<ID>@OrderedFruit) -> values. */
+  export type OrderedIndex_OrderedFruitMap = Map<number, protoconf.FruitConf_Fruit_Item[]>;
 }
 
 /**
  * Fruit6Conf is a wrapper around protobuf message protoconf.Fruit6Conf.
  */
 export class Fruit6Conf extends Messager {
-  private data_: protoconf.Fruit6Conf = create(protoconf.Fruit6ConfSchema);
+  #data: protoconf.Fruit6Conf = create(protoconf.Fruit6ConfSchema);
+  #indexItemMap: Fruit6Conf.Index_ItemMap = new Map();
+  #indexItemMap1: Map<number, Fruit6Conf.Index_ItemMap> = new Map();
+  #orderedIndexOrderedFruitMap: Fruit6Conf.OrderedIndex_OrderedFruitMap = new Map();
+  #orderedIndexOrderedFruitMap1: Map<number, Fruit6Conf.OrderedIndex_OrderedFruitMap> = new Map();
 
   /** name returns the Fruit6Conf's message name. */
   name(): string {
@@ -70,7 +224,7 @@ export class Fruit6Conf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.Fruit6ConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.Fruit6ConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load Fruit6Conf`, { cause: e });
     }
@@ -80,25 +234,178 @@ export class Fruit6Conf extends Messager {
 
   /** data returns the Fruit6Conf's inner message data. */
   data(): protoconf.Fruit6Conf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the Fruit6Conf's inner message data. */
   override message(): protoconf.Fruit6Conf {
-    return this.data_;
+    return this.#data;
+  }
+
+  /** processAfterLoad builds the index, ordered index and ordered map containers. */
+  override processAfterLoad(): void {
+    // Index init.
+    this.#indexItemMap.clear();
+    this.#indexItemMap1.clear();
+    for (const [k1Str, item1] of Object.entries(this.#data.fruitMap)) {
+      const k1 = Number(k1Str);
+      for (const item2 of item1.itemList ?? []) {
+        {
+          // Index: Price<ID>
+          const key = item2.price;
+          {
+            const list = this.#indexItemMap.get(key);
+            if (list) { list.push(item2); } else { this.#indexItemMap.set(key, [item2]); }
+          }
+          {
+            let map = this.#indexItemMap1.get(k1);
+            if (!map) { map = new Map(); this.#indexItemMap1.set(k1, map); }
+            {
+              const list = map.get(key);
+              if (list) { list.push(item2); } else { map.set(key, [item2]); }
+            }
+          }
+        }
+      }
+    }
+    // Index(sort): Price<ID>
+    const cmpItem = (a: protoconf.Fruit6Conf_Fruit_Item, b: protoconf.Fruit6Conf_Fruit_Item): number => compareTuples([a.id], [b.id]);
+    for (const list of this.#indexItemMap.values()) {
+      list.sort(cmpItem);
+    }
+    for (const m of this.#indexItemMap1.values()) {
+      for (const list of m.values()) {
+        list.sort(cmpItem);
+      }
+    }
+    // OrderedIndex init.
+    this.#orderedIndexOrderedFruitMap.clear();
+    this.#orderedIndexOrderedFruitMap1.clear();
+    for (const [k1Str, item1] of Object.entries(this.#data.fruitMap)) {
+      const k1 = Number(k1Str);
+      for (const item2 of item1.itemList ?? []) {
+        {
+          // OrderedIndex: Price<ID>@OrderedFruit
+          const key = item2.price;
+          {
+            const list = this.#orderedIndexOrderedFruitMap.get(key);
+            if (list) { list.push(item2); } else { this.#orderedIndexOrderedFruitMap.set(key, [item2]); }
+          }
+          {
+            let map = this.#orderedIndexOrderedFruitMap1.get(k1);
+            if (!map) { map = new Map(); this.#orderedIndexOrderedFruitMap1.set(k1, map); }
+            {
+              const list = map.get(key);
+              if (list) { list.push(item2); } else { map.set(key, [item2]); }
+            }
+          }
+        }
+      }
+    }
+    // OrderedIndex(sort): Price<ID>@OrderedFruit
+    const cmpOrderedFruit = (a: protoconf.Fruit6Conf_Fruit_Item, b: protoconf.Fruit6Conf_Fruit_Item): number => compareTuples([a.id], [b.id]);
+    for (const list of this.#orderedIndexOrderedFruitMap.values()) {
+      list.sort(cmpOrderedFruit);
+    }
+    for (const m of this.#orderedIndexOrderedFruitMap1.values()) {
+      for (const list of m.values()) {
+        list.sort(cmpOrderedFruit);
+      }
+    }
+    this.#orderedIndexOrderedFruitMap = sortMapByKey(this.#orderedIndexOrderedFruitMap, compareValues);
+    for (const m of this.#orderedIndexOrderedFruitMap1.values()) {
+      sortMapByKey(m, compareValues);
+    }
   }
 
   /** get1 finds value in the 1st-level map; returns undefined if not found. */
   get1(fruitType: number): protoconf.Fruit6Conf_Fruit | undefined {
-    return this.data_.fruitMap[fruitType];
+    return this.#data.fruitMap[fruitType];
   }
+
+  /** findItemMap returns the index map: key(Price<ID>) -> values. */
+  findItemMap(): Fruit6Conf.Index_ItemMap {
+    return this.#indexItemMap;
+  }
+
+  /** findItem returns all values for the given key(s), or undefined. */
+  findItem(price: number): protoconf.Fruit6Conf_Fruit_Item[] | undefined {
+    return this.#indexItemMap.get(price);
+  }
+
+  /** findFirstItem returns the first value for the given key(s), or undefined. */
+  findFirstItem(price: number): protoconf.Fruit6Conf_Fruit_Item | undefined {
+    return this.findItem(price)?.[0];
+  }
+
+  /** findItemMap1 returns the index map scoped to the upper 1st-level map key(s). */
+  findItemMap1(fruitType: number): Fruit6Conf.Index_ItemMap | undefined {
+    return this.#indexItemMap1.get(fruitType);
+  }
+
+  /** findItem1 returns all values for the given key(s) within the upper 1st-level map. */
+  findItem1(fruitType: number, price: number): protoconf.Fruit6Conf_Fruit_Item[] | undefined {
+    return this.findItemMap1(fruitType)?.get(price);
+  }
+
+  /** findFirstItem1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstItem1(fruitType: number, price: number): protoconf.Fruit6Conf_Fruit_Item | undefined {
+    return this.findItem1(fruitType, price)?.[0];
+  }
+
+  /** findOrderedFruitMap returns the ordered index map: key(Price<ID>@OrderedFruit) -> values. */
+  findOrderedFruitMap(): Fruit6Conf.OrderedIndex_OrderedFruitMap {
+    return this.#orderedIndexOrderedFruitMap;
+  }
+
+  /** findOrderedFruit returns all values for the given key(s), or undefined. */
+  findOrderedFruit(price: number): protoconf.Fruit6Conf_Fruit_Item[] | undefined {
+    return this.#orderedIndexOrderedFruitMap.get(price);
+  }
+
+  /** findFirstOrderedFruit returns the first value for the given key(s), or undefined. */
+  findFirstOrderedFruit(price: number): protoconf.Fruit6Conf_Fruit_Item | undefined {
+    return this.findOrderedFruit(price)?.[0];
+  }
+
+  /** findOrderedFruitMap1 returns the ordered index map scoped to the upper 1st-level map key(s). */
+  findOrderedFruitMap1(fruitType: number): Fruit6Conf.OrderedIndex_OrderedFruitMap | undefined {
+    return this.#orderedIndexOrderedFruitMap1.get(fruitType);
+  }
+
+  /** findOrderedFruit1 returns all values for the given key(s) within the upper 1st-level map. */
+  findOrderedFruit1(fruitType: number, price: number): protoconf.Fruit6Conf_Fruit_Item[] | undefined {
+    return this.findOrderedFruitMap1(fruitType)?.get(price);
+  }
+
+  /** findFirstOrderedFruit1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstOrderedFruit1(fruitType: number, price: number): protoconf.Fruit6Conf_Fruit_Item | undefined {
+    return this.findOrderedFruit1(fruitType, price)?.[0];
+  }
+}
+
+// Type aliases for the index / ordered index / ordered map containers,
+// mirroring the named container types of the other-language loaders so the
+// finder signatures read clearly (e.g. Fruit6Conf.Index_XxxMap).
+export namespace Fruit6Conf {
+  /** Index_ItemMap is the index map: key(Price<ID>) -> values. */
+  export type Index_ItemMap = Map<number, protoconf.Fruit6Conf_Fruit_Item[]>;
+  /** OrderedIndex_OrderedFruitMap is the ordered index map: key(Price<ID>@OrderedFruit) -> values. */
+  export type OrderedIndex_OrderedFruitMap = Map<number, protoconf.Fruit6Conf_Fruit_Item[]>;
 }
 
 /**
  * Fruit2Conf is a wrapper around protobuf message protoconf.Fruit2Conf.
  */
 export class Fruit2Conf extends Messager {
-  private data_: protoconf.Fruit2Conf = create(protoconf.Fruit2ConfSchema);
+  #data: protoconf.Fruit2Conf = create(protoconf.Fruit2ConfSchema);
+  #indexCountryMap: Fruit2Conf.Index_CountryMap = new Map();
+  #indexCountryMap1: Map<number, Fruit2Conf.Index_CountryMap> = new Map();
+  #indexAttrMap: Fruit2Conf.Index_AttrMap = new Map();
+  #indexAttrMap1: Map<number, Fruit2Conf.Index_AttrMap> = new Map();
+  #indexAttrMap2: TupleKeyMap<Fruit2Conf.LevelIndex_Fruit_Country_ItemKey, Fruit2Conf.Index_AttrMap> = new TupleKeyMap();
+  #orderedIndexItemMap: Fruit2Conf.OrderedIndex_ItemMap = new Map();
+  #orderedIndexItemMap1: Map<number, Fruit2Conf.OrderedIndex_ItemMap> = new Map();
 
   /** name returns the Fruit2Conf's message name. */
   name(): string {
@@ -109,7 +416,7 @@ export class Fruit2Conf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.Fruit2ConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.Fruit2ConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load Fruit2Conf`, { cause: e });
     }
@@ -119,25 +426,247 @@ export class Fruit2Conf extends Messager {
 
   /** data returns the Fruit2Conf's inner message data. */
   data(): protoconf.Fruit2Conf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the Fruit2Conf's inner message data. */
   override message(): protoconf.Fruit2Conf {
-    return this.data_;
+    return this.#data;
+  }
+
+  /** processAfterLoad builds the index, ordered index and ordered map containers. */
+  override processAfterLoad(): void {
+    // Index init.
+    this.#indexCountryMap.clear();
+    this.#indexCountryMap1.clear();
+    this.#indexAttrMap.clear();
+    this.#indexAttrMap1.clear();
+    this.#indexAttrMap2.clear();
+    for (const [k1Str, item1] of Object.entries(this.#data.fruitMap)) {
+      const k1 = Number(k1Str);
+      for (const item2 of item1.countryList ?? []) {
+        {
+          // Index: CountryName
+          const key = item2.name;
+          {
+            const list = this.#indexCountryMap.get(key);
+            if (list) { list.push(item2); } else { this.#indexCountryMap.set(key, [item2]); }
+          }
+          {
+            let map = this.#indexCountryMap1.get(k1);
+            if (!map) { map = new Map(); this.#indexCountryMap1.set(k1, map); }
+            {
+              const list = map.get(key);
+              if (list) { list.push(item2); } else { map.set(key, [item2]); }
+            }
+          }
+        }
+        for (const [k2Str, item3] of Object.entries(item2.itemMap)) {
+          const k2 = Number(k2Str);
+          for (const item4 of item3.attrList ?? []) {
+            {
+              // Index: CountryItemAttrName
+              const key = item4.name;
+              {
+                const list = this.#indexAttrMap.get(key);
+                if (list) { list.push(item4); } else { this.#indexAttrMap.set(key, [item4]); }
+              }
+              {
+                let map = this.#indexAttrMap1.get(k1);
+                if (!map) { map = new Map(); this.#indexAttrMap1.set(k1, map); }
+                {
+                  const list = map.get(key);
+                  if (list) { list.push(item4); } else { map.set(key, [item4]); }
+                }
+              }
+              {
+                const map = this.#indexAttrMap2.getOrSet([k1, k2], () => new Map());
+                {
+                  const list = map.get(key);
+                  if (list) { list.push(item4); } else { map.set(key, [item4]); }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    // OrderedIndex init.
+    this.#orderedIndexItemMap.clear();
+    this.#orderedIndexItemMap1.clear();
+    for (const [k1Str, item1] of Object.entries(this.#data.fruitMap)) {
+      const k1 = Number(k1Str);
+      for (const item2 of item1.countryList ?? []) {
+        for (const item3 of Object.values(item2.itemMap)) {
+          {
+            // OrderedIndex: CountryItemPrice<CountryItemID>
+            const key = item3.price;
+            {
+              const list = this.#orderedIndexItemMap.get(key);
+              if (list) { list.push(item3); } else { this.#orderedIndexItemMap.set(key, [item3]); }
+            }
+            {
+              let map = this.#orderedIndexItemMap1.get(k1);
+              if (!map) { map = new Map(); this.#orderedIndexItemMap1.set(k1, map); }
+              {
+                const list = map.get(key);
+                if (list) { list.push(item3); } else { map.set(key, [item3]); }
+              }
+            }
+          }
+        }
+      }
+    }
+    // OrderedIndex(sort): CountryItemPrice<CountryItemID>
+    const cmpItem = (a: protoconf.Fruit2Conf_Fruit_Country_Item, b: protoconf.Fruit2Conf_Fruit_Country_Item): number => compareTuples([a.id], [b.id]);
+    for (const list of this.#orderedIndexItemMap.values()) {
+      list.sort(cmpItem);
+    }
+    for (const m of this.#orderedIndexItemMap1.values()) {
+      for (const list of m.values()) {
+        list.sort(cmpItem);
+      }
+    }
+    this.#orderedIndexItemMap = sortMapByKey(this.#orderedIndexItemMap, compareValues);
+    for (const m of this.#orderedIndexItemMap1.values()) {
+      sortMapByKey(m, compareValues);
+    }
   }
 
   /** get1 finds value in the 1st-level map; returns undefined if not found. */
   get1(fruitType: number): protoconf.Fruit2Conf_Fruit | undefined {
-    return this.data_.fruitMap[fruitType];
+    return this.#data.fruitMap[fruitType];
   }
+
+  /** findCountryMap returns the index map: key(CountryName) -> values. */
+  findCountryMap(): Fruit2Conf.Index_CountryMap {
+    return this.#indexCountryMap;
+  }
+
+  /** findCountry returns all values for the given key(s), or undefined. */
+  findCountry(name: string): protoconf.Fruit2Conf_Fruit_Country[] | undefined {
+    return this.#indexCountryMap.get(name);
+  }
+
+  /** findFirstCountry returns the first value for the given key(s), or undefined. */
+  findFirstCountry(name: string): protoconf.Fruit2Conf_Fruit_Country | undefined {
+    return this.findCountry(name)?.[0];
+  }
+
+  /** findCountryMap1 returns the index map scoped to the upper 1st-level map key(s). */
+  findCountryMap1(fruitType: number): Fruit2Conf.Index_CountryMap | undefined {
+    return this.#indexCountryMap1.get(fruitType);
+  }
+
+  /** findCountry1 returns all values for the given key(s) within the upper 1st-level map. */
+  findCountry1(fruitType: number, name: string): protoconf.Fruit2Conf_Fruit_Country[] | undefined {
+    return this.findCountryMap1(fruitType)?.get(name);
+  }
+
+  /** findFirstCountry1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstCountry1(fruitType: number, name: string): protoconf.Fruit2Conf_Fruit_Country | undefined {
+    return this.findCountry1(fruitType, name)?.[0];
+  }
+
+  /** findAttrMap returns the index map: key(CountryItemAttrName) -> values. */
+  findAttrMap(): Fruit2Conf.Index_AttrMap {
+    return this.#indexAttrMap;
+  }
+
+  /** findAttr returns all values for the given key(s), or undefined. */
+  findAttr(name: string): protoconf.Fruit2Conf_Fruit_Country_Item_Attr[] | undefined {
+    return this.#indexAttrMap.get(name);
+  }
+
+  /** findFirstAttr returns the first value for the given key(s), or undefined. */
+  findFirstAttr(name: string): protoconf.Fruit2Conf_Fruit_Country_Item_Attr | undefined {
+    return this.findAttr(name)?.[0];
+  }
+
+  /** findAttrMap1 returns the index map scoped to the upper 1st-level map key(s). */
+  findAttrMap1(fruitType: number): Fruit2Conf.Index_AttrMap | undefined {
+    return this.#indexAttrMap1.get(fruitType);
+  }
+
+  /** findAttr1 returns all values for the given key(s) within the upper 1st-level map. */
+  findAttr1(fruitType: number, name: string): protoconf.Fruit2Conf_Fruit_Country_Item_Attr[] | undefined {
+    return this.findAttrMap1(fruitType)?.get(name);
+  }
+
+  /** findFirstAttr1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstAttr1(fruitType: number, name: string): protoconf.Fruit2Conf_Fruit_Country_Item_Attr | undefined {
+    return this.findAttr1(fruitType, name)?.[0];
+  }
+
+  /** findAttrMap2 returns the index map scoped to the upper 2nd-level map key(s). */
+  findAttrMap2(fruitType: number, id: number): Fruit2Conf.Index_AttrMap | undefined {
+    return this.#indexAttrMap2.get([fruitType, id]);
+  }
+
+  /** findAttr2 returns all values for the given key(s) within the upper 2nd-level map. */
+  findAttr2(fruitType: number, id: number, name: string): protoconf.Fruit2Conf_Fruit_Country_Item_Attr[] | undefined {
+    return this.findAttrMap2(fruitType, id)?.get(name);
+  }
+
+  /** findFirstAttr2 returns the first value for the given key(s) within the upper 2nd-level map. */
+  findFirstAttr2(fruitType: number, id: number, name: string): protoconf.Fruit2Conf_Fruit_Country_Item_Attr | undefined {
+    return this.findAttr2(fruitType, id, name)?.[0];
+  }
+
+  /** findItemMap returns the ordered index map: key(CountryItemPrice<CountryItemID>) -> values. */
+  findItemMap(): Fruit2Conf.OrderedIndex_ItemMap {
+    return this.#orderedIndexItemMap;
+  }
+
+  /** findItem returns all values for the given key(s), or undefined. */
+  findItem(price: number): protoconf.Fruit2Conf_Fruit_Country_Item[] | undefined {
+    return this.#orderedIndexItemMap.get(price);
+  }
+
+  /** findFirstItem returns the first value for the given key(s), or undefined. */
+  findFirstItem(price: number): protoconf.Fruit2Conf_Fruit_Country_Item | undefined {
+    return this.findItem(price)?.[0];
+  }
+
+  /** findItemMap1 returns the ordered index map scoped to the upper 1st-level map key(s). */
+  findItemMap1(fruitType: number): Fruit2Conf.OrderedIndex_ItemMap | undefined {
+    return this.#orderedIndexItemMap1.get(fruitType);
+  }
+
+  /** findItem1 returns all values for the given key(s) within the upper 1st-level map. */
+  findItem1(fruitType: number, price: number): protoconf.Fruit2Conf_Fruit_Country_Item[] | undefined {
+    return this.findItemMap1(fruitType)?.get(price);
+  }
+
+  /** findFirstItem1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstItem1(fruitType: number, price: number): protoconf.Fruit2Conf_Fruit_Country_Item | undefined {
+    return this.findItem1(fruitType, price)?.[0];
+  }
+}
+
+// Type aliases for the index / ordered index / ordered map containers,
+// mirroring the named container types of the other-language loaders so the
+// finder signatures read clearly (e.g. Fruit2Conf.Index_XxxMap).
+export namespace Fruit2Conf {
+  /** LevelIndex_Fruit_Country_ItemKey is the composite upper map key (k1..k2) of the 2nd-level leveled containers. */
+  export type LevelIndex_Fruit_Country_ItemKey = readonly [fruitType: number, id: number];
+  /** Index_CountryMap is the index map: key(CountryName) -> values. */
+  export type Index_CountryMap = Map<string, protoconf.Fruit2Conf_Fruit_Country[]>;
+  /** Index_AttrMap is the index map: key(CountryItemAttrName) -> values. */
+  export type Index_AttrMap = Map<string, protoconf.Fruit2Conf_Fruit_Country_Item_Attr[]>;
+  /** OrderedIndex_ItemMap is the ordered index map: key(CountryItemPrice<CountryItemID>) -> values. */
+  export type OrderedIndex_ItemMap = Map<number, protoconf.Fruit2Conf_Fruit_Country_Item[]>;
 }
 
 /**
  * Fruit3Conf is a wrapper around protobuf message protoconf.Fruit3Conf.
  */
 export class Fruit3Conf extends Messager {
-  private data_: protoconf.Fruit3Conf = create(protoconf.Fruit3ConfSchema);
+  #data: protoconf.Fruit3Conf = create(protoconf.Fruit3ConfSchema);
+  #indexCountryMap: Fruit3Conf.Index_CountryMap = new Map();
+  #indexAttrMap: Fruit3Conf.Index_AttrMap = new Map();
+  #indexAttrMap1: Map<number, Fruit3Conf.Index_AttrMap> = new Map();
+  #orderedIndexItemMap: Fruit3Conf.OrderedIndex_ItemMap = new Map();
 
   /** name returns the Fruit3Conf's message name. */
   name(): string {
@@ -148,7 +677,7 @@ export class Fruit3Conf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.Fruit3ConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.Fruit3ConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load Fruit3Conf`, { cause: e });
     }
@@ -158,20 +687,164 @@ export class Fruit3Conf extends Messager {
 
   /** data returns the Fruit3Conf's inner message data. */
   data(): protoconf.Fruit3Conf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the Fruit3Conf's inner message data. */
   override message(): protoconf.Fruit3Conf {
-    return this.data_;
+    return this.#data;
   }
+
+  /** processAfterLoad builds the index, ordered index and ordered map containers. */
+  override processAfterLoad(): void {
+    // Index init.
+    this.#indexCountryMap.clear();
+    this.#indexAttrMap.clear();
+    this.#indexAttrMap1.clear();
+    for (const item1 of this.#data.fruitList ?? []) {
+      for (const item2 of item1.countryList ?? []) {
+        {
+          // Index: CountryName
+          const key = item2.name;
+          {
+            const list = this.#indexCountryMap.get(key);
+            if (list) { list.push(item2); } else { this.#indexCountryMap.set(key, [item2]); }
+          }
+        }
+        for (const [k1Str, item3] of Object.entries(item2.itemMap)) {
+          const k1 = Number(k1Str);
+          for (const item4 of item3.attrList ?? []) {
+            {
+              // Index: CountryItemAttrName
+              const key = item4.name;
+              {
+                const list = this.#indexAttrMap.get(key);
+                if (list) { list.push(item4); } else { this.#indexAttrMap.set(key, [item4]); }
+              }
+              {
+                let map = this.#indexAttrMap1.get(k1);
+                if (!map) { map = new Map(); this.#indexAttrMap1.set(k1, map); }
+                {
+                  const list = map.get(key);
+                  if (list) { list.push(item4); } else { map.set(key, [item4]); }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    // OrderedIndex init.
+    this.#orderedIndexItemMap.clear();
+    for (const item1 of this.#data.fruitList ?? []) {
+      for (const item2 of item1.countryList ?? []) {
+        for (const item3 of Object.values(item2.itemMap)) {
+          {
+            // OrderedIndex: CountryItemPrice<CountryItemID>
+            const key = item3.price;
+            {
+              const list = this.#orderedIndexItemMap.get(key);
+              if (list) { list.push(item3); } else { this.#orderedIndexItemMap.set(key, [item3]); }
+            }
+          }
+        }
+      }
+    }
+    // OrderedIndex(sort): CountryItemPrice<CountryItemID>
+    const cmpItem = (a: protoconf.Fruit3Conf_Fruit_Country_Item, b: protoconf.Fruit3Conf_Fruit_Country_Item): number => compareTuples([a.id], [b.id]);
+    for (const list of this.#orderedIndexItemMap.values()) {
+      list.sort(cmpItem);
+    }
+    this.#orderedIndexItemMap = sortMapByKey(this.#orderedIndexItemMap, compareValues);
+  }
+
+  /** findCountryMap returns the index map: key(CountryName) -> values. */
+  findCountryMap(): Fruit3Conf.Index_CountryMap {
+    return this.#indexCountryMap;
+  }
+
+  /** findCountry returns all values for the given key(s), or undefined. */
+  findCountry(name: string): protoconf.Fruit3Conf_Fruit_Country[] | undefined {
+    return this.#indexCountryMap.get(name);
+  }
+
+  /** findFirstCountry returns the first value for the given key(s), or undefined. */
+  findFirstCountry(name: string): protoconf.Fruit3Conf_Fruit_Country | undefined {
+    return this.findCountry(name)?.[0];
+  }
+
+  /** findAttrMap returns the index map: key(CountryItemAttrName) -> values. */
+  findAttrMap(): Fruit3Conf.Index_AttrMap {
+    return this.#indexAttrMap;
+  }
+
+  /** findAttr returns all values for the given key(s), or undefined. */
+  findAttr(name: string): protoconf.Fruit3Conf_Fruit_Country_Item_Attr[] | undefined {
+    return this.#indexAttrMap.get(name);
+  }
+
+  /** findFirstAttr returns the first value for the given key(s), or undefined. */
+  findFirstAttr(name: string): protoconf.Fruit3Conf_Fruit_Country_Item_Attr | undefined {
+    return this.findAttr(name)?.[0];
+  }
+
+  /** findAttrMap1 returns the index map scoped to the upper 1st-level map key(s). */
+  findAttrMap1(id: number): Fruit3Conf.Index_AttrMap | undefined {
+    return this.#indexAttrMap1.get(id);
+  }
+
+  /** findAttr1 returns all values for the given key(s) within the upper 1st-level map. */
+  findAttr1(id: number, name: string): protoconf.Fruit3Conf_Fruit_Country_Item_Attr[] | undefined {
+    return this.findAttrMap1(id)?.get(name);
+  }
+
+  /** findFirstAttr1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstAttr1(id: number, name: string): protoconf.Fruit3Conf_Fruit_Country_Item_Attr | undefined {
+    return this.findAttr1(id, name)?.[0];
+  }
+
+  /** findItemMap returns the ordered index map: key(CountryItemPrice<CountryItemID>) -> values. */
+  findItemMap(): Fruit3Conf.OrderedIndex_ItemMap {
+    return this.#orderedIndexItemMap;
+  }
+
+  /** findItem returns all values for the given key(s), or undefined. */
+  findItem(price: number): protoconf.Fruit3Conf_Fruit_Country_Item[] | undefined {
+    return this.#orderedIndexItemMap.get(price);
+  }
+
+  /** findFirstItem returns the first value for the given key(s), or undefined. */
+  findFirstItem(price: number): protoconf.Fruit3Conf_Fruit_Country_Item | undefined {
+    return this.findItem(price)?.[0];
+  }
+}
+
+// Type aliases for the index / ordered index / ordered map containers,
+// mirroring the named container types of the other-language loaders so the
+// finder signatures read clearly (e.g. Fruit3Conf.Index_XxxMap).
+export namespace Fruit3Conf {
+  /** Index_CountryMap is the index map: key(CountryName) -> values. */
+  export type Index_CountryMap = Map<string, protoconf.Fruit3Conf_Fruit_Country[]>;
+  /** Index_AttrMap is the index map: key(CountryItemAttrName) -> values. */
+  export type Index_AttrMap = Map<string, protoconf.Fruit3Conf_Fruit_Country_Item_Attr[]>;
+  /** OrderedIndex_ItemMap is the ordered index map: key(CountryItemPrice<CountryItemID>) -> values. */
+  export type OrderedIndex_ItemMap = Map<number, protoconf.Fruit3Conf_Fruit_Country_Item[]>;
 }
 
 /**
  * Fruit4Conf is a wrapper around protobuf message protoconf.Fruit4Conf.
  */
 export class Fruit4Conf extends Messager {
-  private data_: protoconf.Fruit4Conf = create(protoconf.Fruit4ConfSchema);
+  #data: protoconf.Fruit4Conf = create(protoconf.Fruit4ConfSchema);
+  #indexCountryMap: Fruit4Conf.Index_CountryMap = new Map();
+  #indexCountryMap1: Map<number, Fruit4Conf.Index_CountryMap> = new Map();
+  #indexAttrMap: Fruit4Conf.Index_AttrMap = new Map();
+  #indexAttrMap1: Map<number, Fruit4Conf.Index_AttrMap> = new Map();
+  #indexAttrMap2: TupleKeyMap<Fruit4Conf.LevelIndex_Fruit_CountryKey, Fruit4Conf.Index_AttrMap> = new TupleKeyMap();
+  #indexAttrMap3: TupleKeyMap<Fruit4Conf.LevelIndex_Fruit_Country_ItemKey, Fruit4Conf.Index_AttrMap> = new TupleKeyMap();
+  #orderedIndexItemMap: Fruit4Conf.OrderedIndex_ItemMap = new Map();
+  #orderedIndexItemMap1: Map<number, Fruit4Conf.OrderedIndex_ItemMap> = new Map();
+  #orderedIndexItemMap2: TupleKeyMap<Fruit4Conf.LevelIndex_Fruit_CountryKey, Fruit4Conf.OrderedIndex_ItemMap> = new TupleKeyMap();
 
   /** name returns the Fruit4Conf's message name. */
   name(): string {
@@ -182,7 +855,7 @@ export class Fruit4Conf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.Fruit4ConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.Fruit4ConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load Fruit4Conf`, { cause: e });
     }
@@ -192,17 +865,142 @@ export class Fruit4Conf extends Messager {
 
   /** data returns the Fruit4Conf's inner message data. */
   data(): protoconf.Fruit4Conf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the Fruit4Conf's inner message data. */
   override message(): protoconf.Fruit4Conf {
-    return this.data_;
+    return this.#data;
+  }
+
+  /** processAfterLoad builds the index, ordered index and ordered map containers. */
+  override processAfterLoad(): void {
+    // Index init.
+    this.#indexCountryMap.clear();
+    this.#indexCountryMap1.clear();
+    this.#indexAttrMap.clear();
+    this.#indexAttrMap1.clear();
+    this.#indexAttrMap2.clear();
+    this.#indexAttrMap3.clear();
+    for (const [k1Str, item1] of Object.entries(this.#data.fruitMap)) {
+      const k1 = Number(k1Str);
+      for (const [k2Str, item2] of Object.entries(item1.countryMap)) {
+        const k2 = Number(k2Str);
+        {
+          // Index: CountryName
+          const key = item2.name;
+          {
+            const list = this.#indexCountryMap.get(key);
+            if (list) { list.push(item2); } else { this.#indexCountryMap.set(key, [item2]); }
+          }
+          {
+            let map = this.#indexCountryMap1.get(k1);
+            if (!map) { map = new Map(); this.#indexCountryMap1.set(k1, map); }
+            {
+              const list = map.get(key);
+              if (list) { list.push(item2); } else { map.set(key, [item2]); }
+            }
+          }
+        }
+        for (const [k3Str, item3] of Object.entries(item2.itemMap)) {
+          const k3 = Number(k3Str);
+          for (const item4 of item3.attrList ?? []) {
+            {
+              // Index: CountryItemAttrName
+              const key = item4.name;
+              {
+                const list = this.#indexAttrMap.get(key);
+                if (list) { list.push(item4); } else { this.#indexAttrMap.set(key, [item4]); }
+              }
+              {
+                let map = this.#indexAttrMap1.get(k1);
+                if (!map) { map = new Map(); this.#indexAttrMap1.set(k1, map); }
+                {
+                  const list = map.get(key);
+                  if (list) { list.push(item4); } else { map.set(key, [item4]); }
+                }
+              }
+              {
+                const map = this.#indexAttrMap2.getOrSet([k1, k2], () => new Map());
+                {
+                  const list = map.get(key);
+                  if (list) { list.push(item4); } else { map.set(key, [item4]); }
+                }
+              }
+              {
+                const map = this.#indexAttrMap3.getOrSet([k1, k2, k3], () => new Map());
+                {
+                  const list = map.get(key);
+                  if (list) { list.push(item4); } else { map.set(key, [item4]); }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    // OrderedIndex init.
+    this.#orderedIndexItemMap.clear();
+    this.#orderedIndexItemMap1.clear();
+    this.#orderedIndexItemMap2.clear();
+    for (const [k1Str, item1] of Object.entries(this.#data.fruitMap)) {
+      const k1 = Number(k1Str);
+      for (const [k2Str, item2] of Object.entries(item1.countryMap)) {
+        const k2 = Number(k2Str);
+        for (const item3 of Object.values(item2.itemMap)) {
+          {
+            // OrderedIndex: CountryItemPrice<CountryItemID>
+            const key = item3.price;
+            {
+              const list = this.#orderedIndexItemMap.get(key);
+              if (list) { list.push(item3); } else { this.#orderedIndexItemMap.set(key, [item3]); }
+            }
+            {
+              let map = this.#orderedIndexItemMap1.get(k1);
+              if (!map) { map = new Map(); this.#orderedIndexItemMap1.set(k1, map); }
+              {
+                const list = map.get(key);
+                if (list) { list.push(item3); } else { map.set(key, [item3]); }
+              }
+            }
+            {
+              const map = this.#orderedIndexItemMap2.getOrSet([k1, k2], () => new Map());
+              {
+                const list = map.get(key);
+                if (list) { list.push(item3); } else { map.set(key, [item3]); }
+              }
+            }
+          }
+        }
+      }
+    }
+    // OrderedIndex(sort): CountryItemPrice<CountryItemID>
+    const cmpItem = (a: protoconf.Fruit4Conf_Fruit_Country_Item, b: protoconf.Fruit4Conf_Fruit_Country_Item): number => compareTuples([a.id], [b.id]);
+    for (const list of this.#orderedIndexItemMap.values()) {
+      list.sort(cmpItem);
+    }
+    for (const m of this.#orderedIndexItemMap1.values()) {
+      for (const list of m.values()) {
+        list.sort(cmpItem);
+      }
+    }
+    for (const m of this.#orderedIndexItemMap2.values()) {
+      for (const list of m.values()) {
+        list.sort(cmpItem);
+      }
+    }
+    this.#orderedIndexItemMap = sortMapByKey(this.#orderedIndexItemMap, compareValues);
+    for (const m of this.#orderedIndexItemMap1.values()) {
+      sortMapByKey(m, compareValues);
+    }
+    for (const m of this.#orderedIndexItemMap2.values()) {
+      sortMapByKey(m, compareValues);
+    }
   }
 
   /** get1 finds value in the 1st-level map; returns undefined if not found. */
   get1(fruitType: number): protoconf.Fruit4Conf_Fruit | undefined {
-    return this.data_.fruitMap[fruitType];
+    return this.#data.fruitMap[fruitType];
   }
 
   /** get2 finds value in the 2nd-level map; returns undefined if not found. */
@@ -214,13 +1012,166 @@ export class Fruit4Conf extends Messager {
   get3(fruitType: number, id: number, id3: number): protoconf.Fruit4Conf_Fruit_Country_Item | undefined {
     return this.get2(fruitType, id)?.itemMap[id3];
   }
+
+  /** findCountryMap returns the index map: key(CountryName) -> values. */
+  findCountryMap(): Fruit4Conf.Index_CountryMap {
+    return this.#indexCountryMap;
+  }
+
+  /** findCountry returns all values for the given key(s), or undefined. */
+  findCountry(name: string): protoconf.Fruit4Conf_Fruit_Country[] | undefined {
+    return this.#indexCountryMap.get(name);
+  }
+
+  /** findFirstCountry returns the first value for the given key(s), or undefined. */
+  findFirstCountry(name: string): protoconf.Fruit4Conf_Fruit_Country | undefined {
+    return this.findCountry(name)?.[0];
+  }
+
+  /** findCountryMap1 returns the index map scoped to the upper 1st-level map key(s). */
+  findCountryMap1(fruitType: number): Fruit4Conf.Index_CountryMap | undefined {
+    return this.#indexCountryMap1.get(fruitType);
+  }
+
+  /** findCountry1 returns all values for the given key(s) within the upper 1st-level map. */
+  findCountry1(fruitType: number, name: string): protoconf.Fruit4Conf_Fruit_Country[] | undefined {
+    return this.findCountryMap1(fruitType)?.get(name);
+  }
+
+  /** findFirstCountry1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstCountry1(fruitType: number, name: string): protoconf.Fruit4Conf_Fruit_Country | undefined {
+    return this.findCountry1(fruitType, name)?.[0];
+  }
+
+  /** findAttrMap returns the index map: key(CountryItemAttrName) -> values. */
+  findAttrMap(): Fruit4Conf.Index_AttrMap {
+    return this.#indexAttrMap;
+  }
+
+  /** findAttr returns all values for the given key(s), or undefined. */
+  findAttr(name: string): protoconf.Fruit4Conf_Fruit_Country_Item_Attr[] | undefined {
+    return this.#indexAttrMap.get(name);
+  }
+
+  /** findFirstAttr returns the first value for the given key(s), or undefined. */
+  findFirstAttr(name: string): protoconf.Fruit4Conf_Fruit_Country_Item_Attr | undefined {
+    return this.findAttr(name)?.[0];
+  }
+
+  /** findAttrMap1 returns the index map scoped to the upper 1st-level map key(s). */
+  findAttrMap1(fruitType: number): Fruit4Conf.Index_AttrMap | undefined {
+    return this.#indexAttrMap1.get(fruitType);
+  }
+
+  /** findAttr1 returns all values for the given key(s) within the upper 1st-level map. */
+  findAttr1(fruitType: number, name: string): protoconf.Fruit4Conf_Fruit_Country_Item_Attr[] | undefined {
+    return this.findAttrMap1(fruitType)?.get(name);
+  }
+
+  /** findFirstAttr1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstAttr1(fruitType: number, name: string): protoconf.Fruit4Conf_Fruit_Country_Item_Attr | undefined {
+    return this.findAttr1(fruitType, name)?.[0];
+  }
+
+  /** findAttrMap2 returns the index map scoped to the upper 2nd-level map key(s). */
+  findAttrMap2(fruitType: number, id: number): Fruit4Conf.Index_AttrMap | undefined {
+    return this.#indexAttrMap2.get([fruitType, id]);
+  }
+
+  /** findAttr2 returns all values for the given key(s) within the upper 2nd-level map. */
+  findAttr2(fruitType: number, id: number, name: string): protoconf.Fruit4Conf_Fruit_Country_Item_Attr[] | undefined {
+    return this.findAttrMap2(fruitType, id)?.get(name);
+  }
+
+  /** findFirstAttr2 returns the first value for the given key(s) within the upper 2nd-level map. */
+  findFirstAttr2(fruitType: number, id: number, name: string): protoconf.Fruit4Conf_Fruit_Country_Item_Attr | undefined {
+    return this.findAttr2(fruitType, id, name)?.[0];
+  }
+
+  /** findAttrMap3 returns the index map scoped to the upper 3rd-level map key(s). */
+  findAttrMap3(fruitType: number, id: number, id3: number): Fruit4Conf.Index_AttrMap | undefined {
+    return this.#indexAttrMap3.get([fruitType, id, id3]);
+  }
+
+  /** findAttr3 returns all values for the given key(s) within the upper 3rd-level map. */
+  findAttr3(fruitType: number, id: number, id3: number, name: string): protoconf.Fruit4Conf_Fruit_Country_Item_Attr[] | undefined {
+    return this.findAttrMap3(fruitType, id, id3)?.get(name);
+  }
+
+  /** findFirstAttr3 returns the first value for the given key(s) within the upper 3rd-level map. */
+  findFirstAttr3(fruitType: number, id: number, id3: number, name: string): protoconf.Fruit4Conf_Fruit_Country_Item_Attr | undefined {
+    return this.findAttr3(fruitType, id, id3, name)?.[0];
+  }
+
+  /** findItemMap returns the ordered index map: key(CountryItemPrice<CountryItemID>) -> values. */
+  findItemMap(): Fruit4Conf.OrderedIndex_ItemMap {
+    return this.#orderedIndexItemMap;
+  }
+
+  /** findItem returns all values for the given key(s), or undefined. */
+  findItem(price: number): protoconf.Fruit4Conf_Fruit_Country_Item[] | undefined {
+    return this.#orderedIndexItemMap.get(price);
+  }
+
+  /** findFirstItem returns the first value for the given key(s), or undefined. */
+  findFirstItem(price: number): protoconf.Fruit4Conf_Fruit_Country_Item | undefined {
+    return this.findItem(price)?.[0];
+  }
+
+  /** findItemMap1 returns the ordered index map scoped to the upper 1st-level map key(s). */
+  findItemMap1(fruitType: number): Fruit4Conf.OrderedIndex_ItemMap | undefined {
+    return this.#orderedIndexItemMap1.get(fruitType);
+  }
+
+  /** findItem1 returns all values for the given key(s) within the upper 1st-level map. */
+  findItem1(fruitType: number, price: number): protoconf.Fruit4Conf_Fruit_Country_Item[] | undefined {
+    return this.findItemMap1(fruitType)?.get(price);
+  }
+
+  /** findFirstItem1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstItem1(fruitType: number, price: number): protoconf.Fruit4Conf_Fruit_Country_Item | undefined {
+    return this.findItem1(fruitType, price)?.[0];
+  }
+
+  /** findItemMap2 returns the ordered index map scoped to the upper 2nd-level map key(s). */
+  findItemMap2(fruitType: number, id: number): Fruit4Conf.OrderedIndex_ItemMap | undefined {
+    return this.#orderedIndexItemMap2.get([fruitType, id]);
+  }
+
+  /** findItem2 returns all values for the given key(s) within the upper 2nd-level map. */
+  findItem2(fruitType: number, id: number, price: number): protoconf.Fruit4Conf_Fruit_Country_Item[] | undefined {
+    return this.findItemMap2(fruitType, id)?.get(price);
+  }
+
+  /** findFirstItem2 returns the first value for the given key(s) within the upper 2nd-level map. */
+  findFirstItem2(fruitType: number, id: number, price: number): protoconf.Fruit4Conf_Fruit_Country_Item | undefined {
+    return this.findItem2(fruitType, id, price)?.[0];
+  }
+}
+
+// Type aliases for the index / ordered index / ordered map containers,
+// mirroring the named container types of the other-language loaders so the
+// finder signatures read clearly (e.g. Fruit4Conf.Index_XxxMap).
+export namespace Fruit4Conf {
+  /** LevelIndex_Fruit_CountryKey is the composite upper map key (k1..k2) of the 2nd-level leveled containers. */
+  export type LevelIndex_Fruit_CountryKey = readonly [fruitType: number, id: number];
+  /** LevelIndex_Fruit_Country_ItemKey is the composite upper map key (k1..k3) of the 3rd-level leveled containers. */
+  export type LevelIndex_Fruit_Country_ItemKey = readonly [fruitType: number, id: number, id3: number];
+  /** Index_CountryMap is the index map: key(CountryName) -> values. */
+  export type Index_CountryMap = Map<string, protoconf.Fruit4Conf_Fruit_Country[]>;
+  /** Index_AttrMap is the index map: key(CountryItemAttrName) -> values. */
+  export type Index_AttrMap = Map<string, protoconf.Fruit4Conf_Fruit_Country_Item_Attr[]>;
+  /** OrderedIndex_ItemMap is the ordered index map: key(CountryItemPrice<CountryItemID>) -> values. */
+  export type OrderedIndex_ItemMap = Map<number, protoconf.Fruit4Conf_Fruit_Country_Item[]>;
 }
 
 /**
  * Fruit5Conf is a wrapper around protobuf message protoconf.Fruit5Conf.
  */
 export class Fruit5Conf extends Messager {
-  private data_: protoconf.Fruit5Conf = create(protoconf.Fruit5ConfSchema);
+  #data: protoconf.Fruit5Conf = create(protoconf.Fruit5ConfSchema);
+  #indexCountryMap: Fruit5Conf.Index_CountryMap = new Map();
+  #indexCountryMap1: Map<number, Fruit5Conf.Index_CountryMap> = new Map();
 
   /** name returns the Fruit5Conf's message name. */
   name(): string {
@@ -231,7 +1182,7 @@ export class Fruit5Conf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.Fruit5ConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.Fruit5ConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load Fruit5Conf`, { cause: e });
     }
@@ -241,17 +1192,45 @@ export class Fruit5Conf extends Messager {
 
   /** data returns the Fruit5Conf's inner message data. */
   data(): protoconf.Fruit5Conf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the Fruit5Conf's inner message data. */
   override message(): protoconf.Fruit5Conf {
-    return this.data_;
+    return this.#data;
+  }
+
+  /** processAfterLoad builds the index, ordered index and ordered map containers. */
+  override processAfterLoad(): void {
+    // Index init.
+    this.#indexCountryMap.clear();
+    this.#indexCountryMap1.clear();
+    for (const [k1Str, item1] of Object.entries(this.#data.fruitMap)) {
+      const k1 = Number(k1Str);
+      for (const item2 of Object.values(item1.countryMap)) {
+        {
+          // Index: CountryName
+          const key = item2.name;
+          {
+            const list = this.#indexCountryMap.get(key);
+            if (list) { list.push(item2); } else { this.#indexCountryMap.set(key, [item2]); }
+          }
+          {
+            let map = this.#indexCountryMap1.get(k1);
+            if (!map) { map = new Map(); this.#indexCountryMap1.set(k1, map); }
+            {
+              const list = map.get(key);
+              if (list) { list.push(item2); } else { map.set(key, [item2]); }
+            }
+          }
+        }
+      }
+    }
   }
 
   /** get1 finds value in the 1st-level map; returns undefined if not found. */
   get1(fruitType: number): protoconf.Fruit5Conf_Fruit | undefined {
-    return this.data_.fruitMap[fruitType];
+    return this.#data.fruitMap[fruitType];
   }
 
   /** get2 finds value in the 2nd-level map; returns undefined if not found. */
@@ -263,4 +1242,42 @@ export class Fruit5Conf extends Messager {
   get3(fruitType: number, id: number, id3: number): protoconf.Fruit5Conf_Fruit_Country_Item | undefined {
     return this.get2(fruitType, id)?.itemMap[id3];
   }
+
+  /** findCountryMap returns the index map: key(CountryName) -> values. */
+  findCountryMap(): Fruit5Conf.Index_CountryMap {
+    return this.#indexCountryMap;
+  }
+
+  /** findCountry returns all values for the given key(s), or undefined. */
+  findCountry(name: string): protoconf.Fruit5Conf_Fruit_Country[] | undefined {
+    return this.#indexCountryMap.get(name);
+  }
+
+  /** findFirstCountry returns the first value for the given key(s), or undefined. */
+  findFirstCountry(name: string): protoconf.Fruit5Conf_Fruit_Country | undefined {
+    return this.findCountry(name)?.[0];
+  }
+
+  /** findCountryMap1 returns the index map scoped to the upper 1st-level map key(s). */
+  findCountryMap1(fruitType: number): Fruit5Conf.Index_CountryMap | undefined {
+    return this.#indexCountryMap1.get(fruitType);
+  }
+
+  /** findCountry1 returns all values for the given key(s) within the upper 1st-level map. */
+  findCountry1(fruitType: number, name: string): protoconf.Fruit5Conf_Fruit_Country[] | undefined {
+    return this.findCountryMap1(fruitType)?.get(name);
+  }
+
+  /** findFirstCountry1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstCountry1(fruitType: number, name: string): protoconf.Fruit5Conf_Fruit_Country | undefined {
+    return this.findCountry1(fruitType, name)?.[0];
+  }
+}
+
+// Type aliases for the index / ordered index / ordered map containers,
+// mirroring the named container types of the other-language loaders so the
+// finder signatures read clearly (e.g. Fruit5Conf.Index_XxxMap).
+export namespace Fruit5Conf {
+  /** Index_CountryMap is the index map: key(CountryName) -> values. */
+  export type Index_CountryMap = Map<string, protoconf.Fruit5Conf_Fruit_Country[]>;
 }

@@ -16,7 +16,7 @@ import * as base from "./barrel/base.pc.js";
  * HeroConf is a wrapper around protobuf message protoconf.HeroConf.
  */
 export class HeroConf extends Messager {
-  private data_: protoconf.HeroConf = create(protoconf.HeroConfSchema);
+  #data: protoconf.HeroConf = create(protoconf.HeroConfSchema);
 
   /** name returns the HeroConf's message name. */
   name(): string {
@@ -27,7 +27,7 @@ export class HeroConf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.HeroConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.HeroConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load HeroConf`, { cause: e });
     }
@@ -37,17 +37,17 @@ export class HeroConf extends Messager {
 
   /** data returns the HeroConf's inner message data. */
   data(): protoconf.HeroConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the HeroConf's inner message data. */
   override message(): protoconf.HeroConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** get1 finds value in the 1st-level map; returns undefined if not found. */
   get1(name: string): protoconf.HeroConf_Hero | undefined {
-    return this.data_.heroMap[name];
+    return this.#data.heroMap[name];
   }
 
   /** get2 finds value in the 2nd-level map; returns undefined if not found. */
@@ -60,7 +60,7 @@ export class HeroConf extends Messager {
  * HeroBaseConf is a wrapper around protobuf message protoconf.HeroBaseConf.
  */
 export class HeroBaseConf extends Messager {
-  private data_: protoconf.HeroBaseConf = create(protoconf.HeroBaseConfSchema);
+  #data: protoconf.HeroBaseConf = create(protoconf.HeroBaseConfSchema);
 
   /** name returns the HeroBaseConf's message name. */
   name(): string {
@@ -71,7 +71,7 @@ export class HeroBaseConf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.HeroBaseConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.HeroBaseConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load HeroBaseConf`, { cause: e });
     }
@@ -81,17 +81,17 @@ export class HeroBaseConf extends Messager {
 
   /** data returns the HeroBaseConf's inner message data. */
   data(): protoconf.HeroBaseConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the HeroBaseConf's inner message data. */
   override message(): protoconf.HeroBaseConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** get1 finds value in the 1st-level map; returns undefined if not found. */
   get1(name: string): base.Hero | undefined {
-    return this.data_.heroMap[name];
+    return this.#data.heroMap[name];
   }
 
   /** get2 finds value in the 2nd-level map; returns undefined if not found. */

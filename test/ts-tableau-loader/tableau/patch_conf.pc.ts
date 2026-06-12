@@ -15,7 +15,7 @@ import * as protoconf from "./barrel/protoconf.pc.js";
  * PatchReplaceConf is a wrapper around protobuf message protoconf.PatchReplaceConf.
  */
 export class PatchReplaceConf extends Messager {
-  private data_: protoconf.PatchReplaceConf = create(protoconf.PatchReplaceConfSchema);
+  #data: protoconf.PatchReplaceConf = create(protoconf.PatchReplaceConfSchema);
 
   /** name returns the PatchReplaceConf's message name. */
   name(): string {
@@ -26,7 +26,7 @@ export class PatchReplaceConf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.PatchReplaceConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.PatchReplaceConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load PatchReplaceConf`, { cause: e });
     }
@@ -36,12 +36,12 @@ export class PatchReplaceConf extends Messager {
 
   /** data returns the PatchReplaceConf's inner message data. */
   data(): protoconf.PatchReplaceConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the PatchReplaceConf's inner message data. */
   override message(): protoconf.PatchReplaceConf {
-    return this.data_;
+    return this.#data;
   }
 }
 
@@ -49,7 +49,7 @@ export class PatchReplaceConf extends Messager {
  * PatchMergeConf is a wrapper around protobuf message protoconf.PatchMergeConf.
  */
 export class PatchMergeConf extends Messager {
-  private data_: protoconf.PatchMergeConf = create(protoconf.PatchMergeConfSchema);
+  #data: protoconf.PatchMergeConf = create(protoconf.PatchMergeConfSchema);
 
   /** name returns the PatchMergeConf's message name. */
   name(): string {
@@ -60,7 +60,7 @@ export class PatchMergeConf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.PatchMergeConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.PatchMergeConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load PatchMergeConf`, { cause: e });
     }
@@ -70,17 +70,17 @@ export class PatchMergeConf extends Messager {
 
   /** data returns the PatchMergeConf's inner message data. */
   data(): protoconf.PatchMergeConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the PatchMergeConf's inner message data. */
   override message(): protoconf.PatchMergeConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** get1 finds value in the 1st-level map; returns undefined if not found. */
   get1(id: number): protoconf.Item | undefined {
-    return this.data_.itemMap[id];
+    return this.#data.itemMap[id];
   }
 }
 
@@ -88,7 +88,7 @@ export class PatchMergeConf extends Messager {
  * RecursivePatchConf is a wrapper around protobuf message protoconf.RecursivePatchConf.
  */
 export class RecursivePatchConf extends Messager {
-  private data_: protoconf.RecursivePatchConf = create(protoconf.RecursivePatchConfSchema);
+  #data: protoconf.RecursivePatchConf = create(protoconf.RecursivePatchConfSchema);
 
   /** name returns the RecursivePatchConf's message name. */
   name(): string {
@@ -99,7 +99,7 @@ export class RecursivePatchConf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.RecursivePatchConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.RecursivePatchConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load RecursivePatchConf`, { cause: e });
     }
@@ -109,17 +109,17 @@ export class RecursivePatchConf extends Messager {
 
   /** data returns the RecursivePatchConf's inner message data. */
   data(): protoconf.RecursivePatchConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the RecursivePatchConf's inner message data. */
   override message(): protoconf.RecursivePatchConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** get1 finds value in the 1st-level map; returns undefined if not found. */
   get1(shopId: number): protoconf.RecursivePatchConf_Shop | undefined {
-    return this.data_.shopMap[shopId];
+    return this.#data.shopMap[shopId];
   }
 
   /** get2 finds value in the 2nd-level map; returns undefined if not found. */

@@ -7,7 +7,7 @@
 
 import { create } from "@bufbuild/protobuf";
 import { Messager } from "./messager.pc.js";
-import { Format } from "./util.pc.js";
+import { Format, compareValues, compareTuples, sortMapByKey, TupleKeyMap, type OrderedMapValue } from "./util.pc.js";
 import { loadMessagerInDir, type MessagerOptions } from "./load.pc.js";
 import * as protoconf from "./barrel/protoconf.pc.js";
 
@@ -15,7 +15,17 @@ import * as protoconf from "./barrel/protoconf.pc.js";
  * ActivityConf is a wrapper around protobuf message protoconf.ActivityConf.
  */
 export class ActivityConf extends Messager {
-  private data_: protoconf.ActivityConf = create(protoconf.ActivityConfSchema);
+  #data: protoconf.ActivityConf = create(protoconf.ActivityConfSchema);
+  #orderedMap: ActivityConf.OrderedMap_ActivityMap = new Map();
+  #indexActivityMap: ActivityConf.Index_ActivityMap = new Map();
+  #indexChapterMap: ActivityConf.Index_ChapterMap = new Map();
+  #indexChapterMap1: Map<bigint, ActivityConf.Index_ChapterMap> = new Map();
+  #indexNamedChapterMap: ActivityConf.Index_NamedChapterMap = new Map();
+  #indexNamedChapterMap1: Map<bigint, ActivityConf.Index_NamedChapterMap> = new Map();
+  #indexAwardMap: ActivityConf.Index_AwardMap = new Map();
+  #indexAwardMap1: Map<bigint, ActivityConf.Index_AwardMap> = new Map();
+  #indexAwardMap2: TupleKeyMap<ActivityConf.LevelIndex_Activity_ChapterKey, ActivityConf.Index_AwardMap> = new TupleKeyMap();
+  #indexAwardMap3: TupleKeyMap<ActivityConf.LevelIndex_protoconf_SectionKey, ActivityConf.Index_AwardMap> = new TupleKeyMap();
 
   /** name returns the ActivityConf's message name. */
   name(): string {
@@ -26,7 +36,7 @@ export class ActivityConf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.ActivityConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.ActivityConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load ActivityConf`, { cause: e });
     }
@@ -36,17 +46,148 @@ export class ActivityConf extends Messager {
 
   /** data returns the ActivityConf's inner message data. */
   data(): protoconf.ActivityConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the ActivityConf's inner message data. */
   override message(): protoconf.ActivityConf {
-    return this.data_;
+    return this.#data;
+  }
+
+  /** processAfterLoad builds the index, ordered index and ordered map containers. */
+  override processAfterLoad(): void {
+    // OrderedMap init.
+    const orderedMap: ActivityConf.OrderedMap_ActivityMap = new Map();
+    for (const [k1Str, v1] of Object.entries(this.#data.activityMap)) {
+      const k1 = BigInt(k1Str);
+      const orderedMap2: ActivityConf.OrderedMap_Activity_ChapterMap = new Map();
+      for (const [k2Str, v2] of Object.entries(v1.chapterMap)) {
+        const k2 = Number(k2Str);
+        const orderedMap3: ActivityConf.OrderedMap_protoconf_SectionMap = new Map();
+        for (const [k3Str, v3] of Object.entries(v2.sectionMap)) {
+          const k3 = Number(k3Str);
+          const orderedMap4: ActivityConf.OrderedMap_int32Map = new Map();
+          for (const [k4Str, v4] of Object.entries(v3.sectionRankMap)) {
+            const k4 = Number(k4Str);
+            orderedMap4.set(k4, v4);
+          }
+          sortMapByKey(orderedMap4, compareValues);
+          orderedMap3.set(k3, { first: orderedMap4, second: v3 });
+        }
+        sortMapByKey(orderedMap3, compareValues);
+        orderedMap2.set(k2, { first: orderedMap3, second: v2 });
+      }
+      sortMapByKey(orderedMap2, compareValues);
+      orderedMap.set(k1, { first: orderedMap2, second: v1 });
+    }
+    sortMapByKey(orderedMap, compareValues);
+    this.#orderedMap = orderedMap;
+    // Index init.
+    this.#indexActivityMap.clear();
+    this.#indexChapterMap.clear();
+    this.#indexChapterMap1.clear();
+    this.#indexNamedChapterMap.clear();
+    this.#indexNamedChapterMap1.clear();
+    this.#indexAwardMap.clear();
+    this.#indexAwardMap1.clear();
+    this.#indexAwardMap2.clear();
+    this.#indexAwardMap3.clear();
+    for (const [k1Str, item1] of Object.entries(this.#data.activityMap)) {
+      const k1 = BigInt(k1Str);
+      {
+        // Index: ActivityName
+        const key = item1.activityName;
+        {
+          const list = this.#indexActivityMap.get(key);
+          if (list) { list.push(item1); } else { this.#indexActivityMap.set(key, [item1]); }
+        }
+      }
+      for (const [k2Str, item2] of Object.entries(item1.chapterMap)) {
+        const k2 = Number(k2Str);
+        {
+          // Index: ChapterID
+          const key = item2.chapterId;
+          {
+            const list = this.#indexChapterMap.get(key);
+            if (list) { list.push(item2); } else { this.#indexChapterMap.set(key, [item2]); }
+          }
+          {
+            let map = this.#indexChapterMap1.get(k1);
+            if (!map) { map = new Map(); this.#indexChapterMap1.set(k1, map); }
+            {
+              const list = map.get(key);
+              if (list) { list.push(item2); } else { map.set(key, [item2]); }
+            }
+          }
+        }
+        {
+          // Index: ChapterName<AwardID>@NamedChapter
+          const key = item2.chapterName;
+          {
+            const list = this.#indexNamedChapterMap.get(key);
+            if (list) { list.push(item2); } else { this.#indexNamedChapterMap.set(key, [item2]); }
+          }
+          {
+            let map = this.#indexNamedChapterMap1.get(k1);
+            if (!map) { map = new Map(); this.#indexNamedChapterMap1.set(k1, map); }
+            {
+              const list = map.get(key);
+              if (list) { list.push(item2); } else { map.set(key, [item2]); }
+            }
+          }
+        }
+        for (const [k3Str, item3] of Object.entries(item2.sectionMap)) {
+          const k3 = Number(k3Str);
+          for (const item4 of item3.sectionItemList ?? []) {
+            {
+              // Index: SectionItemID@Award
+              const key = item4.id;
+              {
+                const list = this.#indexAwardMap.get(key);
+                if (list) { list.push(item4); } else { this.#indexAwardMap.set(key, [item4]); }
+              }
+              {
+                let map = this.#indexAwardMap1.get(k1);
+                if (!map) { map = new Map(); this.#indexAwardMap1.set(k1, map); }
+                {
+                  const list = map.get(key);
+                  if (list) { list.push(item4); } else { map.set(key, [item4]); }
+                }
+              }
+              {
+                const map = this.#indexAwardMap2.getOrSet([k1, k2], () => new Map());
+                {
+                  const list = map.get(key);
+                  if (list) { list.push(item4); } else { map.set(key, [item4]); }
+                }
+              }
+              {
+                const map = this.#indexAwardMap3.getOrSet([k1, k2, k3], () => new Map());
+                {
+                  const list = map.get(key);
+                  if (list) { list.push(item4); } else { map.set(key, [item4]); }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    // Index(sort): ChapterName<AwardID>@NamedChapter
+    const cmpNamedChapter = (a: protoconf.ActivityConf_Activity_Chapter, b: protoconf.ActivityConf_Activity_Chapter): number => compareTuples([a.awardId], [b.awardId]);
+    for (const list of this.#indexNamedChapterMap.values()) {
+      list.sort(cmpNamedChapter);
+    }
+    for (const m of this.#indexNamedChapterMap1.values()) {
+      for (const list of m.values()) {
+        list.sort(cmpNamedChapter);
+      }
+    }
   }
 
   /** get1 finds value in the 1st-level map; returns undefined if not found. */
   get1(activityId: bigint): protoconf.ActivityConf_Activity | undefined {
-    return this.data_.activityMap[activityId.toString()];
+    return this.#data.activityMap[activityId.toString()];
   }
 
   /** get2 finds value in the 2nd-level map; returns undefined if not found. */
@@ -63,13 +204,200 @@ export class ActivityConf extends Messager {
   get4(activityId: bigint, chapterId: number, sectionId: number, key4: number): number | undefined {
     return this.get3(activityId, chapterId, sectionId)?.sectionRankMap[key4];
   }
+
+  /** getOrderedMap returns the 1st-level ordered map (sorted by key). */
+  getOrderedMap(): ActivityConf.OrderedMap_ActivityMap {
+    return this.#orderedMap;
+  }
+
+  /** getOrderedMap1 returns the 2nd-level ordered map scoped to the given upper key(s), or undefined. */
+  getOrderedMap1(activityId: bigint): ActivityConf.OrderedMap_Activity_ChapterMap | undefined {
+    return this.#orderedMap.get(activityId)?.first;
+  }
+
+  /** getOrderedMap2 returns the 3rd-level ordered map scoped to the given upper key(s), or undefined. */
+  getOrderedMap2(activityId: bigint, chapterId: number): ActivityConf.OrderedMap_protoconf_SectionMap | undefined {
+    return this.getOrderedMap1(activityId)?.get(chapterId)?.first;
+  }
+
+  /** getOrderedMap3 returns the 4th-level ordered map scoped to the given upper key(s), or undefined. */
+  getOrderedMap3(activityId: bigint, chapterId: number, sectionId: number): ActivityConf.OrderedMap_int32Map | undefined {
+    return this.getOrderedMap2(activityId, chapterId)?.get(sectionId)?.first;
+  }
+
+  /** findActivityMap returns the index map: key(ActivityName) -> values. */
+  findActivityMap(): ActivityConf.Index_ActivityMap {
+    return this.#indexActivityMap;
+  }
+
+  /** findActivity returns all values for the given key(s), or undefined. */
+  findActivity(activityName: string): protoconf.ActivityConf_Activity[] | undefined {
+    return this.#indexActivityMap.get(activityName);
+  }
+
+  /** findFirstActivity returns the first value for the given key(s), or undefined. */
+  findFirstActivity(activityName: string): protoconf.ActivityConf_Activity | undefined {
+    return this.findActivity(activityName)?.[0];
+  }
+
+  /** findChapterMap returns the index map: key(ChapterID) -> values. */
+  findChapterMap(): ActivityConf.Index_ChapterMap {
+    return this.#indexChapterMap;
+  }
+
+  /** findChapter returns all values for the given key(s), or undefined. */
+  findChapter(chapterId: number): protoconf.ActivityConf_Activity_Chapter[] | undefined {
+    return this.#indexChapterMap.get(chapterId);
+  }
+
+  /** findFirstChapter returns the first value for the given key(s), or undefined. */
+  findFirstChapter(chapterId: number): protoconf.ActivityConf_Activity_Chapter | undefined {
+    return this.findChapter(chapterId)?.[0];
+  }
+
+  /** findChapterMap1 returns the index map scoped to the upper 1st-level map key(s). */
+  findChapterMap1(activityId: bigint): ActivityConf.Index_ChapterMap | undefined {
+    return this.#indexChapterMap1.get(activityId);
+  }
+
+  /** findChapter1 returns all values for the given key(s) within the upper 1st-level map. */
+  findChapter1(activityId: bigint, chapterId: number): protoconf.ActivityConf_Activity_Chapter[] | undefined {
+    return this.findChapterMap1(activityId)?.get(chapterId);
+  }
+
+  /** findFirstChapter1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstChapter1(activityId: bigint, chapterId: number): protoconf.ActivityConf_Activity_Chapter | undefined {
+    return this.findChapter1(activityId, chapterId)?.[0];
+  }
+
+  /** findNamedChapterMap returns the index map: key(ChapterName<AwardID>@NamedChapter) -> values. */
+  findNamedChapterMap(): ActivityConf.Index_NamedChapterMap {
+    return this.#indexNamedChapterMap;
+  }
+
+  /** findNamedChapter returns all values for the given key(s), or undefined. */
+  findNamedChapter(chapterName: string): protoconf.ActivityConf_Activity_Chapter[] | undefined {
+    return this.#indexNamedChapterMap.get(chapterName);
+  }
+
+  /** findFirstNamedChapter returns the first value for the given key(s), or undefined. */
+  findFirstNamedChapter(chapterName: string): protoconf.ActivityConf_Activity_Chapter | undefined {
+    return this.findNamedChapter(chapterName)?.[0];
+  }
+
+  /** findNamedChapterMap1 returns the index map scoped to the upper 1st-level map key(s). */
+  findNamedChapterMap1(activityId: bigint): ActivityConf.Index_NamedChapterMap | undefined {
+    return this.#indexNamedChapterMap1.get(activityId);
+  }
+
+  /** findNamedChapter1 returns all values for the given key(s) within the upper 1st-level map. */
+  findNamedChapter1(activityId: bigint, chapterName: string): protoconf.ActivityConf_Activity_Chapter[] | undefined {
+    return this.findNamedChapterMap1(activityId)?.get(chapterName);
+  }
+
+  /** findFirstNamedChapter1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstNamedChapter1(activityId: bigint, chapterName: string): protoconf.ActivityConf_Activity_Chapter | undefined {
+    return this.findNamedChapter1(activityId, chapterName)?.[0];
+  }
+
+  /** findAwardMap returns the index map: key(SectionItemID@Award) -> values. */
+  findAwardMap(): ActivityConf.Index_AwardMap {
+    return this.#indexAwardMap;
+  }
+
+  /** findAward returns all values for the given key(s), or undefined. */
+  findAward(id: number): protoconf.Section_SectionItem[] | undefined {
+    return this.#indexAwardMap.get(id);
+  }
+
+  /** findFirstAward returns the first value for the given key(s), or undefined. */
+  findFirstAward(id: number): protoconf.Section_SectionItem | undefined {
+    return this.findAward(id)?.[0];
+  }
+
+  /** findAwardMap1 returns the index map scoped to the upper 1st-level map key(s). */
+  findAwardMap1(activityId: bigint): ActivityConf.Index_AwardMap | undefined {
+    return this.#indexAwardMap1.get(activityId);
+  }
+
+  /** findAward1 returns all values for the given key(s) within the upper 1st-level map. */
+  findAward1(activityId: bigint, id: number): protoconf.Section_SectionItem[] | undefined {
+    return this.findAwardMap1(activityId)?.get(id);
+  }
+
+  /** findFirstAward1 returns the first value for the given key(s) within the upper 1st-level map. */
+  findFirstAward1(activityId: bigint, id: number): protoconf.Section_SectionItem | undefined {
+    return this.findAward1(activityId, id)?.[0];
+  }
+
+  /** findAwardMap2 returns the index map scoped to the upper 2nd-level map key(s). */
+  findAwardMap2(activityId: bigint, chapterId: number): ActivityConf.Index_AwardMap | undefined {
+    return this.#indexAwardMap2.get([activityId, chapterId]);
+  }
+
+  /** findAward2 returns all values for the given key(s) within the upper 2nd-level map. */
+  findAward2(activityId: bigint, chapterId: number, id: number): protoconf.Section_SectionItem[] | undefined {
+    return this.findAwardMap2(activityId, chapterId)?.get(id);
+  }
+
+  /** findFirstAward2 returns the first value for the given key(s) within the upper 2nd-level map. */
+  findFirstAward2(activityId: bigint, chapterId: number, id: number): protoconf.Section_SectionItem | undefined {
+    return this.findAward2(activityId, chapterId, id)?.[0];
+  }
+
+  /** findAwardMap3 returns the index map scoped to the upper 3rd-level map key(s). */
+  findAwardMap3(activityId: bigint, chapterId: number, sectionId: number): ActivityConf.Index_AwardMap | undefined {
+    return this.#indexAwardMap3.get([activityId, chapterId, sectionId]);
+  }
+
+  /** findAward3 returns all values for the given key(s) within the upper 3rd-level map. */
+  findAward3(activityId: bigint, chapterId: number, sectionId: number, id: number): protoconf.Section_SectionItem[] | undefined {
+    return this.findAwardMap3(activityId, chapterId, sectionId)?.get(id);
+  }
+
+  /** findFirstAward3 returns the first value for the given key(s) within the upper 3rd-level map. */
+  findFirstAward3(activityId: bigint, chapterId: number, sectionId: number, id: number): protoconf.Section_SectionItem | undefined {
+    return this.findAward3(activityId, chapterId, sectionId, id)?.[0];
+  }
+}
+
+// Type aliases for the index / ordered index / ordered map containers,
+// mirroring the named container types of the other-language loaders so the
+// finder signatures read clearly (e.g. ActivityConf.Index_XxxMap).
+export namespace ActivityConf {
+  /** OrderedMap_int32Map is the 4th-level (leaf) ordered map: key -> value (sorted by key). */
+  export type OrderedMap_int32Map = Map<number, number>;
+  /** OrderedMap_protoconf_SectionValue is a 3rd-level node: its next-level sub-map (first) plus this level's value (second). */
+  export type OrderedMap_protoconf_SectionValue = OrderedMapValue<OrderedMap_int32Map, protoconf.Section>;
+  /** OrderedMap_protoconf_SectionMap is the 3rd-level ordered map: key -> node (sorted by key). */
+  export type OrderedMap_protoconf_SectionMap = Map<number, OrderedMap_protoconf_SectionValue>;
+  /** OrderedMap_Activity_ChapterValue is a 2nd-level node: its next-level sub-map (first) plus this level's value (second). */
+  export type OrderedMap_Activity_ChapterValue = OrderedMapValue<OrderedMap_protoconf_SectionMap, protoconf.ActivityConf_Activity_Chapter>;
+  /** OrderedMap_Activity_ChapterMap is the 2nd-level ordered map: key -> node (sorted by key). */
+  export type OrderedMap_Activity_ChapterMap = Map<number, OrderedMap_Activity_ChapterValue>;
+  /** OrderedMap_ActivityValue is a 1st-level node: its next-level sub-map (first) plus this level's value (second). */
+  export type OrderedMap_ActivityValue = OrderedMapValue<OrderedMap_Activity_ChapterMap, protoconf.ActivityConf_Activity>;
+  /** OrderedMap_ActivityMap is the 1st-level ordered map: key -> node (sorted by key). */
+  export type OrderedMap_ActivityMap = Map<bigint, OrderedMap_ActivityValue>;
+  /** LevelIndex_Activity_ChapterKey is the composite upper map key (k1..k2) of the 2nd-level leveled containers. */
+  export type LevelIndex_Activity_ChapterKey = readonly [activityId: bigint, chapterId: number];
+  /** LevelIndex_protoconf_SectionKey is the composite upper map key (k1..k3) of the 3rd-level leveled containers. */
+  export type LevelIndex_protoconf_SectionKey = readonly [activityId: bigint, chapterId: number, sectionId: number];
+  /** Index_ActivityMap is the index map: key(ActivityName) -> values. */
+  export type Index_ActivityMap = Map<string, protoconf.ActivityConf_Activity[]>;
+  /** Index_ChapterMap is the index map: key(ChapterID) -> values. */
+  export type Index_ChapterMap = Map<number, protoconf.ActivityConf_Activity_Chapter[]>;
+  /** Index_NamedChapterMap is the index map: key(ChapterName<AwardID>@NamedChapter) -> values. */
+  export type Index_NamedChapterMap = Map<string, protoconf.ActivityConf_Activity_Chapter[]>;
+  /** Index_AwardMap is the index map: key(SectionItemID@Award) -> values. */
+  export type Index_AwardMap = Map<number, protoconf.Section_SectionItem[]>;
 }
 
 /**
  * ChapterConf is a wrapper around protobuf message protoconf.ChapterConf.
  */
 export class ChapterConf extends Messager {
-  private data_: protoconf.ChapterConf = create(protoconf.ChapterConfSchema);
+  #data: protoconf.ChapterConf = create(protoconf.ChapterConfSchema);
 
   /** name returns the ChapterConf's message name. */
   name(): string {
@@ -80,7 +408,7 @@ export class ChapterConf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.ChapterConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.ChapterConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load ChapterConf`, { cause: e });
     }
@@ -90,17 +418,17 @@ export class ChapterConf extends Messager {
 
   /** data returns the ChapterConf's inner message data. */
   data(): protoconf.ChapterConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the ChapterConf's inner message data. */
   override message(): protoconf.ChapterConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** get1 finds value in the 1st-level map; returns undefined if not found. */
   get1(id: bigint): protoconf.ChapterConf_Chapter | undefined {
-    return this.data_.chapterMap[id.toString()];
+    return this.#data.chapterMap[id.toString()];
   }
 }
 
@@ -108,7 +436,7 @@ export class ChapterConf extends Messager {
  * ThemeConf is a wrapper around protobuf message protoconf.ThemeConf.
  */
 export class ThemeConf extends Messager {
-  private data_: protoconf.ThemeConf = create(protoconf.ThemeConfSchema);
+  #data: protoconf.ThemeConf = create(protoconf.ThemeConfSchema);
 
   /** name returns the ThemeConf's message name. */
   name(): string {
@@ -119,7 +447,7 @@ export class ThemeConf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.ThemeConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.ThemeConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load ThemeConf`, { cause: e });
     }
@@ -129,17 +457,17 @@ export class ThemeConf extends Messager {
 
   /** data returns the ThemeConf's inner message data. */
   data(): protoconf.ThemeConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the ThemeConf's inner message data. */
   override message(): protoconf.ThemeConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** get1 finds value in the 1st-level map; returns undefined if not found. */
   get1(name: string): protoconf.ThemeConf_Theme | undefined {
-    return this.data_.themeMap[name];
+    return this.#data.themeMap[name];
   }
 
   /** get2 finds value in the 2nd-level map; returns undefined if not found. */
@@ -152,7 +480,12 @@ export class ThemeConf extends Messager {
  * TaskConf is a wrapper around protobuf message protoconf.TaskConf.
  */
 export class TaskConf extends Messager {
-  private data_: protoconf.TaskConf = create(protoconf.TaskConfSchema);
+  #data: protoconf.TaskConf = create(protoconf.TaskConfSchema);
+  #indexTaskMap: TaskConf.Index_TaskMap = new Map();
+  #orderedIndexOrderedTaskMap: TaskConf.OrderedIndex_OrderedTaskMap = new Map();
+  #orderedIndexTaskExpiryMap: TaskConf.OrderedIndex_TaskExpiryMap = new Map();
+  #orderedIndexSortedTaskExpiryMap: TaskConf.OrderedIndex_SortedTaskExpiryMap = new Map();
+  #orderedIndexActivityExpiryMap: TaskConf.OrderedIndex_ActivityExpiryMap = new TupleKeyMap();
 
   /** name returns the TaskConf's message name. */
   name(): string {
@@ -163,7 +496,7 @@ export class TaskConf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.TaskConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.TaskConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load TaskConf`, { cause: e });
     }
@@ -173,25 +506,199 @@ export class TaskConf extends Messager {
 
   /** data returns the TaskConf's inner message data. */
   data(): protoconf.TaskConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the TaskConf's inner message data. */
   override message(): protoconf.TaskConf {
-    return this.data_;
+    return this.#data;
+  }
+
+  /** processAfterLoad builds the index, ordered index and ordered map containers. */
+  override processAfterLoad(): void {
+    // Index init.
+    this.#indexTaskMap.clear();
+    for (const item1 of Object.values(this.#data.taskMap)) {
+      {
+        // Index: ActivityID<Goal,ID>
+        const key = item1.activityId;
+        {
+          const list = this.#indexTaskMap.get(key);
+          if (list) { list.push(item1); } else { this.#indexTaskMap.set(key, [item1]); }
+        }
+      }
+    }
+    // Index(sort): ActivityID<Goal,ID>
+    const cmpTask = (a: protoconf.TaskConf_Task, b: protoconf.TaskConf_Task): number => compareTuples([a.goal, a.id], [b.goal, b.id]);
+    for (const list of this.#indexTaskMap.values()) {
+      list.sort(cmpTask);
+    }
+    // OrderedIndex init.
+    this.#orderedIndexOrderedTaskMap.clear();
+    this.#orderedIndexTaskExpiryMap.clear();
+    this.#orderedIndexSortedTaskExpiryMap.clear();
+    this.#orderedIndexActivityExpiryMap.clear();
+    for (const item1 of Object.values(this.#data.taskMap)) {
+      {
+        // OrderedIndex: Goal<ID>@OrderedTask
+        const key = item1.goal;
+        {
+          const list = this.#orderedIndexOrderedTaskMap.get(key);
+          if (list) { list.push(item1); } else { this.#orderedIndexOrderedTaskMap.set(key, [item1]); }
+        }
+      }
+      {
+        // OrderedIndex: Expiry@TaskExpiry
+        const key = item1.expiry?.seconds ?? 0n;
+        {
+          const list = this.#orderedIndexTaskExpiryMap.get(key);
+          if (list) { list.push(item1); } else { this.#orderedIndexTaskExpiryMap.set(key, [item1]); }
+        }
+      }
+      {
+        // OrderedIndex: Expiry<Goal,ID>@SortedTaskExpiry
+        const key = item1.expiry?.seconds ?? 0n;
+        {
+          const list = this.#orderedIndexSortedTaskExpiryMap.get(key);
+          if (list) { list.push(item1); } else { this.#orderedIndexSortedTaskExpiryMap.set(key, [item1]); }
+        }
+      }
+      {
+        // OrderedIndex: (Expiry,ActivityID)@ActivityExpiry
+        const keyParts = [item1.expiry?.seconds ?? 0n, item1.activityId];
+        this.#orderedIndexActivityExpiryMap.getOrSet(keyParts, () => []).push(item1);
+      }
+    }
+    // OrderedIndex(sort): Goal<ID>@OrderedTask
+    const cmpOrderedTask = (a: protoconf.TaskConf_Task, b: protoconf.TaskConf_Task): number => compareTuples([a.id], [b.id]);
+    for (const list of this.#orderedIndexOrderedTaskMap.values()) {
+      list.sort(cmpOrderedTask);
+    }
+    // OrderedIndex(sort): Expiry<Goal,ID>@SortedTaskExpiry
+    const cmpSortedTaskExpiry = (a: protoconf.TaskConf_Task, b: protoconf.TaskConf_Task): number => compareTuples([a.goal, a.id], [b.goal, b.id]);
+    for (const list of this.#orderedIndexSortedTaskExpiryMap.values()) {
+      list.sort(cmpSortedTaskExpiry);
+    }
+    this.#orderedIndexOrderedTaskMap = sortMapByKey(this.#orderedIndexOrderedTaskMap, compareValues);
+    this.#orderedIndexTaskExpiryMap = sortMapByKey(this.#orderedIndexTaskExpiryMap, compareValues);
+    this.#orderedIndexSortedTaskExpiryMap = sortMapByKey(this.#orderedIndexSortedTaskExpiryMap, compareValues);
+    this.#orderedIndexActivityExpiryMap.sortKeys();
   }
 
   /** get1 finds value in the 1st-level map; returns undefined if not found. */
   get1(id: bigint): protoconf.TaskConf_Task | undefined {
-    return this.data_.taskMap[id.toString()];
+    return this.#data.taskMap[id.toString()];
   }
+
+  /** findTaskMap returns the index map: key(ActivityID<Goal,ID>) -> values. */
+  findTaskMap(): TaskConf.Index_TaskMap {
+    return this.#indexTaskMap;
+  }
+
+  /** findTask returns all values for the given key(s), or undefined. */
+  findTask(activityId: bigint): protoconf.TaskConf_Task[] | undefined {
+    return this.#indexTaskMap.get(activityId);
+  }
+
+  /** findFirstTask returns the first value for the given key(s), or undefined. */
+  findFirstTask(activityId: bigint): protoconf.TaskConf_Task | undefined {
+    return this.findTask(activityId)?.[0];
+  }
+
+  /** findOrderedTaskMap returns the ordered index map: key(Goal<ID>@OrderedTask) -> values. */
+  findOrderedTaskMap(): TaskConf.OrderedIndex_OrderedTaskMap {
+    return this.#orderedIndexOrderedTaskMap;
+  }
+
+  /** findOrderedTask returns all values for the given key(s), or undefined. */
+  findOrderedTask(goal: bigint): protoconf.TaskConf_Task[] | undefined {
+    return this.#orderedIndexOrderedTaskMap.get(goal);
+  }
+
+  /** findFirstOrderedTask returns the first value for the given key(s), or undefined. */
+  findFirstOrderedTask(goal: bigint): protoconf.TaskConf_Task | undefined {
+    return this.findOrderedTask(goal)?.[0];
+  }
+
+  /** findTaskExpiryMap returns the ordered index map: key(Expiry@TaskExpiry) -> values. */
+  findTaskExpiryMap(): TaskConf.OrderedIndex_TaskExpiryMap {
+    return this.#orderedIndexTaskExpiryMap;
+  }
+
+  /** findTaskExpiry returns all values for the given key(s), or undefined. */
+  findTaskExpiry(expiry: bigint): protoconf.TaskConf_Task[] | undefined {
+    return this.#orderedIndexTaskExpiryMap.get(expiry);
+  }
+
+  /** findFirstTaskExpiry returns the first value for the given key(s), or undefined. */
+  findFirstTaskExpiry(expiry: bigint): protoconf.TaskConf_Task | undefined {
+    return this.findTaskExpiry(expiry)?.[0];
+  }
+
+  /** findSortedTaskExpiryMap returns the ordered index map: key(Expiry<Goal,ID>@SortedTaskExpiry) -> values. */
+  findSortedTaskExpiryMap(): TaskConf.OrderedIndex_SortedTaskExpiryMap {
+    return this.#orderedIndexSortedTaskExpiryMap;
+  }
+
+  /** findSortedTaskExpiry returns all values for the given key(s), or undefined. */
+  findSortedTaskExpiry(expiry: bigint): protoconf.TaskConf_Task[] | undefined {
+    return this.#orderedIndexSortedTaskExpiryMap.get(expiry);
+  }
+
+  /** findFirstSortedTaskExpiry returns the first value for the given key(s), or undefined. */
+  findFirstSortedTaskExpiry(expiry: bigint): protoconf.TaskConf_Task | undefined {
+    return this.findSortedTaskExpiry(expiry)?.[0];
+  }
+
+  /** findActivityExpiryMap returns the ordered index map: key((Expiry,ActivityID)@ActivityExpiry) -> values. */
+  findActivityExpiryMap(): TaskConf.OrderedIndex_ActivityExpiryMap {
+    return this.#orderedIndexActivityExpiryMap;
+  }
+
+  /** findActivityExpiry returns all values for the given key(s), or undefined. */
+  findActivityExpiry(expiry: bigint, activityId: bigint): protoconf.TaskConf_Task[] | undefined {
+    return this.#orderedIndexActivityExpiryMap.get([expiry, activityId]);
+  }
+
+  /** findFirstActivityExpiry returns the first value for the given key(s), or undefined. */
+  findFirstActivityExpiry(expiry: bigint, activityId: bigint): protoconf.TaskConf_Task | undefined {
+    return this.findActivityExpiry(expiry, activityId)?.[0];
+  }
+}
+
+// Type aliases for the index / ordered index / ordered map containers,
+// mirroring the named container types of the other-language loaders so the
+// finder signatures read clearly (e.g. TaskConf.Index_XxxMap).
+export namespace TaskConf {
+  /** Index_TaskMap is the index map: key(ActivityID<Goal,ID>) -> values. */
+  export type Index_TaskMap = Map<bigint, protoconf.TaskConf_Task[]>;
+  /** OrderedIndex_OrderedTaskMap is the ordered index map: key(Goal<ID>@OrderedTask) -> values. */
+  export type OrderedIndex_OrderedTaskMap = Map<bigint, protoconf.TaskConf_Task[]>;
+  /** OrderedIndex_TaskExpiryMap is the ordered index map: key(Expiry@TaskExpiry) -> values. */
+  export type OrderedIndex_TaskExpiryMap = Map<bigint, protoconf.TaskConf_Task[]>;
+  /** OrderedIndex_SortedTaskExpiryMap is the ordered index map: key(Expiry<Goal,ID>@SortedTaskExpiry) -> values. */
+  export type OrderedIndex_SortedTaskExpiryMap = Map<bigint, protoconf.TaskConf_Task[]>;
+  /** OrderedIndex_ActivityExpiryKey is the composite key of ordered index: key((Expiry,ActivityID)@ActivityExpiry). */
+  export type OrderedIndex_ActivityExpiryKey = readonly [expiry: bigint, activityId: bigint];
+  /** OrderedIndex_ActivityExpiryMap is the ordered index map: key((Expiry,ActivityID)@ActivityExpiry) -> values. */
+  export type OrderedIndex_ActivityExpiryMap = TupleKeyMap<OrderedIndex_ActivityExpiryKey, protoconf.TaskConf_Task[]>;
 }
 
 /**
  * StrcaseConf is a wrapper around protobuf message protoconf.StrcaseConf.
  */
 export class StrcaseConf extends Messager {
-  private data_: protoconf.StrcaseConf = create(protoconf.StrcaseConfSchema);
+  #data: protoconf.StrcaseConf = create(protoconf.StrcaseConfSchema);
+  #indexIndex1Map: StrcaseConf.Index_Index1Map = new Map();
+  #indexIndex2Map: StrcaseConf.Index_Index2Map = new Map();
+  #indexIndex3Map: StrcaseConf.Index_Index3Map = new Map();
+  #indexIndex4Map: StrcaseConf.Index_Index4Map = new Map();
+  #indexIndex5Map: StrcaseConf.Index_Index5Map = new Map();
+  #indexIndex6Map: StrcaseConf.Index_Index6Map = new Map();
+  #indexIndex7Map: StrcaseConf.Index_Index7Map = new Map();
+  #indexIndex8Map: StrcaseConf.Index_Index8Map = new Map();
+  #indexIndex9Map: StrcaseConf.Index_Index9Map = new Map();
+  #indexIndex10Map: StrcaseConf.Index_Index10Map = new Map();
 
   /** name returns the StrcaseConf's message name. */
   name(): string {
@@ -202,7 +709,7 @@ export class StrcaseConf extends Messager {
   load(dir: string, fmt: Format, options?: MessagerOptions): void {
     const start = Date.now();
     try {
-      this.data_ = loadMessagerInDir(protoconf.StrcaseConfSchema, dir, fmt, options);
+      this.#data = loadMessagerInDir(protoconf.StrcaseConfSchema, dir, fmt, options);
     } catch (e) {
       throw new Error(`failed to load StrcaseConf`, { cause: e });
     }
@@ -212,16 +719,289 @@ export class StrcaseConf extends Messager {
 
   /** data returns the StrcaseConf's inner message data. */
   data(): protoconf.StrcaseConf {
-    return this.data_;
+    return this.#data;
   }
 
   /** message returns the StrcaseConf's inner message data. */
   override message(): protoconf.StrcaseConf {
-    return this.data_;
+    return this.#data;
+  }
+
+  /** processAfterLoad builds the index, ordered index and ordered map containers. */
+  override processAfterLoad(): void {
+    // Index init.
+    this.#indexIndex1Map.clear();
+    this.#indexIndex2Map.clear();
+    this.#indexIndex3Map.clear();
+    this.#indexIndex4Map.clear();
+    this.#indexIndex5Map.clear();
+    this.#indexIndex6Map.clear();
+    this.#indexIndex7Map.clear();
+    this.#indexIndex8Map.clear();
+    this.#indexIndex9Map.clear();
+    this.#indexIndex10Map.clear();
+    for (const item1 of Object.values(this.#data.taskMap)) {
+      {
+        // Index: HTTPServer@Index1
+        const key = item1.HTTPServer;
+        {
+          const list = this.#indexIndex1Map.get(key);
+          if (list) { list.push(item1); } else { this.#indexIndex1Map.set(key, [item1]); }
+        }
+      }
+      {
+        // Index: Fight1v1@Index2
+        const key = item1.fight1v1;
+        {
+          const list = this.#indexIndex2Map.get(key);
+          if (list) { list.push(item1); } else { this.#indexIndex2Map.set(key, [item1]); }
+        }
+      }
+      {
+        // Index: SeasonRank@Index3
+        const key = item1.SEASONRANK;
+        {
+          const list = this.#indexIndex3Map.get(key);
+          if (list) { list.push(item1); } else { this.#indexIndex3Map.set(key, [item1]); }
+        }
+      }
+      {
+        // Index: UserID@Index4
+        const key = item1.userID;
+        {
+          const list = this.#indexIndex4Map.get(key);
+          if (list) { list.push(item1); } else { this.#indexIndex4Map.set(key, [item1]); }
+        }
+      }
+      {
+        // Index: Task@Index5
+        const key = item1.task;
+        {
+          const list = this.#indexIndex5Map.get(key);
+          if (list) { list.push(item1); } else { this.#indexIndex5Map.set(key, [item1]); }
+        }
+      }
+      {
+        // Index: V2Ray@Index6
+        const key = item1.v2Ray;
+        {
+          const list = this.#indexIndex6Map.get(key);
+          if (list) { list.push(item1); } else { this.#indexIndex6Map.set(key, [item1]); }
+        }
+      }
+      {
+        // Index: X@Index7
+        const key = item1.x;
+        {
+          const list = this.#indexIndex7Map.get(key);
+          if (list) { list.push(item1); } else { this.#indexIndex7Map.set(key, [item1]); }
+        }
+      }
+      {
+        // Index: SomeField@Index8
+        const key = item1.someField;
+        {
+          const list = this.#indexIndex8Map.get(key);
+          if (list) { list.push(item1); } else { this.#indexIndex8Map.set(key, [item1]); }
+        }
+      }
+      {
+        // Index: XCoordinate@Index9
+        const key = item1.xCoordinate;
+        {
+          const list = this.#indexIndex9Map.get(key);
+          if (list) { list.push(item1); } else { this.#indexIndex9Map.set(key, [item1]); }
+        }
+      }
+      {
+        // Index: Class@Index10
+        const key = item1.class;
+        {
+          const list = this.#indexIndex10Map.get(key);
+          if (list) { list.push(item1); } else { this.#indexIndex10Map.set(key, [item1]); }
+        }
+      }
+    }
   }
 
   /** get1 finds value in the 1st-level map; returns undefined if not found. */
   get1(id: bigint): protoconf.StrcaseConf_Task | undefined {
-    return this.data_.taskMap[id.toString()];
+    return this.#data.taskMap[id.toString()];
   }
+
+  /** findIndex1Map returns the index map: key(HTTPServer@Index1) -> values. */
+  findIndex1Map(): StrcaseConf.Index_Index1Map {
+    return this.#indexIndex1Map;
+  }
+
+  /** findIndex1 returns all values for the given key(s), or undefined. */
+  findIndex1(httpserver: bigint): protoconf.StrcaseConf_Task[] | undefined {
+    return this.#indexIndex1Map.get(httpserver);
+  }
+
+  /** findFirstIndex1 returns the first value for the given key(s), or undefined. */
+  findFirstIndex1(httpserver: bigint): protoconf.StrcaseConf_Task | undefined {
+    return this.findIndex1(httpserver)?.[0];
+  }
+
+  /** findIndex2Map returns the index map: key(Fight1v1@Index2) -> values. */
+  findIndex2Map(): StrcaseConf.Index_Index2Map {
+    return this.#indexIndex2Map;
+  }
+
+  /** findIndex2 returns all values for the given key(s), or undefined. */
+  findIndex2(fight1V1: bigint): protoconf.StrcaseConf_Task[] | undefined {
+    return this.#indexIndex2Map.get(fight1V1);
+  }
+
+  /** findFirstIndex2 returns the first value for the given key(s), or undefined. */
+  findFirstIndex2(fight1V1: bigint): protoconf.StrcaseConf_Task | undefined {
+    return this.findIndex2(fight1V1)?.[0];
+  }
+
+  /** findIndex3Map returns the index map: key(SeasonRank@Index3) -> values. */
+  findIndex3Map(): StrcaseConf.Index_Index3Map {
+    return this.#indexIndex3Map;
+  }
+
+  /** findIndex3 returns all values for the given key(s), or undefined. */
+  findIndex3(seasonRank: bigint): protoconf.StrcaseConf_Task[] | undefined {
+    return this.#indexIndex3Map.get(seasonRank);
+  }
+
+  /** findFirstIndex3 returns the first value for the given key(s), or undefined. */
+  findFirstIndex3(seasonRank: bigint): protoconf.StrcaseConf_Task | undefined {
+    return this.findIndex3(seasonRank)?.[0];
+  }
+
+  /** findIndex4Map returns the index map: key(UserID@Index4) -> values. */
+  findIndex4Map(): StrcaseConf.Index_Index4Map {
+    return this.#indexIndex4Map;
+  }
+
+  /** findIndex4 returns all values for the given key(s), or undefined. */
+  findIndex4(userId: bigint): protoconf.StrcaseConf_Task[] | undefined {
+    return this.#indexIndex4Map.get(userId);
+  }
+
+  /** findFirstIndex4 returns the first value for the given key(s), or undefined. */
+  findFirstIndex4(userId: bigint): protoconf.StrcaseConf_Task | undefined {
+    return this.findIndex4(userId)?.[0];
+  }
+
+  /** findIndex5Map returns the index map: key(Task@Index5) -> values. */
+  findIndex5Map(): StrcaseConf.Index_Index5Map {
+    return this.#indexIndex5Map;
+  }
+
+  /** findIndex5 returns all values for the given key(s), or undefined. */
+  findIndex5(task: bigint): protoconf.StrcaseConf_Task[] | undefined {
+    return this.#indexIndex5Map.get(task);
+  }
+
+  /** findFirstIndex5 returns the first value for the given key(s), or undefined. */
+  findFirstIndex5(task: bigint): protoconf.StrcaseConf_Task | undefined {
+    return this.findIndex5(task)?.[0];
+  }
+
+  /** findIndex6Map returns the index map: key(V2Ray@Index6) -> values. */
+  findIndex6Map(): StrcaseConf.Index_Index6Map {
+    return this.#indexIndex6Map;
+  }
+
+  /** findIndex6 returns all values for the given key(s), or undefined. */
+  findIndex6(v2Ray: bigint): protoconf.StrcaseConf_Task[] | undefined {
+    return this.#indexIndex6Map.get(v2Ray);
+  }
+
+  /** findFirstIndex6 returns the first value for the given key(s), or undefined. */
+  findFirstIndex6(v2Ray: bigint): protoconf.StrcaseConf_Task | undefined {
+    return this.findIndex6(v2Ray)?.[0];
+  }
+
+  /** findIndex7Map returns the index map: key(X@Index7) -> values. */
+  findIndex7Map(): StrcaseConf.Index_Index7Map {
+    return this.#indexIndex7Map;
+  }
+
+  /** findIndex7 returns all values for the given key(s), or undefined. */
+  findIndex7(x: bigint): protoconf.StrcaseConf_Task[] | undefined {
+    return this.#indexIndex7Map.get(x);
+  }
+
+  /** findFirstIndex7 returns the first value for the given key(s), or undefined. */
+  findFirstIndex7(x: bigint): protoconf.StrcaseConf_Task | undefined {
+    return this.findIndex7(x)?.[0];
+  }
+
+  /** findIndex8Map returns the index map: key(SomeField@Index8) -> values. */
+  findIndex8Map(): StrcaseConf.Index_Index8Map {
+    return this.#indexIndex8Map;
+  }
+
+  /** findIndex8 returns all values for the given key(s), or undefined. */
+  findIndex8(someField: bigint): protoconf.StrcaseConf_Task[] | undefined {
+    return this.#indexIndex8Map.get(someField);
+  }
+
+  /** findFirstIndex8 returns the first value for the given key(s), or undefined. */
+  findFirstIndex8(someField: bigint): protoconf.StrcaseConf_Task | undefined {
+    return this.findIndex8(someField)?.[0];
+  }
+
+  /** findIndex9Map returns the index map: key(XCoordinate@Index9) -> values. */
+  findIndex9Map(): StrcaseConf.Index_Index9Map {
+    return this.#indexIndex9Map;
+  }
+
+  /** findIndex9 returns all values for the given key(s), or undefined. */
+  findIndex9(xcoordinate: bigint): protoconf.StrcaseConf_Task[] | undefined {
+    return this.#indexIndex9Map.get(xcoordinate);
+  }
+
+  /** findFirstIndex9 returns the first value for the given key(s), or undefined. */
+  findFirstIndex9(xcoordinate: bigint): protoconf.StrcaseConf_Task | undefined {
+    return this.findIndex9(xcoordinate)?.[0];
+  }
+
+  /** findIndex10Map returns the index map: key(Class@Index10) -> values. */
+  findIndex10Map(): StrcaseConf.Index_Index10Map {
+    return this.#indexIndex10Map;
+  }
+
+  /** findIndex10 returns all values for the given key(s), or undefined. */
+  findIndex10(class_: bigint): protoconf.StrcaseConf_Task[] | undefined {
+    return this.#indexIndex10Map.get(class_);
+  }
+
+  /** findFirstIndex10 returns the first value for the given key(s), or undefined. */
+  findFirstIndex10(class_: bigint): protoconf.StrcaseConf_Task | undefined {
+    return this.findIndex10(class_)?.[0];
+  }
+}
+
+// Type aliases for the index / ordered index / ordered map containers,
+// mirroring the named container types of the other-language loaders so the
+// finder signatures read clearly (e.g. StrcaseConf.Index_XxxMap).
+export namespace StrcaseConf {
+  /** Index_Index1Map is the index map: key(HTTPServer@Index1) -> values. */
+  export type Index_Index1Map = Map<bigint, protoconf.StrcaseConf_Task[]>;
+  /** Index_Index2Map is the index map: key(Fight1v1@Index2) -> values. */
+  export type Index_Index2Map = Map<bigint, protoconf.StrcaseConf_Task[]>;
+  /** Index_Index3Map is the index map: key(SeasonRank@Index3) -> values. */
+  export type Index_Index3Map = Map<bigint, protoconf.StrcaseConf_Task[]>;
+  /** Index_Index4Map is the index map: key(UserID@Index4) -> values. */
+  export type Index_Index4Map = Map<bigint, protoconf.StrcaseConf_Task[]>;
+  /** Index_Index5Map is the index map: key(Task@Index5) -> values. */
+  export type Index_Index5Map = Map<bigint, protoconf.StrcaseConf_Task[]>;
+  /** Index_Index6Map is the index map: key(V2Ray@Index6) -> values. */
+  export type Index_Index6Map = Map<bigint, protoconf.StrcaseConf_Task[]>;
+  /** Index_Index7Map is the index map: key(X@Index7) -> values. */
+  export type Index_Index7Map = Map<bigint, protoconf.StrcaseConf_Task[]>;
+  /** Index_Index8Map is the index map: key(SomeField@Index8) -> values. */
+  export type Index_Index8Map = Map<bigint, protoconf.StrcaseConf_Task[]>;
+  /** Index_Index9Map is the index map: key(XCoordinate@Index9) -> values. */
+  export type Index_Index9Map = Map<bigint, protoconf.StrcaseConf_Task[]>;
+  /** Index_Index10Map is the index map: key(Class@Index10) -> values. */
+  export type Index_Index10Map = Map<bigint, protoconf.StrcaseConf_Task[]>;
 }

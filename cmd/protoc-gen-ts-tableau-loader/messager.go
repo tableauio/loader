@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-ts-tableau-loader/helper"
+	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/loader/internal/loadutil"
 	"github.com/tableauio/tableau/proto/tableaupb"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -35,10 +36,39 @@ func generateMessager(gen *protogen.Plugin, file *protogen.File, reg *barrelRegi
 		}
 	}
 
-	// Runtime imports.
+	// Parse index descriptors up-front: they drive both the extra package
+	// imports (enum/message index-key types) and whether the index runtime
+	// helpers need importing.
+	descriptors := make(map[*protogen.Message]*index.IndexDescriptor, len(messagers))
+	needIndexRuntime := false
+	needOrderedMapValue := false
+	for _, message := range messagers {
+		desc := index.ParseIndexDescriptor(message.Desc)
+		descriptors[message] = desc
+		ig := newIndexGen(g, desc, message, nil)
+		if ig.NeedGenerate() {
+			needIndexRuntime = true
+		}
+		if ig.needNestedOrderedMap() {
+			needOrderedMapValue = true
+		}
+	}
+
+	// Runtime imports. The index container runtime (TupleKeyMap & comparators)
+	// lives alongside Format in util.pc.ts, so it is pulled from the same module
+	// and only when this file uses an index / ordered-index / ordered-map
+	// container.
 	g.P(`import { create } from "@bufbuild/protobuf";`)
 	g.P(`import { Messager } from "./messager.pc.js";`)
-	g.P(`import { Format } from "./util.pc.js";`)
+	if needIndexRuntime {
+		if needOrderedMapValue {
+			g.P(`import { Format, compareValues, compareTuples, sortMapByKey, TupleKeyMap, type OrderedMapValue } from "./util.pc.js";`)
+		} else {
+			g.P(`import { Format, compareValues, compareTuples, sortMapByKey, TupleKeyMap } from "./util.pc.js";`)
+		}
+	} else {
+		g.P(`import { Format } from "./util.pc.js";`)
+	}
 	g.P(`import { loadMessagerInDir, type MessagerOptions } from "./load.pc.js";`)
 	// Namespace imports for the protobuf-es generated types, one per proto
 	// package: the worksheet's own package plus any other package owning a
@@ -52,6 +82,7 @@ func generateMessager(gen *protogen.Plugin, file *protogen.File, reg *barrelRegi
 	pkgs.add(string(file.Desc.Package()))
 	for _, message := range messagers {
 		collectValuePackages(message.Desc, pkgs)
+		collectIndexPackages(descriptors[message], pkgs)
 	}
 	pkgs.emit(g)
 	for _, pkg := range pkgs.order {
@@ -63,23 +94,25 @@ func generateMessager(gen *protogen.Plugin, file *protogen.File, reg *barrelRegi
 		if i > 0 {
 			g.P()
 		}
-		genMessage(gen, g, message, pkgs)
+		genMessage(gen, g, message, descriptors[message], pkgs)
 	}
 }
 
 // genMessage generates a single messager class definition.
-func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message, pkgs *pbPackages) {
+func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message, descriptor *index.IndexDescriptor, pkgs *pbPackages) {
 	md := message.Desc
 	name := helper.MessagerName(md)
 	alias := pkgs.aliasOf(md)
 	schema := alias + "." + helper.LocalSchemaName(md) // runtime schema value
 	dataType := alias + "." + helper.LocalTypeName(md) // message type
+	idxGen := newIndexGen(g, descriptor, message, pkgs)
 
 	g.P("/**")
 	g.P(" * ", name, " is a wrapper around protobuf message ", md.FullName(), ".")
 	g.P(" */")
 	g.P("export class ", name, " extends Messager {")
-	g.P(helper.Indent(1), "private data_: ", dataType, " = create(", schema, ");")
+	g.P(helper.Indent(1), "#data: ", dataType, " = create(", schema, ");")
+	idxGen.GenDecls()
 	g.P()
 
 	// name()
@@ -94,7 +127,7 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P(helper.Indent(1), "load(dir: string, fmt: Format, options?: MessagerOptions): void {")
 	g.P(helper.Indent(2), "const start = Date.now();")
 	g.P(helper.Indent(2), "try {")
-	g.P(helper.Indent(3), "this.data_ = loadMessagerInDir(", schema, ", dir, fmt, options);")
+	g.P(helper.Indent(3), "this.#data = loadMessagerInDir(", schema, ", dir, fmt, options);")
 	g.P(helper.Indent(2), "} catch (e) {")
 	g.P(helper.Indent(3), "throw new Error(`failed to load ", name, "`, { cause: e });")
 	g.P(helper.Indent(2), "}")
@@ -106,20 +139,36 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	// data()
 	g.P(helper.Indent(1), "/** data returns the ", name, "'s inner message data. */")
 	g.P(helper.Indent(1), "data(): ", dataType, " {")
-	g.P(helper.Indent(2), "return this.data_;")
+	g.P(helper.Indent(2), "return this.#data;")
 	g.P(helper.Indent(1), "}")
 	g.P()
 
 	// message()
 	g.P(helper.Indent(1), "/** message returns the ", name, "'s inner message data. */")
 	g.P(helper.Indent(1), "override message(): ", dataType, " {")
-	g.P(helper.Indent(2), "return this.data_;")
+	g.P(helper.Indent(2), "return this.#data;")
 	g.P(helper.Indent(1), "}")
+
+	// processAfterLoad() override: build index / ordered index / ordered map.
+	if idxGen.NeedGenerate() {
+		g.P()
+		g.P(helper.Indent(1), "/** processAfterLoad builds the index, ordered index and ordered map containers. */")
+		g.P(helper.Indent(1), "override processAfterLoad(): void {")
+		idxGen.GenProcessAfterLoadBody()
+		g.P(helper.Indent(1), "}")
+	}
 
 	// syntactic sugar for accessing map items
 	genMapGetters(g, md, 1, nil, pkgs)
 
+	// index / ordered index finders and the ordered map getter
+	idxGen.GenGetters()
+
 	g.P("}")
+
+	// Type aliases for the index / ordered index / ordered map containers,
+	// declared in a namespace merged with the class above.
+	idxGen.GenTypeAliases()
 }
 
 // genMapGetters generates nested map getters (get1/get2/...) for a message.
@@ -142,7 +191,7 @@ func genMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor,
 
 		var access string
 		if depth == 1 {
-			access = "this.data_." + localName + "[" + last.IndexExpr() + "]"
+			access = "this.#data." + localName + "[" + last.IndexExpr() + "]"
 		} else {
 			prevArgs := keys[:len(keys)-1].GenGetArguments()
 			access = fmt.Sprintf("this.get%d(%s)?.%s[%s]", depth-1, prevArgs, localName, last.IndexExpr())

@@ -117,6 +117,9 @@ type MapKey struct {
 	// NeedToString reports whether the parameter must be stringified to index
 	// the underlying map object (true for 64-bit / bool keys).
 	NeedToString bool
+	// Fd is the map field descriptor this key belongs to (used to derive the
+	// leveled-container key alias name; may be nil for non-leveled keys).
+	Fd protoreflect.FieldDescriptor
 }
 
 // IndexExpr returns the expression used to index the underlying map object.
@@ -195,6 +198,19 @@ func ParseMapKey(keyFd protoreflect.FieldDescriptor, name string) MapKey {
 	return key
 }
 
+// ParseLeveledMapPrefix returns the leveled-map name fragment used to build a
+// leveled-container key alias, mirroring the Go/C++/C# loaders. For a
+// message-valued map it is the value message's name local to the messager
+// (joined with "_", e.g. "Activity_Chapter"); for a scalar-valued map it is the
+// value kind string. md is the owning messager message.
+func ParseLeveledMapPrefix(md protoreflect.MessageDescriptor, mapFd protoreflect.FieldDescriptor) string {
+	if mapFd.MapValue().Kind() == protoreflect.MessageKind {
+		localMsgProtoName := strings.TrimPrefix(string(mapFd.MapValue().Message().FullName()), string(md.FullName())+".")
+		return strings.ReplaceAll(localMsgProtoName, ".", "_")
+	}
+	return mapFd.MapValue().Kind().String()
+}
+
 // ParseMapFieldNameAsFuncParam returns a safe lowerCamelCase getter parameter
 // name for a map field key. If the map value is a message type, the first field
 // name of the value message is used; otherwise the tableau field option "key"
@@ -213,10 +229,97 @@ func ParseMapFieldNameAsFuncParam(fd protoreflect.FieldDescriptor) string {
 	return escapeIdentifier(strcase.ToLowerCamel(name))
 }
 
-// FieldLocalName returns the protobuf-es local (JS property) name for a field,
-// which is the lowerCamelCase form of the protobuf field name.
+// FieldLocalName returns the protobuf-es local (JS property) name for a field.
+//
+// IMPORTANT: protobuf-es derives a field's JS property name with protoCamelCase
+// (NOT strcase): it never lowercases the first letter, preserves existing
+// capitals, and only capitalizes the letter following an underscore or digit.
+// Reserved object properties (constructor/toString/toJSON/valueOf) get a "$"
+// suffix. We must match this exactly so generated property access (e.g. for
+// index fields like "HTTPServer", "SEASON_RANK", "fight_1v1_") lines up with
+// the protobuf-es generated types.
 func FieldLocalName(fd protoreflect.FieldDescriptor) string {
-	return strcase.ToLowerCamel(string(fd.Name()))
+	return safeObjectProperty(protoCamelCase(string(fd.Name())))
+}
+
+// protoCamelCase converts a protobuf field name to its protobuf-es local name,
+// matching @bufbuild/protobuf's protoCamelCase implementation.
+func protoCamelCase(snakeCase string) string {
+	var b strings.Builder
+	capNext := false
+	for _, c := range snakeCase {
+		switch {
+		case c == '_':
+			capNext = true
+		case c >= '0' && c <= '9':
+			b.WriteRune(c)
+			capNext = false
+		default:
+			if capNext {
+				capNext = false
+				if c >= 'a' && c <= 'z' {
+					c = c - 'a' + 'A'
+				}
+			}
+			b.WriteRune(c)
+		}
+	}
+	return b.String()
+}
+
+// reservedObjectProperties are JS object properties protobuf-es escapes with a
+// trailing "$" to avoid clashing with built-ins.
+var reservedObjectProperties = map[string]bool{
+	"constructor": true, "toString": true, "toJSON": true, "valueOf": true,
+}
+
+// safeObjectProperty appends "$" to reserved object property names, matching
+// protobuf-es's safeObjectProperty.
+func safeObjectProperty(name string) string {
+	if reservedObjectProperties[name] {
+		return name + "$"
+	}
+	return name
+}
+
+// IndexFieldNameAsKeyStructFieldName returns the CamelCase logical name of an
+// index field, used to derive parameter names. For list fields the tableau
+// field option name is used; otherwise the protobuf field name is used.
+func IndexFieldNameAsKeyStructFieldName(fd protoreflect.FieldDescriptor) string {
+	if fd.IsList() {
+		opts := fd.Options().(*descriptorpb.FieldOptions)
+		fdOpts := proto.GetExtension(opts, tableaupb.E_Field).(*tableaupb.FieldOptions)
+		return strcase.ToCamel(fdOpts.GetName())
+	}
+	return strcase.ToCamel(string(fd.Name()))
+}
+
+// IndexFieldNameAsFuncParam returns a safe lowerCamelCase finder parameter name
+// for an index field.
+func IndexFieldNameAsFuncParam(fd protoreflect.FieldDescriptor) string {
+	return escapeIdentifier(strcase.ToLowerCamel(IndexFieldNameAsKeyStructFieldName(fd)))
+}
+
+// TSEmptyValue returns the TypeScript empty/default literal for a field's type,
+// used as the fallback when accessing a possibly-absent nested index field.
+func TSEmptyValue(fd protoreflect.FieldDescriptor) string {
+	switch fd.Kind() {
+	case protoreflect.BoolKind:
+		return "false"
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind,
+		protoreflect.Uint32Kind, protoreflect.Fixed32Kind,
+		protoreflect.FloatKind, protoreflect.DoubleKind, protoreflect.EnumKind:
+		return "0"
+	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind,
+		protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		return "0n"
+	case protoreflect.StringKind:
+		return `""`
+	case protoreflect.BytesKind:
+		return "new Uint8Array()"
+	default:
+		return "undefined"
+	}
 }
 
 // tsReservedWords are TypeScript/JavaScript reserved words that cannot be used
