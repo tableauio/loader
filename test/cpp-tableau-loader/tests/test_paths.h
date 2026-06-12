@@ -15,6 +15,7 @@ class TestPaths {
   }
 
   static std::filesystem::path Conf() { return Testdata() / "conf"; }
+  static std::filesystem::path Bin() { return Testdata() / "bin"; }
   static std::filesystem::path PatchConf() { return Testdata() / "patchconf"; }
   static std::filesystem::path PatchConf2() { return Testdata() / "patchconf2"; }
   static std::filesystem::path PatchResult() { return Testdata() / "patchresult"; }

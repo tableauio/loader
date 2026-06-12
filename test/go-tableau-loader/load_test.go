@@ -2,7 +2,6 @@ package loader_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/tableauio/loader/test/go-tableau-loader/hub"
@@ -13,6 +12,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// prepareHub builds and loads a MyHub from testdata. It is the shared fixture
+// used by every test block (load / get / orderedmap / index) in this package.
 func prepareHub(t *testing.T) *hub.MyHub {
 	t.Helper()
 	h := hub.NewMyHub()
@@ -30,6 +31,8 @@ func prepareHub(t *testing.T) *hub.MyHub {
 	return h
 }
 
+// ---- Load ----
+
 func Test_Load(t *testing.T) {
 	h := prepareHub(t)
 	for name, msger := range h.GetMessagerMap() {
@@ -37,20 +40,21 @@ func Test_Load(t *testing.T) {
 	}
 }
 
-func Test_ActivityConf_NotFound(t *testing.T) {
+// ---- CustomConf ----
+
+func Test_CustomItemConf(t *testing.T) {
 	h := prepareHub(t)
-	conf := h.GetActivityConf()
-	if conf == nil {
-		t.Fatal("ActivityConf is nil")
+	customConf := h.GetCustomItemConf()
+	if customConf == nil {
+		t.Fatal("CustomItemConf is nil")
 	}
-	_, err := conf.Get3(100001, 1, 999)
-	if err == nil {
-		t.Fatal("expected ErrNotFound, got nil")
+	if customConf.GetSpecialItemName() == "" {
+		t.Fatal("CustomItemConf: special item name is empty")
 	}
-	if !errors.Is(err, loader.ErrNotFound) {
-		t.Fatalf("expected ErrNotFound, got: %v", err)
-	}
+	t.Logf("specialItemName: %v", customConf.GetSpecialItemName())
 }
+
+// ---- Store ----
 
 func Test_ActivityConf_UpdateAndStore(t *testing.T) {
 	h := prepareHub(t)
@@ -71,43 +75,7 @@ func Test_ActivityConf_UpdateAndStore(t *testing.T) {
 	}
 }
 
-func Test_ActivityConf_OrderedMap(t *testing.T) {
-	h := prepareHub(t)
-	conf := h.GetActivityConf()
-	if conf == nil {
-		t.Fatal("ActivityConf is nil")
-	}
-	orderedMap := conf.GetOrderedMap()
-	for iter := orderedMap.Iterator(); iter.Next(); {
-		key := iter.Key()
-		value := iter.Value().Second
-		t.Logf("key: %v, value: %v", key, value)
-		subOrderedMap := iter.Value().First
-		for iter2 := subOrderedMap.Iterator(); iter2.Next(); {
-			key2 := iter2.Key()
-			value2 := iter2.Value().Second
-			t.Logf("  key2: %v, value2: %v", key2, value2)
-		}
-	}
-}
-
-func Test_CustomItemConf(t *testing.T) {
-	h := prepareHub(t)
-	customConf := h.GetCustomItemConf()
-	if customConf == nil {
-		t.Fatal("CustomItemConf is nil")
-	}
-	t.Logf("specialItemName: %v", customConf.GetSpecialItemName())
-}
-
-func Test_HeroBaseConf(t *testing.T) {
-	h := prepareHub(t)
-	heroConf := h.GetHeroBaseConf()
-	if heroConf == nil {
-		t.Fatal("HeroBaseConf is nil")
-	}
-	t.Logf("HeroBaseConf: %v", heroConf.Data().GetHeroMap())
-}
+// ---- Context (Go-specific) ----
 
 func Test_Context(t *testing.T) {
 	h := prepareHub(t)
@@ -130,8 +98,10 @@ func Test_Context(t *testing.T) {
 	t.Logf("PatchReplaceConf(from background): %v", h.FromContext(context.Background()).GetPatchReplaceConf().Data())
 }
 
-// Test_Patch mirrors the patch tests in cpp-tableau-loader/src/main.cpp::TestPatch
-// and csharp-tableau-loader/Program.cs::TestPatch to verify the Go patch logic.
+// ---- Patch ----
+//
+// Test_Patch mirrors the patch tests in cpp-tableau-loader/tests/patch_test.cpp
+// and csharp-tableau-loader/tests/PatchTests.cs to verify the Go patch logic.
 func Test_Patch(t *testing.T) {
 	const testdataDir = "../testdata"
 
