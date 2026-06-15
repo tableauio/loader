@@ -18,9 +18,6 @@ namespace LoaderTests
             _hub = fixture.Hub;
         }
 
-        // fruitType values match FruitConf.json (== FruitType enum values).
-        private const int FruitTypeApple = (int)Protoconf.FruitType.Apple;
-
         [Fact]
         public void GetItemConf_TypedAndGenericReturnSameInstance()
         {
@@ -87,15 +84,15 @@ namespace LoaderTests
             var fruit = _hub.GetFruitConf();
             Assert.NotNull(fruit);
 
-            Assert.NotNull(fruit!.Get1(FruitTypeApple));
+            Assert.NotNull(fruit!.Get1(FruitTypes.Apple));
             Assert.Null(fruit.Get1(999));
 
             // APPLE -> item 1001, price 10
-            var item = fruit.Get2(FruitTypeApple, 1001);
+            var item = fruit.Get2(FruitTypes.Apple, 1001);
             Assert.NotNull(item);
             Assert.Equal(1001, item!.Id);
             Assert.Equal(10, item.Price);
-            Assert.Null(fruit.Get2(FruitTypeApple, 9999));
+            Assert.Null(fruit.Get2(FruitTypes.Apple, 9999));
             Assert.Null(fruit.Get2(999, 1001));
         }
     }

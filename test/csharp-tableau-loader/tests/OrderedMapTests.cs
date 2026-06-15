@@ -35,6 +35,9 @@ namespace LoaderTests
                 activities++;
                 var chapterOrderedMap = activityPair.Value.Item1;
                 Assert.NotNull(chapterOrderedMap);
+                // 2nd-level sub-map is reachable and non-empty (every activity
+                // has chapters).
+                Assert.NotEmpty(chapterOrderedMap);
             }
             Assert.True(activities > 0, "expected at least one activity");
         }
@@ -49,15 +52,11 @@ namespace LoaderTests
             var orderedMap = item!.GetOrderedMap();
             Assert.NotEmpty(orderedMap);
 
+            // keys ascending by id; prev starts at 0 so iteration 1 (key >= 0) holds.
             uint prev = uint.MinValue;
-            bool first = true;
             foreach (var key in orderedMap.Keys)
             {
-                if (!first)
-                {
-                    Assert.True(key >= prev, $"ItemConf ordered map keys not ascending: {key} after {prev}");
-                }
-                first = false;
+                Assert.True(key >= prev, $"ItemConf ordered map keys not ascending: {key} after {prev}");
                 prev = key;
             }
         }

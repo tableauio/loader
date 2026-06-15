@@ -18,11 +18,6 @@ namespace LoaderTests
             _hub = fixture.Hub;
         }
 
-        // fruitType values match FruitConf.json (== FruitType enum values).
-        private const int FruitTypeApple = (int)Protoconf.FruitType.Apple;
-        private const int FruitTypeOrange = (int)Protoconf.FruitType.Orange;
-        private const int FruitTypeBanana = (int)Protoconf.FruitType.Banana;
-
         // ---- FruitConf: leveled index (Price<ID>) finders ----
 
         [Fact]
@@ -42,9 +37,9 @@ namespace LoaderTests
             Assert.Equal(6, fruit.FindItemMap().Count);
 
             // 1st-level scoped index: (fruitType) -> price -> items
-            Assert.Equal(2001, fruit.FindItem1(FruitTypeOrange, 15)![0].Id);
-            Assert.Equal(3001, fruit.FindFirstItem1(FruitTypeBanana, 8)!.Id);
-            Assert.Equal(2, fruit.FindItemMap1(FruitTypeApple)!.Count);
+            Assert.Equal(2001, fruit.FindItem1(FruitTypes.Orange, 15)![0].Id);
+            Assert.Equal(3001, fruit.FindFirstItem1(FruitTypes.Banana, 8)!.Id);
+            Assert.Equal(2, fruit.FindItemMap1(FruitTypes.Apple)!.Count);
             Assert.Null(fruit.FindItemMap1(999));
             Assert.Null(fruit.FindItem1(999, 15));
         }
@@ -72,8 +67,8 @@ namespace LoaderTests
             }
 
             // 1st-level scoped ordered index
-            Assert.Equal(2002, fruit.FindOrderedFruit1(FruitTypeOrange, 25)![0].Id);
-            Assert.Equal(3002, fruit.FindFirstOrderedFruit1(FruitTypeBanana, 12)!.Id);
+            Assert.Equal(2002, fruit.FindOrderedFruit1(FruitTypes.Orange, 25)![0].Id);
+            Assert.Equal(3002, fruit.FindFirstOrderedFruit1(FruitTypes.Banana, 12)!.Id);
             Assert.Null(fruit.FindOrderedFruit1(999, 25));
         }
 
@@ -137,6 +132,8 @@ namespace LoaderTests
             Assert.NotNull(apple);
             Assert.Single(apple!);
             Assert.Equal(1u, apple![0].Id);
+            // FindFirst* variant returns the first match for the same key.
+            Assert.NotNull(item.FindFirstAwardItem(1, "apple"));
         }
     }
 }

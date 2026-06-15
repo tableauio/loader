@@ -112,7 +112,7 @@ namespace LoaderTests
         }
 
         [Fact]
-        public void PatchConf2_DifferentFormat_PatchPathsOverride()
+        public void PatchConf2_PatchPathsOverride_UsesJson()
         {
             var hub = new Tableau.Hub();
             var options = new Tableau.Load.Options
@@ -123,10 +123,10 @@ namespace LoaderTests
                 {
                     ["PatchMergeConf"] = new Tableau.Load.MessagerOptions
                     {
-                        // .txtpb override (note: C# loader currently supports JSON/Bin only;
-                        // this test validates that PatchPaths is honored even though the
-                        // unmarshal step would surface an error for unsupported formats.)
-                        // We instead point to .json to keep the format-supported path.
+                        // The C++/Go mirrors override with a .txtpb path, but the C#
+                        // loader currently supports JSON/Bin only, so this test points
+                        // PatchPaths at the .json file instead. It still validates that
+                        // a MessagerOptions.PatchPaths override is honored.
                         PatchPaths = new List<string>
                         {
                             Path.Combine(TestPaths.PatchConf2Dir, "PatchMergeConf.json"),
@@ -221,8 +221,10 @@ namespace LoaderTests
             Assert.True(hub.Load(TestPaths.ConfDir, Tableau.Format.JSON, options));
 
             var data = hub.GetPatchMergeConf()!.Data();
-            // OnlyPatch starts from an empty message, so Name must come from a patch file.
-            Assert.False(string.IsNullOrEmpty(data.Name));
+            // OnlyPatch starts from an empty message; Name must come from the
+            // patches: patchconf sets name="orange"; patchconf2 carries no name,
+            // so it survives.
+            Assert.Equal("orange", data.Name);
         }
     }
 }

@@ -51,14 +51,12 @@ func Test_ItemConf_OrderedMap(t *testing.T) {
 		t.Fatal("ItemConf ordered map is empty")
 	}
 
-	// keys ascending by id
+	// keys ascending by id; prev starts at 0 so iteration 1 (key >= 0) holds.
 	prev := uint32(0)
-	first := true
 	orderedMap.Range(func(key uint32, _ *protoconf.ItemConf_Item) bool {
-		if !first && key < prev {
+		if key < prev {
 			t.Errorf("ItemConf ordered map keys not ascending: %d after %d", key, prev)
 		}
-		first = false
 		prev = key
 		return true
 	})

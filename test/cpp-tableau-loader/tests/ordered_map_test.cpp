@@ -31,13 +31,33 @@ TEST_F(HubFixture, ActivityConf_GetOrderedMap_Traverses) {
     EXPECT_GE(kv.first, prev) << "ordered map keys not ascending";
     prev = kv.first;
 
-    // 2nd level sub-map is reachable.
+    // 2nd level sub-map is reachable and non-empty (every activity has chapters).
     const auto& chapter_ordered_map = kv.second.first;
+    EXPECT_FALSE(chapter_ordered_map.empty()) << "activity " << kv.first << " has no chapters";
     for (const auto& kv2 : chapter_ordered_map) {
       (void)kv2.first;
       (void)kv2.second.second;
     }
   }
+}
+
+// Hub::GetOrderedMap<Mgr, T>(leveled-keys): the typed, key-scoped overloads that
+// return a specific sub-tree level directly (1-key -> chapter map, 3-key -> rank
+// map). These complement the no-arg conf->GetOrderedMap() traversal above.
+
+TEST_F(HubFixture, ActivityConf_GetOrderedMap_Chapter) {
+  const auto* chapter_ordered_map =
+      Hub::Instance().GetOrderedMap<protoconf::ActivityConfMgr,
+                                    tableau::ActivityConf::OrderedMap_Activity_ChapterMap>(100001);
+  ASSERT_NE(chapter_ordered_map, nullptr);
+  EXPECT_FALSE(chapter_ordered_map->empty());
+}
+
+TEST_F(HubFixture, ActivityConf_GetOrderedMap_Rank) {
+  const auto* rank_ordered_map =
+      Hub::Instance().GetOrderedMap<protoconf::ActivityConfMgr, tableau::ActivityConf::OrderedMap_int32Map>(100001, 1,
+                                                                                                            2);
+  ASSERT_NE(rank_ordered_map, nullptr);
 }
 
 // ---- ItemConf: 1st-level ordered map ----
@@ -50,14 +70,10 @@ TEST_F(HubFixture, ItemConf_GetOrderedMap_Ascending) {
   ASSERT_NE(ordered_map, nullptr);
   EXPECT_FALSE(ordered_map->empty());
 
-  // keys ascending by id
+  // keys ascending by id; prev starts at 0 so iteration 1 (kv.first >= 0) holds.
   uint32_t prev = 0;
-  bool first = true;
   for (const auto& kv : *ordered_map) {
-    if (!first) {
-      EXPECT_GE(kv.first, prev) << "ItemConf ordered map keys not ascending";
-    }
-    first = false;
+    EXPECT_GE(kv.first, prev) << "ItemConf ordered map keys not ascending";
     prev = kv.first;
   }
 }

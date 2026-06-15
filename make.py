@@ -971,15 +971,21 @@ def _prepend_path(directory: Path) -> None:
     parts = current.split(sep) if current else []
     # Case-insensitive comparison on Windows; exact match elsewhere.
     norm = (lambda s: s.lower()) if os.name == "nt" else (lambda s: s)
-    if any(norm(x) == norm(p) for x in parts if x):
-        return
-    os.environ["PATH"] = p + (sep + current if current else "")
+    already_on_path = any(norm(x) == norm(p) for x in parts if x)
     # GitHub Actions: persist the new entry across subsequent steps so that
     # tools installed by `make.py setup` are visible to later `run:` commands.
+    # This must run even when `directory` is already on the in-process PATH:
+    # being present on *this* process's PATH (e.g. because an earlier setup
+    # call already prepended it) says nothing about whether subsequent GitHub
+    # Actions steps — which are fresh processes — will see it. So append to
+    # GITHUB_PATH before the early-return that skips the in-process update.
     gha_path = os.environ.get("GITHUB_PATH")
     if gha_path:
         with open(gha_path, "a", encoding="utf-8") as fh:
             fh.write(p + "\n")
+    if already_on_path:
+        return
+    os.environ["PATH"] = p + (sep + current if current else "")
 
 
 def cmd_setup(args, ctx: "Context") -> int:

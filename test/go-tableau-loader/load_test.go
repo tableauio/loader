@@ -249,11 +249,10 @@ func Test_Patch(t *testing.T) {
 		got := h.GetPatchMergeConf().Data()
 		t.Logf("PatchMergeConf(OnlyPatch): %v", got)
 
-		// Without main-file content, 'name' should be the value coming from the last
-		// non-replace merge (still merged from patches), and replace_* fields should
-		// equal the last patch only.
-		if got.GetName() == "" {
-			t.Fatalf("expected non-empty Name from patches, got: %q", got.GetName())
+		// Without main-file content, 'name' must come from the patches:
+		// patchconf sets name="orange"; patchconf2 carries no name, so it survives.
+		if got.GetName() != "orange" {
+			t.Fatalf("ModeOnlyPatch: expected Name=%q from patches, got: %q", "orange", got.GetName())
 		}
 	})
 }

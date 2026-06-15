@@ -158,8 +158,9 @@ TEST_F(PatchTest, ModeOnlyPatch_AppliesPatchesFromEmpty) {
   ASSERT_TRUE(Hub::Instance().Load(test::TestPaths::Conf().string() + "/", tableau::Format::kJSON, options));
   auto mgr = Hub::Instance().Get<protoconf::PatchMergeConfMgr>();
   ASSERT_NE(mgr, nullptr);
-  // OnlyPatch starts from an empty message; Name must come from a patch file.
-  EXPECT_FALSE(mgr->Data().name().empty());
+  // OnlyPatch starts from an empty message; Name must come from the patches.
+  // patchconf sets name="orange"; patchconf2 carries no name, so it survives.
+  EXPECT_EQ("orange", mgr->Data().name());
 }
 
 }  // namespace
