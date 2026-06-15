@@ -5,17 +5,71 @@ using Xunit;
 namespace LoaderTests
 {
     /// <summary>
-    /// Patch-loading tests, mirroring the same scenarios in:
-    ///   - Go:  test/go-tableau-loader/main_test.go::Test_Patch
-    ///   - C++: test/cpp-tableau-loader/tests/patch_test.cpp
+    /// Load block: hub loading, filtering, custom conf (ProcessAfterLoadAll),
+    /// binary-format loading and patch loading. Mirrors the same scenarios in:
+    ///   - Go:  test/go-tableau-loader/load_test.go
+    ///   - C++: test/cpp-tableau-loader/tests/load_test.cpp
+    ///   - TS:  test/ts-tableau-loader/tests/load.test.ts
     /// </summary>
     [Collection("HubCollection")]
-    public class PatchTests
+    public class LoadTests
     {
-        // Depending on HubFixture guarantees Tableau.Registry.Init() has run
-        // exactly once before any test in this class executes, and the
-        // collection serialization prevents concurrent registry mutation.
-        public PatchTests(HubFixture _) { }
+        private readonly Tableau.Hub _hub;
+
+        public LoadTests(HubFixture fixture)
+        {
+            _hub = fixture.Hub;
+        }
+
+        // ---- Load & Filter ----
+
+        [Fact]
+        public void Load_AllMessagers_Succeeds()
+        {
+            var map = _hub.GetMessagerMap();
+            Assert.NotNull(map);
+            Assert.NotEmpty(map);
+        }
+
+        [Fact]
+        public void TaskConf_FilteredOut_IsNull()
+        {
+            // HubFixture filters out TaskConf via HubOptions.Filter.
+            var taskConf = _hub.Get<Tableau.TaskConf>();
+            Assert.Null(taskConf);
+        }
+
+        // ---- CustomConf ----
+
+        [Fact]
+        public void CustomItemConf_ProcessAfterLoadAll_ResolvesSpecialItem()
+        {
+            var customItemConf = _hub.Get<Custom.CustomItemConf>();
+            Assert.NotNull(customItemConf);
+            Assert.False(string.IsNullOrEmpty(customItemConf!.GetSpecialItemName()));
+        }
+
+        // ---- Bin ----
+
+        [Fact]
+        public void HeroConf_LoadFromBin_Succeeds()
+        {
+            var heroConf = new Tableau.HeroConf();
+            bool ok = heroConf.Load(TestPaths.BinDir, Tableau.Format.Bin);
+            Assert.True(ok, $"failed to load HeroConf.binpb: {Tableau.Util.GetErrMsg()}");
+            Assert.NotNull(heroConf.Data());
+        }
+
+        [Fact]
+        public void HeroConf_LoadFromMissingDir_Fails()
+        {
+            var heroConf = new Tableau.HeroConf();
+            string missingDir = Path.Combine(TestPaths.TestdataDir, "notexist");
+            bool ok = heroConf.Load(missingDir, Tableau.Format.Bin);
+            Assert.False(ok);
+        }
+
+        // ---- Patch ----
 
         [Fact]
         public void PatchConf_RecursivePatchConf_MatchesExpectedResult()
@@ -58,7 +112,7 @@ namespace LoaderTests
         }
 
         [Fact]
-        public void PatchConf2_DifferentFormat_PatchPathsOverride()
+        public void PatchConf2_PatchPathsOverride_UsesJson()
         {
             var hub = new Tableau.Hub();
             var options = new Tableau.Load.Options
@@ -69,10 +123,10 @@ namespace LoaderTests
                 {
                     ["PatchMergeConf"] = new Tableau.Load.MessagerOptions
                     {
-                        // .txtpb override (note: C# loader currently supports JSON/Bin only;
-                        // this test validates that PatchPaths is honored even though the
-                        // unmarshal step would surface an error for unsupported formats.)
-                        // We instead point to .json to keep the format-supported path.
+                        // The C++/Go mirrors override with a .txtpb path, but the C#
+                        // loader currently supports JSON/Bin only, so this test points
+                        // PatchPaths at the .json file instead. It still validates that
+                        // a MessagerOptions.PatchPaths override is honored.
                         PatchPaths = new List<string>
                         {
                             Path.Combine(TestPaths.PatchConf2Dir, "PatchMergeConf.json"),
@@ -167,8 +221,10 @@ namespace LoaderTests
             Assert.True(hub.Load(TestPaths.ConfDir, Tableau.Format.JSON, options));
 
             var data = hub.GetPatchMergeConf()!.Data();
-            // OnlyPatch starts from an empty message, so Name must come from a patch file.
-            Assert.False(string.IsNullOrEmpty(data.Name));
+            // OnlyPatch starts from an empty message; Name must come from the
+            // patches: patchconf sets name="orange"; patchconf2 carries no name,
+            // so it survives.
+            Assert.Equal("orange", data.Name);
         }
     }
 }

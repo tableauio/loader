@@ -1,76 +1,21 @@
 package loader_test
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/tableauio/loader/test/go-tableau-loader/protoconf"
 	"github.com/tableauio/loader/test/go-tableau-loader/protoconf/loader"
 )
 
-// fruitType constants matching FruitConf.json / Fruit6Conf.json
+// fruitType constants matching FruitConf.json / Fruit6Conf.json. Shared by the
+// get and index test blocks.
 var (
 	fruitTypeApple  = int32(protoconf.FruitType_FRUIT_TYPE_APPLE)
 	fruitTypeOrange = int32(protoconf.FruitType_FRUIT_TYPE_ORANGE)
 	fruitTypeBanana = int32(protoconf.FruitType_FRUIT_TYPE_BANANA)
 )
 
-// ---- FruitConf ----
-
-func Test_FruitConf_Get1(t *testing.T) {
-	h := prepareHub(t)
-	conf := h.GetFruitConf()
-
-	// found
-	fruit, err := conf.Get1(fruitTypeApple)
-	if err != nil {
-		t.Fatalf("Get1(%d) unexpected error: %v", fruitTypeApple, err)
-	}
-	if fruit == nil {
-		t.Fatal("Get1: returned nil fruit")
-	}
-
-	// not found
-	_, err = conf.Get1(999)
-	if err == nil {
-		t.Fatal("Get1(999): expected ErrNotFound, got nil")
-	}
-	if !errors.Is(err, loader.ErrNotFound) {
-		t.Fatalf("Get1(999): expected ErrNotFound, got: %v", err)
-	}
-}
-
-func Test_FruitConf_Get2(t *testing.T) {
-	h := prepareHub(t)
-	conf := h.GetFruitConf()
-
-	// found: APPLE -> item 1001
-	item, err := conf.Get2(fruitTypeApple, 1001)
-	if err != nil {
-		t.Fatalf("Get2(%d, 1001) unexpected error: %v", fruitTypeApple, err)
-	}
-	if item.GetId() != 1001 {
-		t.Errorf("Get2: expected id=1001, got %d", item.GetId())
-	}
-	if item.GetPrice() != 10 {
-		t.Errorf("Get2: expected price=10, got %d", item.GetPrice())
-	}
-
-	// not found: wrong item id
-	_, err = conf.Get2(fruitTypeApple, 9999)
-	if err == nil {
-		t.Fatal("Get2(apple, 9999): expected ErrNotFound, got nil")
-	}
-	if !errors.Is(err, loader.ErrNotFound) {
-		t.Fatalf("Get2(apple, 9999): expected ErrNotFound, got: %v", err)
-	}
-
-	// not found: wrong fruitType
-	_, err = conf.Get2(999, 1001)
-	if !errors.Is(err, loader.ErrNotFound) {
-		t.Fatalf("Get2(999, 1001): expected ErrNotFound, got: %v", err)
-	}
-}
+// ---- FruitConf: leveled index (Price<ID>) finders ----
 
 func Test_FruitConf_FindItem(t *testing.T) {
 	h := prepareHub(t)
@@ -189,6 +134,8 @@ func Test_FruitConf_FindItemMap1(t *testing.T) {
 	}
 }
 
+// ---- FruitConf: ordered index (Price<ID>@OrderedFruit) finders ----
+
 func Test_FruitConf_FindOrderedFruit(t *testing.T) {
 	h := prepareHub(t)
 	conf := h.GetFruitConf()
@@ -262,7 +209,7 @@ func Test_FruitConf_FindOrderedFruit1(t *testing.T) {
 		t.Errorf("FindOrderedFruit1(orange, 25): expected id=2002, got %d", items[0].GetId())
 	}
 
-	// ORANGE(2) -> price=15 -> items [2001, 2002], verify IDs are in ascending order
+	// ORANGE(2) -> price=15 -> items, verify IDs are in ascending order
 	items = conf.FindOrderedFruit1(fruitTypeOrange, 15)
 	if len(items) != 1 {
 		t.Fatalf("FindOrderedFruit1(orange, 15): expected 1 item, got %d", len(items))
@@ -301,27 +248,7 @@ func Test_FruitConf_FindFirstOrderedFruit1(t *testing.T) {
 	}
 }
 
-// ---- Fruit6Conf ----
-
-func Test_Fruit6Conf_Get1(t *testing.T) {
-	h := prepareHub(t)
-	conf := h.GetFruit6Conf()
-
-	// found
-	fruit, err := conf.Get1(fruitTypeApple)
-	if err != nil {
-		t.Fatalf("Get1(%d) unexpected error: %v", fruitTypeApple, err)
-	}
-	if fruit == nil {
-		t.Fatal("Get1: returned nil fruit")
-	}
-
-	// not found
-	_, err = conf.Get1(999)
-	if !errors.Is(err, loader.ErrNotFound) {
-		t.Fatalf("Get1(999): expected ErrNotFound, got: %v", err)
-	}
-}
+// ---- Fruit6Conf (Go-specific extra) ----
 
 func Test_Fruit6Conf_FindItem(t *testing.T) {
 	h := prepareHub(t)
@@ -381,10 +308,10 @@ func Test_Fruit6Conf_FindItem1(t *testing.T) {
 	// ORANGE(2) -> price=15 -> item 2001
 	items := conf.FindItem1(fruitTypeOrange, 15)
 	if len(items) != 3 {
-		t.Fatalf("FindItem1(orange, 15): expected 1 item, got %d", len(items))
+		t.Fatalf("FindItem1(orange, 15): expected 3 items, got %d", len(items))
 	}
 	if items[0].GetId() != 2000 {
-		t.Errorf("FindItem1(orange, 15): expected id=2001, got %d", items[0].GetId())
+		t.Errorf("FindItem1(orange, 15): expected id=2000, got %d", items[0].GetId())
 	}
 
 	// wrong fruitType
@@ -505,10 +432,10 @@ func Test_Fruit6Conf_FindOrderedFruit1(t *testing.T) {
 		t.Errorf("FindOrderedFruit1(orange, 25): expected id=2002, got %d", items[0].GetId())
 	}
 
-	// ORANGE(2) -> price=15 -> items [2001, 2002], verify IDs are in ascending order
+	// ORANGE(2) -> price=15 -> items, verify IDs are in ascending order
 	items = conf.FindOrderedFruit1(fruitTypeOrange, 15)
 	if len(items) != 3 {
-		t.Fatalf("FindOrderedFruit1(orange, 15): expected 2 items, got %d", len(items))
+		t.Fatalf("FindOrderedFruit1(orange, 15): expected 3 items, got %d", len(items))
 	}
 	for i := 1; i < len(items); i++ {
 		if items[i].GetId() < items[i-1].GetId() {
@@ -539,5 +466,103 @@ func Test_Fruit6Conf_FindFirstOrderedFruit1(t *testing.T) {
 	item = conf.FindFirstOrderedFruit1(fruitTypeBanana, 999)
 	if item != nil {
 		t.Errorf("FindFirstOrderedFruit1(banana, 999): expected nil, got %v", item)
+	}
+}
+
+// ---- ItemConf: single-column index ----
+
+func Test_ItemConf_FindItemInfoMap(t *testing.T) {
+	h := prepareHub(t)
+	conf := h.GetItemConf()
+	if conf == nil {
+		t.Fatal("ItemConf is nil")
+	}
+	if len(conf.FindItemInfoMap()) == 0 {
+		t.Fatal("FindItemInfoMap: expected non-empty map")
+	}
+}
+
+// ---- ItemConf: multi-column (composite-key) indexes ----
+// Mirrors smoke.ts cases 15 (ParamExtType ordered index) and 16 (AwardItem index).
+
+// Test_ItemConf_FindParamExtType covers the ordered multi-column index
+// (Param,ExtType)<ID>@ParamExtType: a sorted map whose composite keys round-trip
+// through the point-lookup finder.
+func Test_ItemConf_FindParamExtType(t *testing.T) {
+	h := prepareHub(t)
+	conf := h.GetItemConf()
+	if conf == nil {
+		t.Fatal("ItemConf is nil")
+	}
+
+	// apple (id=1) has param_list [1,2,3] x extTypeList [APPLE, ORANGE] -> 6 buckets,
+	// and it is the only item carrying both columns, so the map has exactly 6 entries.
+	m := conf.FindParamExtTypeMap()
+	if m == nil {
+		t.Fatal("FindParamExtTypeMap: returned nil")
+	}
+	if m.Size() != 6 {
+		t.Errorf("FindParamExtTypeMap: expected size=6, got %d", m.Size())
+	}
+
+	// Keys are sorted ascending by (param, extType); each key round-trips through
+	// the point-lookup finder and agrees with the map's stored value list.
+	prevParam := int32(-1)
+	m.Range(func(key loader.ItemConf_OrderedIndex_ParamExtTypeKey, values []*protoconf.ItemConf_Item) bool {
+		if key.Param < prevParam {
+			t.Errorf("FindParamExtTypeMap: keys not ascending by param: %d after %d", key.Param, prevParam)
+		}
+		prevParam = key.Param
+		if got := conf.FindParamExtType(key.Param, key.ExtType); len(got) != len(values) {
+			t.Errorf("FindParamExtType(%d, %v): point-lookup (%d) disagrees with map iteration (%d)",
+				key.Param, key.ExtType, len(got), len(values))
+		}
+		return true
+	})
+
+	// A concrete known bucket: (param=1, extType=APPLE) -> apple.
+	items := conf.FindParamExtType(1, protoconf.FruitType_FRUIT_TYPE_APPLE)
+	if len(items) != 1 {
+		t.Fatalf("FindParamExtType(1, APPLE): expected 1 item, got %d", len(items))
+	}
+	if items[0].GetName() != "apple" {
+		t.Errorf("FindParamExtType(1, APPLE): expected name=apple, got %s", items[0].GetName())
+	}
+
+	// Missing key -> empty slice.
+	if items := conf.FindParamExtType(999, protoconf.FruitType_FRUIT_TYPE_APPLE); len(items) != 0 {
+		t.Errorf("FindParamExtType(999, APPLE): expected 0 items, got %d", len(items))
+	}
+}
+
+// Test_ItemConf_FindAwardItem covers the non-ordered multi-column index
+// (ID,Name)<Type,UseEffectType>@AwardItem.
+func Test_ItemConf_FindAwardItem(t *testing.T) {
+	h := prepareHub(t)
+	conf := h.GetItemConf()
+	if conf == nil {
+		t.Fatal("ItemConf is nil")
+	}
+
+	m := conf.FindAwardItemMap()
+	if m == nil {
+		t.Fatal("FindAwardItemMap: returned nil")
+	}
+
+	// Every map entry round-trips through the point-lookup finder.
+	for key, values := range m {
+		if got := conf.FindAwardItem(key.Id, key.Name); len(got) != len(values) {
+			t.Errorf("FindAwardItem(%d, %q): point-lookup (%d) disagrees with map iteration (%d)",
+				key.Id, key.Name, len(got), len(values))
+		}
+	}
+
+	// apple is keyed by (id=1, name="apple").
+	items := conf.FindAwardItem(1, "apple")
+	if len(items) != 1 {
+		t.Fatalf("FindAwardItem(1, apple): expected 1 item, got %d", len(items))
+	}
+	if items[0].GetId() != 1 {
+		t.Errorf("FindAwardItem(1, apple): expected id=1, got %d", items[0].GetId())
 	}
 }

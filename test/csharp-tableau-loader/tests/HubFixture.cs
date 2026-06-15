@@ -5,6 +5,18 @@ using Xunit;
 namespace LoaderTests
 {
     /// <summary>
+    /// fruitType values match FruitConf.json (== Protoconf.FruitType enum
+    /// values). Centralized here so the Get and Index test blocks share a
+    /// single definition, mirroring C++ (hub_fixture.h) and Go (index_test.go).
+    /// </summary>
+    public static class FruitTypes
+    {
+        public const int Apple = (int)Protoconf.FruitType.Apple;
+        public const int Orange = (int)Protoconf.FruitType.Orange;
+        public const int Banana = (int)Protoconf.FruitType.Banana;
+    }
+
+    /// <summary>
     /// Common test paths. xUnit runs tests from the build output directory
     /// (e.g. bin/Debug/net8.0/), so we resolve testdata relative to the source
     /// tree by walking up until "testdata" is found.
