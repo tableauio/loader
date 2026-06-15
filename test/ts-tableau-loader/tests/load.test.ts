@@ -5,7 +5,7 @@
 //   - C++: test/cpp-tableau-loader/tests/load_test.cpp
 import { equals } from "@bufbuild/protobuf";
 
-import { Hub } from "../tableau/hub.pc.js";
+import { Hub, Registry } from "../tableau/hub.pc.js";
 import { Format, LoadMode } from "../tableau/load.pc.js";
 import {
   PatchMergeConf,
@@ -14,6 +14,8 @@ import {
 } from "../tableau/patch_conf.pc.js";
 import { HeroConf } from "../tableau/hero_conf.pc.js";
 import * as protoconf from "../tableau/barrel/protoconf.pc.js";
+
+import { CustomItemConf, CustomItemConfName } from "../custom/custom_item_conf.js";
 
 import {
   assert,
@@ -28,6 +30,11 @@ import {
   prepareHub,
 } from "./harness.js";
 
+// Register the hand-written CustomItemConf before any hub is built, so the
+// shared hub (and any hub loaded afterwards) includes it. Mirrors Go's init()
+// Register, C#'s HubFixture registration and C++'s InitCustomMessager.
+Registry.register(CustomItemConf);
+
 export function run(): void {
   // ---- Load ----
 
@@ -36,6 +43,21 @@ export function run(): void {
     const hub = prepareHub();
     assert.ok(hub.getItemConf());
     assert.ok(hub.getActivityConf());
+  });
+
+  // ---- CustomConf ----
+
+  // CustomItemConf is a hand-written messager: it has no file of its own and
+  // resolves a "special" item from ItemConf via processAfterLoadAll. Mirrors
+  // Go's Test_CustomItemConf and C#/C++'s
+  // CustomItemConf_ProcessAfterLoadAll_ResolvesSpecialItem.
+  check("CustomItemConf processAfterLoadAll", () => {
+    const hub = prepareHub();
+    const custom = hub.getMessager(CustomItemConfName) as CustomItemConf | undefined;
+    assert.ok(custom);
+    // ItemConf item 1 is "apple", so the resolved special item name is non-empty.
+    assert.notEqual(custom!.getSpecialItemName(), "");
+    assert.equal(custom!.getSpecialItemName(), "apple");
   });
 
   // Hub typed accessor for an unloaded-by-filter messager returns undefined.
@@ -78,6 +100,14 @@ export function run(): void {
     // itemMap key 999 contributed by the second patch (merge, not replace).
     assert.ok(pm.get1(999));
     assert.ok(pm.get1(1));
+    // itemMap merges field-by-field, so the main file's key 2 survives.
+    assert.ok(pm.get1(2));
+    // replaceItemMap has the field-level PATCH_REPLACE option: the last patch
+    // that carries it fully replaces the field. patchconf2 provides {1, 999},
+    // so key 999 is present while the main file's key 2 is dropped (replace,
+    // not merge). Mirrors Go/C#/C++'s ReplaceItemMap[999] assertion.
+    assert.ok(pm.data().replaceItemMap[999]);
+    assert.equal(pm.data().replaceItemMap[2], undefined);
   });
 
   // LoadMode.ONLY_MAIN ignores the patch files.

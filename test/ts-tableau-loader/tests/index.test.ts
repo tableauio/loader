@@ -114,5 +114,7 @@ export function run(): void {
     }
     // apple is keyed by (id=1, name="apple")
     assert.deepEqual(m.get([1, "apple"])?.map((i) => i.id), [1]);
+    // findFirst* variant returns the first match for the same key.
+    assert.equal(item!.findFirstAwardItem(1, "apple")?.id, 1);
   });
 }

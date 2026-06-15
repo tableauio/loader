@@ -9,5 +9,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["tableau", "protoconf", "tests"]
+  "include": ["tableau", "protoconf", "custom", "tests"]
 }
