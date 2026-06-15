@@ -18,11 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        # Pin to the active LTS line (Node 20), matching NODE_VERSION used by
-        # the devcontainer and make.py for local/CI parity.
-        node-version: ["20"]
 
-    name: test (${{ matrix.os }}, node ${{ matrix.node-version }})
+    name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
 
@@ -36,9 +33,6 @@ jobs:
         uses: ./.github/actions/load-versions
 
       - name: Install Go
-        # buf-generate runs the Go protoc plugins (incl.
-        # protoc-gen-ts-tableau-loader) via `go run`, so Go is required even
-        # though the harness under test is TypeScript.
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
@@ -48,7 +42,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: test/ts-tableau-loader/package-lock.json
 
@@ -61,7 +55,4 @@ jobs:
         run: python3 make.py setup --lang go
 
       - name: Test
-        # `make.py test --lang ts` runs `buf generate` (Go plugins + protobuf-es
-        # remote plugin), `npm ci`, `npm run check` (tsc --noEmit type check),
-        # then `npm run smoke` (tsx tests/smoke.ts).
         run: python3 make.py test --lang ts
