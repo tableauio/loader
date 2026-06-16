@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-ts-tableau-loader/helper"
+	"github.com/tableauio/loader/internal/genhelper"
 	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/loader/internal/loadutil"
 	"github.com/tableauio/loader/internal/options"
@@ -52,11 +53,9 @@ func (x *indexGen) initLevelKeys() {
 				break
 			}
 			paramName := helper.ParseMapFieldNameAsFuncParam(fd)
-			x.keys = x.keys.AddMapKey(helper.MapKey{
-				ParamType: helper.ParseMapKey(fd.MapKey(), paramName).ParamType,
-				Name:      paramName,
-				Fd:        fd,
-			})
+			key := helper.ParseMapKey(fd.MapKey(), paramName)
+			key.Fd = fd
+			x.keys = x.keys.AddMapKey(key)
 		}
 	}
 }
@@ -147,8 +146,10 @@ func (x *indexGen) params(idx *index.LevelIndex) helper.MapKeySlice {
 	var keys helper.MapKeySlice
 	for _, field := range idx.ColFields {
 		keys = keys.AddMapKey(helper.MapKey{
-			ParamType: x.keyTSType(field.FD),
-			Name:      helper.IndexFieldNameAsFuncParam(field.FD),
+			MapKey: genhelper.MapKey{
+				Type: x.keyTSType(field.FD),
+				Name: helper.IndexFieldNameAsFuncParam(field.FD),
+			},
 		})
 	}
 	return keys
@@ -193,7 +194,7 @@ func (x *indexGen) aliasName(idx *index.LevelIndex, ordered bool) string {
 // ItemConf.Index_AwardItemMap), so field declarations and finder signatures
 // reference the readable named type rather than an inline Map/TupleKeyMap.
 func (x *indexGen) indexType(idx *index.LevelIndex, ordered bool) string {
-	return helper.MessagerName(x.message.Desc) + "." + x.aliasName(idx, ordered)
+	return string(x.message.Desc.Name()) + "." + x.aliasName(idx, ordered)
 }
 
 // keyAliasName returns the bare composite-key tuple alias name for a
@@ -210,7 +211,7 @@ func (x *indexGen) keyAliasName(idx *index.LevelIndex, ordered bool) string {
 // ItemConf.Index_AwardItemKey), used to explicitly parameterize TupleKeyMap at
 // its (invariant-in-K) construction sites.
 func (x *indexGen) keyAliasType(idx *index.LevelIndex, ordered bool) string {
-	return helper.MessagerName(x.message.Desc) + "." + x.keyAliasName(idx, ordered)
+	return string(x.message.Desc.Name()) + "." + x.keyAliasName(idx, ordered)
 }
 
 // keyTupleType returns the labeled readonly tuple type of a multi-column
@@ -230,7 +231,7 @@ func (x *indexGen) keyTupleType(idx *index.LevelIndex) string {
 func (x *indexGen) upperKeyTupleType(i int) string {
 	var parts []string
 	for _, k := range x.keys[:i] {
-		parts = append(parts, k.Name+": "+k.ParamType)
+		parts = append(parts, k.Name+": "+k.Type)
 	}
 	return "readonly [" + strings.Join(parts, ", ") + "]"
 }
@@ -248,7 +249,7 @@ func (x *indexGen) upperKeyAliasName(i int) string {
 // (e.g. ActivityConf.LevelIndex_Activity_ChapterKey), used to type and
 // construct the i>=2 leveled TupleKeyMap containers.
 func (x *indexGen) upperKeyAliasType(i int) string {
-	return helper.MessagerName(x.message.Desc) + "." + x.upperKeyAliasName(i)
+	return string(x.message.Desc.Name()) + "." + x.upperKeyAliasName(i)
 }
 
 // newLeafContainer returns the construction expression for a multi-column
@@ -276,7 +277,7 @@ func (x *indexGen) orderedMapValueAliasOf(mapFd protoreflect.FieldDescriptor) st
 // orderedMapTypeOf returns the messager-qualified ordered-map alias for a map
 // field (e.g. ActivityConf.OrderedMap_Activity_ChapterMap).
 func (x *indexGen) orderedMapTypeOf(mapFd protoreflect.FieldDescriptor) string {
-	return helper.MessagerName(x.message.Desc) + "." + x.orderedMapAliasOf(mapFd)
+	return string(x.message.Desc.Name()) + "." + x.orderedMapAliasOf(mapFd)
 }
 
 // orderedMapType returns the messager-qualified top-level (1st-level) ordered-map
@@ -302,7 +303,7 @@ func (x *indexGen) genOrderedMapAliases(md protoreflect.MessageDescriptor, depth
 	if fd.MapValue().Kind() == protoreflect.MessageKind {
 		x.genOrderedMapAliases(fd.MapValue().Message(), depth+1)
 	}
-	k := helper.ParseMapKey(fd.MapKey(), "").ParamType
+	k := helper.ParseMapKey(fd.MapKey(), "").Type
 	alias := x.orderedMapAliasOf(fd)
 	ordinal := loadutil.Ordinal(depth)
 	if nextFd != nil {
@@ -327,7 +328,7 @@ func (x *indexGen) GenTypeAliases() {
 	if !x.NeedGenerate() {
 		return
 	}
-	name := helper.MessagerName(x.message.Desc)
+	name := string(x.message.Desc.Name())
 	x.g.P()
 	x.g.P("// Type aliases for the index / ordered index / ordered map containers,")
 	x.g.P("// mirroring the named container types of the other-language loaders so the")
@@ -440,7 +441,7 @@ func (x *indexGen) genContainerDecls(lm *index.LevelMessage, idx *index.LevelInd
 	// the call sites.
 	for i := 1; i < lm.LeveledContainerDepth(); i++ {
 		if i == 1 {
-			x.g.P(helper.Indent(1), x.containerField(idx, ordered, i), ": Map<", x.keys[0].ParamType, ", ", at, "> = new Map();")
+			x.g.P(helper.Indent(1), x.containerField(idx, ordered, i), ": Map<", x.keys[0].Type, ", ", at, "> = new Map();")
 		} else {
 			ut := x.upperKeyAliasType(i)
 			// The field carries the full TupleKeyMap<ut, at> annotation, so the
@@ -506,7 +507,7 @@ func (x *indexGen) genOrderedMapLoaderLevel(md protoreflect.MessageDescriptor, d
 // mapKeyConv converts a string object-key (from Object.entries) into the proper
 // map key type.
 func (x *indexGen) mapKeyConv(keyFd protoreflect.FieldDescriptor, v string) string {
-	switch helper.ParseMapKey(keyFd, "").ParamType {
+	switch helper.ParseMapKey(keyFd, "").Type {
 	case "number":
 		return "Number(" + v + ")"
 	case "bigint":
