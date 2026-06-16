@@ -4,10 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/tableauio/tableau/proto/tableaupb"
-	"google.golang.org/protobuf/proto"
+	"github.com/tableauio/loader/internal/options"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 var indexRegexp *regexp.Regexp
@@ -77,8 +75,7 @@ func (index *Index) String() string {
 
 // parse worksheet option index
 func ParseWSOptionIndex(md protoreflect.MessageDescriptor) ([]*Index, []*Index) {
-	opts := md.Options().(*descriptorpb.MessageOptions)
-	wsOpts := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
+	wsOpts := options.GetWorksheetOptions(md)
 	return parseIndexFrom(wsOpts.Index), parseIndexFrom(wsOpts.OrderedIndex)
 }
 

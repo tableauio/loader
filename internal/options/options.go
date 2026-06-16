@@ -23,11 +23,24 @@ const (
 	LangCPP Language = "cpp"
 	LangGO  Language = "go"
 	LangCS  Language = "cs"
+	LangTS  Language = "ts"
 )
 
-func NeedGenOrderedMap(md protoreflect.MessageDescriptor, lang Language) bool {
+// GetWorksheetOptions returns the worksheet options of the message descriptor.
+// It returns nil if the message is not a tableau worksheet.
+func GetWorksheetOptions(md protoreflect.MessageDescriptor) *tableaupb.WorksheetOptions {
 	opts := md.Options().(*descriptorpb.MessageOptions)
-	wsOpts := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
+	return proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
+}
+
+// IsWorksheet reports whether the message is a tableau worksheet, i.e. it has
+// the tableaupb.E_Worksheet extension set.
+func IsWorksheet(md protoreflect.MessageDescriptor) bool {
+	return GetWorksheetOptions(md) != nil
+}
+
+func NeedGenOrderedMap(md protoreflect.MessageDescriptor, lang Language) bool {
+	wsOpts := GetWorksheetOptions(md)
 	if !wsOpts.GetOrderedMap() {
 		// Not an ordered map.
 		return false
@@ -42,8 +55,7 @@ func NeedGenOrderedMap(md protoreflect.MessageDescriptor, lang Language) bool {
 }
 
 func NeedGenIndex(md protoreflect.MessageDescriptor, lang Language) bool {
-	opts := md.Options().(*descriptorpb.MessageOptions)
-	wsOpts := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
+	wsOpts := GetWorksheetOptions(md)
 	if len(wsOpts.GetIndex()) == 0 {
 		// No index.
 		return false
@@ -58,8 +70,7 @@ func NeedGenIndex(md protoreflect.MessageDescriptor, lang Language) bool {
 }
 
 func NeedGenOrderedIndex(md protoreflect.MessageDescriptor, lang Language) bool {
-	opts := md.Options().(*descriptorpb.MessageOptions)
-	wsOpts := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
+	wsOpts := GetWorksheetOptions(md)
 	if len(wsOpts.GetOrderedIndex()) == 0 {
 		// No index.
 		return false
@@ -85,9 +96,7 @@ func NeedGenFile(f *protogen.File) bool {
 	}
 
 	for _, message := range f.Messages {
-		opts := message.Desc.Options().(*descriptorpb.MessageOptions)
-		worksheet := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
-		if worksheet != nil {
+		if IsWorksheet(message.Desc) {
 			return true
 		}
 	}

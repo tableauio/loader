@@ -89,11 +89,10 @@ namespace LoaderTests
                 }
             }
 
-            var options = new Tableau.HubOptions
-            {
-                Filter = name => name != "TaskConf",
-            };
-            Hub = new Tableau.Hub(options);
+            // Full load (no filter) so the shared fixture is equivalent to the
+            // Go prepareHub / C++ HubFixture / TS prepareHub. The HubOptions.Filter
+            // feature is covered separately by LoadTests.Hub_Filter_LoadsOnlyMatchingMessagers.
+            Hub = new Tableau.Hub();
 
             var loadOptions = new Tableau.Load.Options
             {

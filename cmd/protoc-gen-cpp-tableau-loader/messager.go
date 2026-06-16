@@ -8,11 +8,9 @@ import (
 	"github.com/tableauio/loader/cmd/protoc-gen-cpp-tableau-loader/orderedmap"
 	"github.com/tableauio/loader/internal/extensions"
 	"github.com/tableauio/loader/internal/index"
-	"github.com/tableauio/tableau/proto/tableaupb"
+	"github.com/tableauio/loader/internal/options"
 	"google.golang.org/protobuf/compiler/protogen"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 // generateMessager generates protobuf message wrapped classes
@@ -56,9 +54,7 @@ func generateHppFileContent(file *protogen.File, g *protogen.GeneratedFile) {
 	g.P("namespace ", *namespace, " {")
 	var fileMessagers []string
 	for _, message := range file.Messages {
-		opts := message.Desc.Options().(*descriptorpb.MessageOptions)
-		worksheet := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
-		if worksheet != nil {
+		if options.IsWorksheet(message.Desc) {
 			genHppMessage(g, message)
 			messagerName := string(message.Desc.Name())
 			fileMessagers = append(fileMessagers, messagerName)
@@ -142,9 +138,7 @@ func generateCppFileContent(file *protogen.File, g *protogen.GeneratedFile) {
 
 	g.P("namespace ", *namespace, " {")
 	for _, message := range file.Messages {
-		opts := message.Desc.Options().(*descriptorpb.MessageOptions)
-		worksheet := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
-		if worksheet != nil {
+		if options.IsWorksheet(message.Desc) {
 			genCppMessage(g, message)
 		}
 	}

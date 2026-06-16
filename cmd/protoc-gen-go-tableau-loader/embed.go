@@ -6,6 +6,7 @@ import (
 	"text/template"
 
 	"github.com/iancoleman/strcase"
+	"github.com/tableauio/loader/cmd/protoc-gen-go-tableau-loader/helper"
 	"github.com/tableauio/loader/internal/xproto"
 	"google.golang.org/protobuf/compiler/protogen"
 )
@@ -29,7 +30,7 @@ func generateEmbed(gen *protogen.Plugin) {
 		}
 
 		g := gen.NewGeneratedFile(strings.TrimSuffix(entry.Name(), ".tpl"), "")
-		generateCommonHeader(gen, g)
+		helper.GenerateCommonHeader(gen, g, version)
 		g.P()
 		g.P("package ", *pkg)
 		g.P()

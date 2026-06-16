@@ -32,11 +32,23 @@ namespace LoaderTests
         }
 
         [Fact]
-        public void TaskConf_FilteredOut_IsNull()
+        public void Hub_Filter_LoadsOnlyMatchingMessagers()
         {
-            // HubFixture filters out TaskConf via HubOptions.Filter.
-            var taskConf = _hub.Get<Tableau.TaskConf>();
-            Assert.Null(taskConf);
+            // A hub built with HubOptions.Filter loads only the matching
+            // messagers. Built as an isolated hub (not the shared fixture) so the
+            // shared fixture stays a full load, matching Go/C++/TS. Mirrors TS's
+            // "Hub filter" case in load.test.ts.
+            var options = new Tableau.HubOptions
+            {
+                Filter = name => name == "ItemConf",
+            };
+            var filtered = new Tableau.Hub(options);
+            var loadOptions = new Tableau.Load.Options { IgnoreUnknownFields = true };
+            bool ok = filtered.Load(TestPaths.ConfDir, Tableau.Format.JSON, loadOptions);
+            Assert.True(ok, $"filtered hub.Load failed: {Tableau.Util.GetErrMsg()}");
+
+            Assert.NotNull(filtered.GetItemConf());
+            Assert.Null(filtered.GetActivityConf());
         }
 
         // ---- CustomConf ----
