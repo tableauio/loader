@@ -119,12 +119,6 @@ jobs:
           EOF
 
       - name: Compute vcpkg cache tag
-        # Capture the hosted-runner image release into a step output so the
-        # cache key below can rotate with the toolchain. We read the runner's
-        # `ImageVersion` process env var via bash (it isn't reliably exposed
-        # through the `env` expression context) and emit it as an output, which
-        # IS a supported context and always resolves. bash is available on all
-        # hosted runners, including Windows.
         id: vcpkg_tag
         shell: bash
         run: echo "image=${ImageVersion:-noimg}" >> "$GITHUB_OUTPUT"
@@ -134,19 +128,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.VCPKG_INSTALLED_DIR }}
-          # The image release is part of the key so the cache rotates with the
-          # toolchain. vcpkg keys its build artifacts by an ABI hash that
-          # includes the compiler/SDK version; windows-latest bumps MSVC often,
-          # invalidating that ABI. With a static key, a stale-ABI hit would
-          # restore an unusable tree and never re-save it (no save on
-          # primary-key hit), making vcpkg rebuild protobuf from source on
-          # EVERY Windows run. Linux's gcc is stable so it rarely rotates.
           key: vcpkg-installed-${{ runner.os }}-${{ steps.vcpkg_tag.outputs.image }}-${{ matrix.triplet }}-${{ matrix.config.vcpkg-commit }}-${{ hashFiles('test/cpp-tableau-loader/vcpkg.json') }}
 
       - name: Export GitHub Actions cache env (for vcpkg x-gha)
-        # vcpkg's `x-gha` binary-cache provider reads these two vars to reach
-        # the Actions cache service; they aren't in step env by default. Only
-        # the modern row uses x-gha (see VCPKG_BINARY_SOURCES below).
         if: matrix.config.label == 'modern'
         uses: actions/github-script@v7
         with:
@@ -155,15 +139,6 @@ jobs:
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
       - name: Setup vcpkg & install protobuf
-        # legacy-v3 pins a 2022-era vcpkg snapshot whose binary-cache code
-        # predates the `x-gha` provider and errors with "unknown binary
-        # provider type", so it keeps binary caching cleared and relies solely
-        # on the actions/cache of vcpkg_installed/ above. modern additionally
-        # enables `x-gha`, which keys cached package binaries by ABI hash and
-        # therefore self-heals when the runner bumps its toolchain (notably
-        # MSVC on windows-latest) — the actions/cache tree can't capture the
-        # compiler ABI in its key, x-gha can. `lukka/run-vcpkg` honours a
-        # pre-set VCPKG_BINARY_SOURCES.
         env:
           VCPKG_BINARY_SOURCES: ${{ matrix.config.label == 'legacy-v3' && 'clear' || 'clear;x-gha,readwrite' }}
         uses: lukka/run-vcpkg@v11
