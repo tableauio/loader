@@ -28,11 +28,17 @@
     <a href="https://github.com/tableauio/loader/releases?q=protoc-gen-csharp-tableau-loader"><img src="https://img.shields.io/github/v/release/tableauio/loader?filter=*protoc-gen-csharp-tableau-loader*&display_name=release&style=flat-square" alt="Release C# version"></a>
   </td>
 </tr><tr>
+  <td align="center"><b>TypeScript</b></td>
+  <td>
+    <a href="https://github.com/tableauio/loader/releases?q=protoc-gen-ts-tableau-loader"><img src="https://img.shields.io/github/v/release/tableauio/loader?filter=*protoc-gen-ts-tableau-loader*&display_name=release&style=flat-square" alt="Release TypeScript version"></a>
+  </td>
+</tr><tr>
   <td align="center"><b>Release</b></td>
   <td>
     <a href="https://github.com/tableauio/loader/actions/workflows/release-go.yml"><img src="https://github.com/tableauio/loader/actions/workflows/release-go.yml/badge.svg" alt="Release Go"></a>
     <a href="https://github.com/tableauio/loader/actions/workflows/release-cpp.yml"><img src="https://github.com/tableauio/loader/actions/workflows/release-cpp.yml/badge.svg" alt="Release C++"></a>
     <a href="https://github.com/tableauio/loader/actions/workflows/release-csharp.yml"><img src="https://github.com/tableauio/loader/actions/workflows/release-csharp.yml/badge.svg" alt="Release C#"></a>
+    <a href="https://github.com/tableauio/loader/actions/workflows/release-ts.yml"><img src="https://github.com/tableauio/loader/actions/workflows/release-ts.yml/badge.svg" alt="Release TypeScript"></a>
   </td>
 </tr><tr>
   <td align="center"><b>Testing</b></td>
@@ -40,6 +46,7 @@
     <a href="https://github.com/tableauio/loader/actions/workflows/testing-go.yml"><img src="https://github.com/tableauio/loader/actions/workflows/testing-go.yml/badge.svg" alt="Testing Go"></a>
     <a href="https://github.com/tableauio/loader/actions/workflows/testing-cpp.yml"><img src="https://github.com/tableauio/loader/actions/workflows/testing-cpp.yml/badge.svg" alt="Testing C++"></a>
     <a href="https://github.com/tableauio/loader/actions/workflows/testing-csharp.yml"><img src="https://github.com/tableauio/loader/actions/workflows/testing-csharp.yml/badge.svg" alt="Testing C#"></a>
+    <a href="https://github.com/tableauio/loader/actions/workflows/testing-ts.yml"><img src="https://github.com/tableauio/loader/actions/workflows/testing-ts.yml/badge.svg" alt="Testing TypeScript"></a>
     <a href="https://github.com/tableauio/loader/actions/workflows/testing-make.yml"><img src="https://github.com/tableauio/loader/actions/workflows/testing-make.yml/badge.svg" alt="Testing make.py"></a>
   </td>
 </tr><tr>
@@ -54,6 +61,7 @@
 | `protoc-gen-go-tableau-loader` | Go | `*.pc.go` |
 | `protoc-gen-cpp-tableau-loader` | C++17 | `*.pc.h` / `*.pc.cc` |
 | `protoc-gen-csharp-tableau-loader` | C# (Unity 2022.3 LTS / .NET 8) | `*.pc.cs` |
+| `protoc-gen-ts-tableau-loader` | TypeScript (ESM, protobuf-es) | `*.pc.ts` |
 
 ## Quick start
 

@@ -59,6 +59,7 @@ class TestVersions:
         assert v.go_version == v.raw["GO_VERSION"]
         assert v.buf_version == v.raw["BUF_VERSION"]
         assert v.dotnet_version == v.raw["DOTNET_VERSION"]
+        assert v.node_version == v.raw["NODE_VERSION"]
         assert v.cmake_version == v.raw["CMAKE_VERSION"]
         # default_variant is lowercased.
         assert v.default_variant == v.raw["DEFAULT_VARIANT"].lower()
@@ -67,6 +68,23 @@ class TestVersions:
         prefix = v.default_variant.upper().replace("-", "_")
         assert v.protobuf_version == v.raw[f"{prefix}_PROTOBUF_VERSION"]
         assert v.vcpkg_baseline_commit == v.raw[f"{prefix}_VCPKG_BASELINE_COMMIT"]
+
+    def test_node_version_accessor(self):
+        # NODE_VERSION feeds the TypeScript harness toolchain (NodeSource apt
+        # repo `setup_${NODE_VERSION}.x`, brew `node@${NODE_VERSION}`). It's a
+        # major (e.g. "20"), so 1-3 dot-separated numeric segments are valid.
+        v = make.Versions.load(REPO_ROOT)
+        assert v.node_version == v.raw["NODE_VERSION"]
+        parts = v.node_version.split(".")
+        assert 1 <= len(parts) <= 3
+        for p in parts:
+            assert p.isdigit(), f"Non-numeric node version segment: {p}"
+
+    def test_node_version_missing_is_none(self):
+        # A versions.env without NODE_VERSION yields None (accessor is a
+        # plain .get, so absence is not an error).
+        v = make.Versions(raw={})
+        assert v.node_version is None
 
     def test_variants_enumerates_all_rows(self):
         v = make.Versions.load(REPO_ROOT)
@@ -701,6 +719,12 @@ class TestLangDir:
             == REPO_ROOT / "test" / "csharp-tableau-loader"
         )
 
+    def test_ts(self):
+        assert (
+            make._lang_dir(REPO_ROOT, "ts")
+            == REPO_ROOT / "test" / "ts-tableau-loader"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Subprocess helpers
@@ -750,6 +774,7 @@ class TestTopLevel:
             "LEGACY_V3_PROTOBUF_VERSION",
             "LEGACY_V3_VCPKG_BASELINE_COMMIT",
             "DOTNET_VERSION",
+            "NODE_VERSION",
             "CMAKE_VERSION",
         ):
             assert key in proc.stdout, f"--version missing {key}"
@@ -991,6 +1016,42 @@ class TestDryRunCsharp:
         assert "FullyQualifiedName~HubTest.Load" in proc.stdout
 
 
+class TestDryRunTs:
+    def test_test_lang_ts_default(self):
+        proc = run_make("--dry-run", "test", "--lang", "ts")
+        assert proc.returncode == 0
+        # On Windows npm is the `npm.cmd` batch shim; normalize so the
+        # assertions below are platform-agnostic.
+        out = proc.stdout.replace("npm.cmd", "npm")
+        # Codegen (Go plugins + protobuf-es remote plugin) runs first.
+        assert "buf generate .." in out
+        # Deps install via the reproducible `npm ci` (lockfile is committed).
+        assert "npm ci" in out
+        # Type-check, then smoke.
+        assert "npm run check" in out
+        assert "npm run smoke" in out
+
+    def test_build_lang_ts_skips_smoke(self):
+        proc = run_make("--dry-run", "build", "--lang", "ts")
+        assert proc.returncode == 0
+        # Normalize the Windows `npm.cmd` shim to `npm`.
+        out = proc.stdout.replace("npm.cmd", "npm")
+        # build == type-check only: buf generate + install + check, no smoke.
+        assert "buf generate .." in out
+        assert "npm run check" in out
+        for line in out.splitlines():
+            assert "npm run smoke" not in line, f"build must not run smoke: {line}"
+
+    def test_generate_lang_ts(self):
+        proc = run_make("--dry-run", "generate", "--lang", "ts")
+        assert proc.returncode == 0
+        out = proc.stdout
+        # generate is codegen only — no npm steps.
+        assert "buf generate .." in out
+        for line in out.splitlines():
+            assert "npm" not in line, f"generate must not invoke npm: {line}"
+
+
 class TestDryRunGenerateAndBuild:
     def test_generate_lang_go(self):
         proc = run_make("--dry-run", "generate", "--lang", "go")
@@ -1037,14 +1098,24 @@ class TestDryRunClean:
         assert "obj" in out
         assert "protoconf" in out
 
+    def test_clean_ts(self):
+        proc = run_make("--dry-run", "clean", "--lang", "ts")
+        assert proc.returncode == 0
+        out = proc.stdout
+        # Wipes generated dirs + installed deps.
+        assert "protoconf" in out
+        assert "tableau" in out
+        assert "node_modules" in out
+
     def test_clean_all(self):
         proc = run_make("--dry-run", "clean", "--all")
         assert proc.returncode == 0
         out = proc.stdout
-        # Should mention dirs from at least cpp, csharp, go.
+        # Should mention dirs from at least cpp, csharp, go, ts.
         assert "cpp-tableau-loader" in out
         assert "csharp-tableau-loader" in out
         assert "go-tableau-loader" in out
+        assert "ts-tableau-loader" in out
 
 
 # ---------------------------------------------------------------------------
@@ -1220,3 +1291,23 @@ class TestSetupWindows:
         out = capsys.readouterr().out
         assert "Microsoft.DotNet.SDK.9" in out
         assert "Microsoft.DotNet.SDK.8" not in out
+
+    def test_installs_node_for_ts_lang(self, monkeypatch, capsys):
+        """--lang ts on Windows must install Node via winget (LTS package)
+        when no node is already on PATH."""
+        ctx = self._windows_ctx(monkeypatch)
+        args = type("Args", (), {"lang": "ts", "skip_vcpkg": True})()
+        rc = make.cmd_setup(args, ctx)
+        assert rc == 0
+        out = capsys.readouterr().out
+        assert "OpenJS.NodeJS.LTS" in out, "--lang ts on Windows must install Node"
+
+    def test_no_node_install_for_non_ts_lang(self, monkeypatch, capsys):
+        """Node must NOT be installed when ts isn't among the targets — the
+        winget Node step is gated on `ts in langs`."""
+        ctx = self._windows_ctx(monkeypatch)
+        args = type("Args", (), {"lang": "go", "skip_vcpkg": True})()
+        rc = make.cmd_setup(args, ctx)
+        assert rc == 0
+        out = capsys.readouterr().out
+        assert "OpenJS.NodeJS.LTS" not in out

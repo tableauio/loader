@@ -3,14 +3,14 @@
 make.py — single cross-platform entrypoint for the tableauio/loader repo.
 
 Consolidates per-language `buf generate` / `cmake` / `go test` / `dotnet test`
-recipes into one Python tool that works identically on
+/ `npm test` recipes into one Python tool that works identically on
 native Windows, macOS, Linux, and inside the devcontainer.
 
 Usage (high level):
-    python3 make.py setup    [--lang go|cpp|csharp|all] [--dry-run]
-    python3 make.py generate --lang go|cpp|csharp
-    python3 make.py build    --lang go|cpp|csharp [build flags]
-    python3 make.py test     --lang go|cpp|csharp [build flags] [-k FILTER] [--smoke]
+    python3 make.py setup    [--lang go|cpp|csharp|ts|all] [--dry-run]
+    python3 make.py generate --lang go|cpp|csharp|ts
+    python3 make.py build    --lang go|cpp|csharp|ts [build flags]
+    python3 make.py test     --lang go|cpp|csharp|ts [build flags] [-k FILTER] [--smoke]
     python3 make.py clean    [--lang ...] [--all]
     python3 make.py env
     python3 make.py --version
@@ -141,6 +141,10 @@ class Versions:
     @property
     def dotnet_version(self) -> Optional[str]:
         return self.raw.get("DOTNET_VERSION")
+
+    @property
+    def node_version(self) -> Optional[str]:
+        return self.raw.get("NODE_VERSION")
 
     @property
     def cmake_version(self) -> Optional[str]:
@@ -950,7 +954,7 @@ def hydrate_platform_from_env(plat: Platform) -> None:
 # ---------------------------------------------------------------------------
 
 
-LANGS_ALL = ("go", "cpp", "csharp")
+LANGS_ALL = ("go", "cpp", "csharp", "ts")
 
 
 def _which(name: str) -> Optional[str]:
@@ -1028,8 +1032,8 @@ def _setup_macos(langs: list[str], ctx: "Context") -> int:
 
     # Brew packages: only the version-tolerant pieces (cmake, ninja, build
     # essentials). Go and protobuf are pinned via tarball / vcpkg below;
-    # buf is pinned via direct download. dotnet@N is pinnable via brew's
-    # versioned formulae.
+    # buf is pinned via direct download. dotnet@N and node@N are pinnable
+    # via brew's versioned formulae.
     pkgs: list[str] = []
     if "cpp" in langs:
         pkgs.extend(["cmake", "ninja"])
@@ -1037,12 +1041,15 @@ def _setup_macos(langs: list[str], ctx: "Context") -> int:
         # `dotnet@8` (cask) covers .NET 8.x. Use the major.
         major = (ctx.versions.dotnet_version or "8.0").split(".")[0]
         pkgs.append(f"dotnet@{major}")
+    if "ts" in langs:
+        pkgs.append(f"node@{ctx.versions.node_version or '20'}")
     if pkgs:
         ctx.runner.run(["brew", "update"], check=False)
         ctx.runner.run(["brew", "install", *pkgs], check=False)
 
-    # Pinned Go via official tarball (matches devcontainer).
-    if "go" in langs or "cpp" in langs or "csharp" in langs:
+    # Pinned Go via official tarball (matches devcontainer). Required for any
+    # language: every buf-generate invokes the Go protoc plugins via `go run`.
+    if "go" in langs or "cpp" in langs or "csharp" in langs or "ts" in langs:
         _ensure_go_tarball(ctx, "darwin")
 
     # Pinned buf via GitHub release.
@@ -1094,8 +1101,9 @@ def _setup_linux(langs: list[str], ctx: "Context") -> int:
                 [*sudo_prefix, "dnf", "install", "-y", *base_pkgs], check=False
             )
 
-    # Pinned Go via official tarball.
-    if "go" in langs or "cpp" in langs or "csharp" in langs:
+    # Pinned Go via official tarball. Required for any language: every
+    # buf-generate invokes the Go protoc plugins via `go run`.
+    if "go" in langs or "cpp" in langs or "csharp" in langs or "ts" in langs:
         _ensure_go_tarball(ctx, "linux")
 
     # Pinned buf via GitHub release.
@@ -1103,6 +1111,8 @@ def _setup_linux(langs: list[str], ctx: "Context") -> int:
 
     if "csharp" in langs:
         _ensure_dotnet_linux(ctx)
+    if "ts" in langs:
+        _ensure_node_linux(ctx)
 
     # Pinned protobuf via vcpkg (matches devcontainer + Windows).
     if "cpp" in langs:
@@ -1208,6 +1218,46 @@ def _ensure_go_tarball(ctx: "Context", os_label: str) -> None:
     bin_dir = target_root / "go" / "bin"
     print(f"[info] Go {ver} installed. Add to your shell profile:")
     print(f"    export PATH={bin_dir}:$PATH")
+
+
+def _ensure_node_linux(ctx: "Context") -> None:
+    """Install Node.js at NODE_VERSION (major) via NodeSource, mirroring the
+    devcontainer Dockerfile. A `node` already on PATH is accepted as-is — we
+    don't auto-replace an existing install.
+
+    NodeSource ships distro-specific setup scripts (`deb`/`rpm`) that register
+    the apt/dnf repo and refresh the package lists; we then install the
+    `nodejs` package. Both the setup script and the install need root, so they
+    go through sudo when we're not already uid 0.
+    """
+    if _which("node") is not None:
+        return
+    ver = ctx.versions.node_version
+    if not ver:
+        print("[warn] NODE_VERSION not set; skipping Node install.", file=sys.stderr)
+        return
+    # NodeSource setup scripts are keyed by major only: `setup_<major>.x`.
+    major = ver.split(".")[0]
+    apt = _which("apt-get") is not None
+    dnf = _which("dnf") is not None
+    if not (apt or dnf):
+        print(
+            "[warn] Neither apt-get nor dnf found; install Node manually.",
+            file=sys.stderr,
+        )
+        return
+    sudo_prefix = ["sudo"] if os.geteuid() != 0 else []
+    repo = "deb" if apt else "rpm"
+    url = f"https://{repo}.nodesource.com/setup_{major}.x"
+    script = Path.home() / ".local" / "bin" / "nodesource-setup.sh"
+    ctx.runner.mkdirp(script.parent)
+    print(f"[info] Registering NodeSource repo for Node {major}.x")
+    if not ctx.runner.dry_run:
+        urllib.request.urlretrieve(url, str(script))
+        script.chmod(0o755)
+    ctx.runner.run([*sudo_prefix, "bash", str(script)], check=False)
+    pkg_mgr = "apt-get" if apt else "dnf"
+    ctx.runner.run([*sudo_prefix, pkg_mgr, "install", "-y", "nodejs"], check=False)
 
 
 def _setup_windows(langs: list[str], ctx: "Context", skip_vcpkg: bool) -> int:
@@ -1356,6 +1406,15 @@ def _setup_windows(langs: list[str], ctx: "Context", skip_vcpkg: bool) -> int:
             check=False,
         )
 
+    # Step 8: Node.js (only when ts tests are requested). winget's LTS package
+    # tracks the current LTS line; CI pins an exact version via setup-node, so
+    # this native-dev install is best-effort (no hard version pin on Windows).
+    if "ts" in langs and _which("node") is None:
+        ctx.runner.run(
+            ["winget", "install", "--id", "OpenJS.NodeJS.LTS", "-e"],
+            check=False,
+        )
+
     save_loader_env(cache, ctx.runner)
     print("[info] Windows toolchain ready.")
     print(
@@ -1501,6 +1560,8 @@ def _build_or_test(args, ctx: "Context", run_tests: bool) -> int:
         return _cpp_build_or_test(args, ctx, run_tests)
     if lang == "csharp":
         return _csharp_build_or_test(args, ctx, run_tests)
+    if lang == "ts":
+        return _ts_build_or_test(args, ctx, run_tests)
     print(f"[error] unknown --lang {lang}", file=sys.stderr)
     return 2
 
@@ -1788,6 +1849,51 @@ def _csharp_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
     return 0
 
 
+# ----- TypeScript -----
+
+
+def _npm_cmd(ctx: "Context") -> str:
+    """npm executable name. On Windows npm is a `.cmd` batch shim, which
+    subprocess (shell=False) only resolves with the explicit extension."""
+    return "npm.cmd" if ctx.platform.is_windows else "npm"
+
+
+def _ts_build_or_test(args, ctx: "Context", run_tests: bool) -> int:
+    """Build/test the TypeScript loader harness (test/ts-tableau-loader).
+
+    Flow mirrors the package.json scripts:
+      generate -> `buf generate ..`  (Go protoc plugins via `go run`)
+      install  -> `npm ci` (lockfile present) or `npm install`
+      build    -> `npm run check`  (tsc --noEmit type check)
+      test     -> `npm run check` then `npm run smoke` (tsx tests/smoke.ts)
+
+    Unlike go/cpp/csharp there is no emitted artifact: ESM TS is consumed
+    directly by tsx (in-memory transpile), so "build" is just a type check.
+    """
+    cwd = _lang_dir(ctx.repo_root, "ts")
+    npm = _npm_cmd(ctx)
+
+    if not getattr(args, "no_generate", False):
+        _buf_generate(ctx, "ts")
+
+    # Install deps: prefer the reproducible `npm ci` when a lockfile exists.
+    install_cmd = (
+        [npm, "ci"] if (cwd / "package-lock.json").is_file() else [npm, "install"]
+    )
+    ctx.runner.run(install_cmd, cwd=cwd)
+
+    # Type-check (the closest equivalent to "build" for a noEmit TS project).
+    ctx.runner.run([npm, "run", "check"], cwd=cwd)
+
+    if not run_tests:
+        return 0
+
+    # Smoke test via tsx. The smoke harness runs the full suite (no per-test
+    # filter), so -k is accepted but ignored for ts.
+    ctx.runner.run([npm, "run", "smoke"], cwd=cwd)
+    return 0
+
+
 # ----- clean / env -----
 
 
@@ -1809,6 +1915,10 @@ def cmd_clean(args, ctx: "Context") -> int:
             ctx.runner.rmtree(cwd / "protoconf")
         elif lang == "go":
             ctx.runner.rmtree(cwd / "protoconf")
+        elif lang == "ts":
+            ctx.runner.rmtree(cwd / "protoconf")
+            ctx.runner.rmtree(cwd / "tableau")
+            ctx.runner.rmtree(cwd / "node_modules")
     return 0
 
 
@@ -1836,6 +1946,8 @@ def cmd_env(args, ctx: "Context") -> int:
             "cmake": _which("cmake"),
             "ninja": _which("ninja"),
             "dotnet": _which("dotnet"),
+            "node": _which("node"),
+            "npm": _which("npm"),
         },
         "versions_env": ctx.versions.raw,
     }

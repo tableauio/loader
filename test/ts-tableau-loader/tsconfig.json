@@ -3,12 +3,11 @@
     "target": "es2022",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "rootDir": "src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["src"]
+  "include": ["tableau", "protoconf", "custom", "tests"]
 }
