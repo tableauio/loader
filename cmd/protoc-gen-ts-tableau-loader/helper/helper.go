@@ -1,7 +1,6 @@
 package helper
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/iancoleman/strcase"
@@ -81,85 +80,50 @@ func ScalarTSType(kind protoreflect.Kind) (string, bool) {
 	}
 }
 
-// MapKey represents a single key component of a (possibly nested) map getter.
-// It embeds the cross-language genhelper.MapKey (Type/Name/Fd/...) so its base
-// structure stays aligned with the Go/C++/C# loaders, and adds the
-// TypeScript-specific NeedToString flag.
-type MapKey struct {
-	genhelper.MapKey
-	// NeedToString reports whether the parameter must be stringified to index
-	// the underlying protobuf-es map object (true for 64-bit / bool keys, whose
-	// JS object keys are always stored as strings).
-	NeedToString bool
-}
+// MapKey aliases the cross-language shared key descriptor; see genhelper.MapKey.
+// The TypeScript loader no longer needs its own wrapper: the only TS-specific
+// behaviour (stringifying 64-bit / bool keys) is derived from Type in IndexExpr.
+type MapKey = genhelper.MapKey
 
-// IndexExpr returns the expression used to index the underlying map object.
-func (k MapKey) IndexExpr() string {
-	if k.NeedToString {
+// tsParamFormatter formats a key as a TypeScript parameter declaration
+// ("id: number").
+type tsParamFormatter struct{}
+
+func (tsParamFormatter) FormatParam(key MapKey) string { return key.Name + ": " + key.Type }
+
+// MapKeySlice is the shared cross-language key slice (see genhelper.MapKeySlice)
+// specialized with TypeScript parameter formatting. All slice methods (AddMapKey
+// / GenGetParams / GenGetArguments / ...) come from genhelper.
+type MapKeySlice = genhelper.MapKeySlice[tsParamFormatter]
+
+// IndexExpr returns the expression used to index the underlying protobuf-es map
+// object. 64-bit ("bigint") and bool ("boolean") keys must be stringified
+// because their JS object keys are always stored as strings.
+func IndexExpr(k MapKey) string {
+	if k.Type == "bigint" || k.Type == "boolean" {
 		return k.Name + ".toString()"
 	}
 	return k.Name
 }
 
-// MapKeySlice is an ordered collection of MapKey entries.
-type MapKeySlice []MapKey
-
-// AddMapKey appends a new map key, deduplicating the parameter Name across
-// nested levels (e.g. "id" -> "id3") so generated getter signatures are valid.
-func (s MapKeySlice) AddMapKey(newKey MapKey) MapKeySlice {
-	if newKey.Name == "" {
-		newKey.Name = fmt.Sprintf("key%d", len(s)+1)
-	}
-	for _, key := range s {
-		if key.Name == newKey.Name {
-			newKey.Name = fmt.Sprintf("%s%d", newKey.Name, len(s)+1)
-			break
-		}
-	}
-	return append(s, newKey)
-}
-
-// GenGetParams generates the getter parameter list (e.g. "id: number, name: string").
-func (s MapKeySlice) GenGetParams() string {
-	var params []string
-	for _, key := range s {
-		params = append(params, key.Name+": "+key.Type)
-	}
-	return strings.Join(params, ", ")
-}
-
-// GenGetArguments generates the getter argument list (e.g. "id, name").
-func (s MapKeySlice) GenGetArguments() string {
-	var args []string
-	for _, key := range s {
-		args = append(args, key.Name)
-	}
-	return strings.Join(args, ", ")
-}
-
-// ParseMapKey returns the MapKey metadata (param type, stringify flag) for a
-// map field's key descriptor (fd must be a map key descriptor).
+// ParseMapKey returns the MapKey metadata (param type) for a map field's key
+// descriptor (keyFd must be a map key descriptor).
 func ParseMapKey(keyFd protoreflect.FieldDescriptor, name string) MapKey {
-	key := MapKey{MapKey: genhelper.MapKey{Name: name}}
+	key := MapKey{Name: name}
 	switch keyFd.Kind() {
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind,
 		protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
 		key.Type = "number"
-		key.NeedToString = false
 	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind,
 		protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
 		key.Type = "bigint"
-		key.NeedToString = true
 	case protoreflect.BoolKind:
 		key.Type = "boolean"
-		key.NeedToString = true
 	case protoreflect.StringKind:
 		key.Type = "string"
-		key.NeedToString = false
 	default:
 		// Map keys can only be integral, bool, or string.
 		key.Type = "string"
-		key.NeedToString = false
 	}
 	return key
 }

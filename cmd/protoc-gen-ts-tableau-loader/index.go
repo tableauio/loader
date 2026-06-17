@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/tableauio/loader/cmd/protoc-gen-ts-tableau-loader/helper"
-	"github.com/tableauio/loader/internal/genhelper"
 	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/loader/internal/loadutil"
 	"github.com/tableauio/loader/internal/options"
@@ -146,10 +145,8 @@ func (x *indexGen) params(idx *index.LevelIndex) helper.MapKeySlice {
 	var keys helper.MapKeySlice
 	for _, field := range idx.ColFields {
 		keys = keys.AddMapKey(helper.MapKey{
-			MapKey: genhelper.MapKey{
-				Type: x.keyTSType(field.FD),
-				Name: helper.IndexFieldNameAsFuncParam(field.FD),
-			},
+			Type: x.keyTSType(field.FD),
+			Name: helper.IndexFieldNameAsFuncParam(field.FD),
 		})
 	}
 	return keys

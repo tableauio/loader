@@ -180,10 +180,10 @@ func genMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor,
 
 		var access string
 		if depth == 1 {
-			access = "this.#data." + localName + "[" + last.IndexExpr() + "]"
+			access = "this.#data." + localName + "[" + helper.IndexExpr(last) + "]"
 		} else {
 			prevArgs := keys[:len(keys)-1].GenGetArguments()
-			access = fmt.Sprintf("this.get%d(%s)?.%s[%s]", depth-1, prevArgs, localName, last.IndexExpr())
+			access = fmt.Sprintf("this.get%d(%s)?.%s[%s]", depth-1, prevArgs, localName, helper.IndexExpr(last))
 		}
 
 		g.P()
