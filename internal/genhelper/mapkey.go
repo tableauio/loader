@@ -30,6 +30,31 @@ type MapKey struct {
 	Fd protoreflect.FieldDescriptor
 }
 
+// ParamFormatter renders a single MapKey as a function-parameter declaration in
+// a target language. It is the ONLY piece of MapKeySlice behaviour that differs
+// per language, e.g.:
+//
+//	Go     "id int32"        (Name + " " + Type)
+//	C#     "int id"          (Type + " " + Name)
+//	C++    "int32_t id"      (ToConstRefType(Type) + " " + Name)
+//	TS     "id: number"      (Name + ": " + Type)
+//
+// Each loader provides a zero-size implementation and wires it into MapKeySlice
+// via the type parameter below, so every loader shares the exact same slice
+// type and methods while only "overriding" parameter formatting.
+type ParamFormatter interface {
+	FormatParam(MapKey) string
+}
+
+// MapKeySlice is the single, cross-language ordered collection of MapKey shared
+// by all protoc-gen-*-tableau-loader plugins. The type parameter F injects the
+// language-specific parameter formatting used by GenGetParams; every other
+// method (AddMapKey / GenGetArguments / GenCustom / GenOtherArguments) is fully
+// shared. Loaders alias a concrete instantiation, e.g.:
+//
+//	type MapKeySlice = genhelper.MapKeySlice[goParamFormatter]
+type MapKeySlice[F ParamFormatter] []MapKey
+
 // AddMapKey appends newKey to s, automatically deduplicating both Name (used as
 // function parameter names) and FieldName (used as struct field names in
 // LevelIndex key structs).
@@ -52,7 +77,7 @@ type MapKey struct {
 // names, causing a compile error. With dedup, the conflicting name gets a
 // numeric suffix (the 1-based position of the new key in the slice), producing
 // valid code, e.g. "FruitType", "Id", "Id3".
-func AddMapKey(s []MapKey, newKey MapKey) []MapKey {
+func (s MapKeySlice[F]) AddMapKey(newKey MapKey) MapKeySlice[F] {
 	if newKey.Name == "" {
 		newKey.Name = fmt.Sprintf("key%d", len(s)+1)
 	}
@@ -78,18 +103,30 @@ func AddMapKey(s []MapKey, newKey MapKey) []MapKey {
 	return append(s, newKey)
 }
 
-// GenGetArguments generates function arguments, which are the real values
-// passed to the function (i.e. the key Names joined by ", ").
-func GenGetArguments(s []MapKey) string {
-	return GenCustom(s, func(key MapKey) string { return key.Name }, ", ")
+// GenGetParams generates the function parameter list (declarations), formatted
+// for the language carried by F (e.g. "id int32, name string").
+func (s MapKeySlice[F]) GenGetParams() string {
+	var f F
+	return s.GenCustom(f.FormatParam, ", ")
+}
+
+// GenGetArguments generates the call argument list (the key Names joined by ", ").
+func (s MapKeySlice[F]) GenGetArguments() string {
+	return s.GenCustom(func(key MapKey) string { return key.Name }, ", ")
 }
 
 // GenCustom builds a string by applying fn to each MapKey and joining the
 // results with sep. Returns an empty string for an empty slice.
-func GenCustom(s []MapKey, fn func(MapKey) string, sep string) string {
+func (s MapKeySlice[F]) GenCustom(fn func(MapKey) string, sep string) string {
 	var params []string
 	for _, key := range s {
 		params = append(params, fn(key))
 	}
 	return strings.Join(params, sep)
+}
+
+// GenOtherArguments generates arguments that access each key by Name on another
+// object (e.g. "other.id, other.name"), used by C++ std::tie / hash combine.
+func (s MapKeySlice[F]) GenOtherArguments(other string) string {
+	return s.GenCustom(func(key MapKey) string { return other + "." + key.Name }, ", ")
 }

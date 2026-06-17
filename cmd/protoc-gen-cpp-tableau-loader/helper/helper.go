@@ -162,28 +162,18 @@ func ParseLeveledMapPrefix(md protoreflect.MessageDescriptor, mapFd protoreflect
 // MapKey aliases the cross-language shared key descriptor; see genhelper.MapKey.
 type MapKey = genhelper.MapKey
 
-type MapKeySlice []MapKey
+// cppParamFormatter formats a key as a C++ parameter declaration, using a const
+// reference for std::string ("const std::string& name", "int32_t id").
+type cppParamFormatter struct{}
 
-// AddMapKey appends a new map key, deduplicating Name and FieldName.
-// See genhelper.AddMapKey for the full rationale.
-func (s MapKeySlice) AddMapKey(newKey MapKey) MapKeySlice {
-	return genhelper.AddMapKey(s, newKey)
+func (cppParamFormatter) FormatParam(key MapKey) string {
+	return ToConstRefType(key.Type) + " " + key.Name
 }
 
-// GenGetParams generates function parameters, which are the names listed in the function's definition.
-func (s MapKeySlice) GenGetParams() string {
-	return genhelper.GenCustom(s, func(key MapKey) string { return ToConstRefType(key.Type) + " " + key.Name }, ", ")
-}
-
-// GenGetArguments generates function arguments, which are the real values passed to the function.
-func (s MapKeySlice) GenGetArguments() string {
-	return genhelper.GenGetArguments(s)
-}
-
-// GenOtherArguments generates function arguments for other value of std::tie.
-func (s MapKeySlice) GenOtherArguments(other string) string {
-	return genhelper.GenCustom(s, func(key MapKey) string { return other + "." + key.Name }, ", ")
-}
+// MapKeySlice is the shared cross-language key slice (see genhelper.MapKeySlice)
+// specialized with C++ parameter formatting. All slice methods (AddMapKey /
+// GenGetParams / GenGetArguments / GenOtherArguments / ...) come from genhelper.
+type MapKeySlice = genhelper.MapKeySlice[cppParamFormatter]
 
 func Indent(depth int) string {
 	return strings.Repeat("  ", depth)

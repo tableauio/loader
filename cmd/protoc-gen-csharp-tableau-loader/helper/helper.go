@@ -305,32 +305,15 @@ func ParseLeveledMapPrefix(md protoreflect.MessageDescriptor, mapFd protoreflect
 // MapKey aliases the cross-language shared key descriptor; see genhelper.MapKey.
 type MapKey = genhelper.MapKey
 
-// MapKeySlice is an ordered collection of MapKey entries, providing methods
-// to build function parameters, arguments, and custom formatted strings
-// for code generation.
-type MapKeySlice []MapKey
+// csharpParamFormatter formats a key as a C# parameter declaration ("int id").
+type csharpParamFormatter struct{}
 
-// AddMapKey appends a new map key, deduplicating Name and FieldName.
-// See genhelper.AddMapKey for the full rationale.
-func (s MapKeySlice) AddMapKey(newKey MapKey) MapKeySlice {
-	return genhelper.AddMapKey(s, newKey)
-}
+func (csharpParamFormatter) FormatParam(key MapKey) string { return key.Type + " " + key.Name }
 
-// GenGetParams generates function parameters, which are the names listed in the function's definition.
-func (s MapKeySlice) GenGetParams() string {
-	return s.GenCustom(func(key MapKey) string { return key.Type + " " + key.Name }, ", ")
-}
-
-// GenGetArguments generates function arguments, which are the real values passed to the function.
-func (s MapKeySlice) GenGetArguments() string {
-	return genhelper.GenGetArguments(s)
-}
-
-// GenCustom generates a string by applying fn to each MapKey and joining
-// the results with the given separator. Returns an empty string for empty slices.
-func (s MapKeySlice) GenCustom(fn func(MapKey) string, sep string) string {
-	return genhelper.GenCustom(s, fn, sep)
-}
+// MapKeySlice is the shared cross-language key slice (see genhelper.MapKeySlice)
+// specialized with C# parameter formatting. All slice methods (AddMapKey /
+// GenGetParams / GenGetArguments / GenCustom / ...) come from genhelper.
+type MapKeySlice = genhelper.MapKeySlice[csharpParamFormatter]
 
 // Indent returns a string of 4*depth spaces, used for indenting generated
 // C# code blocks at the specified nesting depth.

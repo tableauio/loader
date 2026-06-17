@@ -277,20 +277,12 @@ func ParseLeveledMapPrefix(md protoreflect.MessageDescriptor, mapFd protoreflect
 // MapKey aliases the cross-language shared key descriptor; see genhelper.MapKey.
 type MapKey = genhelper.MapKey
 
-type MapKeySlice []MapKey
+// goParamFormatter formats a key as a Go parameter declaration ("id int32").
+type goParamFormatter struct{}
 
-// AddMapKey appends a new map key, deduplicating Name and FieldName.
-// See genhelper.AddMapKey for the full rationale.
-func (s MapKeySlice) AddMapKey(newKey MapKey) MapKeySlice {
-	return genhelper.AddMapKey(s, newKey)
-}
+func (goParamFormatter) FormatParam(key MapKey) string { return key.Name + " " + key.Type }
 
-// GenGetParams generates function parameters, which are the names listed in the function's definition.
-func (s MapKeySlice) GenGetParams() string {
-	return genhelper.GenCustom(s, func(key MapKey) string { return key.Name + " " + key.Type }, ", ")
-}
-
-// GenGetArguments generates function arguments, which are the real values passed to the function.
-func (s MapKeySlice) GenGetArguments() string {
-	return genhelper.GenGetArguments(s)
-}
+// MapKeySlice is the shared cross-language key slice (see genhelper.MapKeySlice)
+// specialized with Go parameter formatting. All slice methods (AddMapKey /
+// GenGetParams / GenGetArguments / ...) come from genhelper.
+type MapKeySlice = genhelper.MapKeySlice[goParamFormatter]
