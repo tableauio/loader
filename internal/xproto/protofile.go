@@ -1,7 +1,6 @@
 package xproto
 
 import (
-	"errors"
 	"sort"
 
 	"github.com/tableauio/loader/internal/options"
@@ -36,15 +35,7 @@ func ParseProtoFiles(gen *protogen.Plugin) ProtoFiles {
 		}
 		var messagers []string
 		for _, message := range f.Messages {
-			opts, ok := message.Desc.Options().(*descriptorpb.MessageOptions)
-			if !ok {
-				gen.Error(errors.New("get message options failed"))
-			}
-			worksheet, ok := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
-			if !ok {
-				gen.Error(errors.New("get worksheet extension failed"))
-			}
-			if worksheet != nil {
+			if options.IsWorksheet(message.Desc) {
 				messagerName := string(message.Desc.Name())
 				messagers = append(messagers, messagerName)
 			}

@@ -9,11 +9,9 @@ import (
 	"github.com/tableauio/loader/internal/extensions"
 	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/loader/internal/loadutil"
-	"github.com/tableauio/tableau/proto/tableaupb"
+	"github.com/tableauio/loader/internal/options"
 	"google.golang.org/protobuf/compiler/protogen"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 // generateMessager generates a protoconf file corresponding to the protobuf file.
@@ -21,7 +19,7 @@ import (
 func generateMessager(gen *protogen.Plugin, file *protogen.File) {
 	filename := file.GeneratedFilenamePrefix + "." + extensions.PC + ".go"
 	g := gen.NewGeneratedFile(filename, "")
-	generateFileHeader(gen, file, g)
+	helper.GenerateFileHeader(gen, file, g, version)
 	g.P()
 	g.P("package ", *pkg)
 	g.P()
@@ -32,9 +30,7 @@ func generateMessager(gen *protogen.Plugin, file *protogen.File) {
 func generateFileContent(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile) {
 	var fileMessagers []string
 	for _, message := range file.Messages {
-		opts := message.Desc.Options().(*descriptorpb.MessageOptions)
-		worksheet := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
-		if worksheet != nil {
+		if options.IsWorksheet(message.Desc) {
 			genMessage(gen, g, message)
 
 			messagerName := string(message.Desc.Name())

@@ -11,11 +11,9 @@ import (
 	"github.com/tableauio/loader/internal/extensions"
 	"github.com/tableauio/loader/internal/index"
 	"github.com/tableauio/loader/internal/loadutil"
-	"github.com/tableauio/tableau/proto/tableaupb"
+	"github.com/tableauio/loader/internal/options"
 	"google.golang.org/protobuf/compiler/protogen"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 // generateMessager generates a protoconf file corresponding to the protobuf file.
@@ -25,29 +23,27 @@ func generateMessager(gen *protogen.Plugin, file *protogen.File) {
 	filename := filepath.Join(strcase.ToCamel(file.GeneratedFilenamePrefix) + "." + extensions.PC + ".cs")
 	g := gen.NewGeneratedFile(filename, "")
 	helper.GenerateFileHeader(gen, file, g, version)
-	generateFileContent(gen, file, g)
+	generateFileContent(file, g)
 }
 
 // generateFileContent generates struct type definitions.
-func generateFileContent(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile) {
+func generateFileContent(file *protogen.File, g *protogen.GeneratedFile) {
 	g.P(staticMessagerContent1)
 	firstMessager := true
 	for _, message := range file.Messages {
-		opts := message.Desc.Options().(*descriptorpb.MessageOptions)
-		worksheet := proto.GetExtension(opts, tableaupb.E_Worksheet).(*tableaupb.WorksheetOptions)
-		if worksheet != nil {
+		if options.IsWorksheet(message.Desc) {
 			if !firstMessager {
 				g.P()
 			}
 			firstMessager = false
-			genMessage(gen, g, message)
+			genMessage(g, message)
 		}
 	}
 	g.P(staticMessagerContent2)
 }
 
 // genMessage generates a message definition.
-func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message) {
+func genMessage(g *protogen.GeneratedFile, message *protogen.Message) {
 	messagerName := string(message.Desc.Name())
 	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
@@ -118,13 +114,13 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	}
 
 	// syntactic sugar for accessing map items
-	genMapGetters(gen, g, message.Desc, 1, nil, messagerName)
+	genMapGetters(g, message.Desc, 1, nil)
 	orderedMapGenerator.GenOrderedMapGetters()
 	indexGenerator.GenIndexFinders()
 	g.P(helper.Indent(1), "}")
 }
 
-func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys helper.MapKeySlice, messagerName string) {
+func genMapGetters(g *protogen.GeneratedFile, md protoreflect.MessageDescriptor, depth int, keys helper.MapKeySlice) {
 	for i := 0; i < md.Fields().Len(); i++ {
 		fd := md.Fields().Get(i)
 		if fd.IsMap() {
@@ -151,7 +147,7 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, md protorefl
 			}
 
 			if fd.MapValue().Kind() == protoreflect.MessageKind {
-				genMapGetters(gen, g, fd.MapValue().Message(), depth+1, keys, messagerName)
+				genMapGetters(g, fd.MapValue().Message(), depth+1, keys)
 			}
 			break
 		}
