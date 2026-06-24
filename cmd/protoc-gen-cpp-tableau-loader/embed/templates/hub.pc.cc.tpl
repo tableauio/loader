@@ -64,7 +64,7 @@ std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::filesystem::path& dir,
   options = options ? options : std::make_shared<load::Options>();
   for (auto iter : *msger_map) {
     auto&& name = iter.first;
-    ATOM_DEBUG("loading %s", name.c_str());
+    ATOM_INFO("loading %s", name.c_str());
     auto mopts = options->ParseMessagerOptionsByName(name);
     bool ok = iter.second->Load(dir, fmt, mopts);
     if (!ok) {
@@ -77,7 +77,7 @@ std::shared_ptr<MessagerMap> Hub::InternalLoad(const std::filesystem::path& dir,
 #endif
       return nullptr;
     }
-    ATOM_DEBUG("loaded %s", name.c_str());
+    ATOM_INFO("loaded %s", name.c_str());
   }
 
   // restore to old protobuf log handler
@@ -126,11 +126,13 @@ bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {
   // messager-level postprocess
   for (auto iter : *msger_map) {
     auto msger = iter.second;
+    ATOM_INFO("postprocessing %s", iter.first.c_str());
     bool ok = msger->ProcessAfterLoadAll(tmp_hub);
     if (!ok) {
       SetErrMsg("hub call ProcessAfterLoadAll failed, messager: " + iter.first);
       return false;
     }
+    ATOM_INFO("postprocessed %s", iter.first.c_str());
   }
   return true;
 }
