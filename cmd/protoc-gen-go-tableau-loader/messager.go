@@ -56,8 +56,8 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	messagerName := string(message.Desc.Name())
 	indexDescriptor := index.ParseIndexDescriptor(message.Desc)
 
-	orderedMapGenerator := orderedmap.NewGenerator(gen, g, message)
-	indexGenerator := indexes.NewGenerator(gen, g, indexDescriptor, message)
+	orderedMapGenerator := orderedmap.NewGenerator(gen, g, message, *constFlag)
+	indexGenerator := indexes.NewGenerator(gen, g, indexDescriptor, message, *constFlag)
 
 	// type definitions
 	orderedMapGenerator.GenOrderedMapTypeDef()
@@ -86,14 +86,25 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("}")
 	g.P()
 
-	g.P("// Data returns the ", messagerName, "'s inner message data.")
-	g.P("func (x *", messagerName, ") Data() *", message.GoIdent, " {")
-	g.P("if x != nil {")
-	g.P("return x.data")
-	g.P("}")
-	g.P(`return nil`)
-	g.P("}")
-	g.P()
+	if *constFlag {
+		g.P("// Data returns the ", messagerName, "'s inner message data as a read-only view.")
+		g.P("func (x *", messagerName, ") Data() ", message.GoIdent, "_Const {")
+		g.P("if x != nil {")
+		g.P("return x.data.AsConst()")
+		g.P("}")
+		g.P("return ", message.GoIdent, "_Const{}")
+		g.P("}")
+		g.P()
+	} else {
+		g.P("// Data returns the ", messagerName, "'s inner message data.")
+		g.P("func (x *", messagerName, ") Data() *", message.GoIdent, " {")
+		g.P("if x != nil {")
+		g.P("return x.data")
+		g.P("}")
+		g.P("return nil")
+		g.P("}")
+		g.P()
+	}
 
 	g.P("// Load loads ", messagerName, "'s content in the given dir, based on format and messager options.")
 	g.P("func (x *", messagerName, ") Load(dir string, format ", helper.FormatPackage.Ident("Format"), " , opts *", helper.LoadPackage.Ident("MessagerOptions"), ") error {")
@@ -116,13 +127,16 @@ func genMessage(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protog
 	g.P("// Store stores ", messagerName, "'s content to file in the specified directory and format.")
 	g.P("// Available formats: JSON, Bin, and Text.")
 	g.P("func (x *", messagerName, ") Store(dir string, format ", helper.FormatPackage.Ident("Format"), " , options ...", helper.StorePackage.Ident("Option"), ") error {")
-	g.P("return ", helper.StorePackage.Ident("Store"), "(x.Data(), dir, format, options...)")
+	g.P("return ", helper.StorePackage.Ident("Store"), "(x.data, dir, format, options...)")
 	g.P("}")
 	g.P()
 
 	g.P("// Message returns the ", messagerName, "'s inner message data.")
 	g.P("func (x *", messagerName, ") Message() ", helper.ProtoPackage.Ident("Message"), " {")
-	g.P(`return x.Data()`)
+	g.P("if x != nil {")
+	g.P("return x.data")
+	g.P("}")
+	g.P("return nil")
 	g.P("}")
 	g.P()
 
@@ -168,9 +182,14 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 			getter := fmt.Sprintf("Get%v", depth)
 			g.P("// ", getter, " finds value in the ", loadutil.Ordinal(depth), "-level map. It will return")
 			g.P("// NotFound error if the key is not found.")
-			g.P("func (x *", messagerName, ") ", getter, "(", keys.GenGetParams(), ") (", helper.ParseMapValueType(gen, g, fd), ", error) {")
-
+			returnType := helper.ParseMapValueType(gen, g, fd)
 			returnEmptyValue := helper.GetTypeEmptyValue(fd.MapValue())
+			if *constFlag && fd.MapValue().Kind() == protoreflect.MessageKind {
+				ctype := helper.ConstViewType(g, gen, fd.MapValue().Message())
+				returnType = ctype
+				returnEmptyValue = ctype + "{}"
+			}
+			g.P("func (x *", messagerName, ") ", getter, "(", keys.GenGetParams(), ") (", returnType, ", error) {")
 
 			var container string
 			if depth == 1 {
@@ -187,7 +206,11 @@ func genMapGetters(gen *protogen.Plugin, g *protogen.GeneratedFile, message *pro
 
 			g.P("d := ", container, ".Get", field.GoName, "()")
 			lastKeyName := keys[len(keys)-1].Name
-			g.P("if val, ok := d[", lastKeyName, "]; !ok {")
+			if *constFlag {
+				g.P("if val, ok := d.Get(", lastKeyName, "); !ok {")
+			} else {
+				g.P("if val, ok := d[", lastKeyName, "]; !ok {")
+			}
 			g.P(`return `, returnEmptyValue, `, `, helper.FmtPackage.Ident("Errorf"), `("`, lastKeyName, `(%v) %w", `, lastKeyName, `, ErrNotFound)`)
 			g.P("} else {")
 			g.P(`return val, nil`)

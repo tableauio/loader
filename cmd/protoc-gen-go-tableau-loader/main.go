@@ -12,7 +12,10 @@ import (
 
 const version = "0.12.0"
 
-var pkg *string
+var (
+	pkg       *string
+	constFlag *bool
+)
 
 func main() {
 	showVersion := flag.Bool("version", false, "print the version and exit")
@@ -24,6 +27,7 @@ func main() {
 
 	var flags flag.FlagSet
 	pkg = flags.String("pkg", "tableau", "tableau package name")
+	constFlag = flags.Bool("const", false, "generate const API (read-only views via goconst) for syntax-level immutability on Data()/Get*/Find*")
 
 	protogen.Options{
 		ParamFunc: flags.Set,

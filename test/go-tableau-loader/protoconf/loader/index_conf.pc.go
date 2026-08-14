@@ -75,12 +75,15 @@ func (x *FruitConf) Load(dir string, format format.Format, opts *load.MessagerOp
 // Store stores FruitConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *FruitConf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the FruitConf's inner message data.
 func (x *FruitConf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.
@@ -346,12 +349,15 @@ func (x *Fruit6Conf) Load(dir string, format format.Format, opts *load.MessagerO
 // Store stores Fruit6Conf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *Fruit6Conf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the Fruit6Conf's inner message data.
 func (x *Fruit6Conf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.
@@ -614,12 +620,15 @@ func (x *Fruit2Conf) Load(dir string, format format.Format, opts *load.MessagerO
 // Store stores Fruit2Conf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *Fruit2Conf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the Fruit2Conf's inner message data.
 func (x *Fruit2Conf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.
@@ -951,12 +960,15 @@ func (x *Fruit3Conf) Load(dir string, format format.Format, opts *load.MessagerO
 // Store stores Fruit3Conf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *Fruit3Conf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the Fruit3Conf's inner message data.
 func (x *Fruit3Conf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.
@@ -1196,12 +1208,15 @@ func (x *Fruit4Conf) Load(dir string, format format.Format, opts *load.MessagerO
 // Store stores Fruit4Conf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *Fruit4Conf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the Fruit4Conf's inner message data.
 func (x *Fruit4Conf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.
@@ -1624,12 +1639,15 @@ func (x *Fruit5Conf) Load(dir string, format format.Format, opts *load.MessagerO
 // Store stores Fruit5Conf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *Fruit5Conf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the Fruit5Conf's inner message data.
 func (x *Fruit5Conf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.

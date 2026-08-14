@@ -201,6 +201,13 @@ func FindMessageGoIdent(gen *protogen.Plugin, md protoreflect.MessageDescriptor)
 	return msg.GoIdent
 }
 
+// ConstViewType returns the goconst read-only view type name (e.g.
+// "protoconf.Item_Const") for the given message descriptor. The returned value
+// is already fully qualified, so it can be emitted directly via g.P.
+func ConstViewType(g *protogen.GeneratedFile, gen *protogen.Plugin, md protoreflect.MessageDescriptor) string {
+	return g.QualifiedGoIdent(FindMessageGoIdent(gen, md)) + "_Const"
+}
+
 func FindEnum(gen *protogen.Plugin, ed protoreflect.EnumDescriptor) *protogen.Enum {
 	if file, ok := gen.FilesByPath[ed.ParentFile().Path()]; ok {
 		if enum := FindEnumByDescriptor(file.Enums, ed); enum != nil {
