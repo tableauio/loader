@@ -55,6 +55,11 @@
 | `protoc-gen-cpp-tableau-loader` | C++17 | `*.pc.h` / `*.pc.cc` |
 | `protoc-gen-csharp-tableau-loader` | C# (Unity 2022.3 LTS / .NET 8) | `*.pc.cs` |
 
+The Go plugin accepts the following options (via the `opt` field of `buf.gen.yaml`):
+
+- `pkg=<name>` — package name of the generated loader code (default `tableau`).
+- `const=true` — generate a const API that exposes [goconst](https://github.com/Kybxd/goconst) read-only `Foo_Const` views through `Messager.Data()` and the typed `Get*` / `Find*` accessors. Mutation through those APIs is a compile error. `Message()` remains the mutable escape hatch; the runtime `MutableCheck` still applies to it. Requires also running `protoc-gen-go-const` on the same protos (so `Foo_Const` types live in the protoconf package) and a dependency on `github.com/Kybxd/goconst`.
+
 ## Quick start
 
 Use [`make.py`](./make.py) (Python 3.10+, stdlib only):

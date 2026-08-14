@@ -70,12 +70,15 @@ func (x *HeroConf) Load(dir string, format format.Format, opts *load.MessagerOpt
 // Store stores HeroConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *HeroConf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the HeroConf's inner message data.
 func (x *HeroConf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.
@@ -236,12 +239,15 @@ func (x *HeroBaseConf) Load(dir string, format format.Format, opts *load.Message
 // Store stores HeroBaseConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *HeroBaseConf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the HeroBaseConf's inner message data.
 func (x *HeroBaseConf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.
@@ -261,7 +267,7 @@ func (x *HeroBaseConf) originalMessage() proto.Message {
 func (x *HeroBaseConf) processAfterLoad() error {
 	// OrderedMap init.
 	x.orderedMap = treemap.New[string, *HeroBaseConf_OrderedMap_base_HeroValue]()
-	for k1, v1 := range x.Data().GetHeroMap() {
+	for k1, v1 := range x.data.GetHeroMap() {
 		map1 := x.orderedMap
 		k1v := &HeroBaseConf_OrderedMap_base_HeroValue{
 			First:  treemap.New[string, *base.Item](),

@@ -11,16 +11,18 @@ import (
 )
 
 type Generator struct {
-	gen     *protogen.Plugin
-	g       *protogen.GeneratedFile
-	message *protogen.Message
+	gen          *protogen.Plugin
+	g            *protogen.GeneratedFile
+	message      *protogen.Message
+	constEnabled bool
 }
 
-func NewGenerator(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message) *Generator {
+func NewGenerator(gen *protogen.Plugin, g *protogen.GeneratedFile, message *protogen.Message, constEnabled bool) *Generator {
 	return &Generator{
-		gen:     gen,
-		g:       g,
-		message: message,
+		gen:          gen,
+		g:            g,
+		message:      message,
+		constEnabled: constEnabled,
 	}
 }
 
@@ -44,6 +46,9 @@ func (x *Generator) mapValueFieldType(fd protoreflect.FieldDescriptor) string {
 	nextMapFD := getNextLevelMapFD(fd.MapValue())
 	if nextMapFD != nil {
 		return "*" + x.mapValueType(fd)
+	}
+	if x.constEnabled && fd.MapValue().Kind() == protoreflect.MessageKind {
+		return helper.ConstViewType(x.g, x.gen, fd.MapValue().Message())
 	}
 	return helper.ParseMapValueType(x.gen, x.g, fd)
 }
@@ -77,9 +82,12 @@ func (x *Generator) genOrderedMapTypeDef(md protoreflect.MessageDescriptor, dept
 			orderedMapValue := x.mapValueType(fd)
 			nextMapFD := getNextLevelMapFD(fd.MapValue())
 			if nextMapFD != nil {
-				currValueType := helper.FindMessageGoIdent(x.gen, fd.MapValue().Message())
 				nextOrderedMap := x.mapType(nextMapFD)
-				x.g.P("type ", orderedMapValue, "= ", helper.PairPackage.Ident("Pair"), "[*", nextOrderedMap, ", *", currValueType, "];")
+				secondType := "*" + x.g.QualifiedGoIdent(helper.FindMessageGoIdent(x.gen, fd.MapValue().Message()))
+				if x.constEnabled && fd.MapValue().Kind() == protoreflect.MessageKind {
+					secondType = helper.ConstViewType(x.g, x.gen, fd.MapValue().Message())
+				}
+				x.g.P("type ", orderedMapValue, "= ", helper.PairPackage.Ident("Pair"), "[*", nextOrderedMap, ", ", secondType, "];")
 			}
 			x.g.P("type ", orderedMap, "= ", helper.TreeMapPackage.Ident("TreeMap"), "[", keyType, ", ", x.mapValueFieldType(fd), "]")
 			x.g.P()
@@ -128,7 +136,7 @@ func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth
 				keyType = "int"
 			}
 			orderedMapValue := x.mapValueType(fd)
-			mapName := fmt.Sprintf("x.Data().Get%s()", field.GoName)
+			mapName := fmt.Sprintf("x.data.Get%s()", field.GoName)
 			nextMapFD := getNextLevelMapFD(fd.MapValue())
 			if depth == 1 {
 				x.g.P("x.orderedMap = ", helper.TreeMapPackage.Ident("New"), "[", keyType, ", ", x.mapValueFieldType(fd), "]()")
@@ -141,7 +149,13 @@ func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth
 				}
 				x.g.P("k", depth-1, "v := &", lastOrderedMapValue, "{")
 				x.g.P("First: ", helper.TreeMapPackage.Ident("New"), "[", keyType, ", ", x.mapValueFieldType(fd), "](),")
-				x.g.P("Second: v", depth-1, ",")
+				if x.constEnabled {
+					// v{depth-1} is always the message at the previous level,
+					// and ordered maps only nest through message maps.
+					x.g.P("Second: v", depth-1, ".AsConst(),")
+				} else {
+					x.g.P("Second: v", depth-1, ",")
+				}
 				x.g.P("}")
 				x.g.P("map", depth-1, ".Put(", keyName, ", k", depth-1, "v)")
 			}
@@ -158,7 +172,11 @@ func (x *Generator) genOrderedMapLoader(md protoreflect.MessageDescriptor, depth
 				if needConvertBoolNext {
 					keyName = fmt.Sprintf("boolToInt(%s)", keyName)
 				}
-				x.g.P("map", depth, ".Put(", keyName, ", v", depth, ")")
+				if x.constEnabled && fd.MapValue().Kind() == protoreflect.MessageKind {
+					x.g.P("map", depth, ".Put(", keyName, ", v", depth, ".AsConst())")
+				} else {
+					x.g.P("map", depth, ".Put(", keyName, ", v", depth, ")")
+				}
 			}
 			x.g.P("}")
 			break

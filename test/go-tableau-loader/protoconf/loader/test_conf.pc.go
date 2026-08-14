@@ -110,12 +110,15 @@ func (x *ActivityConf) Load(dir string, format format.Format, opts *load.Message
 // Store stores ActivityConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *ActivityConf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the ActivityConf's inner message data.
 func (x *ActivityConf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.
@@ -135,7 +138,7 @@ func (x *ActivityConf) originalMessage() proto.Message {
 func (x *ActivityConf) processAfterLoad() error {
 	// OrderedMap init.
 	x.orderedMap = treemap.New[uint64, *ActivityConf_OrderedMap_ActivityValue]()
-	for k1, v1 := range x.Data().GetActivityMap() {
+	for k1, v1 := range x.data.GetActivityMap() {
 		map1 := x.orderedMap
 		k1v := &ActivityConf_OrderedMap_ActivityValue{
 			First:  treemap.New[uint32, *ActivityConf_OrderedMap_Activity_ChapterValue](),
@@ -592,12 +595,15 @@ func (x *ChapterConf) Load(dir string, format format.Format, opts *load.Messager
 // Store stores ChapterConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *ChapterConf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the ChapterConf's inner message data.
 func (x *ChapterConf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.
@@ -669,12 +675,15 @@ func (x *ThemeConf) Load(dir string, format format.Format, opts *load.MessagerOp
 // Store stores ThemeConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *ThemeConf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the ThemeConf's inner message data.
 func (x *ThemeConf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.
@@ -795,12 +804,15 @@ func (x *TaskConf) Load(dir string, format format.Format, opts *load.MessagerOpt
 // Store stores TaskConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *TaskConf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the TaskConf's inner message data.
 func (x *TaskConf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.
@@ -1112,12 +1124,15 @@ func (x *StrcaseConf) Load(dir string, format format.Format, opts *load.Messager
 // Store stores StrcaseConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *StrcaseConf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the StrcaseConf's inner message data.
 func (x *StrcaseConf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.

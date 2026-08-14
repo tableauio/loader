@@ -10,21 +10,23 @@ import (
 )
 
 type Generator struct {
-	gen        *protogen.Plugin
-	g          *protogen.GeneratedFile
-	descriptor *index.IndexDescriptor
-	message    *protogen.Message
+	gen          *protogen.Plugin
+	g            *protogen.GeneratedFile
+	descriptor   *index.IndexDescriptor
+	message      *protogen.Message
+	constEnabled bool
 
 	// level message
 	keys helper.MapKeySlice
 }
 
-func NewGenerator(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, message *protogen.Message) *Generator {
+func NewGenerator(gen *protogen.Plugin, g *protogen.GeneratedFile, descriptor *index.IndexDescriptor, message *protogen.Message, constEnabled bool) *Generator {
 	generator := &Generator{
-		gen:        gen,
-		g:          g,
-		descriptor: descriptor,
-		message:    message,
+		gen:          gen,
+		g:            g,
+		descriptor:   descriptor,
+		message:      message,
+		constEnabled: constEnabled,
 	}
 	generator.initLevelMessage()
 	return generator
@@ -62,6 +64,24 @@ func (x *Generator) levelKeyType(mapFd protoreflect.FieldDescriptor) string {
 
 func (x *Generator) mapValueType(index *index.LevelIndex) protogen.GoIdent {
 	return helper.FindMessageGoIdent(x.gen, index.MD)
+}
+
+// indexValueElem returns the element type used inside the index's slice/map
+// containers for the indexed values. In non-const mode it is the mutable
+// pointer type "*protoconf.Item"; in const mode it is the read-only value type
+// "protoconf.Item_Const".
+func (x *Generator) indexValueElem(index *index.LevelIndex) string {
+	if x.constEnabled {
+		return helper.ConstViewType(x.g, x.gen, index.MD)
+	}
+	return "*" + x.g.QualifiedGoIdent(x.mapValueType(index))
+}
+
+func (x *Generator) findFirstMissComment() string {
+	if x.constEnabled {
+		return "or a zero value if no value found."
+	}
+	return "or nil if no value found."
 }
 
 func (x *Generator) fieldGetter(fd protoreflect.FieldDescriptor) string {

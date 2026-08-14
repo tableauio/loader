@@ -70,7 +70,7 @@ func (x *Generator) genIndexTypeDef() {
 				}
 				x.g.P("}")
 			}
-			x.g.P("type ", x.indexMapType(index), " = map[", x.indexMapKeyType(index), "][]*", x.mapValueType(index))
+			x.g.P("type ", x.indexMapType(index), " = map[", x.indexMapKeyType(index), "][]", x.indexValueElem(index))
 			x.g.P()
 		}
 	}
@@ -187,14 +187,18 @@ func (x *Generator) generateOneMulticolumnIndex(lm *index.LevelMessage, index *i
 
 func (x *Generator) genIndexLoaderCommon(lm *index.LevelMessage, index *index.LevelIndex, parentDataName string) {
 	indexContainerName := x.indexContainerName(index, 0)
-	x.g.P("x.", indexContainerName, "[key] = append(x.", indexContainerName, "[key], ", parentDataName, ")")
+	appender := parentDataName
+	if x.constEnabled {
+		appender = parentDataName + ".AsConst()"
+	}
+	x.g.P("x.", indexContainerName, "[key] = append(x.", indexContainerName, "[key], ", appender, ")")
 	for i := 1; i < lm.LeveledContainerDepth(); i++ {
 		indexContainerName := x.indexContainerName(index, i)
 		if i == 1 {
 			x.g.P("if x.", indexContainerName, "[k1] == nil {")
 			x.g.P("x.", indexContainerName, "[k1] = make(", x.indexMapType(index), ")")
 			x.g.P("}")
-			x.g.P("x.", indexContainerName, "[k1][key] = append(x.", indexContainerName, "[k1][key], ", parentDataName, ")")
+			x.g.P("x.", indexContainerName, "[k1][key] = append(x.", indexContainerName, "[k1][key], ", appender, ")")
 		} else {
 			var fields []string
 			for j := 1; j <= i; j++ {
@@ -206,7 +210,7 @@ func (x *Generator) genIndexLoaderCommon(lm *index.LevelMessage, index *index.Le
 			x.g.P("if x.", indexContainerName, "[", keyName, "] == nil {")
 			x.g.P("x.", indexContainerName, "[", keyName, "] = make(", x.indexMapType(index), ")")
 			x.g.P("}")
-			x.g.P("x.", indexContainerName, "[", keyName, "][key] = append(x.", indexContainerName, "[", keyName, "][key], ", parentDataName, ")")
+			x.g.P("x.", indexContainerName, "[", keyName, "][key] = append(x.", indexContainerName, "[", keyName, "][key], ", appender, ")")
 		}
 	}
 }
@@ -217,7 +221,7 @@ func (x *Generator) genIndexSorter() {
 			if len(index.SortedColFields) != 0 {
 				x.g.P("// Index(sort): ", index.Index)
 				indexContainerName := x.indexContainerName(index, 0)
-				x.g.P(indexContainerName, "Sorter := func(itemList []*", x.mapValueType(index), ") func(i, j int) bool {")
+				x.g.P(indexContainerName, "Sorter := func(itemList []", x.indexValueElem(index), ") func(i, j int) bool {")
 				x.g.P("return func(i, j int) bool {")
 				for i, field := range index.SortedColFields {
 					fieldName, _ := x.parseKeyFieldNameAndSuffix(field)
@@ -269,7 +273,7 @@ func (x *Generator) genIndexFinders() {
 			params := keys.GenGetParams()
 			args := keys.GenGetArguments()
 			x.g.P("// Find", index.Name(), " finds a slice of all values of the given key(s).")
-			x.g.P("func (x *", messagerName, ") Find", index.Name(), "(", params, ") []*", x.mapValueType(index), " {")
+			x.g.P("func (x *", messagerName, ") Find", index.Name(), "(", params, ") []", x.indexValueElem(index), " {")
 			if len(index.ColFields) == 1 {
 				x.g.P("return x.", indexContainerName, "[", args, "]")
 			} else {
@@ -279,13 +283,17 @@ func (x *Generator) genIndexFinders() {
 			x.g.P()
 
 			x.g.P("// FindFirst", index.Name(), " finds the first value of the given key(s),")
-			x.g.P("// or nil if no value found.")
-			x.g.P("func (x *", messagerName, ") FindFirst", index.Name(), "(", params, ") *", x.mapValueType(index), " {")
+			x.g.P("// ", x.findFirstMissComment())
+			x.g.P("func (x *", messagerName, ") FindFirst", index.Name(), "(", params, ") ", x.indexValueElem(index), " {")
 			x.g.P("val := x.Find", index.Name(), "(", args, ")")
 			x.g.P("if len(val) > 0 {")
 			x.g.P("return val[0]")
 			x.g.P("}")
-			x.g.P("return nil")
+			if x.constEnabled {
+				x.g.P("return ", x.indexValueElem(index), "{}")
+			} else {
+				x.g.P("return nil")
+			}
 			x.g.P("}")
 			x.g.P()
 
@@ -310,7 +318,7 @@ func (x *Generator) genIndexFinders() {
 
 				x.g.P("// Find", index.Name(), i, " finds a slice of all values of the given key(s) in the upper ", loadutil.Ordinal(i), "-level map")
 				x.g.P("// specified by (", partArgs, ").")
-				x.g.P("func (x *", messagerName, ") Find", index.Name(), i, "(", partParams, ", ", params, ") []*", x.mapValueType(index), " {")
+				x.g.P("func (x *", messagerName, ") Find", index.Name(), i, "(", partParams, ", ", params, ") []", x.indexValueElem(index), " {")
 				if len(index.ColFields) == 1 {
 					x.g.P("return x.Find", index.Name(), "Map", i, "(", partArgs, ")[", args, "]")
 				} else {
@@ -320,13 +328,17 @@ func (x *Generator) genIndexFinders() {
 				x.g.P()
 
 				x.g.P("// FindFirst", index.Name(), i, " finds the first value of the given key(s) in the upper ", loadutil.Ordinal(i), "-level map")
-				x.g.P("// specified by (", partArgs, "), or nil if no value found.")
-				x.g.P("func (x *", messagerName, ") FindFirst", index.Name(), i, "(", partParams, ", ", params, ") *", x.mapValueType(index), " {")
+				x.g.P("// specified by (", partArgs, "), ", x.findFirstMissComment())
+				x.g.P("func (x *", messagerName, ") FindFirst", index.Name(), i, "(", partParams, ", ", params, ") ", x.indexValueElem(index), " {")
 				x.g.P("val := x.Find", index.Name(), i, "(", partArgs, ", ", args, ")")
 				x.g.P("if len(val) > 0 {")
 				x.g.P("return val[0]")
 				x.g.P("}")
-				x.g.P("return nil")
+				if x.constEnabled {
+					x.g.P("return ", x.indexValueElem(index), "{}")
+				} else {
+					x.g.P("return nil")
+				}
 				x.g.P("}")
 				x.g.P()
 			}

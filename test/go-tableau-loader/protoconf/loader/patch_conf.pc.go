@@ -61,12 +61,15 @@ func (x *PatchReplaceConf) Load(dir string, format format.Format, opts *load.Mes
 // Store stores PatchReplaceConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *PatchReplaceConf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the PatchReplaceConf's inner message data.
 func (x *PatchReplaceConf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.
@@ -127,12 +130,15 @@ func (x *PatchMergeConf) Load(dir string, format format.Format, opts *load.Messa
 // Store stores PatchMergeConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *PatchMergeConf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the PatchMergeConf's inner message data.
 func (x *PatchMergeConf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.
@@ -204,12 +210,15 @@ func (x *RecursivePatchConf) Load(dir string, format format.Format, opts *load.M
 // Store stores RecursivePatchConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *RecursivePatchConf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the RecursivePatchConf's inner message data.
 func (x *RecursivePatchConf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.

@@ -139,12 +139,15 @@ func (x *ItemConf) Load(dir string, format format.Format, opts *load.MessagerOpt
 // Store stores ItemConf's content to file in the specified directory and format.
 // Available formats: JSON, Bin, and Text.
 func (x *ItemConf) Store(dir string, format format.Format, options ...store.Option) error {
-	return store.Store(x.Data(), dir, format, options...)
+	return store.Store(x.data, dir, format, options...)
 }
 
 // Message returns the ItemConf's inner message data.
 func (x *ItemConf) Message() proto.Message {
-	return x.Data()
+	if x != nil {
+		return x.data
+	}
+	return nil
 }
 
 // Messager returns the current messager.
@@ -164,7 +167,7 @@ func (x *ItemConf) originalMessage() proto.Message {
 func (x *ItemConf) processAfterLoad() error {
 	// OrderedMap init.
 	x.orderedMap = treemap.New[uint32, *protoconf.ItemConf_Item]()
-	for k1, v1 := range x.Data().GetItemMap() {
+	for k1, v1 := range x.data.GetItemMap() {
 		map1 := x.orderedMap
 		map1.Put(k1, v1)
 	}
