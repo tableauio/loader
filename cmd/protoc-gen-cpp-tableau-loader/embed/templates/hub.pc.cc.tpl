@@ -102,20 +102,31 @@ std::shared_ptr<MessagerMap> Hub::NewMessagerMap() const {
 std::shared_ptr<MessagerMap> Hub::GetMessagerMap() const { return GetMessagerContainerWithProvider()->msger_map_; }
 
 void Hub::SetMessagerMap(std::shared_ptr<MessagerMap> msger_map) {
-  // replace with thread-safe guarantee.
-  std::unique_lock<std::mutex> lock(mutex_);
-  msger_container_ = std::make_shared<MessagerContainer>(msger_map);
+  auto msger_container = std::make_shared<MessagerContainer>(msger_map);
+#if defined(__cpp_lib_atomic_shared_ptr)
+  msger_container_.store(std::move(msger_container), std::memory_order_release);
+#else
+  std::atomic_store_explicit(&msger_container_, std::move(msger_container), std::memory_order_release);
+#endif
 }
 
 const std::shared_ptr<Messager> Hub::GetMessager(const std::string& name) const {
   return GetMessagerContainerWithProvider()->GetMessager(name);
 }
 
+std::shared_ptr<MessagerContainer> Hub::GetMessagerContainer() const {
+#if defined(__cpp_lib_atomic_shared_ptr)
+  return msger_container_.load(std::memory_order_acquire);
+#else
+  return std::atomic_load_explicit(&msger_container_, std::memory_order_acquire);
+#endif
+}
+
 std::shared_ptr<MessagerContainer> Hub::GetMessagerContainerWithProvider() const {
   if (options_ && options_->provider) {
     return options_->provider(*this);
   }
-  return msger_container_;
+  return GetMessagerContainer();
 }
 
 bool Hub::Postprocess(std::shared_ptr<MessagerMap> msger_map) {

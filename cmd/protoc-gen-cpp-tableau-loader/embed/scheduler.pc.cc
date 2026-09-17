@@ -1,5 +1,7 @@
 #include "scheduler.pc.h"
 
+#include <cstdlib>
+
 namespace tableau {
 namespace internal {
 // Thread-local storage (TLS)
