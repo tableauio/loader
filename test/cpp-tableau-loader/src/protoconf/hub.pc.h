@@ -5,6 +5,7 @@
 // clang-format off
 
 #pragma once
+#include <atomic>
 #include <ctime>
 #include <functional>
 #include <memory>
@@ -64,7 +65,7 @@ class Hub {
 
   /***** MessagerContainer *****/
   // This function is exposed only for use in MessagerContainerProvider.
-  std::shared_ptr<MessagerContainer> GetMessagerContainer() const { return msger_container_; }
+  std::shared_ptr<MessagerContainer> GetMessagerContainer() const;
 
   /***** Access APIs *****/
   template <typename T>
@@ -89,10 +90,14 @@ class Hub {
   bool Postprocess(std::shared_ptr<MessagerMap> msger_map);
 
  private:
-  // For thread-safe guarantee during configuration updating.
-  std::mutex mutex_;
-  // All messagers' container.
+  // All messagers' container. It is replaced as a whole on each load, so it must
+  // be read and written atomically: the loading thread stores a brand-new
+  // container while accessor threads are loading the current one.
+#if defined(__cpp_lib_atomic_shared_ptr)
+  std::atomic<std::shared_ptr<MessagerContainer>> msger_container_;
+#else
   std::shared_ptr<MessagerContainer> msger_container_;
+#endif
   // Loading scheduler.
   internal::Scheduler* sched_ = nullptr;
   // Init once
