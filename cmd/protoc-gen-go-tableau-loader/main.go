@@ -13,6 +13,7 @@ import (
 const version = "0.12.0"
 
 var pkg *string
+var go127 *bool
 
 func main() {
 	showVersion := flag.Bool("version", false, "print the version and exit")
@@ -24,6 +25,7 @@ func main() {
 
 	var flags flag.FlagSet
 	pkg = flags.String("pkg", "tableau", "tableau package name")
+	go127 = flags.Bool("go127", false, "generate Go 1.27 generic Hub/MessagerContainer.Get methods")
 
 	protogen.Options{
 		ParamFunc: flags.Set,

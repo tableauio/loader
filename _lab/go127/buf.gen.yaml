@@ -1,0 +1,29 @@
+version: v2
+# Override go_package so codegen lands in this module instead of
+# test/go-tableau-loader/protoconf (hardcoded in the shared protos).
+managed:
+  enabled: true
+  disable:
+    - file_option: go_package
+      module: buf.build/tableauio/tableau
+  override:
+    - file_option: go_package
+      value: github.com/tableauio/loader/_lab/go127/protoconf
+inputs:
+  # Use the main test buf workspace; only generate these two files.
+  # paths are relative to this directory (same as buf generate --path).
+  - directory: ../../test
+    paths:
+      - ../../test/proto/item_conf.proto
+      - ../../test/proto/common_conf.proto
+plugins:
+  - remote: buf.build/protocolbuffers/go:v1.34.2
+    out: protoconf
+    opt: paths=source_relative
+  - local: ["go", "run", "-C", "../..", "./cmd/protoc-gen-go-tableau-loader"]
+    out: protoconf/loader
+    opt:
+      - paths=source_relative
+      - pkg=loader
+      - go127=true
+    strategy: all
