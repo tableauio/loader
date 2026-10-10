@@ -18,11 +18,20 @@ var tpl = template.Must(template.New("").Funcs(template.FuncMap{
 	"toLowerCamel": strcase.ToLowerCamel,
 }).ParseFS(efs, "embed/templates/*"))
 
+type embedData struct {
+	Messagers []string
+	Go127     bool
+}
+
 // generateEmbed generates related registry files.
 func generateEmbed(gen *protogen.Plugin) {
 	entries, err := efs.ReadDir("embed/templates")
 	if err != nil {
 		panic(err)
+	}
+	data := embedData{
+		Messagers: xproto.ParseProtoFiles(gen).FlatMessagers(),
+		Go127:     *go127,
 	}
 	for _, entry := range entries {
 		if entry.IsDir() {
@@ -34,7 +43,7 @@ func generateEmbed(gen *protogen.Plugin) {
 		g.P()
 		g.P("package ", *pkg)
 		g.P()
-		if err := tpl.Lookup(entry.Name()).Execute(g, xproto.ParseProtoFiles(gen).FlatMessagers()); err != nil {
+		if err := tpl.Lookup(entry.Name()).Execute(g, data); err != nil {
 			panic(err)
 		}
 	}

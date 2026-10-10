@@ -201,10 +201,16 @@ func (h *Hub) GetMessager(name string) Messager {
 	return h.mc.Load().GetMessager(name)
 }
 
+{{ if .Go127 }}
+// Get returns the messager of type T, or the zero value if not found.
+func (h *Hub) Get[T Messager]() T {
+	return h.mc.Load().Get[T]()
+}
+{{ end }}
 func (h *Hub) GetLastLoadedTime() time.Time {
 	return h.mc.Load().GetLastLoadedTime()
 }
-{{ range . }}
+{{ range .Messagers }}
 func (h *Hub) Get{{ . }}() *{{ . }} {
 	return h.mc.Load().Get{{ . }}()
 }

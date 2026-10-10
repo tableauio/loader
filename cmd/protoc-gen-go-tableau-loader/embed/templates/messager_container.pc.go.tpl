@@ -6,15 +6,21 @@ type MessagerContainer struct {
 	messagerMap MessagerMap
 	loadedTime  time.Time
 	// all messagers as fields for fast access
-{{ range . }}	{{ toLowerCamel . }} *{{ . }}
+{{ range .Messagers }}	{{ toLowerCamel . }} *{{ . }}
 {{ end }}}
 
 func newMessagerContainer(messagerMap MessagerMap) *MessagerContainer {
 	return &MessagerContainer{
 		messagerMap: messagerMap,
 		loadedTime:  time.Now(),
-{{ range . }}		{{ toLowerCamel . }}: GetMessager[*{{ . }}](messagerMap),
-{{ end }}	}
+{{ if .Go127 -}}
+{{ range .Messagers }}		{{ toLowerCamel . }}: getMessager[*{{ . }}](messagerMap),
+{{ end -}}
+{{ else -}}
+{{ range .Messagers }}		{{ toLowerCamel . }}: GetMessager[*{{ . }}](messagerMap),
+{{ end -}}
+{{ end -}}
+	}
 }
 
 func (mc *MessagerContainer) GetMessagerMap() MessagerMap {
@@ -25,11 +31,17 @@ func (mc *MessagerContainer) GetMessager(name string) Messager {
 	return mc.messagerMap[name]
 }
 
+{{ if .Go127 }}
+// Get returns the messager of type T, or the zero value if not found.
+func (mc *MessagerContainer) Get[T Messager]() T {
+	return getMessager[T](mc.messagerMap)
+}
+{{ end }}
 func (mc *MessagerContainer) GetLastLoadedTime() time.Time {
 	return mc.loadedTime
 }
 // Auto-generated getters below
-{{ range . }}
+{{ range .Messagers }}
 func (mc *MessagerContainer) Get{{ . }}() *{{ . }} {
 	return mc.{{ toLowerCamel . }}
 }
